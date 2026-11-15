@@ -1,8 +1,6 @@
 """Étape 4 : API de l'Atlas, de bout en bout sur un petit corpus synthétique."""
 
-import numpy as np
 import pytest
-from PIL import Image
 
 pytest.importorskip("fastapi")
 pytest.importorskip("faiss")
@@ -10,40 +8,14 @@ pytest.importorskip("umap")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
-from pixplot.analysis.layout import analyze  # noqa: E402
 from pixplot.api.app import create_app  # noqa: E402
 from pixplot.api.data import AtlasData  # noqa: E402
-from pixplot.catalog.ingest import ingest  # noqa: E402
-from pixplot.catalog.metadata import import_csv  # noqa: E402
-from pixplot.config import get_settings  # noqa: E402
-from pixplot.encoders.colorhist import ColorHistEncoder  # noqa: E402
-from pixplot.features.extract import extract  # noqa: E402
 
 
 @pytest.fixture(scope="module")
-def client(tmp_path_factory):
-    root = tmp_path_factory.mktemp("atlas")
-    images = root / "images"
-    images.mkdir()
-    rng = np.random.default_rng(3)
-    rows = ["path,artist,style"]
-    palette = {"Rouge": (200, 40, 40), "Bleu": (40, 60, 200), "Vert": (40, 170, 60)}
-    n = 0
-    for artist, color in palette.items():
-        for k in range(6):
-            arr = np.clip(np.array(color) + rng.normal(0, 12, (120, 90, 3)), 0, 255).astype(np.uint8)
-            Image.fromarray(arr).save(images / f"{artist}_{k}.jpg")
-            rows.append(f"{artist}_{k}.jpg,{artist},Style {artist}")
-            n += 1
-    (images / "meta.csv").write_text("\n".join(rows), encoding="utf-8")
-
-    s = get_settings(root / "data")
-    ingest([images], s.catalog_path, s.thumbs_dir, workers=1)
-    import_csv(images / "meta.csv", s.catalog_path)
-    feats = extract(ColorHistEncoder(), s.catalog_path, s.runs_dir, batch_size=8, workers=1)
-    analyze(feats, runs_dir=s.runs_dir, n_clusters=3, n_neighbors=5, use_hdbscan=False)
-    data = AtlasData.load(s)
-    return TestClient(create_app(data)), n
+def client(atlas_env):
+    s, n = atlas_env
+    return TestClient(create_app(AtlasData.load(s))), n
 
 
 def test_info_and_map(client):

@@ -1,0 +1,104 @@
+"""Étape 6 : Research Pack et serveur MCP."""
+
+import asyncio
+import csv
+import io
+import json
+import zipfile
+
+import pytest
+
+from pixplot.api.data import AtlasData
+from pixplot.export import selection as sel
+from pixplot.export.pack import build_pack
+
+
+@pytest.fixture(scope="module")
+def data(atlas_env):
+    s, _ = atlas_env
+    return AtlasData.load(s)
+
+
+def test_research_pack(data, tmp_path):
+    chosen = sel.by_similar(data, int(data.ids[0]), k=5)
+    first = chosen.ids[0]
+    path = build_pack(data, chosen.ids, tmp_path, "Rouges et voisines", question="Pourquoi ces rouges ?",
+                      selection=chosen.how, scores=chosen.scores, details={first: [0, 0, 0.5, 0.5]})
+    z = zipfile.ZipFile(path)
+    names = set(z.namelist())
+    assert {"manifest.json", "summary.md", "artworks.csv", "relations.csv"} <= names
+    assert {f"evidence/{i}.jpg" for i in chosen.ids} <= names and f"evidence/detail_{first}.jpg" in names
+    manifest = json.loads(z.read("manifest.json"))
+    assert manifest["artwork_ids"] == chosen.ids and manifest["question"] == "Pourquoi ces rouges ?"
+    assert manifest["runs"]["features"] == data.features.id and manifest["caveats"]
+    rows = list(csv.DictReader(io.StringIO(z.read("artworks.csv").decode())))
+    assert len(rows) == 6 and rows[0]["artist"] and rows[0]["image"].startswith("evidence/")
+    rel = list(csv.DictReader(io.StringIO(z.read("relations.csv").decode())))
+    assert len(rel) == 6 * 5 // 2
+    summary = z.read("summary.md").decode()
+    assert "Pourquoi ces rouges ?" in summary and "pas une preuve" in summary
+    assert path.stat().st_size < 2 * 2**20
+
+
+def test_selections(data):
+    g = sel.by_cluster(data, 1)
+    assert len(g.ids) == int((data.clusters == 0).sum())
+    assert sel.by_ids(data, [int(data.ids[0]), 999999]).ids == [int(data.ids[0])]
+    with pytest.raises(ValueError):
+        sel.by_cluster(data, 99)
+
+
+def test_api_pack(data):
+    pytest.importorskip("fastapi")
+    from fastapi.testclient import TestClient
+    from pixplot.api.app import create_app
+
+    c = TestClient(create_app(data))
+    ids = [int(i) for i in data.ids[:4]]
+    r = c.post("/api/pack", json={"ids": ids, "title": "Essai", "question": "Q ?"})
+    assert r.status_code == 200 and r.headers["content-type"] == "application/zip"
+    assert "manifest.json" in zipfile.ZipFile(io.BytesIO(r.content)).namelist()
+    assert c.post("/api/pack", json={"ids": [999999]}).status_code == 400
+
+
+def test_mcp_tools(data):
+    pytest.importorskip("mcp")
+    from pixplot.mcp.server import create_server
+
+    srv = create_server(data)
+    first = int(data.ids[0])
+
+    async def call(name, args):
+        return await srv.call_tool(name, args)
+
+    async def scenario():
+        tools = {t.name for t in await srv.list_tools()}
+        assert tools == {"corpus_overview", "search_by_text", "similar_artworks", "search_detail", "get_artwork",
+                         "view_artwork", "view_detail", "compare_artworks", "get_group", "find_atypical",
+                         "export_research_pack"}
+        overview = json.loads((await call("corpus_overview", {})).content[0].text)
+        assert overview["count"] == len(data.ids) and len(overview["groups"]) == 3
+        art = json.loads((await call("get_artwork", {"artwork_id": first})).content[0].text)
+        assert art["id"] == first and len(art["neighbors"]) == 5
+        img = await call("view_artwork", {"artwork_id": first, "size": 256})
+        assert [c.type for c in img.content] == ["text", "image"]
+        det = await call("view_detail", {"artwork_id": first, "x0": 0, "y0": 0, "x1": 0.5, "y1": 0.5})
+        assert det.content[1].type == "image"
+        cmp = await call("compare_artworks", {"artwork_ids": [int(i) for i in data.ids[:3]]})
+        assert [c.type for c in cmp.content] == ["text", "image", "text"]
+        group = json.loads((await call("get_group", {"group_number": 1, "k": 3})).content[0].text)
+        assert len(group["artworks"]) == 3
+        atyp = json.loads((await call("find_atypical", {"k": 2})).content[0].text)
+        assert len(atyp["artworks"]) == 2
+        text = json.loads((await call("search_by_text", {"query": "un chat"})).content[0].text)
+        assert "error" in text  # pas de vecteurs SigLIP dans ce corpus de test
+        pack = json.loads((await call("export_research_pack",
+                                      {"artwork_ids": [int(i) for i in data.ids[:3]], "title": "MCP"})).content[0].text)
+        assert pack["artworks"] == 3 and pack["path"].endswith(".zip")
+        # Appelé directement, un outil en échec lève une exception ; à travers le transport
+        # MCP (stdio), le client reçoit une réponse marquée is_error.
+        with pytest.raises(Exception, match="get_artwork") as err:
+            await call("get_artwork", {"artwork_id": 999999})
+        assert "inconnue" in str(err.value.__cause__)
+
+    asyncio.run(scenario())

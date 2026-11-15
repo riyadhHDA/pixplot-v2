@@ -31,6 +31,8 @@ pixplot index --regions                # index des zones → « Chercher un dét
 pixplot embed --encoder siglip2_so400m # vecteurs texte↔image (puis pixplot index --encoder siglip2_so400m)
 pixplot search-text "Annonciation dans un jardin"   # recherche en texte libre
 pixplot serve --open                   # l'Atlas : carte interactive sur http://127.0.0.1:8765
+pixplot pack --text "Annonciation" -k 20 --question "…"   # Research Pack (.zip) pour un LLM
+pixplot mcp                            # serveur MCP : brancher Claude, voir docs/MCP.md
 pixplot status
 ```
 
@@ -46,7 +48,8 @@ Installation du GPU (Windows natif, WSL2 en secours) et des modèles : [docs/INS
 - [x] Étape 3 : e-means + HDBSCAN + UMAP → première carte (`pixplot analyze`)
 - [x] Étape 4 : API + Atlas interactif (`pixplot serve --open`)
 - [x] Étape 5 : recherche par détail (cadre tracé) + recherche en texte libre multilingue (SigLIP 2)
-- [ ] Étape 6 : serveur MCP + Research Pack
+- [x] Étape 6 : serveur MCP (11 outils, images comprises) + Research Pack
+- [ ] Étape 7 : comparateur, carnet de recherche, chronologie et géographie
 
 ## Licence et origine
 

@@ -22,6 +22,15 @@ WEB_DIR = Path(__file__).resolve().parents[2] / "web"
 CACHE = {"Cache-Control": "public, max-age=86400"}
 
 
+class PackQuery(BaseModel):
+    ids: list[int] = Field(..., min_length=1, max_length=500)
+    title: str = Field("Research Pack", max_length=200)
+    question: str = Field("", max_length=2000)
+    selection: dict[str, str] = Field(default_factory=dict)
+    scores: dict[int, float] = Field(default_factory=dict)
+    details: dict[int, list[float]] = Field(default_factory=dict)
+
+
 class RegionQuery(BaseModel):
     id: int
     box: list[float] = Field(..., min_length=4, max_length=4, description="[x0, y0, x1, y1] en fractions de l'image")
@@ -33,6 +42,19 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
     app.add_middleware(GZipMiddleware, minimum_size=2048)
     map_cache: dict = {}
     engines = engines or SearchEngines(data)
+
+    @app.post("/api/pack")
+    def pack(q: PackQuery):
+        from ..export.pack import build_pack
+
+        try:
+            path = build_pack(data, q.ids, data.settings.data_dir / "packs", q.title or "Research Pack",
+                              question=q.question, selection=q.selection or {"méthode": "sélection dans l'Atlas"},
+                              details={int(k): v for k, v in q.details.items() if len(v) == 4},
+                              scores={int(k): v for k, v in q.scores.items()})
+        except ValueError as exc:
+            raise HTTPException(400, str(exc))
+        return FileResponse(path, media_type="application/zip", filename=path.name)
 
     @app.get("/api/search/status")
     def search_status():

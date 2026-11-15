@@ -286,6 +286,47 @@ def cmd_analyze(args) -> int:
     return 0
 
 
+# --------------------------------------------------------------------------- pack
+def cmd_pack(args) -> int:
+    from .api.data import AtlasData
+    from .api.search import SearchEngines
+    from .export import selection as sel
+    from .export.pack import build_pack
+
+    s = get_settings(args.data)
+    data = AtlasData.load(s)
+    engines = SearchEngines(data)
+    if args.ids:
+        chosen = sel.by_ids(data, [int(x) for x in args.ids.split(",") if x.strip()])
+    elif args.cluster:
+        chosen = sel.by_cluster(data, args.cluster, k=args.k)
+    elif args.similar:
+        chosen = sel.by_similar(data, args.similar, k=args.k)
+    elif args.text:
+        chosen = sel.by_text(engines, args.text, k=args.k)
+    elif args.detail:
+        if not args.box:
+            raise SystemExit("--detail demande --box x0,y0,x1,y1 (fractions de l'image)")
+        chosen = sel.by_detail(engines, args.detail, [float(v) for v in args.box.split(",")], k=args.k)
+    else:
+        raise SystemExit("Choisissez une sélection : --ids, --cluster, --similar, --text ou --detail")
+    title = args.title or chosen.how.get("méthode", "Research Pack")
+    path = build_pack(data, chosen.ids, Path(args.out) if args.out else s.data_dir / "packs", title,
+                      question=args.question or "", selection=chosen.how, details=chosen.details,
+                      scores=chosen.scores, include_vectors=args.vectors)
+    size = path.stat().st_size / 2**20
+    print(f"Research Pack : {path}  ({len(chosen.ids)} œuvres, {size:.1f} Mo)")
+    return 0
+
+
+# --------------------------------------------------------------------------- mcp
+def cmd_mcp(args) -> int:
+    from .mcp.server import run
+
+    run(get_settings(args.data), analysis_name=args.analysis)
+    return 0
+
+
 # --------------------------------------------------------------------------- serve
 def cmd_serve(args) -> int:
     import webbrowser
@@ -428,6 +469,25 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-map", action="store_true", help="ne pas dessiner la carte")
     p.add_argument("--map-size", type=int, default=4000, help="taille de la carte en pixels")
     p.set_defaults(func=cmd_analyze)
+
+    p = sub.add_parser("pack", help="exporter un Research Pack (.zip) pour un LLM ou un collègue")
+    g = p.add_mutually_exclusive_group()
+    g.add_argument("--ids", help="liste d'œuvres : 12,45,78")
+    g.add_argument("--cluster", type=int, help="numéro de groupe (comme dans l'Atlas)")
+    g.add_argument("--similar", type=int, help="une œuvre et ses voisines")
+    g.add_argument("--text", help="une description (SigLIP 2)")
+    g.add_argument("--detail", type=int, help="une œuvre + --box : recherche par détail")
+    p.add_argument("--box", help="cadre x0,y0,x1,y1 en fractions de l'image (avec --detail)")
+    p.add_argument("-k", type=int, default=30, help="nombre d'œuvres retenues")
+    p.add_argument("--title")
+    p.add_argument("--question", help="la question de recherche, reprise dans le dossier")
+    p.add_argument("--vectors", action="store_true", help="ajouter les vecteurs (option experte)")
+    p.add_argument("--out", help="dossier de sortie (défaut : data/packs)")
+    p.set_defaults(func=cmd_pack)
+
+    p = sub.add_parser("mcp", help="serveur MCP (stdio) : donne accès au corpus à Claude ou un autre LLM")
+    p.add_argument("--analysis", help="dossier d'analyse (défaut : la plus récente)")
+    p.set_defaults(func=cmd_mcp)
 
     p = sub.add_parser("serve", help="ouvrir l'Atlas (carte interactive) dans le navigateur")
     p.add_argument("--analysis", help="dossier d'analyse (défaut : la plus récente)")

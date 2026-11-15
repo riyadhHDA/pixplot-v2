@@ -113,8 +113,11 @@ Commande : `pixplot analyze [--clusters N] [--hdbscan]`. Graine fixe : reproduct
   `/api/clusters`, `/api/artwork/{id}` (métadonnées + sources, voisines, provenance du calcul),
   `/api/search?q=`, `/api/thumb/{taille}/{id}`, `/api/image/{id}` (images servies par
   identifiant uniquement, jamais par chemin). Documentation automatique : `/api/docs`.
-- Serveur MCP, outils : `search_similar`, `search_text`, `search_region`, `get_artwork`,
-  `get_neighbors`, `get_cluster`, `export_pack`.
+- **Serveur MCP** (`pixplot mcp`, stdio, SDK officiel `mcp` 2.x) : 11 outils —
+  `corpus_overview`, `search_by_text`, `similar_artworks`, `search_detail`, `get_artwork`,
+  `view_artwork`, `view_detail`, `compare_artworks`, `get_group`, `find_atypical`,
+  `export_research_pack`. Les outils `view_*` et `compare_artworks` **renvoient des images**
+  au LLM. Consignes de méthode et de prudence intégrées. Branchement : `docs/MCP.md`.
 
 ### ⑥ Interface — `web/`
 **deck.gl 9.4** (rendu WebGL), en JavaScript simple **sans étape de compilation** : le
@@ -131,17 +134,21 @@ Atlas (choix de l'espace) → Fiche œuvre (voisins par espace) → Sélection d
 Comparateur (zoom synchronisé, superposition) → Carnet de recherche.
 
 ### ⑦ Research Pack — `pixplot.export`
+`pixplot pack` (CLI), bouton « Exporter » de l'Atlas, outil MCP `export_research_pack`.
+Sélection : liste d'œuvres, groupe, voisines d'une œuvre, recherche texte ou détail.
 ```
-pack.zip
-├── manifest.json      modèles, runs, paramètres, requête d'origine
-├── artworks.parquet   métadonnées des œuvres concernées
-├── relations.parquet  paires, scores, espace, groupe
-├── evidence/          vignettes et détails recadrés (lisibles par un LLM multimodal)
-├── summary.md         résumé rédigé pour un LLM
-└── vectors.npy        (option « expert » : reproductibilité)
+<date>_<titre>.zip            (≈ 50 Ko par œuvre)
+├── manifest.json      titre, question, modèles, runs et paramètres, provenance de la sélection
+├── summary.md         le dossier rédigé : méthode, composition, œuvres, relations les plus
+│                      fortes, atypiques, mises en garde, consigne proposée pour un LLM
+├── artworks.csv       métadonnées, groupe, famille, atypicité, score de la recherche
+├── relations.csv      toutes les paires : similarité visuelle (DINOv3) et sémantique (SigLIP)
+├── evidence/          vignette 512 px par œuvre + détails recadrés (lisibles par un LLM)
+└── vectors.npy        (option `--vectors`) pour reproduire les calculs
 ```
-Un LLM ne sait rien faire de vecteurs bruts : ce qui compte, ce sont les **relations
-explicites, les métadonnées et les images**. Les vecteurs ne servent qu'à reproduire.
+CSV / JSON / Markdown / JPEG plutôt que Parquet : lisibles par n'importe quel LLM ou
+tableur, sans outil particulier. Un LLM ne sait rien faire de vecteurs bruts : ce qui
+compte, ce sont les **relations explicites, les métadonnées sourcées et les images**.
 
 ## 4. Arborescence
 
@@ -187,7 +194,7 @@ Pixplot V2/
      « saint Sébastien » → le *Saint Sébastien* de Titien en 2ᵉ (1ʳᵉ : un Christ souffrant
      du même peintre) ; « un navire dans la tempête » → 5 marines d'Aivazovsky. Utile pour
      défricher, à vérifier œuvre par œuvre.
-6. Serveur MCP + Research Pack.
+6. ~~Serveur MCP + Research Pack~~ **fait**.
 7. Comparateur, carnet de recherche, chronologie et géographie.
 
 ## 6. Leçons tirées de PixPlot v1 (0.0.1.1)

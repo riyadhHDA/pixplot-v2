@@ -409,6 +409,7 @@
           <button class="chip" id="chip-group">Groupe ${d.cluster}</button>${fam}
           <span class="chip ${atyp >= 90 ? "warn" : ""}" title="Rang d'isolement parmi toutes les œuvres">Atypicité ${atyp} %</span>
           <button class="chip" id="chip-fly">Voir sur la carte</button>
+          <button class="chip" id="chip-export" title="Dossier .zip : l'œuvre, ses voisines, relations et métadonnées">Exporter avec ses voisines</button>
         </div>
         ${meta ? `<table>${meta}</table>` : ""}
         <h4>Œuvres les plus proches</h4>
@@ -424,6 +425,12 @@
       if (li) { li.scrollIntoView({ block: "nearest" }); if (!li.classList.contains("active")) li.click(); }
     });
     if ($("chip-detail")) $("chip-detail").addEventListener("click", () => toggleDrawing(d));
+    $("chip-export").addEventListener("click", (e) => exportPack({
+      ids: [d.id, ...d.neighbors.map((n) => n.id)],
+      title: `${pretty(d.label)} et ses voisines`,
+      selection: { "méthode": "œuvre et ses plus proches voisines (DINOv3), depuis l'Atlas", "œuvre de départ": `${d.id} — ${d.label}` },
+      scores: Object.fromEntries(d.neighbors.map((n) => [n.id, n.score])),
+    }, e.currentTarget));
     if ($("back-results")) $("back-results").addEventListener("click", () => renderResults(state.lastResults));
     state.drawing = false;
     $("fiche").scrollTop = 0;
@@ -521,7 +528,8 @@
         <div class="score">${x.score.toFixed(3)} · groupe ${x.cluster}</div>
         <div class="lbl">${esc(pretty(x.label))}</div></button>`).join("");
     $("fiche-body").innerHTML = `<div class="results-head"><h3>${esc(r.title)}</h3><div class="sub">${esc(r.sub)}</div>
-        ${r.query ? `<canvas id="query-crop" width="360" height="160"></canvas>` : ""}</div>
+        ${r.query ? `<canvas id="query-crop" width="360" height="160"></canvas>` : ""}
+        <div class="chips" style="margin-top:10px"><button class="chip" id="export-results" title="Dossier .zip : images, métadonnées, relations, résumé pour un LLM">Exporter en Research Pack</button></div></div>
       <div class="results-grid">${cards}</div>
       <div class="prov" style="margin:0 16px 20px">${r.kind === "region"
         ? "Chaque vignette montre la zone de l'œuvre la plus proche du détail tracé (grilles 2×2 et 4×4)."
@@ -532,11 +540,50 @@
       drawCrop(c, x.id, x.box, 130);
     });
     $("fiche-body").querySelectorAll(".result").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.id), true)));
+    $("export-results").addEventListener("click", (e) => {
+      const ids = (r.query ? [r.query.id] : []).concat(r.results.map((x) => x.id));
+      const details = {};
+      if (r.kind === "region") {
+        details[r.query.id] = r.query.box;
+        r.results.forEach((x) => { if (x.box) details[x.id] = x.box; });
+      }
+      exportPack({
+        ids, title: r.kind === "region" ? "Détails semblables" : r.title,
+        selection: r.kind === "region"
+          ? { "méthode": "recherche par détail dans l'Atlas", "œuvre de départ": String(r.query.id), "cadre": JSON.stringify(r.query.box.map((v) => +v.toFixed(3))) }
+          : { "méthode": "recherche en texte libre (SigLIP 2) dans l'Atlas", "requête": r.title },
+        scores: Object.fromEntries(r.results.map((x) => [x.id, x.score])), details,
+      }, e.currentTarget);
+    });
     $("fiche").hidden = false;
     $("fiche").scrollTop = 0;
     const set = new Set(r.results.map((x) => state.rowOf.get(x.id)).filter((i) => i !== undefined));
     if (r.query && state.rowOf.has(r.query.id)) set.add(state.rowOf.get(r.query.id));
     setHighlight(set, r.title);
+  }
+
+  // ------------------------------------------------------------------ Research Pack
+  async function exportPack({ ids, title, selection, scores = {}, details = {} }, button) {
+    const question = prompt("Question de recherche à inscrire dans le dossier (facultatif) :", "");
+    if (question === null) return; // annulé
+    const label = button ? button.textContent : "";
+    if (button) { button.disabled = true; button.textContent = "Export en cours…"; }
+    try {
+      const r = await fetch("/api/pack", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids, title, question, selection, scores, details }) });
+      if (!r.ok) throw new Error((await r.json()).detail || r.status);
+      const blob = await r.blob();
+      const name = (r.headers.get("content-disposition") || "").match(/filename="?([^";]+)"?/)?.[1] || "research-pack.zip";
+      const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: name });
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(a.href), 5000);
+      if (button) button.textContent = `Exporté (${(blob.size / 1048576).toFixed(1)} Mo)`;
+    } catch (err) {
+      alert(`Export impossible : ${err.message}`);
+      if (button) button.textContent = label;
+    } finally {
+      if (button) button.disabled = false;
+    }
   }
 
   async function runTextSearch(q) {
