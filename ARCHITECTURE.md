@@ -88,13 +88,21 @@ découvertes à un LLM (MCP, Research Pack) sans jamais perdre la traçabilité.
 | `text` | SigLIP 2 | `IndexFlatIP` | ~1,5 Go |
 
 ### ④ Analyse — `pixplot.analysis`
-- **Regroupement** : e-means (`faiss.contrib.e_means`, inclus dans `faiss-cpu` 1.16, y
-  compris sous Windows) par défaut ; HDBSCAN (celui de scikit-learn) en option, pour
-  isoler les œuvres « à part ».
-- **Cartes** : PCA 64 d → UMAP appris sur un échantillon (~100k) puis appliqué au reste.
+Commande : `pixplot analyze [--clusters N] [--hdbscan]`. Graine fixe : reproductible.
+- **Regroupement** : e-means sphérique (`faiss.contrib.e_means.NumpyEmeans`, inclus dans
+  `faiss-cpu` 1.16, y compris sous Windows), ≈ √N / 2 groupes par défaut (8 à 200) ; pour
+  chaque groupe, l'œuvre la plus proche du centre sert d'image représentative.
+- **HDBSCAN** (option, scikit-learn) sur une UMAP intermédiaire en 10 dimensions : familles
+  « naturelles » et œuvres « à part ». Directement sur les vecteurs, presque tout serait
+  déclaré à part (28 % sur WikiArt, contre 2 % ainsi).
+- **Cartes** : PCA 64 d → UMAP 2D, appris sur un échantillon (~100k) puis appliqué au reste.
+  L'échelle ignore 0,5 % d'œuvres extrêmes de chaque côté, posées sur le bord.
   Une carte par espace : formel (DINOv3), sémantique (SigLIP), chromatique (plus tard).
-- **Graphe de voisinage** : top-20 voisins par œuvre et par espace (Parquet).
-- **Atypiques** : faible densité locale, ou voisins très différents d'un espace à l'autre.
+- **Graphe de voisinage** : 20 plus proches voisines par œuvre (`neighbors.npy` + scores).
+- **Atypicité** : rang centile de l'isolement (faible similarité moyenne avec ses voisines).
+  Plus tard : voisines très différentes d'un espace à l'autre.
+- **Carte statique** : grande image JPEG des vignettes à leur place UMAP, numéros de groupe
+  au centre (`data/maps/`), en attendant l'interface de l'étape 4.
 
 ### ⑤ Services — `pixplot.api`, `pixplot.mcp`
 - API FastAPI pour l'interface.
@@ -148,7 +156,7 @@ Pixplot V2/
 
 1. Ingestion + extraction DINOv3 sur 1 000 images ; validation du GPU.
 2. ~~Index FAISS global + banc d'essai~~ **fait** (voir § 9).
-3. PCA→UMAP + e-means → première carte.
+3. ~~PCA→UMAP + e-means → première carte~~ **fait**.
 4. API + interface Atlas + fiche œuvre. *(= « PixPlot v1 en mieux »)*
 5. Recherche par région, puis SigLIP 2 (texte). *(= le vrai apport pour l'historien)*
 6. Serveur MCP + Research Pack.

@@ -20,7 +20,6 @@ from .runs import Run, latest_run, list_runs
 STAGES = ("features", "index", "analysis", "export")
 
 TODO = {
-    "analyze": "Étape 3 — e-means + UMAP",
     "serve": "Étape 4 — API + interface",
 }
 
@@ -216,6 +215,57 @@ def cmd_index(args) -> int:
     return 0
 
 
+# --------------------------------------------------------------------------- analyze
+def cmd_analyze(args) -> int:
+    import json
+    from collections import Counter
+
+    import numpy as np
+
+    from .analysis.layout import analyze
+    from .analysis.mapimage import render_map
+    from .catalog import db
+    from .catalog.metadata import get_metadata
+
+    s = get_settings(args.data)
+    features = _resolve_run(s, args.run, args.encoder)
+    print(f"Vecteurs : {features.id}")
+    run = analyze(features, runs_dir=s.runs_dir, n_clusters=args.clusters, use_hdbscan=args.hdbscan,
+                  progress=lambda m: print(f"  {m}", flush=True))
+    out = run.manifest["outputs"]
+    print(f"\nAnalyse : {run.id}  ({out['count']} œuvres, {out['clusters']} groupes)")
+    if args.hdbscan:
+        print(f"HDBSCAN : {out['hdbscan_clusters']} groupes, {out['hdbscan_isolated']} œuvres « à part »")
+
+    # Résumé des groupes avec les métadonnées dominantes : de quoi juger s'ils ont un sens.
+    ids = np.load(run.path / "ids.npy")
+    labels = np.load(run.path / "clusters.npy")
+    with db.connect(s.catalog_path) as conn:
+        meta = get_metadata(conn, ids.tolist())
+    summary = json.loads((run.path / "clusters.json").read_text(encoding="utf-8"))
+    keys = [k for k in ("artist", "style", "genre", "date") if any(k in m for m in meta.values())]
+    print(f"\n{'groupe':>6} {'taille':>6}  " + "  ".join(f"{k} dominant" for k in keys))
+    for entry in summary[:args.show]:
+        members = ids[labels == entry["cluster"]]
+        cells = []
+        for key in keys:
+            values = [meta[int(i)].get(key) for i in members]
+            values = [v for v in values if v and not v.lower().startswith("unknown")]
+            if values:
+                v, c = Counter(values).most_common(1)[0]
+                cells.append(f"{v} ({c / len(members):.0%})")
+            else:
+                cells.append("—")
+        print(f"{entry['cluster'] + 1:>6} {entry['size']:>6}  " + "  ".join(cells))
+    if len(summary) > args.show:
+        print(f"   … {len(summary) - args.show} autres groupes (--show N pour tout voir)")
+
+    if not args.no_map:
+        path = render_map(run, s.thumbs_dir, s.data_dir / "maps" / f"{run.path.name}.jpg", size=args.map_size)
+        print(f"\nCarte : {path}")
+    return 0
+
+
 # --------------------------------------------------------------------------- bench
 def cmd_bench(args) -> int:
     from .analysis.bench import run_bench
@@ -319,6 +369,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--kind", default="flat", choices=("flat", "hnsw"),
                    help="flat = exact (défaut, jusqu'à ~500k) ; hnsw = approché, au-delà")
     p.set_defaults(func=cmd_index)
+
+    p = sub.add_parser("analyze", help="groupes (e-means), carte (UMAP), voisinages, œuvres atypiques")
+    p.add_argument("--run", help="run de vecteurs (défaut : le plus récent)")
+    p.add_argument("--encoder", help="restreindre au dernier run de cet encodeur")
+    p.add_argument("--clusters", type=int, default=None, help="nombre de groupes (défaut : ≈ √N / 2)")
+    p.add_argument("--hdbscan", action="store_true", help="ajouter HDBSCAN pour repérer les œuvres « à part »")
+    p.add_argument("--show", type=int, default=15, help="nombre de groupes résumés à l'écran")
+    p.add_argument("--no-map", action="store_true", help="ne pas dessiner la carte")
+    p.add_argument("--map-size", type=int, default=4000, help="taille de la carte en pixels")
+    p.set_defaults(func=cmd_analyze)
 
     p = sub.add_parser("bench", help="comparer des runs : étiquettes (artiste, style...) et paires connues")
     p.add_argument("runs", nargs="*", help="noms des runs de vecteurs (défaut : tous)")

@@ -26,6 +26,7 @@ pixplot import-metadata meta.csv       # artiste, date, style... (colonne path)
 pixplot index                          # index FAISS du dernier run
 pixplot similar 42 --html planche.html  # œuvres les plus proches
 pixplot bench                          # comparer les runs (étiquettes, paires connues)
+pixplot analyze --hdbscan              # groupes, carte UMAP, voisinages → data/maps/*.jpg
 pixplot status
 ```
 
@@ -38,7 +39,8 @@ Installation du GPU (Windows natif, WSL2 en secours) et des modèles : [docs/INS
       extraction par lots reprenable, recherche d'images similaires, planche HTML
 - [x] Étape 1 validée sur la RX 7900 GRE (Windows natif) : DINOv3 B/16, 48 à 60 img/s
 - [x] Étape 2 : index FAISS + banc d'essai (`pixplot bench`) — résultats dans ARCHITECTURE.md § 9
-- [ ] Étape 3 : e-means + UMAP → première carte
+- [x] Étape 3 : e-means + HDBSCAN + UMAP → première carte (`pixplot analyze`)
+- [ ] Étape 4 : API + interface Atlas
 
 ## Licence et origine
 
