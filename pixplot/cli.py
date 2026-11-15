@@ -19,9 +19,7 @@ from .runs import Run, latest_run, list_runs
 
 STAGES = ("features", "index", "analysis", "export")
 
-TODO = {
-    "serve": "Étape 4 — API + interface",
-}
+TODO: dict[str, str] = {}
 
 
 def _progress(label: str):
@@ -266,6 +264,29 @@ def cmd_analyze(args) -> int:
     return 0
 
 
+# --------------------------------------------------------------------------- serve
+def cmd_serve(args) -> int:
+    import webbrowser
+
+    import uvicorn
+
+    from .api.app import create_app
+    from .api.data import AtlasData
+
+    s = get_settings(args.data)
+    analysis = Run.load(s.runs_dir / "analysis" / args.analysis) if args.analysis else None
+    data = AtlasData.load(s, analysis)
+    url = f"http://{args.host}:{args.port}/"
+    print(f"Analyse : {data.analysis.id}  ({len(data.ids)} œuvres)")
+    print(f"Atlas   : {url}   (Ctrl+C pour arrêter)")
+    if args.host not in ("127.0.0.1", "localhost"):
+        print("Attention : le serveur est accessible depuis le réseau, images comprises.")
+    if args.open:
+        webbrowser.open(url)
+    uvicorn.run(create_app(data), host=args.host, port=args.port, log_level="warning")
+    return 0
+
+
 # --------------------------------------------------------------------------- bench
 def cmd_bench(args) -> int:
     from .analysis.bench import run_bench
@@ -379,6 +400,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-map", action="store_true", help="ne pas dessiner la carte")
     p.add_argument("--map-size", type=int, default=4000, help="taille de la carte en pixels")
     p.set_defaults(func=cmd_analyze)
+
+    p = sub.add_parser("serve", help="ouvrir l'Atlas (carte interactive) dans le navigateur")
+    p.add_argument("--analysis", help="dossier d'analyse (défaut : la plus récente)")
+    p.add_argument("--host", default="127.0.0.1", help="127.0.0.1 = accessible seulement depuis ce PC")
+    p.add_argument("--port", type=int, default=8765)
+    p.add_argument("--open", action="store_true", help="ouvrir le navigateur automatiquement")
+    p.set_defaults(func=cmd_serve)
 
     p = sub.add_parser("bench", help="comparer des runs : étiquettes (artiste, style...) et paires connues")
     p.add_argument("runs", nargs="*", help="noms des runs de vecteurs (défaut : tous)")

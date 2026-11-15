@@ -16,3 +16,6 @@ web/dist/
 
 # Référence locale (PixPlot v1 de Yale), non publiée
 /pix-plot-0.0.1.1/
+
+# Réglages locaux de Claude Code
+/.claude/

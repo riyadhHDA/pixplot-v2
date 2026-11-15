@@ -105,13 +105,25 @@ Commande : `pixplot analyze [--clusters N] [--hdbscan]`. Graine fixe : reproduct
   au centre (`data/maps/`), en attendant l'interface de l'étape 4.
 
 ### ⑤ Services — `pixplot.api`, `pixplot.mcp`
-- API FastAPI pour l'interface.
+- **API FastAPI** (`pixplot serve`, écoute sur 127.0.0.1 seulement par défaut) :
+  `/api/info`, `/api/map` (colonnes compactes : position, groupe, atypicité, catégories),
+  `/api/clusters`, `/api/artwork/{id}` (métadonnées + sources, voisines, provenance du calcul),
+  `/api/search?q=`, `/api/thumb/{taille}/{id}`, `/api/image/{id}` (images servies par
+  identifiant uniquement, jamais par chemin). Documentation automatique : `/api/docs`.
 - Serveur MCP, outils : `search_similar`, `search_text`, `search_region`, `get_artwork`,
   `get_neighbors`, `get_cluster`, `export_pack`.
 
 ### ⑥ Interface — `web/`
-React + TypeScript + rendu WebGL. **Moteur à choisir à l'étape 4** (deck.gl ou PixiJS),
-sur un prototype avec le vrai corpus. Écrans, dans l'ordre :
+**deck.gl 9.4** (rendu WebGL), en JavaScript simple **sans étape de compilation** : le
+fichier deck.gl est rangé dans `web/vendor/`, donc ni Node ni connexion Internet ne sont
+nécessaires pour utiliser l'Atlas. Choisi plutôt que PixiJS pour son zoom/déplacement,
+sa sélection au clic et son rendu de centaines de milliers de points prêts à l'emploi.
+Les vignettes ne sont chargées que pour les œuvres visibles à l'écran (1 500 au plus),
+ce qui garde l'Atlas fluide quelle que soit la taille du corpus.
+
+Fait (étape 4) : carte des groupes, coloration (groupes, familles HDBSCAN, atypicité,
+artiste, style…), légende cliquable, recherche, fiche œuvre avec ses 20 voisines reliées
+sur la carte, lien partageable `#oeuvre-<id>`. Écrans suivants, dans l'ordre :
 Atlas (choix de l'espace) → Fiche œuvre (voisins par espace) → Sélection de zone →
 Comparateur (zoom synchronisé, superposition) → Carnet de recherche.
 
@@ -146,7 +158,7 @@ Pixplot V2/
 │   ├── export/            ⑦ Research Pack
 │   ├── api/               ⑤ FastAPI
 │   └── mcp/               ⑤ serveur MCP
-├── web/                   ⑥ React + TypeScript
+├── web/                   ⑥ Atlas : index.html, atlas.js, atlas.css, vendor/deck.gl
 ├── tests/
 ├── data/                  (hors git) catalog.sqlite, thumbs/, runs/
 └── pix-plot-0.0.1.1/      PixPlot v1 (Yale, 2018) — référence locale, non publiée
@@ -157,7 +169,7 @@ Pixplot V2/
 1. Ingestion + extraction DINOv3 sur 1 000 images ; validation du GPU.
 2. ~~Index FAISS global + banc d'essai~~ **fait** (voir § 9).
 3. ~~PCA→UMAP + e-means → première carte~~ **fait**.
-4. API + interface Atlas + fiche œuvre. *(= « PixPlot v1 en mieux »)*
+4. ~~API + interface Atlas + fiche œuvre~~ **fait** *(= « PixPlot v1 en mieux »)*.
 5. Recherche par région, puis SigLIP 2 (texte). *(= le vrai apport pour l'historien)*
 6. Serveur MCP + Research Pack.
 7. Comparateur, carnet de recherche, chronologie et géographie.

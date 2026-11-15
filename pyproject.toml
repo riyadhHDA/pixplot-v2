@@ -19,7 +19,7 @@ dependencies = [
 # torch/torchvision s'installent à part (roues ROCm d'AMD), voir README.
 ml = ["transformers>=4.56", "huggingface_hub", "faiss-cpu>=1.16", "umap-learn", "scikit-learn>=1.3", "pandas", "pyarrow", "tqdm"]
 api = ["fastapi", "uvicorn"]
-dev = ["pytest"]
+dev = ["pytest", "httpx", "fastapi", "uvicorn"]
 
 [project.scripts]
 pixplot = "pixplot.cli:main"
