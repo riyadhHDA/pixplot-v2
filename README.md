@@ -27,6 +27,9 @@ pixplot index                          # index FAISS du dernier run
 pixplot similar 42 --html planche.html  # œuvres les plus proches
 pixplot bench                          # comparer les runs (étiquettes, paires connues)
 pixplot analyze --hdbscan              # groupes, carte UMAP, voisinages → data/maps/*.jpg
+pixplot index --regions                # index des zones → « Chercher un détail » dans l'Atlas
+pixplot embed --encoder siglip2_so400m # vecteurs texte↔image (puis pixplot index --encoder siglip2_so400m)
+pixplot search-text "Annonciation dans un jardin"   # recherche en texte libre
 pixplot serve --open                   # l'Atlas : carte interactive sur http://127.0.0.1:8765
 pixplot status
 ```
@@ -42,7 +45,8 @@ Installation du GPU (Windows natif, WSL2 en secours) et des modèles : [docs/INS
 - [x] Étape 2 : index FAISS + banc d'essai (`pixplot bench`) — résultats dans ARCHITECTURE.md § 9
 - [x] Étape 3 : e-means + HDBSCAN + UMAP → première carte (`pixplot analyze`)
 - [x] Étape 4 : API + Atlas interactif (`pixplot serve --open`)
-- [ ] Étape 5 : recherche par zone (détails) + recherche en texte libre (SigLIP 2)
+- [x] Étape 5 : recherche par détail (cadre tracé) + recherche en texte libre multilingue (SigLIP 2)
+- [ ] Étape 6 : serveur MCP + Research Pack
 
 ## Licence et origine
 

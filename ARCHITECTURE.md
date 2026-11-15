@@ -67,7 +67,10 @@ découvertes à un LLM (MCP, Research Pack) sans jamais perdre la traçabilité.
     ~16 Go sur disque pour 500 000 œuvres) ; étape 5 : réduits à 256 d par PCA puis
     compressés dans l'index régional.
     (Garder tous les patchs coûterait ~150 Go pour 500 000 images.)
-- **SigLIP 2** (Google) → recherche en texte libre.
+- **SigLIP 2 So400m** (Google, `google/siglip2-so400m-patch16-384`, Apache 2.0, accès
+  libre) → recherche en texte libre, **multilingue** (requêtes en français). Letterbox avec
+  la normalisation propre à SigLIP (0,5 / 0,5). Pas de vecteurs régionaux.
+  Sur la 7900 GRE : 47 images/s, 4,7 Go de mémoire GPU.
 - Option : **DINOv3 ViT-L/16** : +2 à 3 points sur l'artiste et le style, 1,8 fois plus
   lent (voir § 9). Conseillé pour le traitement final d'un grand corpus.
 - **DINOv2 ViT-B/14 (registres)** : sans demande d'accès, pour démarrer en attendant la
@@ -85,7 +88,7 @@ découvertes à un LLM (MCP, Research Pack) sans jamais perdre la traçabilité.
 |---|---|---|---|
 | `global` | DINOv3 global | `IndexFlatIP` | ~1,5 Go |
 | `regions` | ~10 M régions | `IVF-PQ` | ~0,5 Go |
-| `text` | SigLIP 2 | `IndexFlatIP` | ~1,5 Go |
+| `text` | SigLIP 2 (1 152 d) | `IndexFlatIP` | ~2,2 Go |
 
 ### ④ Analyse — `pixplot.analysis`
 Commande : `pixplot analyze [--clusters N] [--hdbscan]`. Graine fixe : reproductible.
@@ -170,7 +173,20 @@ Pixplot V2/
 2. ~~Index FAISS global + banc d'essai~~ **fait** (voir § 9).
 3. ~~PCA→UMAP + e-means → première carte~~ **fait**.
 4. ~~API + interface Atlas + fiche œuvre~~ **fait** *(= « PixPlot v1 en mieux »)*.
-5. Recherche par région, puis SigLIP 2 (texte). *(= le vrai apport pour l'historien)*
+5. ~~Recherche par détail, puis SigLIP 2 (texte)~~ **fait** *(= le vrai apport pour l'historien)*.
+   - Détail : `pixplot index --regions` indexe les zones 2×2 et 4×4 (PCA 256 d ; exact
+     jusqu'à 1,5 M de zones, IVF-PQ au-delà). Dans l'Atlas, « Chercher un détail » : on
+     trace un cadre, il est découpé dans l'original et analysé à une résolution qui
+     respecte son échelle (112, 224, 336 ou 448 px : 4 tailles fixes, car le GPU AMD
+     compile ~20 s par nouvelle taille, une seule fois). Résultat : la zone la plus
+     proche de chaque œuvre, découpée et affichée.
+   - Texte : `pixplot embed --encoder siglip2_so400m`, `pixplot index --encoder
+     siglip2_so400m`, puis `pixplot search-text "…"` ou le mode « Description (IA) » de
+     l'Atlas. Les modèles ne sont chargés qu'à la première recherche.
+   - Essais (WikiArt) : « Annonciation » → *L'Annonciation* de Doré en 1ʳᵉ position ;
+     « saint Sébastien » → le *Saint Sébastien* de Titien en 2ᵉ (1ʳᵉ : un Christ souffrant
+     du même peintre) ; « un navire dans la tempête » → 5 marines d'Aivazovsky. Utile pour
+     défricher, à vérifier œuvre par œuvre.
 6. Serveur MCP + Research Pack.
 7. Comparateur, carnet de recherche, chronologie et géographie.
 

@@ -12,18 +12,49 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
+from pydantic import BaseModel, Field
 
 from ..catalog.ingest import THUMB_SIZES, thumb_path
 from .data import AtlasData
+from .search import SearchEngines, SearchUnavailable
 
 WEB_DIR = Path(__file__).resolve().parents[2] / "web"
 CACHE = {"Cache-Control": "public, max-age=86400"}
 
 
-def create_app(data: AtlasData, web_dir: Path = WEB_DIR) -> FastAPI:
+class RegionQuery(BaseModel):
+    id: int
+    box: list[float] = Field(..., min_length=4, max_length=4, description="[x0, y0, x1, y1] en fractions de l'image")
+    k: int = Field(30, ge=1, le=200)
+
+
+def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines | None = None) -> FastAPI:
     app = FastAPI(title="PixPlot v2", docs_url="/api/docs", redoc_url=None)
     app.add_middleware(GZipMiddleware, minimum_size=2048)
     map_cache: dict = {}
+    engines = engines or SearchEngines(data)
+
+    @app.get("/api/search/status")
+    def search_status():
+        return engines.status()
+
+    @app.post("/api/search/region")
+    def search_region(q: RegionQuery):
+        try:
+            return engines.region(q.id, q.box, k=q.k)
+        except SearchUnavailable as exc:
+            raise HTTPException(503, str(exc))
+        except KeyError:
+            raise HTTPException(404, "Œuvre ou image originale introuvable")
+        except ValueError as exc:
+            raise HTTPException(400, str(exc))
+
+    @app.get("/api/search/text")
+    def search_text(q: str = Query(..., min_length=2, max_length=300), k: int = Query(60, ge=1, le=500)):
+        try:
+            return engines.text(q, k=k)
+        except SearchUnavailable as exc:
+            raise HTTPException(503, str(exc))
 
     @app.get("/api/info")
     def info():

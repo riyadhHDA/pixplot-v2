@@ -191,6 +191,20 @@ class AtlasData:
                     break
         return hits
 
+    def brief(self, artwork_id: int) -> dict:
+        """Résumé d'une œuvre pour une liste de résultats."""
+        r = self.row_of[artwork_id]
+        return {"id": artwork_id, "label": self.label(artwork_id), "cluster": int(self.clusters[r]) + 1}
+
+    def sizes(self, artwork_ids: list[int]) -> dict[int, tuple[int, int]]:
+        if not artwork_ids:
+            return {}
+        conn = self._conn(self.settings)
+        q = f"SELECT id, width, height FROM artworks WHERE id IN ({','.join('?' * len(artwork_ids))})"
+        out = {r[0]: (r[1] or 1, r[2] or 1) for r in conn.execute(q, artwork_ids)}
+        conn.close()
+        return out
+
     def original_path(self, artwork_id: int) -> Path | None:
         if artwork_id not in self.row_of:
             return None

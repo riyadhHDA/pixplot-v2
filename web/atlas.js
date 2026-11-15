@@ -33,8 +33,10 @@
     selected: null, selectedData: null,
     viewState: { target: [0, 0, 0], zoom: 0, minZoom: -4, maxZoom: 9 },
     fitZoom: 0, iconSize: 20, icons: [], iconTimer: null,
+    searchStatus: { region: false, text: false }, lastResults: null, drawing: false,
   };
   let deckgl;
+  window.pixplot = state; // pour inspecter l'Atlas depuis la console du navigateur
 
   // ------------------------------------------------------------------ chargement
   async function getJSON(url) {
@@ -62,6 +64,10 @@
       state.rowOf.set(m.ids[i], i);
     }
     state.iconSize = Math.max(2, Math.min(40, (2 * WORLD / Math.sqrt(state.n)) * 0.9));
+    try { state.searchStatus = await getJSON("/api/search/status"); } catch { /* recherches avancées indisponibles */ }
+    const textOpt = $("search-mode").querySelector('option[value="text"]');
+    textOpt.disabled = !state.searchStatus.text;
+    textOpt.title = state.searchStatus.text ? "" : "Calculez d'abord les vecteurs SigLIP 2";
     buildColorOptions();
     renderGroups();
     setupDeck();
@@ -142,9 +148,26 @@
   }
 
   // ------------------------------------------------------------------ deck.gl
+  function computeFit() {
+    const el = $("map");
+    return Math.log2(Math.max(50, Math.min(el.clientWidth, el.clientHeight)) / (2.2 * WORLD));
+  }
+
+  function onResize() {
+    // Tant que l'utilisateur n'a pas bougé la carte, on garde la vue d'ensemble cadrée.
+    const fit = computeFit();
+    const changed = Math.abs(fit - state.fitZoom) > 1e-3;
+    state.fitZoom = fit;
+    if (changed && !state.userMoved) {
+      state.viewState = { ...state.viewState, minZoom: fit - 2, zoom: fit, target: [0, 0, 0] };
+      deckgl.setProps({ viewState: state.viewState });
+    }
+    scheduleIcons();
+  }
+
   function setupDeck() {
     const el = $("map");
-    const fit = Math.log2(Math.min(el.clientWidth, el.clientHeight) / (2.2 * WORLD));
+    const fit = computeFit();
     state.fitZoom = fit;
     state.viewState = { ...state.viewState, zoom: fit, minZoom: fit - 2 };
     deckgl = new Deck({
@@ -152,7 +175,8 @@
       views: new OrthographicView({ id: "atlas", flipY: false }),
       viewState: state.viewState,
       controller: { dragRotate: false, doubleClickZoom: true, scrollZoom: { speed: 0.02, smooth: true } },
-      onViewStateChange: ({ viewState }) => {
+      onViewStateChange: ({ viewState, interactionState }) => {
+        if (interactionState && (interactionState.isDragging || interactionState.isZooming || interactionState.isPanning)) state.userMoved = true;
         state.viewState = viewState;
         deckgl.setProps({ viewState });
         scheduleIcons();
@@ -268,6 +292,9 @@
   }
 
   function flyTo(x, y, zoom) {
+    // Un zoom vers une œuvre ou un groupe n'est plus « la vue d'ensemble » : un
+    // redimensionnement (ouverture de la fiche…) ne doit pas l'annuler.
+    state.userMoved = !(x === 0 && y === 0 && zoom === state.fitZoom);
     state.viewState = {
       ...state.viewState, target: [x, y, 0], zoom,
       transitionDuration: 700, transitionInterpolator: new LinearInterpolator(["target", "zoom"]),
@@ -376,7 +403,9 @@
       <div class="content">
         <h3>${esc(pretty(d.label))}</h3>
         <div class="sub">n° ${d.id} · ${esc(d.filename)} · ${d.width}×${d.height} px ${esc(d.format || "")}</div>
+        ${state.lastResults ? `<button class="back" id="back-results" style="padding:0 0 10px">← Retour aux résultats</button>` : ""}
         <div class="chips">
+          ${state.searchStatus.region ? `<button class="chip" id="chip-detail" title="Tracez un cadre sur l'image : main, drapé, objet…">Chercher un détail</button>` : ""}
           <button class="chip" id="chip-group">Groupe ${d.cluster}</button>${fam}
           <span class="chip ${atyp >= 90 ? "warn" : ""}" title="Rang d'isolement parmi toutes les œuvres">Atypicité ${atyp} %</span>
           <button class="chip" id="chip-fly">Voir sur la carte</button>
@@ -394,13 +423,137 @@
       const li = document.querySelector(`.group[data-cluster="${d.cluster - 1}"]`);
       if (li) { li.scrollIntoView({ block: "nearest" }); if (!li.classList.contains("active")) li.click(); }
     });
+    if ($("chip-detail")) $("chip-detail").addEventListener("click", () => toggleDrawing(d));
+    if ($("back-results")) $("back-results").addEventListener("click", () => renderResults(state.lastResults));
+    state.drawing = false;
     $("fiche").scrollTop = 0;
     setTimeout(() => deckgl.redraw(true), 0);
+  }
+
+  // ------------------------------------------------------------------ recherche par détail
+  function imageRect(img) {
+    // Position réelle de l'image dans son cadre (object-fit: contain).
+    const cw = img.clientWidth, ch = img.clientHeight;
+    const s = Math.min(cw / img.naturalWidth, ch / img.naturalHeight);
+    const w = img.naturalWidth * s, h = img.naturalHeight * s;
+    return { left: img.offsetLeft + (cw - w) / 2, top: img.offsetTop + (ch - h) / 2, w, h };
+  }
+
+  function toggleDrawing(d) {
+    const hero = document.querySelector(".fiche .hero");
+    const chip = $("chip-detail");
+    state.drawing = !state.drawing;
+    hero.classList.toggle("drawing", state.drawing);
+    chip.classList.toggle("on", state.drawing);
+    hero.querySelectorAll(".selbox, .draw-hint").forEach((x) => x.remove());
+    if (!state.drawing) return;
+    const hint = document.createElement("div");
+    hint.className = "draw-hint";
+    hint.textContent = "Tracez un cadre autour du détail";
+    hero.appendChild(hint);
+    const img = hero.querySelector("img");
+    let start = null, box = null;
+    const frac = (e) => {
+      const r = imageRect(img), b = hero.getBoundingClientRect();
+      return [Math.min(Math.max((e.clientX - b.left - r.left) / r.w, 0), 1), Math.min(Math.max((e.clientY - b.top - r.top) / r.h, 0), 1)];
+    };
+    const draw = (a, c) => {
+      const r = imageRect(img);
+      box = box || Object.assign(document.createElement("div"), { className: "selbox" });
+      if (!box.parentNode) hero.appendChild(box);
+      Object.assign(box.style, {
+        left: `${r.left + Math.min(a[0], c[0]) * r.w}px`, top: `${r.top + Math.min(a[1], c[1]) * r.h}px`,
+        width: `${Math.abs(c[0] - a[0]) * r.w}px`, height: `${Math.abs(c[1] - a[1]) * r.h}px`,
+      });
+    };
+    hero.onclick = (e) => { if (state.drawing) e.preventDefault(); };
+    hero.onpointerdown = (e) => {
+      if (!state.drawing) return;
+      e.preventDefault(); start = frac(e); hero.setPointerCapture(e.pointerId);
+    };
+    hero.onpointermove = (e) => { if (state.drawing && start) draw(start, frac(e)); };
+    hero.onpointerup = (e) => {
+      if (!state.drawing || !start) return;
+      const end = frac(e);
+      const q = [Math.min(start[0], end[0]), Math.min(start[1], end[1]), Math.max(start[0], end[0]), Math.max(start[1], end[1])];
+      start = null;
+      if (q[2] - q[0] < 0.03 || q[3] - q[1] < 0.03) return; // simple clic : on ignore
+      state.drawing = false;
+      hero.classList.remove("drawing");
+      runRegionSearch(d, q);
+    };
+  }
+
+  async function runRegionSearch(d, box) {
+    $("fiche-body").innerHTML = `<div class="loading">Recherche du détail dans le corpus…<br><small>La toute première recherche charge le modèle (jusqu'à une demi-minute).</small></div>`;
+    let res;
+    try {
+      const r = await fetch("/api/search/region", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: d.id, box, k: 40 }) });
+      if (!r.ok) throw new Error((await r.json()).detail || r.status);
+      res = await r.json();
+    } catch (err) {
+      $("fiche-body").innerHTML = `<div class="loading">Échec : ${esc(err.message)}</div>`;
+      return;
+    }
+    renderResults({ kind: "region", title: "Détails semblables", sub: `${res.results.length} œuvres · cadre tracé sur « ${pretty(d.label)} »`,
+      query: { id: d.id, box }, results: res.results });
+  }
+
+  // ------------------------------------------------------------------ panneau de résultats
+  function drawCrop(canvas, id, box, maxH) {
+    const img = new Image();
+    img.onload = () => {
+      const [x0, y0, x1, y1] = box || [0, 0, 1, 1];
+      const sw = (x1 - x0) * img.naturalWidth, sh = (y1 - y0) * img.naturalHeight;
+      const s = Math.min(canvas.width / sw, maxH / sh);
+      canvas.height = Math.round(Math.min(maxH, sh * s));
+      const ctx = canvas.getContext("2d");
+      const dw = sw * s, dh = sh * s;
+      ctx.drawImage(img, x0 * img.naturalWidth, y0 * img.naturalHeight, sw, sh, (canvas.width - dw) / 2, (canvas.height - dh) / 2, dw, dh);
+    };
+    img.src = `/api/thumb/1024/${id}`;
+  }
+
+  function renderResults(r) {
+    state.lastResults = r;
+    const cards = r.results.map((x, n) => `<button class="result" data-id="${x.id}" title="${esc(x.label)}">
+        ${r.kind === "region" ? `<canvas width="300" height="130" data-n="${n}"></canvas>` : `<img src="/api/thumb/256/${x.id}" alt="" loading="lazy">`}
+        <div class="score">${x.score.toFixed(3)} · groupe ${x.cluster}</div>
+        <div class="lbl">${esc(pretty(x.label))}</div></button>`).join("");
+    $("fiche-body").innerHTML = `<div class="results-head"><h3>${esc(r.title)}</h3><div class="sub">${esc(r.sub)}</div>
+        ${r.query ? `<canvas id="query-crop" width="360" height="160"></canvas>` : ""}</div>
+      <div class="results-grid">${cards}</div>
+      <div class="prov" style="margin:0 16px 20px">${r.kind === "region"
+        ? "Chaque vignette montre la zone de l'œuvre la plus proche du détail tracé (grilles 2×2 et 4×4)."
+        : "Classement par SigLIP 2 : ressemblance entre la description et l'image, à vérifier œuvre par œuvre."}</div>`;
+    if (r.query) drawCrop($("query-crop"), r.query.id, r.query.box, 160);
+    if (r.kind === "region") $("fiche-body").querySelectorAll(".result canvas").forEach((c) => {
+      const x = r.results[Number(c.dataset.n)];
+      drawCrop(c, x.id, x.box, 130);
+    });
+    $("fiche-body").querySelectorAll(".result").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.id), true)));
+    $("fiche").hidden = false;
+    $("fiche").scrollTop = 0;
+    const set = new Set(r.results.map((x) => state.rowOf.get(x.id)).filter((i) => i !== undefined));
+    if (r.query && state.rowOf.has(r.query.id)) set.add(state.rowOf.get(r.query.id));
+    setHighlight(set, r.title);
+  }
+
+  async function runTextSearch(q) {
+    $("fiche").hidden = false;
+    $("fiche-body").innerHTML = `<div class="loading">Recherche de « ${esc(q)} »…<br><small>La toute première recherche charge SigLIP 2 (jusqu'à une minute).</small></div>`;
+    try {
+      const res = await getJSON(`/api/search/text?q=${encodeURIComponent(q)}&k=60`);
+      renderResults({ kind: "text", title: `« ${q} »`, sub: `${res.results.length} œuvres les plus proches de la description`, results: res.results });
+    } catch (err) {
+      $("fiche-body").innerHTML = `<div class="loading">Échec : ${esc(err.message)}</div>`;
+    }
   }
 
   function closeFiche() {
     $("fiche").hidden = true;
     state.selected = state.selectedData = null;
+    state.lastResults = null;
     history.replaceState(null, "", location.pathname);
     redraw();
   }
@@ -414,10 +567,22 @@
       redraw();
     });
     let t;
+    $("search-mode").addEventListener("change", (e) => {
+      $("search").placeholder = e.target.value === "text"
+        ? "Décrivez ce que vous cherchez, puis Entrée : « Annonciation dans un jardin »…"
+        : "Rechercher : artiste, style, n° d'œuvre…";
+      $("search").focus();
+    });
+    $("search-form").addEventListener("submit", (e) => {
+      e.preventDefault();
+      const q = $("search").value.trim();
+      if ($("search-mode").value === "text" && q.length >= 2) runTextSearch(q);
+    });
     $("search").addEventListener("input", (e) => {
       clearTimeout(t);
       const q = e.target.value.trim();
       $("search-clear").hidden = !q;
+      if ($("search-mode").value === "text") return; // recherche lancée par Entrée seulement
       t = setTimeout(async () => {
         if (!q) { clearHighlight(); return; }
         const res = await getJSON(`/api/search?q=${encodeURIComponent(q)}`);
@@ -427,12 +592,16 @@
         if (set.size === 1) select(res.ids[0], true);
       }, 250);
     });
-    $("search-form").addEventListener("submit", (e) => e.preventDefault());
     $("search-clear").addEventListener("click", clearHighlight);
     $("reset-view").addEventListener("click", () => { clearHighlight(); flyTo(0, 0, state.fitZoom); });
     $("fiche-close").addEventListener("click", closeFiche);
     addEventListener("keydown", (e) => { if (e.key === "Escape") closeFiche(); });
-    addEventListener("resize", () => scheduleIcons());
+    addEventListener("resize", onResize);
+    new ResizeObserver(onResize).observe($("map"));
+    addEventListener("hashchange", () => {
+      const id = parseInt(location.hash.replace("#oeuvre-", ""), 10);
+      if (state.rowOf.has(id) && id !== state.selected) select(id, true);
+    });
     $("map").addEventListener("mouseleave", () => { $("tooltip").hidden = true; });
   }
 

@@ -96,7 +96,7 @@ def cmd_embed(args) -> int:
 
     s = get_settings(args.data)
     kwargs = {}
-    if args.encoder.startswith(("dinov3_", "dinov2_")):
+    if args.encoder.startswith(("dinov3_", "dinov2_", "siglip2_")):
         kwargs = {"weights": args.weights, "repo": args.repo, "hf_model": args.hf_model,
                   "input_size": args.input_size}
     encoder = get_encoder(args.encoder, **kwargs)
@@ -207,9 +207,31 @@ def cmd_index(args) -> int:
 
     s = get_settings(args.data)
     features = _resolve_run(s, args.run, args.encoder)
-    run = build_global_index(features, kind=args.kind, runs_dir=s.runs_dir)
-    print(f"Index : {run.id}  ({run.manifest['outputs']['count']} œuvres, {args.kind})")
+    if args.regions:
+        from .index.regions import build_region_index
+
+        run = build_region_index(features, runs_dir=s.runs_dir)
+        out = run.manifest["outputs"]
+        print(f"Index des zones : {run.id}  ({out['count']} zones de {out['artworks']} œuvres, "
+              f"{run.manifest['params']['kind']}, PCA {run.manifest['params']['pca_dim']} d)")
+    else:
+        run = build_global_index(features, kind=args.kind, runs_dir=s.runs_dir)
+        print(f"Index : {run.id}  ({run.manifest['outputs']['count']} œuvres, {args.kind})")
     print(f"Construit depuis : {features.id}")
+    return 0
+
+
+# --------------------------------------------------------------------------- search-text
+def cmd_search_text(args) -> int:
+    from .api.data import AtlasData
+    from .api.search import SearchEngines
+
+    s = get_settings(args.data)
+    engines = SearchEngines(AtlasData.load(s))
+    res = engines.text(args.query, k=args.k)
+    print(f"« {args.query} »  —  {res['features']}")
+    for rank, r in enumerate(res["results"], 1):
+        print(f"{rank:>3}. #{r['id']:<7} {r['score']:.4f}  groupe {r['cluster']:<3} {r['label']}")
     return 0
 
 
@@ -389,7 +411,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--encoder", help="restreindre au dernier run de cet encodeur")
     p.add_argument("--kind", default="flat", choices=("flat", "hnsw"),
                    help="flat = exact (défaut, jusqu'à ~500k) ; hnsw = approché, au-delà")
+    p.add_argument("--regions", action="store_true", help="index des zones, pour la recherche par détail")
     p.set_defaults(func=cmd_index)
+
+    p = sub.add_parser("search-text", help="chercher des œuvres par une description (SigLIP 2)")
+    p.add_argument("query", help="ex. « Annonciation dans un jardin »")
+    p.add_argument("-k", type=int, default=15)
+    p.set_defaults(func=cmd_search_text)
 
     p = sub.add_parser("analyze", help="groupes (e-means), carte (UMAP), voisinages, œuvres atypiques")
     p.add_argument("--run", help="run de vecteurs (défaut : le plus récent)")

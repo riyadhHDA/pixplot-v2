@@ -71,8 +71,13 @@ def run_umap(Z: np.ndarray, n_components: int = 2, n_neighbors: int = 15, min_di
     reste (tient dans 16 Go de RAM pour 500 000 œuvres)."""
     import umap
 
+    kwargs = {}
+    if "compatibility_layout" in umap.UMAP.__init__.__code__.co_varnames:
+        # umap-learn ≥ 0.6 annonce un changement d'algorithme par défaut : on fige l'actuel
+        # pour que la même analyse redonne la même carte (reproductibilité).
+        kwargs["compatibility_layout"] = True
     reducer = umap.UMAP(n_neighbors=n_neighbors, min_dist=min_dist, metric="euclidean",
-                        random_state=SEED, n_components=n_components)
+                        random_state=SEED, n_components=n_components, **kwargs)
     if len(Z) <= fit_sample:
         return np.asarray(reducer.fit_transform(Z), dtype=np.float32)
     rng = np.random.default_rng(SEED)
