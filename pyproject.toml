@@ -12,6 +12,7 @@ license-files = ["LICENSE"]
 dependencies = [
     "numpy>=1.26",
     "pillow>=10",
+    "tqdm",
 ]
 
 [project.optional-dependencies]

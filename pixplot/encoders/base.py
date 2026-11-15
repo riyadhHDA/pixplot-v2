@@ -8,10 +8,9 @@ from __future__ import annotations
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Sequence
 
 import numpy as np
-from PIL import Image, ImageOps
+from PIL import Image
 
 IMAGENET_MEAN = (0.485, 0.456, 0.406)
 IMAGENET_STD = (0.229, 0.224, 0.225)
@@ -32,8 +31,12 @@ def letterbox_box(width: int, height: int, size: int) -> tuple[int, int, int, in
 
 
 def letterbox(image: Image.Image, size: int, fill: tuple[int, int, int] = PAD_RGB) -> Image.Image:
-    """Redimensionne l'image entière dans un carré ``size``×``size`` sans la recadrer."""
-    image = ImageOps.exif_transpose(image).convert("RGB")
+    """Redimensionne l'image entière dans un carré ``size``×``size`` sans la recadrer.
+
+    L'orientation EXIF doit déjà être appliquée (voir ``pixplot.imageio.open_image``).
+    """
+    if image.mode != "RGB":
+        image = image.convert("RGB")
     left, top, w, h = letterbox_box(*image.size, size)
     resized = image.resize((w, h), Image.Resampling.BICUBIC)
     canvas = Image.new("RGB", (size, size), fill)
@@ -61,16 +64,29 @@ class EncodedBatch:
 
 
 class Encoder(ABC):
-    """Contrat que chaque modèle (DINOv3, SigLIP 2, futurs modèles) doit respecter."""
+    """Contrat que chaque modèle (DINOv3, SigLIP 2, futurs modèles) doit respecter.
+
+    Le prétraitement (CPU, exécuté dans des threads de chargement) est séparé de
+    l'encodage (GPU), pour que le GPU ne reste jamais à attendre les images.
+    """
 
     name: str
     dim: int
     input_size: int
     patch_size: int | None = None
 
+    def preprocess(self, image: Image.Image) -> tuple[np.ndarray, tuple[int, int, int, int]]:
+        """Image RGB orientée → (tableau (3, S, S) float32, position de l'œuvre dans le carré)."""
+        box = letterbox_box(*image.size, self.input_size)
+        return to_normalized_array(letterbox(image, self.input_size)), box
+
     @abstractmethod
-    def encode(self, images: Sequence[Image.Image]) -> EncodedBatch:
-        """Encode un lot d'images PIL (non prétraitées)."""
+    def encode(self, batch: np.ndarray) -> EncodedBatch:
+        """Encode un lot prétraité (N, 3, S, S) float32."""
+
+    def runtime_stats(self) -> dict:
+        """Mesures d'exécution à consigner dans le manifest (ex. VRAM maximale)."""
+        return {}
 
     def describe(self) -> dict:
         """Ce qui est écrit dans le manifest du run."""

@@ -14,11 +14,26 @@ pytest
 
 PyTorch s'installe à part (roues ROCm d'AMD sous WSL2), puis `pip install -e ".[ml]"`.
 
+## Utilisation (étape 1)
+
+```bash
+pixplot doctor                          # Python, PyTorch, GPU
+pixplot ingest "D:/MesImages"           # catalogue, vignettes, doublons
+pixplot embed --limit 1000              # vecteurs DINOv3 (GPU) — reprenable
+pixplot embed --encoder colorhist       # même pipeline sans GPU, pour tester
+pixplot similar 42 --html planche.html  # œuvres les plus proches
+pixplot status
+```
+
+Installation du GPU (WSL2 + ROCm) et de DINOv3 : [docs/INSTALL_GPU.md](docs/INSTALL_GPU.md).
+
 ## Où en est-on
 
-- [x] Architecture, structure du projet, runs versionnés, prétraitement letterbox,
-      vecteurs régionaux, encodeur DINOv3 (écrit, pas encore testé sur GPU)
-- [ ] Étape 1 : ingestion + extraction sur 1 000 images
+- [x] Architecture, runs versionnés, prétraitement letterbox, vecteurs régionaux
+- [x] Étape 1 : ingestion (catalogue SQLite, SHA-256, dHash, doublons, vignettes WebP),
+      extraction par lots reprenable, recherche d'images similaires, planche HTML
+- [ ] Étape 1 : validation DINOv3 sur la RX 7900 GRE (1 000 images, images/s, VRAM)
+- [ ] Étape 2 : index FAISS + banc d'essai sur paires connues
 
 ## Licence et origine
 
