@@ -114,3 +114,18 @@ def test_resume_after_crash(corpus):
     assert run.manifest["resumed"] == 1
     assert enc.calls == 3                            # seulement les 5 images restantes
     assert run.manifest["outputs"]["ok"] == 7
+
+
+def test_import_metadata(corpus):
+    from pixplot.catalog.metadata import get_metadata, import_csv
+
+    cat = corpus / "catalog.sqlite"
+    ingest([corpus / "images"], cat, corpus / "thumbs", workers=1)
+    csv_path = corpus / "images" / "meta.csv"
+    csv_path.write_text("path,artist,style\na/red.jpg,Rouge Maître,Fauvisme\nabsent.jpg,X,Y\n", encoding="utf-8")
+    rep = import_csv(csv_path, cat)
+    assert (rep.rows, rep.matched, rep.unmatched, rep.values) == (2, 1, 1, 2)
+
+    conn = db.connect(cat)
+    red = db.find_by_path(conn, corpus / "images" / "a" / "red.jpg")["id"]
+    assert get_metadata(conn, [red])[red] == {"artist": "Rouge Maître", "style": "Fauvisme"}

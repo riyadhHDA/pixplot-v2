@@ -140,20 +140,33 @@ def cmd_similar(args) -> int:
             raise SystemExit(f"Image absente du catalogue : {args.query}")
         artwork_id = row["id"]
 
+    from .catalog.metadata import get_metadata
+
     store = FeatureStore.open(_resolve_run(s, args.run, args.encoder))
     results = store.similar(artwork_id, k=args.k)
-    rows = db.get_artworks(conn, [artwork_id] + [i for i, _ in results])
+    all_ids = [artwork_id] + [i for i, _ in results]
+    rows = db.get_artworks(conn, all_ids)
+    meta = get_metadata(conn, all_ids)
+
+    def describe(i: int) -> str:
+        m = meta.get(i) or {}
+        bits = [m[k] for k in ("artist", "date", "genre", "style") if m.get(k)]
+        return " · ".join(bits) if bits else Path(rows[i]["path"]).name
 
     print(f"Run : {store.run.id}")
-    print(f"Requête  #{artwork_id}  {rows[artwork_id]['path']}")
+    print(f"Requête  #{artwork_id}  {describe(artwork_id)}")
     for rank, (i, score) in enumerate(results, 1):
-        print(f"{rank:>3}. #{i:<8} {score:.4f}  {rows[i]['path']}")
+        print(f"{rank:>3}. #{i:<8} {score:.4f}  {describe(i)}")
 
     if args.html:
+        import base64
+
         def card(i, label):
-            src = thumb_path(s.thumbs_dir, i, 256).resolve().as_uri()
+            # Vignette intégrée dans la page : la planche est autonome (aucun lien vers le disque).
+            thumb = thumb_path(s.thumbs_dir, i, 256)
+            src = "data:image/webp;base64," + base64.b64encode(thumb.read_bytes()).decode() if thumb.exists() else ""
             return (f'<figure><img src="{src}" loading="lazy"><figcaption>{html.escape(label)}<br>'
-                    f'<small>{html.escape(Path(rows[i]["path"]).name)}</small></figcaption></figure>')
+                    f'<small>{html.escape(describe(i))}</small></figcaption></figure>')
 
         cards = [card(artwork_id, f"Requête #{artwork_id}")]
         cards += [card(i, f"{r}. #{i} — {sc:.3f}") for r, (i, sc) in enumerate(results, 1)]
@@ -171,6 +184,17 @@ small{{color:#888;word-break:break-all}}
         out = Path(args.html)
         out.write_text(page, encoding="utf-8")
         print(f"\nPlanche : {out.resolve()}")
+    return 0
+
+
+# --------------------------------------------------------------------------- metadata
+def cmd_import_metadata(args) -> int:
+    from .catalog.metadata import import_csv
+
+    s = get_settings(args.data)
+    rep = import_csv(Path(args.csv), s.catalog_path, source=args.source)
+    print(f"Lignes : {rep.rows}  ·  œuvres trouvées : {rep.matched}  ·  absentes du catalogue : {rep.unmatched}")
+    print(f"Valeurs enregistrées : {rep.values}")
     return 0
 
 
@@ -210,6 +234,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--limit", type=int, default=None, help="ne traiter que N images en attente")
     p.set_defaults(func=cmd_ingest)
 
+    p = sub.add_parser("import-metadata", help="importer artiste, date, style... depuis un CSV (colonne path)")
+    p.add_argument("csv")
+    p.add_argument("--source", help="provenance à enregistrer (défaut : nom du fichier)")
+    p.set_defaults(func=cmd_import_metadata)
+
     p = sub.add_parser("embed", help="calculer les vecteurs des œuvres")
     p.add_argument("--encoder", default="dinov3_vitb16",
                    help="dinov3_vitb16 (défaut), dinov3_vitl16, dinov2_vitb14_reg (sans demande d accès), colorhist (test sans GPU)")
@@ -218,7 +247,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--weights", default=None,
                    help="secours : fichier .pth au format Meta (avec --repo) au lieu de Hugging Face")
     p.add_argument("--repo", default="vendor/dinov3", help="dépôt DINOv3 cloné (avec --weights)")
-    p.add_argument("--input-size", type=int, default=448, help="résolution (multiple de 16)")
+    p.add_argument("--input-size", type=int, default=448, help="résolution : multiple de 16 (DINOv3) et de 14 (DINOv2) ; 448 convient aux deux")
     p.add_argument("--limit", type=int, default=None)
     p.add_argument("--batch-size", type=int, default=16)
     p.add_argument("--workers", type=int, default=4, help="threads de chargement des images")
