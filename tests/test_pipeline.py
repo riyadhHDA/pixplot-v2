@@ -129,3 +129,49 @@ def test_import_metadata(corpus):
     conn = db.connect(cat)
     red = db.find_by_path(conn, corpus / "images" / "a" / "red.jpg")["id"]
     assert get_metadata(conn, [red])[red] == {"artist": "Rouge Maître", "style": "Fauvisme"}
+
+
+def test_faiss_index_matches_bruteforce(corpus):
+    pytest.importorskip("faiss")
+    from pixplot.index.faiss_index import GlobalIndex, build_global_index, find_index_for
+
+    cat, runs = corpus / "catalog.sqlite", corpus / "runs"
+    ingest([corpus / "images"], cat, corpus / "thumbs", workers=1)
+    feats = extract(ColorHistEncoder(), cat, runs, batch_size=4, workers=1)
+    idx_run = build_global_index(feats, runs_dir=runs)
+    assert idx_run.manifest["parent"] == feats.id
+    assert find_index_for(feats, runs_dir=runs).path == idx_run.path
+    assert idx_run.manifest["outputs"]["count"] == 7
+
+    store, index = FeatureStore.open(feats), GlobalIndex.open(idx_run)
+    for artwork_id in store.ids[:3]:
+        brute = store.similar(int(artwork_id), k=4)
+        fast = store.similar(int(artwork_id), k=4, index=index)
+        # mêmes scores ; l'ordre peut différer entre œuvres à égalité (vecteurs FP16 identiques)
+        assert np.allclose([s for _, s in brute], [s for _, s in fast], atol=1e-3)
+        assert brute[0][0] == fast[0][0] or abs(brute[0][1] - brute[1][1]) < 1e-3
+
+
+def test_bench_labels_and_pairs(corpus):
+    pytest.importorskip("faiss")
+    from pixplot.analysis.bench import run_bench
+    from pixplot.catalog.metadata import import_csv
+
+    cat, runs = corpus / "catalog.sqlite", corpus / "runs"
+    ingest([corpus / "images"], cat, corpus / "thumbs", workers=1)
+    red = (corpus / "images" / "a" / "red.jpg").resolve().as_posix()
+    csv_path = corpus / "images" / "meta.csv"
+    csv_path.write_text(
+        "path,style,variant_of,variant_type\n"
+        "a/red.jpg,rouge,,\n"
+        "b/red.jpg,jaune,,\n"
+        "a/blue.jpg,bleu,,\n"
+        "a/green.jpg,vert,,\n"
+        f"a/red2.jpg,,{red},copie\n", encoding="utf-8")
+    import_csv(csv_path, cat)
+    run = extract(ColorHistEncoder(), cat, runs, batch_size=4, workers=1)
+
+    labels, pairs = run_bench(run, db.connect(cat), ["style"], k=3)
+    assert labels[0].key == "style" and labels[0].n == 4
+    by_type = {p.variant_type: p for p in pairs}
+    assert by_type["copie"].n == 1 and by_type["copie"].r1 == 1.0  # red2 retrouve red

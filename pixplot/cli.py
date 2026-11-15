@@ -20,7 +20,6 @@ from .runs import Run, latest_run, list_runs
 STAGES = ("features", "index", "analysis", "export")
 
 TODO = {
-    "index": "Étape 2 — index FAISS",
     "analyze": "Étape 3 — e-means + UMAP",
     "serve": "Étape 4 — API + interface",
 }
@@ -143,7 +142,14 @@ def cmd_similar(args) -> int:
     from .catalog.metadata import get_metadata
 
     store = FeatureStore.open(_resolve_run(s, args.run, args.encoder))
-    results = store.similar(artwork_id, k=args.k)
+    index = None
+    try:
+        from .index.faiss_index import GlobalIndex, find_index_for
+        index_run = find_index_for(store.run, runs_dir=s.runs_dir)
+        index = GlobalIndex.open(index_run) if index_run else None
+    except ImportError:
+        pass  # sans FAISS : recherche exacte directe sur les vecteurs
+    results = store.similar(artwork_id, k=args.k, index=index)
     all_ids = [artwork_id] + [i for i, _ in results]
     rows = db.get_artworks(conn, all_ids)
     meta = get_metadata(conn, all_ids)
@@ -195,6 +201,51 @@ def cmd_import_metadata(args) -> int:
     rep = import_csv(Path(args.csv), s.catalog_path, source=args.source)
     print(f"Lignes : {rep.rows}  ·  œuvres trouvées : {rep.matched}  ·  absentes du catalogue : {rep.unmatched}")
     print(f"Valeurs enregistrées : {rep.values}")
+    return 0
+
+
+# --------------------------------------------------------------------------- index
+def cmd_index(args) -> int:
+    from .index.faiss_index import build_global_index
+
+    s = get_settings(args.data)
+    features = _resolve_run(s, args.run, args.encoder)
+    run = build_global_index(features, kind=args.kind, runs_dir=s.runs_dir)
+    print(f"Index : {run.id}  ({run.manifest['outputs']['count']} œuvres, {args.kind})")
+    print(f"Construit depuis : {features.id}")
+    return 0
+
+
+# --------------------------------------------------------------------------- bench
+def cmd_bench(args) -> int:
+    from .analysis.bench import run_bench
+    from .catalog import db
+
+    s = get_settings(args.data)
+    conn = db.connect(s.catalog_path)
+    keys = args.keys.split(",")
+    names = args.runs or [r.path.name for r in list_runs("features", runs_dir=s.runs_dir)]
+    label_rows, pair_rows = [], []
+    for name in names:
+        run = Run.load(s.runs_dir / "features" / name)
+        out = run.manifest.get("outputs", {})
+        p = run.manifest["params"]
+        tag = f"{p.get('encoder')} @{p.get('input_size')}"
+        labels, pairs = run_bench(run, conn, keys, k=args.k)
+        speed = out.get("images_per_second")
+        label_rows += [(tag, sc, speed) for sc in labels]
+        pair_rows += [(tag, sc) for sc in pairs]
+
+    k = args.k
+    print(f"\nÉtiquettes (k={k})")
+    print(f"{'configuration':<28} {'étiquette':<8} {'P@1':>6} {f'P@{k}':>6} {'hasard':>7} {'n':>6} {'img/s':>6}")
+    for tag, sc, speed in label_rows:
+        print(f"{tag:<28} {sc.key:<8} {sc.p1:>6.1%} {sc.pk:>6.1%} {sc.chance:>7.1%} {sc.n:>6} {speed or '':>6}")
+    if pair_rows:
+        print(f"\nPaires connues : l'original est-il retrouvé ?")
+        print(f"{'configuration':<28} {'variante':<16} {'R@1':>6} {f'R@{k}':>6} {'n':>5}")
+        for tag, sc in pair_rows:
+            print(f"{tag:<28} {sc.variant_type:<16} {sc.r1:>6.1%} {sc.rk:>6.1%} {sc.n:>5}")
     return 0
 
 
@@ -261,6 +312,19 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--encoder", help="restreindre au dernier run de cet encodeur")
     p.add_argument("--html", help="écrire une planche HTML de comparaison")
     p.set_defaults(func=cmd_similar)
+
+    p = sub.add_parser("index", help="construire l'index FAISS d'un run de vecteurs")
+    p.add_argument("--run", help="run de vecteurs (défaut : le plus récent)")
+    p.add_argument("--encoder", help="restreindre au dernier run de cet encodeur")
+    p.add_argument("--kind", default="flat", choices=("flat", "hnsw"),
+                   help="flat = exact (défaut, jusqu'à ~500k) ; hnsw = approché, au-delà")
+    p.set_defaults(func=cmd_index)
+
+    p = sub.add_parser("bench", help="comparer des runs : étiquettes (artiste, style...) et paires connues")
+    p.add_argument("runs", nargs="*", help="noms des runs de vecteurs (défaut : tous)")
+    p.add_argument("-k", type=int, default=10)
+    p.add_argument("--keys", default="artist,style,genre")
+    p.set_defaults(func=cmd_bench)
 
     sub.add_parser("status", help="état du catalogue et des runs").set_defaults(func=cmd_status)
     sub.add_parser("runs", help="alias de status").set_defaults(func=cmd_status)

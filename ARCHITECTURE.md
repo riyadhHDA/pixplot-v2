@@ -64,16 +64,18 @@ découvertes à un LLM (MCP, Research Pack) sans jamais perdre la traçabilité.
   - vecteur global (token CLS normalisé, 768 d) → ressemblance d'ensemble ;
   - vecteurs régionaux : les patchs sont moyennés sur des grilles 1×1, 2×2 et 4×4
     (21 régions) → recherche par détail. Étape 1 : stockés tels quels (768 d, FP16,
-    ~16 Go sur disque pour 500 000 œuvres) ; étape 2 : réduits à 256 d par PCA puis
-    compressés dans l'index.
+    ~16 Go sur disque pour 500 000 œuvres) ; étape 5 : réduits à 256 d par PCA puis
+    compressés dans l'index régional.
     (Garder tous les patchs coûterait ~150 Go pour 500 000 images.)
 - **SigLIP 2** (Google) → recherche en texte libre.
-- Option : **DINOv3 ViT-L/16** si le banc d'essai le justifie.
+- Option : **DINOv3 ViT-L/16** : +2 à 3 points sur l'artiste et le style, 1,8 fois plus
+  lent (voir § 9). Conseillé pour le traitement final d'un grand corpus.
 - **DINOv2 ViT-B/14 (registres)** : sans demande d'accès, pour démarrer en attendant la
   validation de DINOv3, puis comme point de comparaison.
 - Chargement des poids : Hugging Face (`transformers`) par défaut ; format Meta `.pth`
   en secours pour DINOv3.
-- Résolution par défaut : 448 px (à confirmer contre 224 px au banc d'essai).
+- Résolution par défaut : 448 px (confirmée au banc d'essai : +3 points sur l'artiste
+  par rapport à 224 px, pour 2,5 fois plus de calcul).
 - Accélération : **PyTorch ROCm natif sous Windows 11** en priorité ; secours WSL2 + ROCm,
   puis CPU (ONNX Runtime + DirectML envisageable, non implémenté).
 
@@ -145,8 +147,7 @@ Pixplot V2/
 ## 5. Feuille de route
 
 1. Ingestion + extraction DINOv3 sur 1 000 images ; validation du GPU.
-2. Index global + recherche d'images similaires (CLI) ; banc d'essai sur paires connues
-   (copies, variantes, gravures d'après tableaux) : DINOv3 B vs L, recall@10.
+2. ~~Index FAISS global + banc d'essai~~ **fait** (voir § 9).
 3. PCA→UMAP + e-means → première carte.
 4. API + interface Atlas + fiche œuvre. *(= « PixPlot v1 en mieux »)*
 5. Recherche par région, puis SigLIP 2 (texte). *(= le vrai apport pour l'historien)*
@@ -183,3 +184,26 @@ Contrôle humain (le chercheur valide).
 - **DINOv3 : licence propre à Meta, accès aux poids sur demande** — à relire avant toute
   diffusion publique ou commerciale des résultats ou du logiciel.
 - SigLIP 2 : Apache 2.0
+
+## 9. Banc d'essai (15/11/2026)
+
+RX 7900 GRE, Windows 11 natif, PyTorch 2.14 + ROCm 10.1. Corpus : 2 263 œuvres WikiArt
+(124 artistes, 27 styles) + 1 000 variantes synthétiques de 250 d'entre elles.
+Commande : `pixplot bench` (catalogue séparé `data/bench`).
+
+| Configuration | Artiste P@1 | Style P@1 | Genre P@1 | Variantes R@1 | img/s | VRAM |
+|---|---|---|---|---|---|---|
+| DINOv2 B/14 @448 | 37,1 % | 41,1 % | 68,0 % | 98,8 % | 56 | 834 Mo |
+| DINOv3 B/16 @224 | 39,4 % | 46,7 % | 72,4 % | 99,6 % | 150 | 585 Mo |
+| **DINOv3 B/16 @448** (défaut) | 42,6 % | 49,3 % | 72,7 % | 99,6 % | 60 | 758 Mo |
+| DINOv3 L/16 @448 | **45,3 %** | **51,5 %** | 71,5 % | 99,5 % | 34 | 1 466 Mo |
+
+Hasard : artiste 2,9 %, style 10,0 %, genre 14,7 %.
+
+- **Variantes** (gravure inversée, reproduction N&B, détail recadré, copie altérée) : toutes
+  les configurations retrouvent l'original dans ~99 % des cas. Excellent pour l'usage, mais
+  trop facile pour départager les modèles : il faudra de vraies paires (copies d'atelier,
+  gravures d'interprétation) pour un test plus discriminant.
+- **Temps estimé pour 500 000 œuvres** : B@448 ≈ 2 h 20, L@448 ≈ 4 h, B@224 ≈ 1 h.
+- Mise en garde : les étiquettes WikiArt sont imparfaites, et « même artiste » n'est qu'un
+  indicateur indirect de ce que cherche l'historien.

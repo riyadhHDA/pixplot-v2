@@ -14,7 +14,7 @@ pytest
 
 PyTorch s'installe à part (roues ROCm d'AMD pour Windows), puis `pip install -e ".[ml]"`.
 
-## Utilisation (étape 1)
+## Utilisation
 
 ```bash
 pixplot doctor                          # Python, PyTorch, GPU
@@ -22,7 +22,10 @@ pixplot ingest "D:/MesImages"           # catalogue, vignettes, doublons
 pixplot embed --limit 1000              # vecteurs DINOv3 (GPU) — reprenable
 pixplot embed --encoder dinov2_vitb14_reg --limit 1000   # DINOv2, sans demande d'accès
 pixplot embed --encoder colorhist       # même pipeline sans GPU, pour tester
+pixplot import-metadata meta.csv       # artiste, date, style... (colonne path)
+pixplot index                          # index FAISS du dernier run
 pixplot similar 42 --html planche.html  # œuvres les plus proches
+pixplot bench                          # comparer les runs (étiquettes, paires connues)
 pixplot status
 ```
 
@@ -33,8 +36,9 @@ Installation du GPU (Windows natif, WSL2 en secours) et des modèles : [docs/INS
 - [x] Architecture, runs versionnés, prétraitement letterbox, vecteurs régionaux
 - [x] Étape 1 : ingestion (catalogue SQLite, SHA-256, dHash, doublons, vignettes WebP),
       extraction par lots reprenable, recherche d'images similaires, planche HTML
-- [ ] Étape 1 : validation DINOv3 sur la RX 7900 GRE (1 000 images, images/s, VRAM)
-- [ ] Étape 2 : index FAISS + banc d'essai sur paires connues
+- [x] Étape 1 validée sur la RX 7900 GRE (Windows natif) : DINOv3 B/16, 48 à 60 img/s
+- [x] Étape 2 : index FAISS + banc d'essai (`pixplot bench`) — résultats dans ARCHITECTURE.md § 9
+- [ ] Étape 3 : e-means + UMAP → première carte
 
 ## Licence et origine
 

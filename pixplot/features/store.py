@@ -59,6 +59,11 @@ class FeatureStore:
         top = top[np.argsort(-scores[top])]
         return [(int(self.ids[r]), float(scores[r])) for r in top]
 
-    def similar(self, artwork_id: int, k: int = 10) -> list[tuple[int, float]]:
+    def similar(self, artwork_id: int, k: int = 10, index=None) -> list[tuple[int, float]]:
+        """Œuvres les plus proches. Avec ``index`` (GlobalIndex FAISS), la recherche passe par FAISS."""
         row = self.row_of(artwork_id)
-        return self.search(self.global_vectors[row], k=k, exclude_row=row)
+        if index is None:
+            return self.search(self.global_vectors[row], k=k, exclude_row=row)
+        found, scores = index.search(self.global_vectors[row], k=k + 1)
+        pairs = [(int(i), float(s)) for i, s in zip(found[0], scores[0]) if i >= 0 and i != artwork_id]
+        return pairs[:k]

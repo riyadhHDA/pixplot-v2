@@ -107,8 +107,8 @@ Un `embed` interrompu (Ctrl+C, plantage) reprend là où il s'était arrêté.
 ## 6. Résolution : 448 ou 224 ?
 
 Par défaut, les œuvres sont analysées à 448 px (meilleurs détails), ce qui coûte environ
-4 fois plus de calcul qu'à 224 px. Le banc d'essai de l'étape 2 dira si la différence
-vaut le coût sur votre corpus.
+2,5 fois plus de temps qu'à 224 px. Sur WikiArt, le banc d'essai donne +3 points sur l'artiste
+à 448 px. Pour le vérifier sur votre propre corpus : `pixplot bench`.
 
 ## 7. Secours : WSL2
 
