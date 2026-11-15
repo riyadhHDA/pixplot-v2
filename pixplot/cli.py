@@ -283,6 +283,9 @@ def cmd_analyze(args) -> int:
     if not args.no_map:
         path = render_map(run, s.thumbs_dir, s.data_dir / "maps" / f"{run.path.name}.jpg", size=args.map_size)
         print(f"\nCarte : {path}")
+    from .analysis.sprites import build_sprites
+    meta = json.loads(build_sprites(run, s.thumbs_dir).read_text(encoding="utf-8"))
+    print(f"Planches de vignettes pour l'Atlas : {meta['sheets']} × {meta['sheet']} px, cases de {meta['cell']} px")
     return 0
 
 
@@ -347,6 +350,37 @@ def cmd_serve(args) -> int:
     if args.open:
         webbrowser.open(url)
     uvicorn.run(create_app(data), host=args.host, port=args.port, log_level="warning")
+    return 0
+
+
+# --------------------------------------------------------------------------- audit
+def cmd_audit(args) -> int:
+    from .analysis.audit import audit, write_report
+    from .catalog import db
+
+    s = get_settings(args.data)
+    if args.analysis:
+        analysis = Run.load(s.runs_dir / "analysis" / args.analysis)
+    else:
+        analysis = latest_run("analysis", runs_dir=s.runs_dir)
+        if analysis is None:
+            raise SystemExit("Aucune analyse : lancez d'abord `pixplot analyze`.")
+    conn = db.connect(s.catalog_path)
+    results = audit(analysis, conn, args.keys.split(","), k=args.k, min_count=args.min_count)
+    if not results:
+        raise SystemExit(f"Aucune des étiquettes {args.keys} n'est renseignée dans le catalogue.")
+    out = s.data_dir / "audits" / analysis.path.name
+    md, page = write_report(results, analysis, conn, s.thumbs_dir, out, k=args.k)
+    print(f"Analyse : {analysis.id}\n")
+    print(f"{'étiquette':<10} {'œuvres':>7} {'valeurs':>8} {'pureté':>8} {'NMI':>6} {'ARI':>6}")
+    for r in results:
+        print(f"{r.key:<10} {r.n:>7} {r.values:>8} {r.purity:>8.1%} {r.nmi:>6.3f} {r.ari:>6.3f}")
+    for r in results:
+        print(f"\n{r.key} — le moins bien retrouvé (P@{args.k}) :")
+        for d in r.per_value[:5]:
+            conf = ", ".join(f"{b} {s_:.0%}" for b, s_ in d["top_confusions"][:2])
+            print(f"  {d['p_at_k']:>6.1%}  {d['value']:<30} (n={d['n']})  → confondu avec {conf}")
+    print(f"\nRapport : {md}\nExemples d'échecs : {page}")
     return 0
 
 
@@ -495,6 +529,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--open", action="store_true", help="ouvrir le navigateur automatiquement")
     p.set_defaults(func=cmd_serve)
+
+    p = sub.add_parser("audit", help="audit à l'aveugle : où les regroupements contredisent les étiquettes")
+    p.add_argument("--analysis", help="dossier d'analyse (défaut : la plus récente)")
+    p.add_argument("--keys", default="artist,style,genre")
+    p.add_argument("-k", type=int, default=10)
+    p.add_argument("--min-count", type=int, default=10, help="ignorer les valeurs plus rares")
+    p.set_defaults(func=cmd_audit)
 
     p = sub.add_parser("bench", help="comparer des runs : étiquettes (artiste, style...) et paires connues")
     p.add_argument("runs", nargs="*", help="noms des runs de vecteurs (défaut : tous)")

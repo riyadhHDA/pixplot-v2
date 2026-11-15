@@ -124,8 +124,15 @@ Commande : `pixplot analyze [--clusters N] [--hdbscan]`. Graine fixe : reproduct
 fichier deck.gl est rangé dans `web/vendor/`, donc ni Node ni connexion Internet ne sont
 nécessaires pour utiliser l'Atlas. Choisi plutôt que PixiJS pour son zoom/déplacement,
 sa sélection au clic et son rendu de centaines de milliers de points prêts à l'emploi.
-Les vignettes ne sont chargées que pour les œuvres visibles à l'écran (1 500 au plus),
-ce qui garde l'Atlas fluide quelle que soit la taille du corpus.
+**Toutes les vignettes sont affichées en permanence**, sans scintillement : elles viennent
+de planches de 4096 × 4096 px (« atlas de textures », comme dans PixPlot v1) construites
+par `pixplot analyze` (ou à la première ouverture de l'Atlas) et chargées une fois sur le
+GPU. Cases de 64 px jusqu'à 30 000 œuvres, 32 px au-delà (500 000 œuvres ≈ 2 Go de VRAM).
+Au zoom, des vignettes 256 puis 1024 px se posent **par-dessus** les 300 œuvres les plus
+proches du centre, sans jamais retirer celles de dessous. Sélecteur « Affichage » :
+vignettes ou points colorés (les couleurs par groupe, style… se lisent sur les points).
+L'interface est servie en `Cache-Control: no-cache` (pas de mélange ancienne page /
+nouveau script après une mise à jour).
 
 Fait (étape 4) : carte des groupes, coloration (groupes, familles HDBSCAN, atypicité,
 artiste, style…), légende cliquable, recherche, fiche œuvre avec ses 20 voisines reliées
@@ -250,3 +257,33 @@ Hasard : artiste 2,9 %, style 10,0 %, genre 14,7 %.
 - **Temps estimé pour 500 000 œuvres** : B@448 ≈ 2 h 20, L@448 ≈ 4 h, B@224 ≈ 1 h.
 - Mise en garde : les étiquettes WikiArt sont imparfaites, et « même artiste » n'est qu'un
   indicateur indirect de ce que cherche l'historien.
+
+## 10. Audit à l'aveugle (16/11/2026)
+
+Les modèles ne lisent que les pixels ; les métadonnées ne servent qu'à évaluer.
+`pixplot audit` compare voisinages et groupes aux étiquettes et produit
+`data/audits/<analyse>/audit.md` (chiffres) et `audit.html` (exemples d'échecs).
+
+Sur WikiArt (DINOv3 B/16, 24 groupes) : pureté des groupes 26 % (artiste), 38 % (style),
+70 % (genre). Quatre familles d'« échecs », d'après les exemples regardés un à un :
+
+1. **Le sujet l'emporte sur la manière.** Un portrait fauve de Matisse a pour voisins des
+   portraits réalistes, expressionnistes, post-impressionnistes : même cadrage en buste,
+   palette ignorée. Le modèle voit *ce qui est représenté et comment c'est composé* avant
+   la couleur et la touche.
+2. **La technique et le support rapprochent.** Un *Pop Art* de Warhol (téléphone au trait)
+   tombe parmi les dessins et les natures mortes cubistes ; gravures et dessins se
+   regroupent entre eux quel que soit le style.
+3. **Les frontières historiographiques ne sont pas visuelles.** Maniérisme ↔ Baroque,
+   Première ↔ Haute Renaissance, Minimalisme ↔ Color Field : confusions fréquentes, mais
+   souvent de vraies parentés. Le pointillisme de Pissarro est rangé avec ses paysages
+   impressionnistes — même artiste, même motif ; la touche divisée est invisible à
+   l'échelle d'analyse.
+4. **Les étiquettes elles-mêmes sont fausses.** Plusieurs œuvres « portrait » sont en réalité
+   des scènes de genre, des figures dans un paysage ou une fresque à plusieurs saints ; un
+   « Minimalisme » est une abstraction gestuelle. Le modèle avait raison : l'audit sert aussi
+   à **repérer les erreurs de catalogue**.
+
+Pistes : espace chromatique et espace « touche » (patchs fins) pour les styles définis par la
+couleur ou la facture ; regroupement selon plusieurs espaces ; signaler à l'historien les
+étiquettes probablement erronées.

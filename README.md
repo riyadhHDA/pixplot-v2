@@ -26,6 +26,7 @@ pixplot import-metadata meta.csv       # artiste, date, style... (colonne path)
 pixplot index                          # index FAISS du dernier run
 pixplot similar 42 --html planche.html  # œuvres les plus proches
 pixplot bench                          # comparer les runs (étiquettes, paires connues)
+pixplot audit                          # audit à l'aveugle : où les groupes contredisent les étiquettes
 pixplot analyze --hdbscan              # groupes, carte UMAP, voisinages → data/maps/*.jpg
 pixplot index --regions                # index des zones → « Chercher un détail » dans l'Atlas
 pixplot embed --encoder siglip2_so400m # vecteurs texte↔image (puis pixplot index --encoder siglip2_so400m)

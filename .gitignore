@@ -19,3 +19,6 @@ web/dist/
 
 # Réglages locaux de Claude Code
 /.claude/
+
+# Configuration MCP locale (chemins propres à ce PC) — modèle dans docs/MCP.md
+/.mcp.json

@@ -10,7 +10,7 @@
   const { Deck, OrthographicView, ScatterplotLayer, IconLayer, TextLayer, LineLayer, LinearInterpolator } = deck;
 
   const WORLD = 1000;            // les coordonnées [-1, 1] deviennent [-1000, 1000]
-  const MAX_ICONS = 1500;        // vignettes affichées au plus à la fois
+  const MAX_HD = 300;            // vignettes haute définition posées à la fois (au centre de l écran)
   const PALETTE = [
     [230, 159, 0], [86, 180, 233], [0, 158, 115], [240, 228, 66], [0, 114, 178], [213, 94, 0],
     [204, 121, 167], [148, 103, 189], [140, 86, 75], [127, 201, 127], [253, 192, 134], [190, 174, 212],
@@ -32,7 +32,8 @@
     colorMode: "cluster", highlight: null, highlightLabel: "",
     selected: null, selectedData: null,
     viewState: { target: [0, 0, 0], zoom: 0, minZoom: -4, maxZoom: 9 },
-    fitZoom: 0, iconSize: 20, icons: [], iconTimer: null,
+    fitZoom: 0, iconSize: 20, iconTimer: null,
+    sprites: null, spriteSize: null, hd: [], display: "sprites",
     searchStatus: { region: false, text: false }, lastResults: null, drawing: false,
   };
   let deckgl;
@@ -73,6 +74,7 @@
     setupDeck();
     updateStats();
     wireUI();
+    loadSprites();
     const fromHash = parseInt(location.hash.replace("#oeuvre-", ""), 10);
     if (state.rowOf.has(fromHash)) select(fromHash, true);
   }
@@ -194,67 +196,118 @@
   }
 
   function pickedId(info) {
-    if (!info || !info.layer) return null;
-    if (info.layer.id === "icons") return info.object?.id ?? null;
-    if (info.layer.id === "points" && info.index >= 0) return state.map.ids[info.index];
+    if (!info || !info.layer || info.index < 0) return null;
+    const id = info.layer.id;
+    if (id.startsWith("sheet-") || id === "hd") return state.map.ids[info.object.r ?? info.object];
+    if (id === "points") return state.map.ids[info.index];
     return null;
   }
 
-  function scheduleIcons() {
-    clearTimeout(state.iconTimer);
-    state.iconTimer = setTimeout(() => { computeIcons(); redraw(); }, 120);
+  // ------------------------------------------------------------------ vignettes
+  // Toutes les vignettes viennent de quelques planches (atlas de textures) chargées une
+  // fois sur le GPU : elles restent toutes affichées, sans scintillement. Au zoom, des
+  // versions haute définition se posent PAR-DESSUS les mêmes vignettes (jamais à la place).
+  async function loadSprites() {
+    let meta;
+    try { meta = await getJSON("/api/sprites"); } catch { return; } // à défaut : les points
+    const sheets = [];
+    for (let s = 0; s < meta.sheets; s++) sheets.push({ rows: [], mapping: {} });
+    state.spriteSize = new Float32Array(state.n);
+    for (let r = 0; r < state.n; r++) {
+      const s = meta.atlas[r], w = meta.w[r], h = meta.h[r];
+      sheets[s].rows.push(r);
+      sheets[s].mapping[r] = { x: meta.x[r], y: meta.y[r], width: w, height: h };
+      // getSize règle la HAUTEUR de l'icône : on la réduit pour les œuvres en largeur,
+      // afin que chaque vignette tienne dans la même case carrée.
+      state.spriteSize[r] = state.iconSize * h / Math.max(w, h, 1);
+    }
+    state.sprites = sheets;
+    redraw();
+    scheduleHD();
   }
 
-  function computeIcons() {
-    const vs = state.viewState;
-    const el = $("map");
-    const scale = Math.pow(2, vs.zoom);
-    const onScreen = state.iconSize * scale; // taille d'une vignette en pixels
-    if (onScreen < 14) { state.icons = []; $("hint").textContent = "Zoomez pour voir les vignettes · clic : fiche de l'œuvre"; return; }
+  function onScreenSize() { return state.iconSize * Math.pow(2, state.viewState.zoom); }
+  function showSprites() { return state.sprites && state.display === "sprites" && onScreenSize() >= 4; }
+
+  function scheduleIcons() { scheduleHD(); }
+  function scheduleHD() {
+    clearTimeout(state.iconTimer);
+    state.iconTimer = setTimeout(() => { computeHD(); redraw(); }, 180);
+  }
+
+  function computeHD() {
+    const px = onScreenSize();
+    if (!showSprites() || px < 72) {
+      state.hd = [];
+      $("hint").textContent = state.display === "sprites"
+        ? `${state.n.toLocaleString("fr-FR")} vignettes · zoomez pour la haute définition · clic : fiche`
+        : "Molette : zoomer · glisser : se déplacer · clic sur une œuvre : sa fiche";
+      return;
+    }
+    const el = $("map"), scale = Math.pow(2, state.viewState.zoom);
     const halfW = el.clientWidth / 2 / scale + state.iconSize, halfH = el.clientHeight / 2 / scale + state.iconSize;
-    const [cx, cy] = vs.target;
+    const [cx, cy] = state.viewState.target;
     let visible = [];
-    for (let i = 0; i < state.n; i++) {
-      if (state.highlight && !state.highlight.has(i)) continue;
-      const x = state.positions[2 * i], y = state.positions[2 * i + 1];
-      if (Math.abs(x - cx) < halfW && Math.abs(y - cy) < halfH) visible.push(i);
+    for (let r = 0; r < state.n; r++) {
+      if (state.highlight && !state.highlight.has(r)) continue;
+      const dx = state.positions[2 * r] - cx, dy = state.positions[2 * r + 1] - cy;
+      if (Math.abs(dx) < halfW && Math.abs(dy) < halfH) visible.push([r, dx * dx + dy * dy]);
     }
-    if (visible.length > MAX_ICONS) {
-      // Trop d'œuvres à l'écran : on montre d'abord les plus représentatives (les moins atypiques).
-      visible.sort((a, b) => state.map.atypicality[a] - state.map.atypicality[b]);
-      visible = visible.slice(0, MAX_ICONS);
-    }
-    const px = onScreen > 90 ? 256 : 64;
-    state.icons = visible.map((i) => {
-      const a = state.map.aspect[i] || 1;
-      const w = a >= 1 ? 64 : Math.round(64 * a), h = a >= 1 ? Math.round(64 / a) : 64;
-      return { i, id: state.map.ids[i], w, h, px };
+    visible.sort((a, b) => a[1] - b[1]); // le centre de l'écran d'abord
+    const size = px > 160 ? 1024 : 256;
+    state.hd = visible.slice(0, MAX_HD).map(([r]) => {
+      const a = state.map.aspect[r] || 1;
+      return { r, id: state.map.ids[r], size, w: a >= 1 ? size : Math.round(size * a), h: a >= 1 ? Math.round(size / a) : size };
     });
-    $("hint").textContent = `${visible.length} vignettes à l'écran · clic : fiche de l'œuvre`;
+    $("hint").textContent = `Haute définition : ${state.hd.length} vignettes au centre · clic : fiche`;
+  }
+
+  function spriteColor(r) {
+    return !state.highlight || state.highlight.has(r) ? [255, 255, 255, 255] : [255, 255, 255, 30];
   }
 
   function redraw() {
     const layers = [];
-    const showingIcons = state.icons.length > 0;
+    const sprites = showSprites();
+    const showingIcons = sprites;
     layers.push(new ScatterplotLayer({
       id: "points",
+      visible: !sprites,
       data: { length: state.n, attributes: {
         getPosition: { value: state.positions, size: 2 },
         getFillColor: { value: colorArray(), size: 4, normalized: true },
       } },
       radiusUnits: "pixels",
-      getRadius: showingIcons ? 1.5 : 3,
+      getRadius: 3,
       radiusMinPixels: 1, radiusMaxPixels: 6,
       pickable: true, autoHighlight: true, highlightColor: [255, 255, 255, 255],
       updateTriggers: { getFillColor: [state.colorMode, state.highlightLabel] },
     }));
-    if (showingIcons) {
+    if (state.sprites) {
+      state.sprites.forEach((sheet, s) => layers.push(new IconLayer({
+        id: `sheet-${s}`,
+        visible: sprites,
+        data: sheet.rows,
+        iconAtlas: `/api/sprites/${s}.jpg`,
+        iconMapping: sheet.mapping,
+        getIcon: (r) => String(r),
+        getPosition: (r) => [state.positions[2 * r], state.positions[2 * r + 1]],
+        getSize: (r) => state.spriteSize[r],
+        sizeUnits: "common",
+        getColor: spriteColor,
+        pickable: true,
+        autoHighlight: true, highlightColor: [224, 176, 64, 255],
+        alphaCutoff: 0,
+        updateTriggers: { getColor: [state.highlightLabel] },
+      })));
+    }
+    if (sprites && state.hd.length) {
       layers.push(new IconLayer({
-        id: "icons",
-        data: state.icons,
-        getPosition: (d) => [state.positions[2 * d.i], state.positions[2 * d.i + 1]],
-        getIcon: (d) => ({ url: `/api/thumb/${d.px}/${d.id}`, width: d.w * (d.px / 64), height: d.h * (d.px / 64), id: `${d.px}-${d.id}` }),
-        getSize: state.iconSize,
+        id: "hd",
+        data: state.hd,
+        getIcon: (d) => ({ url: `/api/thumb/${d.size}/${d.id}`, width: d.w, height: d.h, id: `${d.size}-${d.id}` }),
+        getPosition: (d) => [state.positions[2 * d.r], state.positions[2 * d.r + 1]],
+        getSize: (d) => state.spriteSize[d.r],
         sizeUnits: "common",
         pickable: true,
         alphaCutoff: 0,
@@ -276,7 +329,7 @@
         stroked: true, filled: false, getLineColor: [224, 176, 64], lineWidthUnits: "pixels", getLineWidth: 3,
       }));
     }
-    if (!showingIcons && (state.colorMode === "cluster")) {
+    if (onScreenSize() < 40 && (state.colorMode === "cluster" || sprites)) {
       layers.push(new TextLayer({
         id: "group-labels",
         data: state.clusters,
@@ -356,7 +409,7 @@
   function setHighlight(set, label) {
     state.highlight = set && set.size ? set : null;
     state.highlightLabel = label || "";
-    computeIcons();
+    computeHD();
     redraw();
     updateStats();
   }
@@ -607,8 +660,17 @@
 
   // ------------------------------------------------------------------ interface
   function wireUI() {
+    $("display").addEventListener("change", (e) => {
+      state.display = e.target.value;
+      computeHD();
+      redraw();
+    });
     $("colorby").addEventListener("change", (e) => {
       state.colorMode = e.target.value;
+      // Les couleurs ne se voient que sur les points : on y bascule.
+      state.display = "points";
+      $("display").value = "points";
+      computeHD();
       if (state.highlightLabel && !state.highlightLabel.startsWith("Recherche")) clearHighlight();
       renderLegend();
       redraw();

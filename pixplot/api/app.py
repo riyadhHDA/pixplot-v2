@@ -6,6 +6,7 @@ images du catalogue, par identifiant (jamais un chemin fourni par le navigateur)
 
 from __future__ import annotations
 
+import threading
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
@@ -41,6 +42,15 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
     app = FastAPI(title="PixPlot v2", docs_url="/api/docs", redoc_url=None)
     app.add_middleware(GZipMiddleware, minimum_size=2048)
     map_cache: dict = {}
+
+    @app.middleware("http")
+    async def no_stale_interface(request, call_next):
+        # L'interface (HTML/JS/CSS) est toujours revalidée : après une mise à jour, le
+        # navigateur ne mélange jamais une ancienne page et un nouveau script.
+        response = await call_next(request)
+        if not request.url.path.startswith("/api/") and not request.url.path.startswith("/vendor/"):
+            response.headers["Cache-Control"] = "no-cache"
+        return response
     engines = engines or SearchEngines(data)
 
     @app.post("/api/pack")
@@ -103,6 +113,24 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
     def search(q: str = Query(..., min_length=1, max_length=200)):
         hits = data.search(q)
         return {"query": q, "count": len(hits), "ids": hits}
+
+    sprite_lock = threading.Lock()
+
+    def sprites_meta() -> Path:
+        from ..analysis.sprites import build_sprites
+        with sprite_lock:  # construites une seule fois, à la première demande si besoin
+            return build_sprites(data.analysis, data.settings.thumbs_dir)
+
+    @app.get("/api/sprites")
+    def sprites():
+        return FileResponse(sprites_meta(), media_type="application/json", headers=CACHE)
+
+    @app.get("/api/sprites/{n}.jpg")
+    def sprite_sheet(n: int):
+        p = sprites_meta().parent / f"sheet-{n}.jpg"
+        if not p.exists():
+            raise HTTPException(404, "Planche inexistante")
+        return FileResponse(p, media_type="image/jpeg", headers=CACHE)
 
     @app.get("/api/thumb/{size}/{artwork_id}")
     def thumb(size: int, artwork_id: int):
