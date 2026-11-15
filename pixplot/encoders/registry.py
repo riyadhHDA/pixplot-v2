@@ -4,15 +4,24 @@ from __future__ import annotations
 
 from .base import Encoder
 
-ENCODERS = ("dinov3_vits16", "dinov3_vitb16", "dinov3_vitl16", "colorhist")
+ENCODERS = (
+    "dinov3_vitb16", "dinov3_vitl16", "dinov3_vits16",
+    "dinov2_vitb14_reg", "dinov2_vitl14_reg", "dinov2_vits14_reg",
+    "colorhist",
+)
 
 
 def get_encoder(name: str, **kwargs) -> Encoder:
+    kwargs = {k: v for k, v in kwargs.items() if v is not None}
     if name == "colorhist":
         from .colorhist import ColorHistEncoder
         return ColorHistEncoder()
     if name.startswith("dinov3_"):
         from .dinov3 import DINOv3Encoder
-        kwargs = {k: v for k, v in kwargs.items() if v is not None}
         return DINOv3Encoder(arch=name, **kwargs)
+    if name.startswith("dinov2_"):
+        from .dinov2 import DINOv2Encoder
+        kwargs.pop("weights", None)
+        kwargs.pop("repo", None)
+        return DINOv2Encoder(arch=name, **kwargs)
     raise ValueError(f"Encodeur inconnu : {name} (choix : {', '.join(ENCODERS)})")

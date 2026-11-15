@@ -100,7 +100,7 @@ def cmd_embed(args) -> int:
 
     s = get_settings(args.data)
     kwargs = {}
-    if args.encoder.startswith("dinov3_"):
+    if args.encoder.startswith(("dinov3_", "dinov2_")):
         kwargs = {"weights": args.weights, "repo": args.repo, "hf_model": args.hf_model,
                   "input_size": args.input_size}
     encoder = get_encoder(args.encoder, **kwargs)
@@ -212,7 +212,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("embed", help="calculer les vecteurs des œuvres")
     p.add_argument("--encoder", default="dinov3_vitb16",
-                   help="dinov3_vitb16 (défaut), dinov3_vitl16, dinov3_vits16, colorhist (test sans GPU)")
+                   help="dinov3_vitb16 (défaut), dinov3_vitl16, dinov2_vitb14_reg (sans demande d accès), colorhist (test sans GPU)")
     p.add_argument("--hf-model", default=None,
                    help="modèle Hugging Face (défaut : facebook/dinov3-…-pretrain-lvd1689m)")
     p.add_argument("--weights", default=None,

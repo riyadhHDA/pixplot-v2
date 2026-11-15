@@ -12,7 +12,7 @@ pip install -e ".[dev]"
 pytest
 ```
 
-PyTorch s'installe à part (roues ROCm d'AMD sous WSL2), puis `pip install -e ".[ml]"`.
+PyTorch s'installe à part (roues ROCm d'AMD pour Windows), puis `pip install -e ".[ml]"`.
 
 ## Utilisation (étape 1)
 
@@ -20,12 +20,13 @@ PyTorch s'installe à part (roues ROCm d'AMD sous WSL2), puis `pip install -e ".
 pixplot doctor                          # Python, PyTorch, GPU
 pixplot ingest "D:/MesImages"           # catalogue, vignettes, doublons
 pixplot embed --limit 1000              # vecteurs DINOv3 (GPU) — reprenable
+pixplot embed --encoder dinov2_vitb14_reg --limit 1000   # DINOv2, sans demande d'accès
 pixplot embed --encoder colorhist       # même pipeline sans GPU, pour tester
 pixplot similar 42 --html planche.html  # œuvres les plus proches
 pixplot status
 ```
 
-Installation du GPU (WSL2 + ROCm) et de DINOv3 : [docs/INSTALL_GPU.md](docs/INSTALL_GPU.md).
+Installation du GPU (Windows natif, WSL2 en secours) et des modèles : [docs/INSTALL_GPU.md](docs/INSTALL_GPU.md).
 
 ## Où en est-on
 

@@ -63,11 +63,19 @@ découvertes à un LLM (MCP, Research Pack) sans jamais perdre la traçabilité.
 - **DINOv3 ViT-B/16** (Meta) :
   - vecteur global (token CLS normalisé, 768 d) → ressemblance d'ensemble ;
   - vecteurs régionaux : les patchs sont moyennés sur des grilles 1×1, 2×2 et 4×4
-    (21 régions), réduits à 256 d par PCA → recherche par détail.
+    (21 régions) → recherche par détail. Étape 1 : stockés tels quels (768 d, FP16,
+    ~16 Go sur disque pour 500 000 œuvres) ; étape 2 : réduits à 256 d par PCA puis
+    compressés dans l'index.
     (Garder tous les patchs coûterait ~150 Go pour 500 000 images.)
 - **SigLIP 2** (Google) → recherche en texte libre.
 - Option : **DINOv3 ViT-L/16** si le banc d'essai le justifie.
-- Accélération : WSL2 + ROCm en priorité ; secours ONNX Runtime + DirectML, puis CPU.
+- **DINOv2 ViT-B/14 (registres)** : sans demande d'accès, pour démarrer en attendant la
+  validation de DINOv3, puis comme point de comparaison.
+- Chargement des poids : Hugging Face (`transformers`) par défaut ; format Meta `.pth`
+  en secours pour DINOv3.
+- Résolution par défaut : 448 px (à confirmer contre 224 px au banc d'essai).
+- Accélération : **PyTorch ROCm natif sous Windows 11** en priorité ; secours WSL2 + ROCm,
+  puis CPU (ONNX Runtime + DirectML envisageable, non implémenté).
 
 ### ③ Index — `pixplot.index`
 
@@ -78,8 +86,9 @@ découvertes à un LLM (MCP, Research Pack) sans jamais perdre la traçabilité.
 | `text` | SigLIP 2 | `IndexFlatIP` | ~1,5 Go |
 
 ### ④ Analyse — `pixplot.analysis`
-- **Regroupement** : e-means (`faiss.contrib.e_means`, FAISS ≥ 1.16) par défaut ;
-  HDBSCAN en option, pour isoler les œuvres « à part ».
+- **Regroupement** : e-means (`faiss.contrib.e_means`, inclus dans `faiss-cpu` 1.16, y
+  compris sous Windows) par défaut ; HDBSCAN (celui de scikit-learn) en option, pour
+  isoler les œuvres « à part ».
 - **Cartes** : PCA 64 d → UMAP appris sur un échantillon (~100k) puis appliqué au reste.
   Une carte par espace : formel (DINOv3), sémantique (SigLIP), chromatique (plus tard).
 - **Graphe de voisinage** : top-20 voisins par œuvre et par espace (Parquet).
@@ -91,7 +100,8 @@ découvertes à un LLM (MCP, Research Pack) sans jamais perdre la traçabilité.
   `get_neighbors`, `get_cluster`, `export_pack`.
 
 ### ⑥ Interface — `web/`
-React + TypeScript + rendu WebGL (deck.gl ou PixiJS). Écrans, dans l'ordre :
+React + TypeScript + rendu WebGL. **Moteur à choisir à l'étape 4** (deck.gl ou PixiJS),
+sur un prototype avec le vrai corpus. Écrans, dans l'ordre :
 Atlas (choix de l'espace) → Fiche œuvre (voisins par espace) → Sélection de zone →
 Comparateur (zoom synchronisé, superposition) → Carnet de recherche.
 
@@ -119,7 +129,7 @@ Pixplot V2/
 │   ├── runs.py            runs versionnés + manifests
 │   ├── cli.py             pixplot ingest | embed | index | analyze | serve
 │   ├── catalog/           ① SQLite, ingestion, vignettes, doublons
-│   ├── encoders/          ② interface Encoder, letterbox, dinov3, siglip2
+│   ├── encoders/          ② interface Encoder, letterbox, dinov3, dinov2, siglip2
 │   ├── features/          ② extraction par lots, reprise, régions
 │   ├── index/             ③ FAISS
 │   ├── analysis/          ④ e-means, hdbscan, umap, voisins, atypiques
