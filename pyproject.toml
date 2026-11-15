@@ -1,0 +1,30 @@
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pixplot"
+version = "0.1.0"
+description = "PixPlot v2 — exploration visuelle de grands corpus pour l'histoire de l'art"
+requires-python = ">=3.12"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE"]
+dependencies = [
+    "numpy>=1.26",
+    "pillow>=10",
+]
+
+[project.optional-dependencies]
+# torch/torchvision s'installent à part (roues ROCm d'AMD), voir README.
+ml = ["faiss-cpu>=1.16", "umap-learn", "hdbscan", "scikit-learn", "pandas", "pyarrow", "tqdm"]
+api = ["fastapi", "uvicorn"]
+dev = ["pytest"]
+
+[project.scripts]
+pixplot = "pixplot.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["pixplot*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

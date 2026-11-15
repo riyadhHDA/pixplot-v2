@@ -1,0 +1,18 @@
+# Données (images, vignettes, vecteurs, index) — jamais dans git
+/data/
+/weights/
+/vendor/
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+.pytest_cache/
+
+# Web
+web/node_modules/
+web/dist/
+
+# Référence locale (PixPlot v1 de Yale), non publiée
+/pix-plot-0.0.1.1/
