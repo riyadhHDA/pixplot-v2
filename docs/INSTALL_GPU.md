@@ -62,20 +62,22 @@ pixplot doctor        # doit afficher le GPU et « Calcul GPU ok »
 Solutions de secours si ROCm sous WSL ne veut rien savoir : ONNX Runtime + DirectML
 sous Windows (à ajouter), ou le CPU (lent mais fonctionnel pour 1 000 images).
 
-## 4. DINOv3
+## 4. DINOv3 (via Hugging Face)
+
+1. Sur https://huggingface.co/facebook/dinov3-vitb16-pretrain-lvd1689m, accepter la
+   licence de Meta. **La demande est validée manuellement par Meta** : attendre que la
+   page indique que l'accès est accordé. Chaque taille (S, B, L) a sa propre demande.
+2. Se connecter depuis Ubuntu (jeton « read » créé dans les réglages Hugging Face) :
 
 ```bash
-git clone https://github.com/facebookresearch/dinov3.git vendor/dinov3
-pip install -e vendor/dinov3
+hf auth login
 ```
 
-Les poids nécessitent d'**accepter la licence de Meta** (lien dans le README du dépôt
-DINOv3). Téléchargez le ViT-B/16 et placez-le ici :
+Les poids (~340 Mo pour le ViT-B) se téléchargent automatiquement au premier `embed`,
+dans le cache Hugging Face (`~/.cache/huggingface`), jamais dans le dépôt.
 
-```
-weights/dinov3_vitb16.pth
-```
-
+**Secours, format Meta :** cloner `facebook/dinov3` dans `vendor/dinov3`, télécharger le
+fichier `.pth` et passer `--weights weights/dinov3_vitb16.pth` à `pixplot embed`.
 `vendor/` et `weights/` sont exclus de git : les poids ne doivent jamais être publiés.
 
 ## 5. Premier essai : 1 000 images

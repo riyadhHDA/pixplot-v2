@@ -14,7 +14,5 @@ def get_encoder(name: str, **kwargs) -> Encoder:
     if name.startswith("dinov3_"):
         from .dinov3 import DINOv3Encoder
         kwargs = {k: v for k, v in kwargs.items() if v is not None}
-        if "weights" not in kwargs:
-            kwargs["weights"] = f"weights/{name}.pth"
         return DINOv3Encoder(arch=name, **kwargs)
     raise ValueError(f"Encodeur inconnu : {name} (choix : {', '.join(ENCODERS)})")

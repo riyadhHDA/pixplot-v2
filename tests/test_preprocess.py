@@ -35,3 +35,15 @@ def test_pool_regions_shape_and_mask():
     noisy[:, ~mask] = 1000.0
     m = np.broadcast_to(mask, (2, 28, 28))
     assert np.allclose(pool_regions(grid, mask=m)[:, 0], pool_regions(noisy, mask=m)[:, 0], atol=1e-5)
+
+
+def test_split_tokens_drops_registers():
+    from pixplot.encoders.dinov3 import split_tokens
+
+    n, regs, g, d = 2, 4, 3, 5
+    hidden = np.arange(n * (1 + regs + g * g) * d, dtype=np.float32).reshape(n, 1 + regs + g * g, d)
+    cls, patches = split_tokens(hidden, regs, g)
+    assert cls.shape == (n, d) and patches.shape == (n, g, g, d)
+    assert np.array_equal(cls, hidden[:, 0])
+    assert np.array_equal(patches[:, 0, 0], hidden[:, 1 + regs])      # premier patch après les registres
+    assert np.array_equal(patches[:, 2, 2], hidden[:, -1])

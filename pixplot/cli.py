@@ -101,7 +101,8 @@ def cmd_embed(args) -> int:
     s = get_settings(args.data)
     kwargs = {}
     if args.encoder.startswith("dinov3_"):
-        kwargs = {"weights": args.weights, "repo": args.repo, "input_size": args.input_size}
+        kwargs = {"weights": args.weights, "repo": args.repo, "hf_model": args.hf_model,
+                  "input_size": args.input_size}
     encoder = get_encoder(args.encoder, **kwargs)
     print(f"Encodeur : {encoder.describe()}")
     run = extract(encoder, s.catalog_path, s.runs_dir, limit=args.limit, batch_size=args.batch_size,
@@ -212,8 +213,11 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("embed", help="calculer les vecteurs des œuvres")
     p.add_argument("--encoder", default="dinov3_vitb16",
                    help="dinov3_vitb16 (défaut), dinov3_vitl16, dinov3_vits16, colorhist (test sans GPU)")
-    p.add_argument("--weights", default=None, help="fichier de poids (défaut : weights/<encodeur>.pth)")
-    p.add_argument("--repo", default="vendor/dinov3", help="dépôt DINOv3 cloné")
+    p.add_argument("--hf-model", default=None,
+                   help="modèle Hugging Face (défaut : facebook/dinov3-…-pretrain-lvd1689m)")
+    p.add_argument("--weights", default=None,
+                   help="secours : fichier .pth au format Meta (avec --repo) au lieu de Hugging Face")
+    p.add_argument("--repo", default="vendor/dinov3", help="dépôt DINOv3 cloné (avec --weights)")
     p.add_argument("--input-size", type=int, default=448, help="résolution (multiple de 16)")
     p.add_argument("--limit", type=int, default=None)
     p.add_argument("--batch-size", type=int, default=16)
