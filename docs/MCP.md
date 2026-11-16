@@ -1,38 +1,41 @@
-# Brancher PixPlot sur Claude (ou un autre LLM) — serveur MCP
+# Connecting PixPlot to Claude (or another LLM) — MCP server
 
-`pixplot mcp` démarre un serveur [MCP](https://modelcontextprotocol.io) qui donne au LLM un
-accès direct au corpus : il cherche, **regarde les images**, explore les groupes et
-exporte des Research Packs. Tout reste sur votre PC : le serveur lit vos fichiers locaux
-et ne transmet au LLM que ce que ses outils renvoient (textes, vignettes, détails).
+**English** · [Français](MCP.fr.md)
 
-> Rôles : PixPlot calcule, observe et organise. Le LLM questionne et propose.
-> L'historien vérifie, interprète et construit le savoir.
+`pixplot mcp` starts an [MCP](https://modelcontextprotocol.io) server that gives the LLM
+direct access to the corpus: it searches, **looks at the images**, explores the groups,
+writes to your research notebook and exports Research Packs. Everything stays on your PC:
+the server reads your local files and only passes to the LLM what its tools return (text,
+thumbnails, details).
 
-## Outils fournis
+> Roles: PixPlot computes, observes and organises. The LLM asks and suggests.
+> The art historian checks, interprets and builds knowledge.
 
-| Outil | Rôle |
+## Tools
+
+| Tool | Purpose |
 |---|---|
-| `corpus_overview` | taille, modèles, groupes et leurs métadonnées dominantes |
-| `search_by_text` | œuvres correspondant à une description (SigLIP 2, français ou anglais) |
-| `similar_artworks` | plus proches voisines d'une œuvre, dans l'espace choisi : `forme` (DINOv3), `sujet` (SigLIP 2), `couleur`, `touche` |
-| `search_detail` | zones semblables à un détail (cadre x0, y0, x1, y1 en fractions) |
-| `get_artwork` | fiche : métadonnées et leur source, groupe, atypicité, voisines |
-| `view_artwork` | **l'image** de l'œuvre (256 à 1024 px) |
-| `view_detail` | **un détail recadré** depuis l'original |
-| `compare_artworks` | **planche numérotée** de 2 à 12 œuvres + une matrice de similarité par espace |
-| `get_group` | un groupe de la carte, œuvres les plus centrales d'abord |
-| `find_atypical` | œuvres les plus isolées (exceptions, erreurs de catalogue…) |
-| `check_labels` | étiquettes que toutes les voisines contredisent (erreurs possibles ou œuvres singulières) |
-| `notebook_add` | ajoute une piste au **carnet de recherche** de l'historien (visible dans l'Atlas) |
-| `notebook_list` | relit le carnet (les plus récentes d'abord) |
-| `export_research_pack` | dossier .zip traçable (voir README) |
+| `corpus_overview` | size, models, similarity spaces, groups (with their names) and their dominant metadata |
+| `search_by_text` | works matching a description (SigLIP 2, French or English) |
+| `similar_artworks` | nearest neighbours of a work in the chosen space: `forme` (DINOv3), `sujet` (SigLIP 2), `couleur`, `touche` |
+| `search_detail` | regions similar to a detail (box x0, y0, x1, y1 as fractions) |
+| `get_artwork` | record: metadata and their source, group, atypicality, neighbours |
+| `view_artwork` | **the image** of the work (256 to 1024 px) |
+| `view_detail` | **a cropped detail** from the original |
+| `compare_artworks` | **numbered contact sheet** of 2 to 12 works + one similarity matrix per space |
+| `get_group` | a group of the map, most central works first |
+| `find_atypical` | the most isolated works (exceptions, cataloguing errors…) |
+| `check_labels` | labels contradicted by all the neighbours (possible errors or singular works) |
+| `notebook_add` | adds a lead to the historian's **research notebook** (visible in the Atlas) |
+| `notebook_list` | reads the notebook back (most recent first) |
+| `export_research_pack` | traceable .zip dossier (see the README) |
 
-Les consignes données au LLM (méthode, prudence d'interprétation, contre-exemples) sont
-dans `pixplot/mcp/server.py` (`INSTRUCTIONS`).
+The guidelines given to the LLM (method, interpretive caution, counter-examples) are in
+`pixplot/mcp/server.py` (`INSTRUCTIONS`, in French; the LLM reads them as they are).
 
 ## Claude Code
 
-Créer à la racine du projet un fichier `.mcp.json` :
+Create a `.mcp.json` file at the root of the project:
 
 ```json
 {
@@ -45,29 +48,29 @@ Créer à la racine du projet un fichier `.mcp.json` :
 }
 ```
 
-Ouvrir une nouvelle session dans ce dossier et approuver le serveur `pixplot`.
+Open a new session in that folder and approve the `pixplot` server.
 
 ## Claude Desktop
 
-Dans `%APPDATA%\Claude\claude_desktop_config.json` (chemins absolus) :
+In `%APPDATA%\Claude\claude_desktop_config.json` (absolute paths):
 
 ```json
 {
   "mcpServers": {
     "pixplot": {
-      "command": "C:\\chemin\\vers\\pixplot-v2\\.venv\\Scripts\\pixplot.exe",
-      "args": ["--data", "C:\\chemin\\vers\\pixplot-v2\\data", "mcp"]
+      "command": "C:\\path\\to\\pixplot-v2\\.venv\\Scripts\\pixplot.exe",
+      "args": ["--data", "C:\\path\\to\\pixplot-v2\\data", "mcp"]
     }
   }
 }
 ```
 
-Puis redémarrer Claude Desktop.
+Then restart Claude Desktop.
 
-## Bon à savoir
+## Good to know
 
-- Le serveur charge l'analyse la plus récente (`--analysis <dossier>` pour en choisir une).
-- La première recherche par texte ou par détail charge le modèle sur le GPU (jusqu'à une
-  minute) ; les suivantes sont immédiates.
-- Ne pas lancer `pip install` pendant qu'un serveur PixPlot (Atlas ou MCP) tourne : sous
-  Windows, `pixplot.exe` est verrouillé et l'installation reste à moitié faite.
+- The server loads the most recent analysis (`--analysis <folder>` to pick another).
+- The first text or detail search loads the model onto the GPU (up to a minute); later
+  ones are immediate.
+- Do not run `pip install` while a PixPlot server (Atlas or MCP) is running: on Windows,
+  `pixplot.exe` is locked and the installation is left half done.

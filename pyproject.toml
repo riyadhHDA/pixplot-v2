@@ -5,7 +5,9 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pixplot"
 version = "0.1.0"
-description = "PixPlot v2 — exploration visuelle de grands corpus pour l'histoire de l'art"
+description = "PixPlot v2 — visual exploration of large art corpora for art history"
+authors = [{ name = "Riyadh HADJBA" }]
+readme = "README.md"
 requires-python = ">=3.12"
 license = "GPL-3.0-or-later"
 license-files = ["LICENSE"]

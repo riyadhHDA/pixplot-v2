@@ -42,6 +42,7 @@ def parse_coord(value: str | None, limit: float) -> float | None:
     except (TypeError, ValueError):
         return None
     return v if -limit <= v <= limit else None
+HDBSCAN_MAX_ISOLATED = 0.3  # au-delà, les familles HDBSCAN ne sont pas montrées
 MAX_CATEGORIES = 2000  # au-delà, une métadonnée n'est pas proposée pour colorer la carte
 
 
@@ -99,6 +100,10 @@ class AtlasData:
             meta=meta,
         )
         data.row_of = {int(i): r for r, i in enumerate(ids)}
+        if data.hdbscan is not None and (data.hdbscan < 0).mean() > HDBSCAN_MAX_ISOLATED:
+            # HDBSCAN inexploitable sur ce corpus (cf. ARCHITECTURE.md § 11) : on ne l'affiche
+            # pas, plutôt que de déclarer « à part » la moitié des œuvres.
+            data.hdbscan = None
         data.suspect_of = {}
         for key, items in (data.suspects or {}).get("suspects", {}).items():
             for d in items:

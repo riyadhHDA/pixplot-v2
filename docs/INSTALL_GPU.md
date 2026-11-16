@@ -1,35 +1,37 @@
-# Installer le calcul GPU (RX 7900 GRE, Windows 11)
+# Setting up GPU computation (RX 7900 GRE, Windows 11)
 
-Objectif : que `pixplot doctor` affiche le GPU, puis calculer les vecteurs de 1 000 images.
+**English** · [Français](INSTALL_GPU.fr.md)
 
-**Ordre recommandé :**
-1. **Windows natif** (ce guide) : AMD prend désormais en charge PyTorch sous Windows 11
-   pour les Radeon RX 7000 (puce gfx1100, dont la 7900 GRE).
-2. **WSL2** en secours si la carte n'est pas reconnue (section 7).
-3. **CPU** en dernier recours (lent mais fonctionnel).
+Goal: `pixplot doctor` shows the GPU, then embeddings are computed for 1,000 images.
 
-> Les commandes exactes d'AMD changent d'une version de ROCm à l'autre. **Suivez la
-> documentation officielle** (rocm.docs.amd.com → *Radeon* → *Install PyTorch on
-> Windows*) pour le pilote et les roues PyTorch ; ce guide l'encadre et dit quoi vérifier.
+**Recommended order:**
+1. **Native Windows** (this guide): AMD now supports PyTorch on Windows 11 for Radeon
+   RX 7000 cards (gfx1100 chip, including the 7900 GRE).
+2. **WSL2** as a fallback if the card is not recognised (section 7).
+3. **CPU** as a last resort (slow but works).
 
-## 0. Sans GPU, tout de suite
+> AMD's exact commands change from one ROCm release to the next. **Follow the official
+> documentation** (rocm.docs.amd.com → *Radeon* → *Install PyTorch on Windows*) for the
+> driver and the PyTorch wheels; this guide frames it and says what to check.
 
-Le pipeline complet se teste déjà, avec l'encodeur de couleurs :
+## 0. Without a GPU, right away
+
+The whole pipeline can already be tested with the colour encoder:
 
 ```powershell
-pixplot ingest "D:\MesImages"
+pixplot ingest "D:\MyImages"
 pixplot embed --encoder colorhist
-pixplot similar 1 --html planche.html
+pixplot similar 1 --html sheet.html
 ```
 
-## 1. Pilote AMD
+## 1. AMD driver
 
-Installer le pilote Adrenalin récent **dans la version demandée par la page PyTorch
-pour Windows d'AMD** (elle impose souvent une version minimale).
+Install a recent Adrenalin driver **in the version required by AMD's PyTorch-for-Windows
+page** (it often sets a minimum version).
 
-## 2. Environnement Python du projet (Python 3.12)
+## 2. The project's Python environment (Python 3.12)
 
-Dans PowerShell, à la racine du projet :
+In PowerShell, at the root of the project:
 
 ```powershell
 py -3.12 -m venv .venv
@@ -37,97 +39,98 @@ py -3.12 -m venv .venv
 python -m pip install -U pip
 ```
 
-## 3. PyTorch ROCm pour Windows — AVANT le reste
+## 3. PyTorch ROCm for Windows — BEFORE anything else
 
-Installer **les roues PyTorch fournies par AMD pour Windows** (page officielle ci-dessus),
-dans le `.venv` activé. Les installer en premier évite que pip installe à la place la
-version CPU de PyTorch.
+Install **the PyTorch wheels provided by AMD for Windows** (official page above) into the
+activated `.venv`. Installing them first prevents pip from installing the CPU build of
+PyTorch instead. Example used for this project (ROCm 10.1, gfx1100):
 
-Puis le projet :
+```powershell
+pip install --index-url https://stable.repo.amd.com/rocm/whl-next/ "torch[device-gfx1100]==2.14.0+rocm10.1.0" "torchvision[device-gfx1100]==0.29.0a0+rocm10.1.0"
+```
+
+Then the project:
 
 ```powershell
 pip install -e ".[dev,ml]"
 pixplot doctor
 ```
 
-`doctor` doit afficher la 7900 GRE et « Calcul GPU ok ». Vérifiez aussi que la ligne
-PyTorch mentionne ROCm/HIP : si elle dit « non », c'est la version CPU qui a été installée.
+`doctor` must show the 7900 GRE and "Calcul GPU ok". Also check that the PyTorch line
+mentions ROCm/HIP: if it says "non" (no), the CPU build was installed.
 
-**Si `doctor` échoue, on s'arrête là et on corrige avant d'aller plus loin.**
+**If `doctor` fails, stop there and fix it before going further.**
 
-## 4. Les modèles
+## 4. The models
 
-| Modèle | Accès | Commande |
+| Model | Access | Command |
 |---|---|---|
-| **DINOv2** ViT-B/14 (registres) | libre, Apache 2.0 | `--encoder dinov2_vitb14_reg` |
-| **DINOv3** ViT-B/16 (principal) | licence Meta, **validée à la main** | `--encoder dinov3_vitb16` (défaut) |
+| **DINOv3** ViT-B/16 (main, "form") | Meta licence, **approved by hand** | `--encoder dinov3_vitb16` (default) |
+| **DINOv3** "touch" space | same weights | `--encoder dinov3_vitb16_texture` |
+| **SigLIP 2** So400m ("subject", text search) | open, Apache 2.0 | `--encoder siglip2_so400m` |
+| Colour space (CIELAB) | no model, no GPU | `--encoder color_lab` |
+| **DINOv2** ViT-B/14 (registers) | open, Apache 2.0 | `--encoder dinov2_vitb14_reg` |
 
-Les poids se téléchargent tout seuls au premier `embed`, dans le cache Hugging Face
-(`%USERPROFILE%\.cache\huggingface`), jamais dans le dépôt.
+The weights are downloaded automatically at the first `embed`, into the Hugging Face cache
+(`%USERPROFILE%\.cache\huggingface`), never into the repository.
 
-Pour DINOv3 :
-1. Sur https://huggingface.co/facebook/dinov3-vitb16-pretrain-lvd1689m, accepter la
-   licence, puis **attendre la validation de Meta** (e-mail de Hugging Face).
-   Chaque taille (S, B, L) a sa propre demande.
-2. Se connecter (jeton « read » créé dans les réglages Hugging Face) :
+For DINOv3:
+1. On https://huggingface.co/facebook/dinov3-vitb16-pretrain-lvd1689m, accept the licence,
+   then **wait for Meta's approval** (email from Hugging Face). Each size (S, B, L) has its
+   own request.
+2. Log in (a "read" token created in your Hugging Face settings):
 
 ```powershell
 hf auth login
 ```
 
-**Secours, format Meta :** le README du dépôt `facebookresearch/dinov3` renvoie vers un
-formulaire de Meta qui envoie des liens `.pth` par e-mail. Cloner le dépôt dans
-`vendor\dinov3`, placer le fichier dans `weights\`, puis
-`pixplot embed --weights weights\dinov3_vitb16.pth`. `vendor/` et `weights/` sont exclus de
-git : les poids ne doivent jamais être publiés.
+**Fallback, Meta format:** the README of the `facebookresearch/dinov3` repository points to
+a Meta form that emails `.pth` links. Clone the repository into `vendor\dinov3`, put the
+file in `weights\`, then `pixplot embed --weights weights\dinov3_vitb16.pth`. `vendor/` and
+`weights/` are excluded from git: the weights must never be published.
 
-## 5. Premier essai : 1 000 images
+## 5. First trial: 1,000 images
 
-Gardez de préférence les images et le dossier `data\` sur un SSD.
+Keep the images and the `data\` folder on an SSD if possible.
 
 ```powershell
-pixplot ingest "D:\MesImages"
-pixplot embed --encoder dinov2_vitb14_reg --limit 1000 --batch-size 16
-pixplot similar 1 --html planche.html
+pixplot ingest "D:\MyImages"
+pixplot embed --limit 1000 --batch-size 16
+pixplot similar 1 --html sheet.html
 pixplot status
 ```
 
-Puis, une fois DINOv3 validé :
+Note from the `embed` output: **images/s** and **peak VRAM**. These are the figures that
+let you estimate the time for 100,000 to 500,000 works (on the RX 7900 GRE: DINOv3 B/16
+at 448 px ≈ 97 img/s, SigLIP 2 ≈ 73 img/s).
 
-```powershell
-pixplot embed --limit 1000 --batch-size 16
-```
+If GPU memory overflows: `--batch-size 8`, or `--input-size 224`.
+An interrupted `embed` (Ctrl+C, crash) resumes where it stopped.
 
-Notez dans le résultat de `embed` : **images/s** et **VRAM maximale**. Ce sont les
-chiffres qui permettent d'estimer le temps pour 100 000 à 500 000 œuvres.
+## 6. Resolution: 448 or 224?
 
-Si la mémoire GPU déborde : `--batch-size 8`, ou `--input-size 224`.
-Un `embed` interrompu (Ctrl+C, plantage) reprend là où il s'était arrêté.
+By default, works are analysed at 448 px (better details), which takes about 2.5 times
+longer than 224 px. On WikiArt, the benchmark gives +3 points on artist at 448 px. To check
+on your own corpus: `pixplot bench`.
 
-## 6. Résolution : 448 ou 224 ?
+## 7. Fallback: WSL2
 
-Par défaut, les œuvres sont analysées à 448 px (meilleurs détails), ce qui coûte environ
-2,5 fois plus de temps qu'à 224 px. Sur WikiArt, le banc d'essai donne +3 points sur l'artiste
-à 448 px. Pour le vérifier sur votre propre corpus : `pixplot bench`.
+If the card is not recognised on Windows:
 
-## 7. Secours : WSL2
-
-Si la carte n'est pas reconnue sous Windows :
-
-1. `wsl --install -d Ubuntu-24.04` (PowerShell administrateur).
-2. Avec 16 Go de RAM, limiter WSL dans `C:\Users\<vous>\.wslconfig` :
+1. `wsl --install -d Ubuntu-24.04` (administrator PowerShell).
+2. With 16 GB of RAM, limit WSL in `C:\Users\<you>\.wslconfig`:
    ```ini
    [wsl2]
    memory=9GB
    swap=16GB
    ```
-   puis `wsl --shutdown`.
-3. Installer ROCm pour WSL et les roues PyTorch d'AMD **selon la doc AMD, section WSL**
-   (elle inclut une étape propre à WSL sur la bibliothèque `libhsa-runtime64`).
-   Vérifier `rocminfo | grep gfx` → **gfx1100**.
-4. Cloner le projet côté Linux (`~/pixplot-v2`), créer le venv, `pip install -e ".[dev,ml]"`,
-   `pixplot doctor`.
-5. Sous WSL, lire des images sur `/mnt/c` ou `/mnt/d` est lent : copier le corpus et
-   garder `data/` dans le système de fichiers Linux.
+   then `wsl --shutdown`.
+3. Install ROCm for WSL and AMD's PyTorch wheels **following AMD's documentation, WSL
+   section** (it includes a WSL-specific step about the `libhsa-runtime64` library).
+   Check `rocminfo | grep gfx` → **gfx1100**.
+4. Clone the project on the Linux side (`~/pixplot-v2`), create the venv,
+   `pip install -e ".[dev,ml]"`, `pixplot doctor`.
+5. Under WSL, reading images from `/mnt/c` or `/mnt/d` is slow: copy the corpus and keep
+   `data/` in the Linux file system.
 
-Dernier recours : le CPU, avec `--input-size 224`.
+Last resort: the CPU, with `--input-size 224`.
