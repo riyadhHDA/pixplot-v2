@@ -14,6 +14,11 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.10.2 — 16/11/2026 · Site du projet
+
+- Site de présentation en anglais et en français (https://riyadhhda.github.io/pixplot-v2/), publié sur GitHub Pages par une
+  GitHub Action à chaque modification de `site/` ; aperçu local : `bash scripts/build_site.sh`.
+
 ## 0.10.1 — 16/11/2026 · Feuille de route
 
 - `ROADMAP.fr.md` / `ROADMAP.md` : les étapes 0.11 à 0.15 (groupes Leiden, désaccords entre regards,

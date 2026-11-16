@@ -22,3 +22,6 @@ web/dist/
 
 # Configuration MCP locale (chemins propres à ce PC) — modèle dans docs/MCP.md
 /.mcp.json
+
+# Site assemblé localement (scripts/build_site.sh)
+/_site/

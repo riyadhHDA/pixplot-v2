@@ -3,7 +3,7 @@
 </p>
 
 <p align="center">
-  <b>English</b> · <a href="README.fr.md">Français</a>
+  <b>English</b> · <a href="https://riyadhhda.github.io/pixplot-v2/"><b>Website</b></a> · <a href="README.fr.md">Français</a>
 </p>
 
 <p align="center">

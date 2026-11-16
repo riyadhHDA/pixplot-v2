@@ -3,4 +3,4 @@
 Voir ARCHITECTURE.md à la racine du projet.
 """
 
-__version__ = "0.10.1"
+__version__ = "0.10.2"

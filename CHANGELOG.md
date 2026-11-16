@@ -14,6 +14,11 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.10.2 — 2026-11-16 · Project website
+
+- Presentation website in English and French (https://riyadhhda.github.io/pixplot-v2/), published on GitHub Pages by a GitHub
+  Action whenever `site/` changes; local preview: `bash scripts/build_site.sh`.
+
 ## 0.10.1 — 2026-11-16 · Roadmap
 
 - `ROADMAP.md` / `ROADMAP.fr.md`: steps 0.11 to 0.15 (Leiden groups, disagreements between ways of
