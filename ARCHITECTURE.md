@@ -413,3 +413,51 @@ window (group panel collapsible, panels overlaid below 1,100 px), right panel wi
 a "Back" button to the list it was opened from, welcome screen on first visit, help (`?`) and
 keyboard shortcuts (`/` search, `G` groups, `C` compare, `N` notebook, `V` labels to check, `0`
 overview, `Esc` close). Checked at 1,920, 1,536, 1,366 and 1,024 px wide.
+
+## 14. Pair benchmark: which way of seeing finds which kind of resemblance? (16/11/2026)
+
+Label scores (§ 11) say whether neighbours share an artist or a style, not *why* two works
+look alike. `pixplot pairs` scores each way of seeing on typed pairs: same subject but a
+different composition, same composition but a different subject, same artist but a
+different handling, different artists but comparable handling, same motif across periods,
+same palette across traditions, documented filiation, and a control (nothing in common).
+For each pair, in both directions, the exact rank of the twin among the whole corpus is
+computed: R@10, R@100, median rank and **percentile** (share of the corpus farther away
+than the twin; 0.5 = chance).
+
+Two origins, always reported separately: pairs **annotated** by the art historian (the
+"Annoter" button in the Atlas comparator, or `pixplot pairs add`, with a source and a
+validated / proposed / rejected status), and pairs **drawn from metadata**
+(`pixplot pairs generate`), numerous but coarse. File: `<data>/bench/pairs.csv`.
+
+First result on WikiArt 81k, metadata pairs (percentile; 300 pairs per type, 250 for
+handling, spread evenly over five styles):
+
+| type | form | subject | colour | touch |
+|---|---|---|---|---|
+| same subject (genre), other artists and styles | 0.725 | **0.726** | 0.517 | 0.622 |
+| same artist, other style | 0.691 | **0.790** | 0.596 | 0.660 |
+| same handling style, other artists and genres | 0.793 | **0.831** | 0.625 | 0.803 |
+| — Fauvism | 0.635 | 0.682 | 0.702 | **0.818** |
+| — Pointillism | 0.735 | **0.847** | 0.671 | 0.819 |
+| — Impressionism | 0.639 | **0.656** | 0.477 | 0.541 |
+| control | 0.456 | 0.450 | 0.468 | 0.447 |
+
+Reading: SigLIP 2 wins almost everywhere, but it learnt from web captions that name
+styles and artists (and may have seen WikiArt): it recognises a label more than it sees a
+handling. Touch wins clearly where the handling is striking (Fauvism) and fails on a style
+as broad as Impressionism. Form barely separates "same subject" from the rest: a WikiArt
+genre is too loose a category. Hence the next step: **annotated pairs** (filiations
+described by Honour and Fleming, review in the Atlas), the only way to test composition
+and palette, before adding new models (STELLAR, PE-Spatial).
+
+**First annotated pairs** (11 pairs, "proposed" status, to be validated in the Atlas; 4
+documented by Honour and Fleming, pp. 671, 672, 709 and 772, the others from outside the
+book). Exact copies and borrowed compositions are found at rank 1–2 by both form and
+subject (Raphael ← Perugino *Marriage of the Virgin*, Van Gogh ← Millet *The Sower*,
+Manet ← Goya *Maximilian*); as soon as the artist transforms the model (Picasso ← El
+Greco, Picasso ← Delacroix *Women of Algiers*, Van Gogh's fragment after Rembrandt's
+*Lazarus*), no way of seeing follows it. Form alone finds Manet's quotation of the
+*Pastoral Concert* from the *Déjeuner* (rank 8). Colour finds no filiation: a copy changes
+its palette. This is exactly what a new composition model (STELLAR) should be tested on.
+See the French version for the full rank table.

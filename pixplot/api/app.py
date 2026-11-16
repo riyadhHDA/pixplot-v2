@@ -40,6 +40,15 @@ class NoteIn(BaseModel):
     context: dict = Field(default_factory=dict)
 
 
+class PairIn(BaseModel):
+    a: int
+    b: int
+    type: str = Field(..., max_length=40)
+    status: str = Field("validée", max_length=20)
+    source: str = Field("", max_length=500)
+    note: str = Field("", max_length=5000)
+
+
 class NotePatch(BaseModel):
     title: str | None = Field(None, max_length=300)
     note: str | None = Field(None, max_length=20000)
@@ -168,6 +177,32 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
         md = notebook.to_markdown(lambda i: data.label(i) if i in data.row_of else f"Œuvre {i}")
         return Response(md, media_type="text/markdown; charset=utf-8",
                         headers={"Content-Disposition": 'attachment; filename="carnet-pixplot.md"'})
+
+    # ------------------------------------------------------------- paires du banc d'essai
+    from ..analysis import pairbench
+
+    pairs_file = pairbench.pairs_path(data.settings)
+
+    @app.get("/api/pairs")
+    def pairs_list(ids: str = ""):
+        wanted = {int(x) for x in ids.split(",") if x.strip().isdigit()}
+        pairs = [p for p in pairbench.load_pairs(pairs_file) if p.origin == "annotée"
+                 and (not wanted or (p.a in wanted and p.b in wanted))]
+        return {"types": [{"key": k, "label": v[0], "expected": v[1], "question": v[2]}
+                          for k, v in pairbench.TYPES.items() if k != "temoin"],
+                "statuses": list(pairbench.STATUSES),
+                "pairs": [p.__dict__ for p in pairs]}
+
+    @app.post("/api/pairs")
+    def pairs_add(pair: PairIn):
+        if pair.a not in data.row_of or pair.b not in data.row_of:
+            raise HTTPException(404, "Œuvre absente de cette analyse")
+        try:
+            p = pairbench.add_pair(pairs_file, pairbench.Pair(pair.a, pair.b, pair.type, "annotée",
+                                                              pair.status, pair.source, pair.note))
+        except ValueError as exc:
+            raise HTTPException(400, str(exc))
+        return p.__dict__
 
     # ------------------------------------------------------------- étiquettes à vérifier
     @app.get("/api/suspects")

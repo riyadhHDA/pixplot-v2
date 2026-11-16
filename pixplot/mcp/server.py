@@ -67,12 +67,15 @@ def _font(size: int):
     return ImageFont.load_default()
 
 
+from .. import __version__
+
+
 def create_server(data: AtlasData, engines: SearchEngines | None = None):
     from mcp.server.mcpserver import Image, MCPServer
 
     engines = engines or SearchEngines(data)
     server = MCPServer(name="pixplot", title="PixPlot v2", instructions=INSTRUCTIONS,
-                       version="0.1.0", log_level="WARNING")
+                       version=__version__, log_level="WARNING")
 
     def check(artwork_id: int) -> int:
         artwork_id = int(artwork_id)

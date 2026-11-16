@@ -8,6 +8,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="Licence : GPL-3.0" src="https://img.shields.io/badge/licence-GPL--3.0-e0b040"></a>
+  <a href="https://github.com/riyadhHDA/pixplot-v2/releases"><img alt="Version" src="https://img.shields.io/github/v/release/riyadhHDA/pixplot-v2?label=version&color=e0b040"></a>
   <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776ab">
   <img alt="100 % local" src="https://img.shields.io/badge/100%25-local-2c2c31">
   <img alt="GPU : AMD ROCm ou CPU" src="https://img.shields.io/badge/GPU-AMD%20ROCm%20%7C%20CPU-9b978e">
@@ -111,6 +112,7 @@ pixplot search-text "Annonciation dans un jardin"
 pixplot similar 42 --html planche.html  # œuvres les plus proches, en planche HTML
 pixplot audit                           # audit à l'aveugle face aux étiquettes
 pixplot bench                           # comparer des runs (étiquettes, paires connues)
+pixplot pairs generate | bench          # banc d'essai par paires : quel regard pour quelle ressemblance
 pixplot pack --text "Annonciation" -k 20 --question "…"   # Research Pack (.zip)
 pixplot mcp                             # serveur MCP : voir docs/MCP.fr.md
 pixplot status
@@ -122,6 +124,7 @@ pixplot status
 - [ARCHITECTURE.fr.md](ARCHITECTURE.fr.md) : conception, couches, feuille de route, bancs d'essai et résultats ci-dessus ([English](ARCHITECTURE.md))
 - [docs/INSTALL_GPU.fr.md](docs/INSTALL_GPU.fr.md) : GPU sous Windows 11 (AMD ROCm), secours WSL2, modèles ([English](docs/INSTALL_GPU.md))
 - [docs/MCP.fr.md](docs/MCP.fr.md) : brancher Claude ou un autre LLM ([English](docs/MCP.md))
+- [CHANGELOG.fr.md](CHANGELOG.fr.md) : historique des versions. « v2 » est le nom du projet ; les versions du logiciel vont de 0.1 à 0.10 et suivent le versionnage sémantique ([English](CHANGELOG.md))
 
 Les commentaires du code et l'interface sont en français ; la documentation existe dans les deux langues.
 

@@ -8,6 +8,7 @@
 
 <p align="center">
   <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-e0b040"></a>
+  <a href="https://github.com/riyadhHDA/pixplot-v2/releases"><img alt="Version" src="https://img.shields.io/github/v/release/riyadhHDA/pixplot-v2?label=version&color=e0b040"></a>
   <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776ab">
   <img alt="Runs locally" src="https://img.shields.io/badge/runs-100%25%20local-2c2c31">
   <img alt="GPU: AMD ROCm or CPU" src="https://img.shields.io/badge/GPU-AMD%20ROCm%20%7C%20CPU-9b978e">
@@ -108,6 +109,7 @@ pixplot search-text "Annunciation in a garden"
 pixplot similar 42 --html sheet.html    # nearest works as an HTML contact sheet
 pixplot audit                           # blind audit against the labels
 pixplot bench                           # compare runs (labels, known pairs)
+pixplot pairs generate | bench          # pair benchmark: which way of seeing finds which resemblance
 pixplot pack --text "Annunciation" -k 20 --question "…"   # Research Pack (.zip)
 pixplot mcp                             # MCP server: see docs/MCP.md
 pixplot status
@@ -119,6 +121,7 @@ pixplot status
 - [ARCHITECTURE.md](ARCHITECTURE.md): design, layers, roadmap, benchmarks and the findings above ([français](ARCHITECTURE.fr.md))
 - [docs/INSTALL_GPU.md](docs/INSTALL_GPU.md): GPU setup on Windows 11 (AMD ROCm), WSL2 fallback, models ([français](docs/INSTALL_GPU.fr.md))
 - [docs/MCP.md](docs/MCP.md): connecting Claude or another LLM ([français](docs/MCP.fr.md))
+- [CHANGELOG.md](CHANGELOG.md): version history. "v2" is the project's name; software versions run from 0.1 to 0.10 and follow semantic versioning ([français](CHANGELOG.fr.md))
 
 The code comments and the interface are in French; the documentation is in both languages.
 

@@ -428,3 +428,65 @@ sous 1 100 px), panneau de droite avec un titre et un bouton « Retour » vers l
 l'on vient, écran d'accueil à la première visite, aide (`?`) et raccourcis clavier (`/`
 chercher, `G` groupes, `C` comparer, `N` carnet, `V` à vérifier, `0` vue d'ensemble, `Échap`
 fermer). Vérifié à 1 920, 1 536, 1 366 et 1 024 px de large.
+
+## 14. Banc d'essai par paires : quel regard pour quelle ressemblance ? (16/11/2026)
+
+Les scores par étiquette (§ 11) disent si les voisines partagent l'artiste ou le style, pas
+*pourquoi* deux œuvres se ressemblent. `pixplot pairs` mesure chaque regard sur des paires
+typées : même sujet mais composition différente, même composition mais sujet différent,
+même artiste mais facture différente, artistes différents mais facture comparable, même
+motif à des époques différentes, même palette dans des traditions différentes, filiation
+attestée, et un témoin (rien en commun). Pour chaque paire, dans les deux sens, on calcule
+le rang exact de l'œuvre jumelle parmi tout le corpus : R@10, R@100, rang médian et
+**centile** (part du corpus plus éloignée que la jumelle ; 0,5 = hasard).
+
+Deux origines, toujours séparées dans le rapport : les paires **annotées** par l'historien
+(bouton « Annoter » du comparateur de l'Atlas, ou `pixplot pairs add`, avec leur source et
+un statut validée / proposée / rejetée), et des paires **tirées des métadonnées**
+(`pixplot pairs generate`), nombreuses mais grossières. Fichier : `<données>/bench/pairs.csv`.
+
+Premier résultat sur WikiArt 81k, paires tirées des métadonnées (centile, 300 paires par
+type, 250 pour la facture, réparties à parts égales entre cinq styles) :
+
+| type | forme | sujet | couleur | touche |
+|---|---|---|---|---|
+| même sujet (genre), autres artistes et styles | 0,725 | **0,726** | 0,517 | 0,622 |
+| même artiste, autre style | 0,691 | **0,790** | 0,596 | 0,660 |
+| même style de facture, autres artistes et genres | 0,793 | **0,831** | 0,625 | 0,803 |
+| — dont Fauvisme | 0,635 | 0,682 | 0,702 | **0,818** |
+| — dont Pointillisme | 0,735 | **0,847** | 0,671 | 0,819 |
+| — dont Impressionnisme | 0,639 | **0,656** | 0,477 | 0,541 |
+| témoin | 0,456 | 0,450 | 0,468 | 0,447 |
+
+Lecture : SigLIP 2 l'emporte presque partout, mais il a appris sur le web des légendes
+qui nomment styles et artistes (et a peut-être vu WikiArt) : il reconnaît une étiquette
+plus qu'il ne voit une facture. La touche gagne nettement là où la facture est
+spectaculaire (Fauvisme) et échoue sur un style aussi large que l'Impressionnisme. Le
+regard « forme » ne distingue presque pas « même sujet » du reste : un genre WikiArt est
+une catégorie trop lâche. D'où la suite : des **paires annotées** (filiations décrites par
+Honour et Fleming, relecture dans l'Atlas), seules capables de tester la composition et
+la palette, avant d'ajouter de nouveaux modèles (STELLAR, PE-Spatial).
+
+**Premières paires annotées** (11 paires, statut « proposée », à valider dans l'Atlas ; 4
+attestées par Honour et Fleming, p. 671, 672, 709 et 772, les autres hors du livre). Rang
+de la jumelle dans chaque sens, parmi 80 716 œuvres :
+
+| paire | forme | sujet | couleur | touche |
+|---|---|---|---|---|
+| Raphaël ← Pérugin, *Mariage de la Vierge* | 2 / 1 | 1 / 1 | 9 656 | 8 / 19 |
+| Van Gogh ← Millet, *Le Semeur* | 2 / 1 | 1 / 1 | 21 160 | 251 / 728 |
+| Manet ← Goya, *Maximilien* / *Tres de mayo* (p. 672) | 2 / 68 | 2 / 12 | 41 279 | 391 / 998 |
+| Manet ← Titien, *Olympia* / *Vénus d'Urbin* (p. 709) | 4 / 23 | 4 / 58 | 4 075 | 568 / 588 |
+| Manet ← *Concert champêtre* (p. 671) | 8 / 796 | 155 / 130 | 14 153 | 1 070 / 2 062 |
+| Monet ← Manet, *Déjeuner sur l'herbe* | 84 / 435 | 22 / 3 | 3 328 | 124 / 18 |
+| Picasso ← El Greco, *Demoiselles* / *Vision de saint Jean* (p. 772) | 418 / 2 144 | 671 / 96 | 74 329 | 2 106 / 1 497 |
+| Picasso ← Delacroix, *Femmes d'Alger* | 20 944 / 49 444 | 2 076 / 766 | 32 508 | 4 308 / 7 472 |
+| Van Gogh ← Rembrandt, *Lazare* (fragment) | 1 856 / 3 645 | 591 / 1 814 | 77 018 | 67 412 |
+| Pérugin, *Remise des clés* / *Mariage de la Vierge* (même composition) | 2 / 2 | 2 / 21 | 47 111 | 103 / 62 |
+
+Les copies et reprises de composition sont retrouvées au tout premier rang par la forme
+comme par le sujet ; dès que l'artiste transforme son modèle (Picasso, le fragment de
+Lazare), aucun regard ne suit. La forme est le seul regard qui retrouve la citation de
+Manet d'après le *Concert champêtre* depuis le Déjeuner (rang 8). La couleur ne retrouve
+aucune filiation : une copie change de palette. C'est exactement ce que doit tester un
+nouveau modèle de composition (STELLAR).

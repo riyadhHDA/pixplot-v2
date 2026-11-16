@@ -152,7 +152,10 @@ class AtlasData:
 
     # ------------------------------------------------------------------ réponses
     def info(self) -> dict:
+        from .. import __version__
+
         return {
+            "version": __version__,
             "analysis": self.analysis.id,
             "features": self.features.id,
             "encoder": self.features.manifest["params"].get("encoder"),

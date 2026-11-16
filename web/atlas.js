@@ -775,13 +775,32 @@
     for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) pairs.push([a, b]);
     const spaces = res.spaces.filter((s) => res.similarity[s.key]);
     const head = spaces.map((s) => `<th title="${esc(s.about)}">${esc(SPACE_SHORT[s.key] || s.label)}</th>`).join("");
-    const body = pairs.map(([a, b]) => `<tr><td>${a + 1} ↔ ${b + 1}</td>${spaces.map((s) => {
-      const v = res.similarity[s.key][a][b];
-      return v == null ? "<td>—</td>" : `<td><span class="bar" style="--v:${Math.max(0, v)}"></span>${v.toFixed(3)}</td>`;
-    }).join("")}</tr>`).join("");
+    let ref = { types: [], pairs: [] };
+    try { ref = await getJSON(`/api/pairs?ids=${res.ids.join(",")}`); } catch (_) { /* banc d'essai indisponible */ }
+    const typeLabel = Object.fromEntries(ref.types.map((t) => [t.key, t.label]));
+    const annotations = (a, b) => ref.pairs.filter((p) =>
+      (p.a === res.ids[a] && p.b === res.ids[b]) || (p.a === res.ids[b] && p.b === res.ids[a]));
+    const body = pairs.map(([a, b]) => {
+      const tags = annotations(a, b).map((p) =>
+        `<span class="pair-tag ${p.status === "validée" ? "ok" : ""}" title="${esc([p.status, p.source, p.note].filter(Boolean).join(" · "))}">${esc(typeLabel[p.type] || p.type)}</span>`).join("");
+      return `<tr><td>${a + 1} ↔ ${b + 1}</td>${spaces.map((s) => {
+        const v = res.similarity[s.key][a][b];
+        return v == null ? "<td>—</td>" : `<td><span class="bar" style="--v:${Math.max(0, v)}"></span>${v.toFixed(3)}</td>`;
+      }).join("")}<td class="pair-cell">${tags}${ref.types.length ? `<button class="chip" data-annotate="${a},${b}">Annoter</button>` : ""}</td></tr>`;
+    }).join("");
     $("compare-body").innerHTML = `<div class="cmp-row" style="--n:${n}">${cols}</div>
       <div class="cmp-table"><h3>Similarités (cosinus) selon chaque regard</h3>
-        <table><thead><tr><th>paire</th>${head}</tr></thead><tbody>${body}</tbody></table>
+        <table><thead><tr><th>paire</th>${head}<th title="Paires de référence du banc d'essai (pixplot pairs bench)">référence</th></tr></thead><tbody>${body}</tbody></table>
+        <form class="pair-form" id="pair-form" hidden>
+          <h4>Paire de référence <span id="pair-which"></span></h4>
+          <label>Type de ressemblance <select name="type">${ref.types.map((t) =>
+            `<option value="${t.key}" title="${esc(t.question)}">${esc(t.label)}</option>`).join("")}</select></label>
+          <label>Statut <select name="status">${(ref.statuses || []).map((s) => `<option>${esc(s)}</option>`).join("")}</select></label>
+          <label>Source <input name="source" placeholder="ex. Honour et Fleming, p. 670" maxlength="500"></label>
+          <label>Note <input name="note" placeholder="ce que vous voyez de commun" maxlength="5000"></label>
+          <div class="pair-btns"><button type="submit" class="chip">Enregistrer</button><button type="button" class="chip" id="pair-cancel">Annuler</button></div>
+          <p class="prov">Les paires validées servent au banc d'essai : <code>pixplot pairs bench</code> mesure quel regard les retrouve.</p>
+        </form>
         <p class="prov">Chaque colonne répond à une question différente : formes et composition (DINOv3), sujet et style tels qu'on
         les décrit (SigLIP 2), palette (couleur), facture (touche). Les valeurs ne sont pas des probabilités et ne se comparent
         qu'à l'intérieur d'une même colonne.</p></div>`;
@@ -791,6 +810,28 @@
     $("compare-body").querySelectorAll("[data-remove]").forEach((b) => b.addEventListener("click", () => {
       toggleCompare(Number(b.dataset.remove)); if (state.compare.length >= 2) openCompare(); else $("compare").hidden = true;
     }));
+    const form = $("pair-form");
+    if (!form) return;
+    let current = null;
+    $("compare-body").querySelectorAll("[data-annotate]").forEach((btn) => btn.addEventListener("click", () => {
+      const [a, b] = btn.dataset.annotate.split(",").map(Number);
+      current = [res.ids[a], res.ids[b]];
+      $("pair-which").textContent = `${a + 1} ↔ ${b + 1} (n° ${current[0]} et n° ${current[1]})`;
+      form.hidden = false; form.querySelector("select").focus();
+    }));
+    $("pair-cancel").addEventListener("click", () => { form.hidden = true; });
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const f = new FormData(form);
+      try {
+        const r = await fetch("/api/pairs", { method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ a: current[0], b: current[1], type: f.get("type"), status: f.get("status"),
+                                 source: f.get("source") || "", note: f.get("note") || "" }) });
+        if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+        toast("Paire enregistrée pour le banc d'essai");
+        openCompare();
+      } catch (err) { toast(`Échec : ${err.message}`); }
+    });
   }
 
   // ------------------------------------------------------------------ carnet de recherche

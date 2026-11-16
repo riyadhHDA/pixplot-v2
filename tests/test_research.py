@@ -194,3 +194,77 @@ def test_world_basemap_is_vendored():
 
     topo = json.loads((Path(__file__).parents[1] / "web" / "vendor" / "world-110m.json").read_text(encoding="utf-8"))
     assert topo["type"] == "Topology" and {"land", "countries"} <= set(topo["objects"]) and topo["transform"]
+
+
+def test_pair_ranks_are_exact():
+    from pixplot.analysis.pairbench import Pair, ranks_in_space, score_pairs
+
+    rng = np.random.default_rng(1)
+    X = rng.normal(size=(50, 8)).astype(np.float32)
+    X /= np.linalg.norm(X, axis=1, keepdims=True)
+    S = X @ X.T
+    np.fill_diagonal(S, -np.inf)
+    a, b = 3, 17
+    expected = int((S[a] > S[a, b]).sum()) + 1
+    assert ranks_in_space(X, np.array([a]), np.array([b]))[0] == expected
+    # une paire identique à elle-même près : rang 1, centile 1
+    X[b] = X[a]
+    res, detail = score_pairs([Pair(100 + a, 100 + b, "filiation")], {"forme": (X, {100 + i: i for i in range(50)})})
+    assert res[0].r10 == 1.0 and res[0].median_rank == 1 and res[0].centile == pytest.approx(1.0)
+    assert detail[(100 + a, 100 + b, "filiation")]["forme"] == (1, 1)
+
+
+def test_pairs_file_and_metadata_pairs(tmp_path):
+    from pixplot.analysis.pairbench import Pair, add_pair, load_pairs, metadata_pairs
+
+    path = tmp_path / "pairs.csv"
+    add_pair(path, Pair(1, 2, "meme_sujet", source="Honour et Fleming, p. 670"))
+    add_pair(path, Pair(2, 1, "meme_sujet", status="proposée"))          # même paire, ordre inversé
+    add_pair(path, Pair(1, 2, "meme_palette"))
+    pairs = load_pairs(path)
+    assert len(pairs) == 2 and {p.status for p in pairs if p.type == "meme_sujet"} == {"proposée"}
+    with pytest.raises(ValueError):
+        add_pair(path, Pair(1, 2, "inconnu"))
+    with pytest.raises(ValueError):
+        add_pair(path, Pair(3, 3, "meme_sujet"))
+
+    meta = {}
+    for n in range(400):
+        meta[n] = {"artist": f"a{n % 20}", "style": ["Pointillism", "Fauvism", "Realism", "Baroque"][n % 4],
+                   "genre": ["portrait", "landscape", "still_life"][n % 3]}
+    out = metadata_pairs(meta, n=30, seed=0)
+    by = lambda t: [p for p in out if p.type == t]
+    assert by("meme_sujet") and all(meta[p.a]["genre"] == meta[p.b]["genre"] and meta[p.a]["style"] != meta[p.b]["style"]
+                                     and meta[p.a]["artist"] != meta[p.b]["artist"] for p in by("meme_sujet"))
+    assert all(meta[p.a]["artist"] == meta[p.b]["artist"] and meta[p.a]["style"] != meta[p.b]["style"]
+               for p in by("meme_main"))
+    fac = by("meme_facture")
+    assert fac and all(meta[p.a]["style"] == meta[p.b]["style"] == p.note and meta[p.a]["genre"] != meta[p.b]["genre"]
+                       for p in fac)
+    assert {p.note for p in fac} == {"Pointillism", "Fauvism"}
+    assert all(p.origin == "métadonnées" for p in out)
+
+
+def test_pairs_api(env):
+    s, data, c = env
+    a, b = int(data.ids[0]), int(data.ids[1])
+    r = c.get(f"/api/pairs?ids={a},{b}").json()
+    assert r["pairs"] == [] and "meme_facture" in [t["key"] for t in r["types"]]
+    assert c.post("/api/pairs", json={"a": a, "b": b, "type": "inconnu"}).status_code == 400
+    assert c.post("/api/pairs", json={"a": a, "b": 999999, "type": "meme_sujet"}).status_code == 404
+    p = c.post("/api/pairs", json={"a": a, "b": b, "type": "meme_palette", "source": "essai"}).json()
+    assert p["origin"] == "annotée" and p["status"] == "validée"
+    assert [x["type"] for x in c.get(f"/api/pairs?ids={b},{a}").json()["pairs"]] == ["meme_palette"]
+
+
+def test_version_is_consistent():
+    import tomllib
+    from pathlib import Path
+
+    import pixplot
+
+    root = Path(__file__).parents[1]
+    project = tomllib.loads((root / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    assert project["version"] == pixplot.__version__
+    assert f"## {pixplot.__version__} " in (root / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert f"## {pixplot.__version__} " in (root / "CHANGELOG.fr.md").read_text(encoding="utf-8")

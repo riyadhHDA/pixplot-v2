@@ -498,6 +498,97 @@ def cmd_bench(args) -> int:
     return 0
 
 
+# --------------------------------------------------------------------------- paires
+def cmd_pairs(args) -> int:
+    import json
+    from pathlib import Path
+
+    from .analysis.pairbench import (TYPES, Pair, add_pair, load_pairs, load_space_matrix,
+                                     metadata_pairs, pairs_path, save_pairs, score_pairs)
+
+    s = get_settings(args.data)
+    path = pairs_path(s)
+    if args.action == "types":
+        for key, (label, expected, question) in TYPES.items():
+            print(f"{key:<17} {label}  (regard attendu : {expected or '—'})\n{'':<17} {question}")
+        return 0
+    if args.action == "add":
+        if len(args.ids) != 2 or not args.type:
+            raise SystemExit("Usage : pixplot pairs add A B --type TYPE [--source …] [--note …]")
+        p = add_pair(path, Pair(args.ids[0], args.ids[1], args.type, "annotée", args.status,
+                                args.source or "", args.note or ""))
+        print(f"Paire enregistrée : {p.a} ↔ {p.b} ({TYPES[p.type][0]}, {p.status}) → {path}")
+        return 0
+    if args.action == "list":
+        pairs = load_pairs(path)
+        counts: dict = {}
+        for p in pairs:
+            counts[(p.type, p.origin, p.status)] = counts.get((p.type, p.origin, p.status), 0) + 1
+        for (t, o, st), n in sorted(counts.items()):
+            print(f"{TYPES.get(t, (t,))[0]:<48} {o:<12} {st:<9} {n:>5}")
+        print(f"{len(pairs)} paires · {path}")
+        return 0
+
+    from .api.data import AtlasData
+
+    data = AtlasData.load(s, _analysis_arg(s, args.analysis))
+    ids = [int(i) for i in data.ids]
+    if args.action == "generate":
+        from .catalog import db
+        from .catalog.metadata import get_metadata
+
+        conn = db.connect(s.catalog_path)
+        meta = get_metadata(conn, ids)
+        conn.close()
+        kept = [p for p in load_pairs(path) if p.origin != "métadonnées"]
+        new = metadata_pairs(meta, n=args.n, seed=args.seed)
+        save_pairs(path, kept + new)
+        print(f"{len(new)} paires tirées des métadonnées (graine {args.seed}) ; "
+              f"{len(kept)} paires annotées conservées → {path}")
+        return 0
+
+    # bench
+    pairs = load_pairs(path)
+    if not pairs:
+        raise SystemExit("Aucune paire : `pixplot pairs generate` ou `pixplot pairs add`.")
+    keys = args.spaces.split(",") if args.spaces else list(data.spaces.runs)
+    results, detail = [], {}
+    for key in keys:
+        print(f"Regard « {key} » : chargement des vecteurs…", flush=True)
+        X, row = load_space_matrix(data.spaces, key, ids)
+        res, det = score_pairs(pairs, {key: (X, row)}, include_proposed=args.proposed)
+        results += res
+        for k, v in det.items():
+            detail.setdefault(k, {}).update(v)
+        del X
+    order = {k: n for n, k in enumerate(keys)}
+    print(f"\nBanc d'essai par paires · {data.analysis.id} · {len(ids)} œuvres")
+    print("centile : part du corpus plus éloignée que l'œuvre jumelle (0,5 = hasard, 1 = la plus proche)")
+    for origin in ("annotée", "métadonnées"):
+        rows = [r for r in results if r.origin == origin]
+        if not rows:
+            continue
+        print(f"\nPaires {'annotées' if origin == 'annotée' else 'tirées des métadonnées'}")
+        print(f"{'type':<44} {'regard':<9} {'n':>5} {'R@10':>6} {'R@100':>6} {'rang méd.':>9} {'centile':>8}")
+        for t in TYPES:
+            sub_rows = sorted((r for r in rows if r.type == t), key=lambda r: order.get(r.space, 99))
+            if not sub_rows:
+                continue
+            best = max(sub_rows, key=lambda r: r.centile).space
+            for r in sub_rows:
+                mark = " ◀" if r.space == best else ""
+                print(f"{TYPES[t][0][:44]:<44} {r.space:<9} {r.n:>5} {r.r10:>6.1%} {r.r100:>6.1%} "
+                      f"{r.median_rank:>9.0f} {r.centile:>8.3f}{mark}")
+    out = path.parent / f"pairs_report_{Path(data.analysis.path).name}.json"
+    out.write_text(json.dumps({
+        "analysis": data.analysis.id, "n_artworks": len(ids), "spaces": keys,
+        "results": [r.__dict__ for r in results],
+        "pairs": [{"a": a, "b": b, "type": t, "ranks": v} for (a, b, t), v in detail.items()],
+    }, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"\nRapport : {out}")
+    return 0
+
+
 # --------------------------------------------------------------------------- status
 def cmd_status(args) -> int:
     from .catalog import db
@@ -522,7 +613,10 @@ def cmd_status(args) -> int:
 
 # --------------------------------------------------------------------------- main
 def build_parser() -> argparse.ArgumentParser:
+    from . import __version__
+
     parser = argparse.ArgumentParser(prog="pixplot", description="PixPlot v2")
+    parser.add_argument("--version", action="version", version=f"PixPlot v2 {__version__}")
     parser.add_argument("--data", help="dossier de données (sinon PIXPLOT_DATA ou ./data)")
     sub = parser.add_subparsers(dest="command", required=True)
 
@@ -651,6 +745,20 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-k", type=int, default=10)
     p.add_argument("--keys", default="artist,style,genre")
     p.set_defaults(func=cmd_bench)
+
+    p = sub.add_parser("pairs", help="banc d'essai par paires : quel regard retrouve quelle ressemblance")
+    p.add_argument("action", choices=["types", "add", "list", "generate", "bench"])
+    p.add_argument("ids", nargs="*", type=int, help="pour add : les deux numéros d'œuvre")
+    p.add_argument("--type", help="type de ressemblance (voir `pixplot pairs types`)")
+    p.add_argument("--status", default="validée", choices=["validée", "proposée", "rejetée"])
+    p.add_argument("--source", help="référence (ex. « Honour et Fleming, p. 670 »)")
+    p.add_argument("--note")
+    p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
+    p.add_argument("--spaces", help="regards à mesurer, séparés par des virgules (défaut : tous)")
+    p.add_argument("--proposed", action="store_true", help="compter aussi les paires proposées")
+    p.add_argument("-n", type=int, default=300, help="pour generate : paires par type")
+    p.add_argument("--seed", type=int, default=0)
+    p.set_defaults(func=cmd_pairs)
 
     sub.add_parser("status", help="état du catalogue et des runs").set_defaults(func=cmd_status)
     sub.add_parser("runs", help="alias de status").set_defaults(func=cmd_status)
