@@ -211,6 +211,8 @@ Pixplot V2/
 6. ~~Serveur MCP + Research Pack~~ **fait**.
 7. ~~Comparateur, carnet de recherche, chronologie et géographie~~ **fait** (voir § 12).
 
+La suite (groupes Leiden, désaccords entre regards, recherche d'une zone par des mots, Iconclass, composition) est dans [ROADMAP.fr.md](ROADMAP.fr.md).
+
 ## 6. Leçons tirées de PixPlot v1 (0.0.1.1)
 
 | Problème du v1 | Réponse du v2 |

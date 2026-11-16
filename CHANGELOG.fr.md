@@ -14,6 +14,12 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.10.1 — 16/11/2026 · Feuille de route
+
+- `ROADMAP.fr.md` / `ROADMAP.md` : les étapes 0.11 à 0.15 (groupes Leiden, désaccords entre regards,
+  recherche d'une zone par des mots avec TIPSv2, noms Iconclass, composition), la condition de
+  réussite de chacune, ce qui est écarté et les conditions de la 1.0.
+
 ## 0.10.0 — 16/11/2026 · Banc d'essai par paires
 
 - `pixplot pairs` : mesure quel regard retrouve quelle *sorte* de ressemblance (même sujet,

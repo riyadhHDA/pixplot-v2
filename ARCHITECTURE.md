@@ -204,6 +204,8 @@ pixplot-v2/
 6. ~~MCP server + Research Pack~~ **done**.
 7. ~~Comparator, research notebook, timeline and geography~~ **done** (see § 12).
 
+What comes next (Leiden groups, disagreements between ways of seeing, searching a region with words, Iconclass, composition) is in [ROADMAP.md](ROADMAP.md).
+
 ## 6. Lessons from PixPlot v1 (0.0.1.1)
 
 | v1 problem | v2 answer |

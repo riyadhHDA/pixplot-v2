@@ -121,6 +121,7 @@ pixplot status
 - [ARCHITECTURE.md](ARCHITECTURE.md): design, layers, roadmap, benchmarks and the findings above ([français](ARCHITECTURE.fr.md))
 - [docs/INSTALL_GPU.md](docs/INSTALL_GPU.md): GPU setup on Windows 11 (AMD ROCm), WSL2 fallback, models ([français](docs/INSTALL_GPU.fr.md))
 - [docs/MCP.md](docs/MCP.md): connecting Claude or another LLM ([français](docs/MCP.fr.md))
+- [ROADMAP.md](ROADMAP.md): what comes next, in order, and what makes each step a success ([français](ROADMAP.fr.md))
 - [CHANGELOG.md](CHANGELOG.md): version history. "v2" is the project's name; software versions run from 0.1 to 0.10 and follow semantic versioning ([français](CHANGELOG.fr.md))
 
 The code comments and the interface are in French; the documentation is in both languages.
