@@ -132,6 +132,10 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
             map_cache["map"] = data.map_payload()
         return JSONResponse(map_cache["map"])
 
+    @app.get("/api/corpus")
+    def corpus():
+        return {"report": data.corpus_report(), "spaces": data.spaces.list()}
+
     @app.get("/api/disagreements")
     def disagreements_list(near: str, far: str, offset: int = Query(0, ge=0), limit: int = Query(40, ge=1, le=200)):
         out = data.disagreements_payload(near, far, offset, limit)

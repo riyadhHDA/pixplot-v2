@@ -15,6 +15,7 @@ import threading
 
 import numpy as np
 
+from ..analysis.critique import card
 from ..features.extract import OK
 from ..features.store import FeatureStore
 from ..index.faiss_index import GlobalIndex, find_index_for
@@ -74,7 +75,7 @@ class Spaces:
             enc = run.manifest["params"].get("encoder", "")
             _, label, about = describe_encoder(enc)
             out.append({"key": key, "label": label, "about": about, "encoder": enc,
-                        "features": run.id, "main": key == self.main})
+                        "features": run.id, "main": key == self.main, "card": card(key)})
         return out
 
     # ------------------------------------------------------------------ accès

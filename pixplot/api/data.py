@@ -16,7 +16,7 @@ import numpy as np
 
 from ..catalog import db
 from ..catalog.metadata import get_metadata
-from ..analysis import communities, disagreements
+from ..analysis import communities, critique, disagreements
 from ..analysis.naming import load_names
 from ..analysis.spacemaps import available_maps, load_space_map
 from ..analysis.suspects import load_suspects
@@ -176,6 +176,20 @@ class AtlasData:
             "analysis_params": self.analysis.manifest.get("params", {}),
         }
 
+    def corpus_report(self) -> dict:
+        """Bilan critique du corpus (voir ``analysis.critique``), mis en cache."""
+        if getattr(self, "_report", None) is None:
+            conn = self._conn(self.settings)
+            sources: dict = {}
+            for key, src, n in conn.execute("SELECT key, source, COUNT(*) FROM metadata GROUP BY key, source"):
+                sources.setdefault(key, Counter())[src or ""] += n
+            conn.close()
+            coords = self.coordinates()
+            places = sum(v is not None for v in coords[0]) if coords else 0
+            meta = {int(i): self.meta.get(int(i), {}) for i in self.ids}
+            self._report = critique.corpus_report(meta, sources, self.years(), places)
+        return self._report
+
     def annotated_pair_counts(self) -> dict[str, int]:
         from ..analysis.pairbench import load_pairs, pairs_path
 
@@ -305,6 +319,7 @@ class AtlasData:
             "width": row["width"], "height": row["height"], "format": row["format"],
             "metadata": self.meta.get(artwork_id, {}),
             "metadata_sources": sources,
+            "metadata_source_notes": {k: n for k, s in sources.items() if (n := critique.source_note(s))},
             "cluster": int(self.clusters[r]) + 1,
             "hdbscan": int(self.hdbscan[r]) if self.hdbscan is not None else None,
             "atypicality": round(float(self.atypicality[r]), 3),

@@ -446,6 +446,34 @@ def cmd_disagreements(args) -> int:
     return 0
 
 
+def cmd_corpus(args) -> int:
+    from .api.data import AtlasData
+
+    s = get_settings(args.data)
+    data = AtlasData.load(s, _analysis_arg(s, args.analysis))
+    r = data.corpus_report()
+    print(f"Corpus : {r['n']} œuvres ({data.analysis.id})\n")
+    print("Ce qui manque ou déséquilibre le corpus :")
+    for n in r["notes"]:
+        print(f"  - {n}")
+    print("\nÉtiquettes : couverture et source")
+    for k, c in r["coverage"].items():
+        src = c["sources"][0]["source"] if c["sources"] else "?"
+        print(f"  {k:<10} {c['share']:>6.0%}  {c['distinct']:>6} valeurs  source : {src}")
+        if c["sources"] and c["sources"][0]["note"]:
+            print(f"             {c['sources'][0]['note']}")
+    print("\nRegards : ce que chacun voit, et ses biais")
+    for sp in data.spaces.list():
+        cd = sp["card"]
+        print(f"\n  {sp['label']} — {cd['model']}")
+        print(f"    entraîné sur : {cd['trained_on']}")
+        print(f"    voit : {cd['sees']} · ne voit pas : {cd['blind_to']}")
+        for b in cd["biases"]:
+            print(f"    biais : {b}")
+        print(f"    mesuré : {cd['measured']}")
+    return 0
+
+
 def cmd_zonebench(args) -> int:
     import json
 
@@ -819,6 +847,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--centile", type=float, default=0.35, help="centile maximal dans le regard qui sépare")
     p.add_argument("--keep", type=int, default=300, help="paires gardées par couple de regards")
     p.set_defaults(func=cmd_disagreements)
+
+    p = sub.add_parser("corpus", help="bilan critique : ce qui manque au corpus, d'où viennent les étiquettes, ce que voit chaque regard")
+    p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
+    p.set_defaults(func=cmd_corpus)
 
     p = sub.add_parser("zonebench", help="chercher une zone avec des mots : banc d'essai RichArt")
     p.add_argument("--richart", default="data/richart", help="dossier RichArt (annotations/, data/test/)")

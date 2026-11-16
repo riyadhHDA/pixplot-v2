@@ -1,6 +1,6 @@
 # Roadmap
 
-**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-16 · Current version: **0.13.0**
+**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-16 · Current version: **0.13.1**
 
 What is done is in the [changelog](CHANGELOG.md). This document says what comes next, in
 which order, and what makes a step a success.
@@ -81,6 +81,15 @@ step becomes a minor version.
   step 0.12. Otherwise it is documented and dropped.
 
 ## Later, or to watch
+
+- **Entropy and complexity** (Sigaki, Perc and Ribeiro, PNAS 2018): an "order and complexity" way
+  of seeing computed without a GPU, and a possible axis for the timeline.
+- **ArtEmis** (CVPR 2021): 455,000 emotion annotations on WikiArt works; do the ways of seeing
+  capture the felt effect or only the subject?
+- **"Why do these two works look alike?"**: show, in the comparator, which regions of one answer
+  which regions of the other (an answer to the perceptual bias described by Wasielewski).
+- **Collection Space Navigator** (Ohm et al., 2023): multidimensional filters and selection
+  export for the Atlas.
 
 - **SAM 3**: precise segmentation of a motif, on demand on a selection. Meta licence to be
   accepted by the user; ROCm compatibility to check.

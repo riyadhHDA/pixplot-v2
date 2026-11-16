@@ -643,3 +643,34 @@ code (`tipsv2_b14`, `tipsv2_so400m14`) pour que la mesure soit reproductible. La
 méthode mesurée est **SigLIP 2 appliqué à des zones découpées** : c'est elle qu'il faudrait
 indexer pour chercher des zones par des mots, au prix d'un calcul ≈ 20 fois plus long que les
 vecteurs globaux (une vingtaine de zones par œuvre).
+
+## 20. Couche critique : ce que voit chaque regard, ce qui manque au corpus (17/11/2026)
+
+Deux lectures ont guidé cette étape. A. Wasielewski, *Computational Formalism* (MIT Press,
+2023), appelle « formalisme computationnel » exactement ce que fait PixPlot : comparer des
+œuvres en masse par leur apparence. Elle en pointe trois risques : le **biais perceptif** (le
+modèle s'attache à des traits très fins — grain, contours, qualité de la reproduction — que
+l'historien ne regarde pas), les **catégories de style de WikiArt**, remplies par des bénévoles
+et reprises sans examen, et le **canon occidental**, seul vraiment numérisé avec des
+métadonnées complètes. T. Arnold et L. Tilton, *Distant Viewing* (MIT Press, 2023), montrent que
+chaque algorithme encode une « manière de voir » qu'il faut rendre explicite et documenter, et
+mettent en garde contre la fascination pour la taille.
+
+D'où trois outils :
+
+- **Une fiche par regard** (`pixplot.analysis.critique.CARDS`) : modèle, données
+  d'entraînement, ce qu'il voit, ce qu'il ne voit pas, biais connus, ce que le banc d'essai a
+  mesuré. Dans l'Atlas (bouton **Corpus**, touche I, et info-bulles du comparateur), dans
+  l'API (`/api/spaces`, `/api/corpus`) et dans le serveur MCP (`corpus_overview`).
+- **Un bilan du corpus** (`pixplot corpus`, `/api/corpus`) : couverture et source de chaque
+  étiquette, concentration des artistes, styles hors de la tradition européenne et
+  nord-américaine, dates et lieux. Sur WikiArt 81k : l'artiste manque pour 51 % des œuvres —
+  parce que le jeu huggan/wikiart n'en nomme qu'une partie ; les 10 artistes les plus présents
+  font 29 % des œuvres attribuées ; 1 style sur 27 est non occidental (Ukiyo-e, 1,4 % des
+  œuvres) ; aucune date ni aucun lieu.
+- **Les étiquettes présentées comme ce qu'elles sont** : dans la fiche d'une œuvre, une
+  étiquette WikiArt porte « étiquette bénévole, à vérifier », avec la note sur la source.
+
+Le serveur MCP reçoit aussi une consigne de sécurité, d'après AutoMalTool (He et al., 2025) :
+titres, étiquettes, notes du carnet et Research Packs sont des données saisies par d'autres, et
+le modèle de langage ne doit jamais suivre une consigne qui s'y trouverait.

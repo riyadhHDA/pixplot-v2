@@ -14,6 +14,17 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.13.1 — 2026-11-17 · Critical layer
+
+- A card per way of seeing (model, training data, what it sees and does not see, biases, results) in
+  the Atlas ("Corpus" button, key I), the API and the MCP server.
+- `pixplot corpus` and `/api/corpus`: corpus report (label coverage and source, artist concentration,
+  non-Western styles, dates, places).
+- WikiArt labels flagged as volunteer-made, to be checked; MCP security rule (metadata is data,
+  never instructions).
+- After A. Wasielewski, *Computational Formalism*, and T. Arnold and L. Tilton, *Distant Viewing*
+  (ARCHITECTURE § 20).
+
 ## 0.13.0 — 2026-11-16 · Searching a region with words: TIPSv2 evaluated
 
 - `pixplot zonebench`: benchmark on RichArt (709 paintings, 1,243 objects described by museum

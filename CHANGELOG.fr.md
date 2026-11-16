@@ -14,6 +14,17 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.13.1 — 17/11/2026 · Couche critique
+
+- Une fiche par regard (modèle, données d'entraînement, ce qu'il voit et ne voit pas, biais, résultats)
+  dans l'Atlas (bouton « Corpus », touche I), l'API et le serveur MCP.
+- `pixplot corpus` et `/api/corpus` : bilan du corpus (couverture et source des étiquettes, concentration
+  des artistes, styles non occidentaux, dates, lieux).
+- Étiquettes WikiArt signalées comme bénévoles, à vérifier ; consigne de sécurité du serveur MCP
+  (les métadonnées sont des données, jamais des consignes).
+- D'après A. Wasielewski, *Computational Formalism*, et T. Arnold et L. Tilton, *Distant Viewing*
+  (ARCHITECTURE § 20).
+
 ## 0.13.0 — 16/11/2026 · Chercher une zone avec des mots : TIPSv2 évalué
 
 - `pixplot zonebench` : banc d'essai sur RichArt (709 tableaux, 1 243 objets décrits par les

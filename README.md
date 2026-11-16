@@ -106,6 +106,7 @@ pixplot maps                            # one UMAP map per way of seeing (subjec
 pixplot communities                     # nested Leiden groups (families ⊃ groups) for each way of seeing
 pixplot disagreements                   # pairs one way of seeing brings together and another pulls apart
 pixplot zonebench                       # searching a region with words: RichArt benchmark
+pixplot corpus                          # critical report: what the corpus lacks, what each way of seeing sees
 pixplot name-groups                     # name the groups (SigLIP 2 + art-history vocabulary)
 pixplot suspects                        # labels contradicted by all neighbours
 pixplot search-text "Annunciation in a garden"
@@ -149,5 +150,6 @@ PixPlot v2 is released under the **GPL-3.0** licence (see [LICENSE](LICENSE)).
 - Models: [DINOv3](https://github.com/facebookresearch/dinov3) (Meta, DINOv3 licence, weights on request and never redistributed here), [SigLIP 2](https://huggingface.co/google/siglip2-so400m-patch16-384) (Google, Apache 2.0).
 - Libraries: FAISS and e-means (Meta, MIT), UMAP, scikit-learn, deck.gl, FastAPI, the MCP Python SDK. World base map: [world-atlas](https://github.com/topojson/world-atlas) (ISC), from [Natural Earth](https://www.naturalearthdata.com) (public domain).
 - Group-naming vocabulary extended from the glossary of H. Honour and J. Fleming, *The Visual Arts: A History* (revised 7th ed., 2023): only the terms are used.
+- Readings that shape the project: A. Wasielewski, *Computational Formalism* (MIT Press, 2023); T. Arnold and L. Tilton, *Distant Viewing* (MIT Press, 2023); H. Honour and J. Fleming, *The Visual Arts: A History* (2023).
 - Region benchmark: [RichArt](https://huggingface.co/datasets/MihaiBogdanBindila/RichArt) (ICMR 2026, CC BY-NC 4.0, local use, never redistributed); [TIPSv2](https://huggingface.co/google/tipsv2-b14) (Google DeepMind, Apache 2.0), evaluated and not adopted.
 - Test corpora: [WikiArt via huggan/wikiart](https://huggingface.co/datasets/huggan/wikiart) and the [Yale Center for British Art](https://britishart.yale.edu/) (public domain, IIIF). No corpus images are stored in this repository; the screenshots show the Atlas interface.

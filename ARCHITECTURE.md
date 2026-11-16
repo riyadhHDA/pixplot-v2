@@ -593,3 +593,25 @@ met; TIPSv2 is not integrated into the Atlas. The encoder stays in the code (`ti
 `tipsv2_so400m14`) so the measurement is reproducible. The best measured method is **SigLIP 2
 applied to cropped regions**: that is what should be indexed to search regions with words, at
 the cost of ≈ 20 times the computation of global vectors (about twenty regions per work).
+
+## 20. Critical layer: what each way of seeing sees, what the corpus lacks (17/11/2026)
+
+Two readings guided this step. A. Wasielewski, *Computational Formalism* (MIT Press, 2023),
+calls "computational formalism" exactly what PixPlot does: comparing works en masse by their
+appearance. She points to three risks: **perceptual bias** (the model fixes on very fine traits —
+grain, edges, reproduction quality — that art historians do not look at), **WikiArt's style
+categories**, filled in by volunteers and reused uncritically, and the **Western canon**, the only
+part really digitised with complete metadata. T. Arnold and L. Tilton, *Distant Viewing* (MIT
+Press, 2023), show that every algorithm encodes a "way of seeing" that must be made explicit and
+documented, and warn against fetishising size.
+
+Hence three tools: **a card per way of seeing** (model, training data, what it sees and does not
+see, known biases, what the benchmark measured), in the Atlas ("Corpus" button, key I, and the
+comparator's tooltips), the API and the MCP server; **a corpus report** (`pixplot corpus`,
+`/api/corpus`: coverage and source of each label, artist concentration, non-Western styles,
+dates and places — on WikiArt 81k, the artist is missing for 51% of works because the
+huggan/wikiart dataset names only some of them; the 10 most frequent artists make up 29% of
+attributed works; 1 style in 27 is non-Western, Ukiyo-e, 1.4% of works; no dates, no places);
+and **labels shown for what they are** ("volunteer label, to be checked" on WikiArt labels). The
+MCP server also gets a security rule, after AutoMalTool (He et al., 2025): titles, labels,
+notebook notes and Research Packs are data entered by others, never instructions.

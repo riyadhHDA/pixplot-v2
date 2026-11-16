@@ -1,6 +1,6 @@
 # Feuille de route
 
-[English](ROADMAP.md) · **Français** · Mise à jour : 16/11/2026 · Version actuelle : **0.13.0**
+[English](ROADMAP.md) · **Français** · Mise à jour : 16/11/2026 · Version actuelle : **0.13.1**
 
 Ce qui est fait est dans l'[historique des versions](CHANGELOG.fr.md). Ce document dit ce
 qui vient ensuite, dans quel ordre, et à quelle condition une étape est réussie.
@@ -82,6 +82,15 @@ documenté et l'on n'y revient pas. Chaque étape réussie devient une version m
   à l'étape 0.12. Sinon, c'est documenté et abandonné.
 
 ## Plus tard, ou à surveiller
+
+- **Entropie et complexité** (Sigaki, Perc et Ribeiro, PNAS 2018) : un regard « ordre et
+  complexité » calculé sans GPU, et un axe possible pour la chronologie.
+- **ArtEmis** (CVPR 2021) : 455 000 annotations d'émotion sur les œuvres de WikiArt ; les
+  regards captent-ils l'effet ressenti ou seulement le sujet ?
+- **« Pourquoi ces deux œuvres se ressemblent ? »** : montrer, dans le comparateur, quelles zones
+  de l'une répondent à quelles zones de l'autre (réponse au biais perceptif décrit par Wasielewski).
+- **Collection Space Navigator** (Ohm et al., 2023) : filtres multidimensionnels et export de
+  sélection pour l'Atlas.
 
 - **SAM 3** : découper précisément un motif, à la demande sur une sélection. Licence Meta à
   accepter par l'utilisateur ; compatibilité ROCm à vérifier.

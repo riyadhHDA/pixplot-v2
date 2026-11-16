@@ -445,3 +445,23 @@ def test_zonebench_geometry_and_scores():
     assert rt["R@1"] == 1.0 and rt["median_rank"] == 1
     pt = pointing(Q[:1], grids, paintings, entities[:1])
     assert pt["hit"] == 1.0 and 0.2 < pt["chance"] < 0.3   # un quart de l'œuvre
+
+
+def test_corpus_report_and_regard_cards(env):
+    from collections import Counter
+
+    from pixplot.analysis.critique import CARDS, card, corpus_report, source_note
+
+    s, data, c = env
+    meta = {i: {"artist": "a" if i < 3 else "Unknown Artist", "style": "Ukiyo_e" if i == 0 else "Baroque"} for i in range(10)}
+    r = corpus_report(meta, {"artist": Counter({"huggan/wikiart (Hugging Face)": 10})}, years=[None] * 10, places=0)
+    assert r["coverage"]["artist"]["share"] == 0.3 and r["coverage"]["style"]["distinct"] == 2
+    joined = " ".join(r["notes"])
+    assert "artiste" in joined and "70 %" in joined and "Ukiyo_e" in joined and "10,0 %" in joined
+    assert "chronologie est indisponible" in joined and "géographique est vide" in joined
+    assert "bénévoles" in source_note("huggan/wikiart (Hugging Face)") and source_note("catalogue maison") == ""
+    for key in ("forme", "sujet", "couleur", "touche"):
+        assert set(CARDS[key]) >= {"model", "trained_on", "sees", "blind_to", "biases", "measured"}
+    assert card("inconnu")["model"] == "inconnu"
+    res = c.get("/api/corpus").json()
+    assert res["report"]["n"] == len(data.ids) and all("card" in sp for sp in res["spaces"])

@@ -793,7 +793,7 @@
     const pairs = [];
     for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) pairs.push([a, b]);
     const spaces = res.spaces.filter((s) => res.similarity[s.key]);
-    const head = spaces.map((s) => `<th title="${esc(s.about)}">${esc(SPACE_SHORT[s.key] || s.label)}</th>`).join("");
+    const head = spaces.map((s) => `<th title="${esc([s.about, s.card && `Entraîné sur : ${s.card.trained_on}`, ...((s.card || {}).biases || []).map((b) => `Biais : ${b}`)].filter(Boolean).join(" · "))}">${esc(SPACE_SHORT[s.key] || s.label)}</th>`).join("");
     let ref = { types: [], pairs: [] };
     try { ref = await getJSON(`/api/pairs?ids=${res.ids.join(",")}`); } catch (_) { /* banc d'essai indisponible */ }
     const typeLabel = Object.fromEntries(ref.types.map((t) => [t.key, t.label]));
@@ -925,6 +925,52 @@
 
   // ------------------------------------------------------------------ étiquettes à vérifier
   const prettyLabel = (l) => String(l).split(" · ").map((x) => pretty(x)).join(" · ");
+
+  // ------------------------------------------------------------------ bilan du corpus et fiches des regards
+  // D'après A. Wasielewski (Computational Formalism) et T. Arnold & L. Tilton (Distant Viewing) :
+  // dire ce que voit chaque regard, d'où viennent les étiquettes, et ce qui manque au corpus.
+  function regardCard(sp) {
+    const c = sp.card || {};
+    return `<section class="card-regard">
+      <h3>${esc(SPACE_SHORT[sp.key] || sp.label)} <small>${esc(c.model || sp.encoder)}</small></h3>
+      <dl>
+        <dt>Entraîné sur</dt><dd>${esc(c.trained_on || "—")}</dd>
+        <dt>Voit</dt><dd>${esc(c.sees || "—")}</dd>
+        <dt>Ne voit pas</dt><dd>${esc(c.blind_to || "—")}</dd>
+        ${(c.biases || []).length ? `<dt>Biais connus</dt><dd><ul>${c.biases.map((b) => `<li>${esc(b)}</li>`).join("")}</ul></dd>` : ""}
+        <dt>Mesuré</dt><dd>${esc(c.measured || "—")}</dd>
+      </dl></section>`;
+  }
+
+  async function renderCorpus() {
+    showPanel("corpus", "Le corpus et les regards");
+    state.lastList = () => renderCorpus();
+    $("fiche-body").innerHTML = `<div class="loading">Chargement…</div>`;
+    let res;
+    try { res = await getJSON("/api/corpus"); } catch (err) {
+      $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`; return;
+    }
+    const r = res.report;
+    const rows = Object.entries(r.coverage).map(([k, c]) => {
+      const src = c.sources[0] || {};
+      return `<tr><th>${esc(LABELS[k] || pretty(k))}</th><td>${Math.round(c.share * 100)} %</td><td>${c.distinct}</td></tr>
+        <tr class="src"><td colspan="3">source : ${esc(src.source || "—")}${src.note ? `<small>${esc(src.note)}</small>` : ""}</td></tr>`;
+    }).join("");
+    $("fiche-body").innerHTML = `<div class="corpus-panel">
+      <p class="sub">${r.n.toLocaleString("fr-FR")} œuvres. Ce bilan dit de quoi le corpus est fait — et donc ce qu'aucun
+        résultat ne peut dire au-delà.</p>
+      <h3>Ce qui manque, ce qui déséquilibre</h3>
+      <ul class="corpus-notes">${r.notes.map((n) => `<li>${esc(n)}</li>`).join("")}</ul>
+      <h3>Étiquettes : couverture et source</h3>
+      <table class="corpus-table"><thead><tr><th></th><th>connues</th><th>valeurs différentes</th></tr></thead>
+        <tbody>${rows}</tbody></table>
+      <h3>Les regards</h3>
+      <p class="sub">Chaque regard est une manière de voir, construite par un modèle et ses données. Ils regardent des traits
+        que l'historien ne regarde pas (grain, contours, qualité de la reproduction) : une proximité est une piste.</p>
+      ${res.spaces.map(regardCard).join("")}
+      <p class="prov">Sources : A. Wasielewski, <i>Computational Formalism</i> (MIT Press, 2023) ; T. Arnold et L. Tilton,
+        <i>Distant Viewing</i> (MIT Press, 2023). Résultats détaillés : ARCHITECTURE § 11 à 19.</p></div>`;
+  }
 
   // ------------------------------------------------------------------ relecture rapide (façon Anki)
   // Une paire à la fois, une touche par décision : Entrée valide, 1–7 choisit le type,
@@ -1232,7 +1278,7 @@
 
   function renderFiche(d) {
     const meta = Object.entries(d.metadata).filter(([, v]) => v).map(([k, v]) =>
-      `<tr><th>${esc(LABELS[k] || pretty(k))}</th><td>${esc(SLUG_KEYS.has(k) ? pretty(v) : v)}${d.metadata_sources[k] ? `<small>source : ${esc(d.metadata_sources[k])}</small>` : ""}</td></tr>`).join("");
+      `<tr><th>${esc(LABELS[k] || pretty(k))}</th><td>${esc(SLUG_KEYS.has(k) ? pretty(v) : v)}${d.metadata_sources[k] ? `<small title="${esc((d.metadata_source_notes || {})[k] || "")}">source : ${esc(d.metadata_sources[k])}${(d.metadata_source_notes || {})[k] ? " · étiquette bénévole, à vérifier" : ""}</small>` : ""}</td></tr>`).join("");
     const fam = d.hdbscan == null ? "" : d.hdbscan < 0
       ? `<span class="chip warn" title="HDBSCAN ne la rattache à aucune famille">Œuvre « à part »</span>`
       : `<span class="chip">Famille ${d.hdbscan + 1}</span>`;
@@ -1558,6 +1604,7 @@
     $("open-notebook").addEventListener("click", renderNotebook);
     $("open-suspects").addEventListener("click", openReview);
     $("open-disagreements").addEventListener("click", () => renderDisagreements());
+    $("open-corpus").addEventListener("click", renderCorpus);
     $("fiche-close").addEventListener("click", closeFiche);
     $("fiche-back").addEventListener("click", () => { if (state.panelBack) state.panelBack(); });
 
@@ -1615,6 +1662,7 @@
       else if (k === "v" && !$("open-suspects").hidden) openReview();
       else if (k === "d" && !$("open-disagreements").hidden) renderDisagreements();
       else if (k === "r") openReviewSession();
+      else if (k === "i") renderCorpus();
       else if (e.key === "0") $("reset-view").click();
     });
     document.addEventListener("keydown", reviewKeys, true);
