@@ -13,6 +13,7 @@ DATA="${1:?dossier de données, ex. data/wikiart81k}"
 PY=".venv/Scripts/python"
 PIX=".venv/Scripts/pixplot"
 LOG="$DATA/pipeline.log"
+SOURCE="${2:-huggan/wikiart (Hugging Face)}"   # provenance des métadonnées
 mkdir -p "$DATA"
 
 step() {
@@ -28,7 +29,7 @@ if [ ! -f "$DATA/corpus/metadata.csv" ]; then
   step "extraction des images" $PY -X utf8 scripts/extract_hf_parquet.py "$DATA/corpus/raw" "$DATA/corpus"
 fi
 step "ingestion"            $PIX --data "$DATA" ingest "$DATA/corpus/images"
-step "métadonnées"          $PIX --data "$DATA" import-metadata "$DATA/corpus/metadata.csv" --source "huggan/wikiart (Hugging Face)"
+step "métadonnées"          $PIX --data "$DATA" import-metadata "$DATA/corpus/metadata.csv" --source "$SOURCE"
 step "DINOv3 B/16 @448"     $PIX --data "$DATA" embed --encoder dinov3_vitb16 --batch-size 32
 step "SigLIP 2 So400m"      $PIX --data "$DATA" embed --encoder siglip2_so400m --batch-size 32
 step "espace touche"        $PIX --data "$DATA" embed --encoder dinov3_vitb16_texture --batch-size 32

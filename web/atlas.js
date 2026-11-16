@@ -422,7 +422,8 @@
     const m = state.map, n = state.n, cell = state.iconSize * 1.08;
     const years = m.year.filter((y) => y != null);
     const lo = Math.min(...years), hi = Math.max(...years);
-    const maxCols = Math.max(8, Math.floor((2 * WORLD) / cell));
+    // pas plus de colonnes que l'écran n'en tient, ni beaucoup plus que d'œuvres (petits corpus)
+    const maxCols = Math.max(8, Math.min(Math.floor((2 * WORLD) / cell), Math.round(4 * Math.sqrt(n))));
     const step = [1, 2, 5, 10, 20, 25, 50, 100, 200].find((s) => (hi - lo) / s + 1 <= maxCols) || 500;
     const start = Math.floor(lo / step) * step;
     const bins = Math.floor((hi - start) / step) + 2; // + un bloc « sans date »
@@ -555,7 +556,7 @@
   function renderGroups() {
     $("groups").innerHTML = state.clusters.map((g) => {
       const dom = Object.entries(g.dominant).slice(0, 3).map(([k, vs]) =>
-        `${esc(LABELS[k] || k)} : ${esc(pretty(vs[0].value))} (${Math.round(vs[0].share * 100)} %)`).join("<br>");
+        `${esc(LABELS[k] || k)} : ${esc(SLUG_KEYS.has(k) && /^[\w-]+$/.test(vs[0].value) ? pretty(vs[0].value) : vs[0].value)} (${Math.round(vs[0].share * 100)} %)`).join("<br>");
       const col = PALETTE[g.cluster % PALETTE.length].join(",");
       return `<li class="group" data-cluster="${g.cluster}">
         <img src="/api/thumb/256/${g.representative}" alt="" loading="lazy">

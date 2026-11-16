@@ -386,3 +386,15 @@ valider sur une vraie collection importée par IIIF.
 paginées), image de la première vue (ou toutes) par l'API Image à la taille voulue,
 métadonnées normalisées (titre, artiste, date, lieu, technique, droits, cote) dans
 `metadata.csv`, reprise sans retéléchargement, une requête à la fois.
+
+Essai réel (16/11/2026) : 18 peintures du **Yale Center for British Art** (domaine public,
+3,7 Mo), toutes importées, pipeline complet en 2 min 30. Leçons :
+- l'**Art Institute of Chicago** sert ses images derrière une vérification anti-robot
+  Cloudflare : refus (403) pour tout téléchargement automatique. On ne la contourne pas ;
+  passer par une autre institution ou par leurs exports officiels ;
+- Yale ne donne **la date que dans le libellé** (« Turner, 1775–1851, Dort, 1818 ») : elle en
+  est extraite (dernier segment contenant une année, jamais les dates de vie juste après le
+  nom) et marquée `date_source = déduite du libellé du manifeste` ;
+- la chronologie s'affiche alors d'elle-même (blocs de 20 ans, 1740 → 1920) ;
+- sur 18 œuvres, les noms de groupes restent approximatifs (« Marines · aquarelle » pour des
+  huiles de Gainsborough et Turner) : le vocabulaire juge l'apparence, pas la technique réelle.

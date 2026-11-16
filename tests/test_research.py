@@ -120,6 +120,17 @@ def test_group_naming():
     assert names[0]["name"] == f"{SUBJECTS[3][0]} · {MANNERS[5][0]}"
     meta = [{"artist": "camille-corot", "style": "Realism", "genre": "landscape"}] * 6 + [{"artist": "ivan-shishkin"}] * 4
     assert metadata_name(meta) == "Corot, Shishkin · Realism · Landscape"
+    assert metadata_name([{"artist": "Henry Fuseli, 1741–1825"}] * 3) == "Fuseli"
+
+
+def test_iiif_date_from_label():
+    from pixplot.importers.iiif import date_from_label
+
+    # forme des libellés du Yale Center for British Art : artiste, dates de vie, titre, date
+    assert date_from_label("Joseph Mallord William Turner, 1775–1851, Dort, 1818") == "1818"
+    assert date_from_label("Richard Wilson, ca. 1712–1782, Italian Landscape, between 1760 and 1765") == "between 1760 and 1765"
+    assert date_from_label("Henry Fuseli, 1741–1825") is None   # dates de vie seulement
+    assert date_from_label("Vue de Delft") is None
 
 
 def test_iiif_import(tmp_path):

@@ -125,10 +125,15 @@ def metadata_name(meta: list[dict[str, str]]) -> str:
     def pretty(v: str) -> str:
         return v.replace("_", " ").replace("-", " ").title() if v.islower() or "_" in v else v
 
+    def surname(a: str) -> str:
+        # « camille-corot » (WikiArt) ou « Henry Fuseli, 1741–1825 » (musées) → « Corot », « Fuseli »
+        name = a.split(",")[0].split("(")[0].strip()
+        return pretty(name).split()[-1] if name else a
+
     bits = []
     artists = top("artist", 0.08, 2)
     if artists:
-        bits.append(", ".join(pretty(a).split()[-1] for a in artists))
+        bits.append(", ".join(surname(a) for a in artists))
     for key, share in (("style", 0.35), ("genre", 0.5)):
         vals = top(key, share, 1)
         if vals:

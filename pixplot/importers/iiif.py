@@ -39,6 +39,7 @@ KEY_ALIASES = {
     "materials": "technique", "matériaux": "technique", "dimensions": "dimensions",
     "rights": "rights", "license": "rights", "licence": "rights", "droits": "rights",
     "identifier": "identifier", "object number": "identifier", "inventory number": "identifier", "cote": "identifier",
+    "call number": "identifier", "accession number": "identifier",
     "latitude": "latitude", "longitude": "longitude", "repository": "repository", "institution": "repository",
 }
 
@@ -180,18 +181,38 @@ def image_url(canvas: dict, max_size: int) -> str | None:
     return _id(body) or None
 
 
+YEAR_IN_LABEL = re.compile(r"(?<!\d)(1[0-9]{3}|20[0-4][0-9])(?!\d)")
+
+
+def date_from_label(label: str) -> str | None:
+    """Beaucoup d'institutions (Yale…) ne mettent la date que dans le libellé :
+    « Turner, 1775–1851, Dort, 1818 ». On prend le dernier segment qui contient une année,
+    sauf s'il ressemble aux dates de vie de l'artiste (« 1775–1851 » juste après le nom)."""
+    parts = [p.strip() for p in label.split(",")]
+    for k in range(len(parts) - 1, 0, -1):
+        if YEAR_IN_LABEL.search(parts[k]):
+            return parts[k] if k >= 2 else None
+    return None
+
+
 def metadata_of(manifest: dict, url: str) -> dict[str, str]:
     out: dict[str, str] = {}
-    if title := text_of(manifest.get("label")):
-        out["title"] = title
+    label = text_of(manifest.get("label"))
+    if label:
+        out["label"] = label
     for pair in manifest.get("metadata") or []:
-        label, value = text_of(pair.get("label")), text_of(pair.get("value"))
-        if not label or not value:
+        name, value = text_of(pair.get("label")), text_of(pair.get("value"))
+        if not name or not value:
             continue
-        key = KEY_ALIASES.get(label.lower().strip(" :"), re.sub(r"[^a-z0-9]+", "_", label.lower()).strip("_")[:40])
+        key = KEY_ALIASES.get(name.lower().strip(" :"), re.sub(r"[^a-z0-9]+", "_", name.lower()).strip("_")[:40])
         out.setdefault(key, value)
+    out.setdefault("title", label)
     if (nav := manifest.get("navDate")) and "date" not in out:
         out["date"] = str(nav)[:10]
+        out["date_source"] = "navDate IIIF"
+    if "date" not in out and label and (d := date_from_label(label)):
+        out["date"] = d
+        out["date_source"] = "déduite du libellé du manifeste"
     for key in ("requiredStatement", "attribution"):
         if v := manifest.get(key):
             out.setdefault("attribution", text_of(v.get("value") if isinstance(v, dict) and "value" in v else v))
