@@ -463,3 +463,37 @@ Greco, Picasso ← Delacroix *Women of Algiers*, Van Gogh's fragment after Rembr
 *Pastoral Concert* from the *Déjeuner* (rank 8). Colour finds no filiation: a copy changes
 its palette. This is exactly what a new composition model (STELLAR) should be tested on.
 See the French version for the full rank table.
+
+## 15. Leiden groups: nested, per way of seeing (16/11/2026)
+
+`pixplot communities` computes, for each way of seeing, Leiden communities on the graph of
+the 15 nearest neighbours (weighted by similarity): **groups** (as many as e-means, for a
+fair comparison; resolution found by bisection) and **families** (Leiden on the graph of
+groups: a family is always a union of groups). Communities under 5 works are merged into
+the most connected neighbour. In the Atlas, "Vue" menu → colour: "Familles Leiden" and
+"Groupes Leiden" for each way of seeing.
+
+Comparison on WikiArt 81k, 142 groups, three seeds per method (stability = mean adjusted
+Rand index between seeds; labels = normalised mutual information):
+
+| way of seeing | method | stability | artist | style | genre | time |
+|---|---|---|---|---|---|---|
+| form | e-means | 0.522 | 0.379 | 0.276 | 0.386 | 5 s |
+| form | Leiden | **0.645** | **0.400** | 0.277 | 0.390 | 40 s |
+| subject | e-means | 0.573 | 0.508 | 0.374 | 0.409 | 7 s |
+| subject | Leiden | **0.675** | 0.504 | 0.364 | 0.404 | 39 s |
+| touch | e-means | 0.423 | 0.360 | 0.225 | 0.243 | 8 s |
+| touch | Leiden | **0.528** | **0.437** | **0.266** | 0.263 | 41 s |
+| colour | e-means | **0.423** | 0.197 | 0.086 | 0.084 | 2 s |
+| colour | Leiden | 0.355 | 0.198 | 0.085 | 0.083 | 22 s |
+
+Leiden is clearly more stable for form, subject and touch, and as good or better on labels,
+especially for touch (artist: 0.36 → 0.44). Colour is the exception: a palette histogram
+has no clear communities, and e-means stays more stable there. Group sizes are more uneven
+(26 to 2,036 works for form, against 140 to 1,190): they follow the corpus instead of
+equalising it. On pairs the differences are within noise (only 11 annotated pairs): to be
+redone with the validated pairs of step 0.12.
+
+Decision: the roadmap criterion is met for form, touch and subject, not for colour. Leiden
+groups are available for every way of seeing; the Atlas's **named** groups stay e-means
+until names, the groups panel and labels-to-check are ported to Leiden (next step).

@@ -27,7 +27,7 @@
   const pretty = (v) => String(v ?? "").replace(/_/g, " ").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
   const state = {
-    info: null, map: null, clusters: [], n: 0,
+    info: null, map: null, clusters: [], n: 0, comm: {},
     positions: null, rowOf: new Map(),
     colorMode: "cluster", highlight: null, highlightLabel: "",
     selected: null, selectedData: null,
@@ -132,6 +132,12 @@
     const sel = $("colorby");
     const opts = [["cluster", "Groupes (e-means)"]];
     if (state.map.hdbscan) opts.push(["hdbscan", "Familles (HDBSCAN)"]);
+    const ORDER = ["forme", "sujet", "couleur", "touche"];
+    const comm = [...(state.info.communities || [])].sort((a, b) => (ORDER.indexOf(a) + 99) % 99 - (ORDER.indexOf(b) + 99) % 99);
+    for (const sp of comm) {
+      const name = SPACE_SHORT[sp] || sp;
+      opts.push([`leiden:${sp}:family`, `Familles Leiden · ${name}`], [`leiden:${sp}:group`, `Groupes Leiden · ${name}`]);
+    }
     opts.push(["atypicality", "Atypicité"]);
     for (const key of Object.keys(state.map.categories)) opts.push([`meta:${key}`, LABELS[key] || pretty(key)]);
     sel.innerHTML = opts.map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join("");
@@ -154,6 +160,11 @@
     if (mode === "hdbscan") {
       const h = state.map.hdbscan[i];
       return h < 0 ? [235, 235, 235] : PALETTE[h % PALETTE.length];
+    }
+    if (mode.startsWith("leiden:")) {
+      const [, sp, kind] = mode.split(":");
+      const v = state.comm[sp][kind][i];
+      return v < 0 ? [70, 70, 74] : PALETTE[v % PALETTE.length];
     }
     if (mode === "atypicality") {
       const t = state.map.atypicality[i];
@@ -183,6 +194,13 @@
       return;
     }
     if (mode === "cluster" || mode === "hdbscan") { el.innerHTML = ""; return; }
+    if (mode.startsWith("leiden:")) {
+      const [, sp, kind] = mode.split(":");
+      const c = state.comm[sp];
+      el.innerHTML = `<div>${kind === "family" ? `${c.n_families} familles` : `${c.n_groups} groupes`} Leiden · ${esc(SPACE_SHORT[sp] || sp)}</div>
+        <div style="color:var(--muted);max-width:240px">Communautés du graphe des voisines dans ce regard${kind === "family" ? " ; chaque famille réunit plusieurs groupes" : ""}. En gris : œuvres absentes de ce regard.</div>`;
+      return;
+    }
     const key = mode.slice(5);
     const { cat, ranked, colorOf } = categoryInfo(key);
     const rows = ranked.slice(0, 12).map(([code, c]) =>
@@ -1209,8 +1227,17 @@
       computeHD();
       redraw();
     });
-    $("colorby").addEventListener("change", (e) => {
-      state.colorMode = e.target.value;
+    $("colorby").addEventListener("change", async (e) => {
+      const mode = e.target.value;
+      if (mode.startsWith("leiden:")) {
+        const sp = mode.split(":")[1];
+        if (!state.comm[sp]) {
+          try { state.comm[sp] = await getJSON(`/api/communities/${sp}`); } catch (err) {
+            toast(`Groupes Leiden indisponibles : ${err.message}`); e.target.value = state.colorMode; return;
+          }
+        }
+      }
+      state.colorMode = mode;
       // Les couleurs ne se voient que sur les points : on y bascule.
       state.display = "points";
       $("display").value = "points";

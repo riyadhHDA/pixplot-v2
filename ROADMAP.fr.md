@@ -1,6 +1,6 @@
 # Feuille de route
 
-[English](ROADMAP.md) · **Français** · Mise à jour : 16/11/2026 · Version actuelle : **0.10.2**
+[English](ROADMAP.md) · **Français** · Mise à jour : 16/11/2026 · Version actuelle : **0.11.0**
 
 Ce qui est fait est dans l'[historique des versions](CHANGELOG.fr.md). Ce document dit ce
 qui vient ensuite, dans quel ordre, et à quelle condition une étape est réussie.
@@ -14,7 +14,12 @@ documenté et l'on n'y revient pas. Chaque étape réussie devient une version m
 
 ## Prochaines étapes
 
-### 0.11 — Groupes Leiden, emboîtés, par regard
+### 0.11 — Groupes Leiden, emboîtés, par regard · *fait*
+
+> **Résultat** (ARCHITECTURE § 15) : critère rempli pour la forme, le sujet et la touche (plus
+> stables, aussi bons ou meilleurs sur les étiquettes), pas pour la couleur. Reste à porter les
+> noms, le panneau des groupes et les étiquettes à vérifier sur Leiden avant d'en faire les
+> groupes principaux de l'Atlas.
 
 - **Pourquoi** : le nombre de groupes vient d'une règle arbitraire (k = √N / 2, soit 142
   groupes pour 80 716 œuvres) et HDBSCAN échoue sur un continuum sans vides.

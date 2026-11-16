@@ -492,3 +492,39 @@ Lazare), aucun regard ne suit. La forme est le seul regard qui retrouve la citat
 Manet d'après le *Concert champêtre* depuis le Déjeuner (rang 8). La couleur ne retrouve
 aucune filiation : une copie change de palette. C'est exactement ce que doit tester un
 nouveau modèle de composition (STELLAR).
+
+## 15. Groupes Leiden : emboîtés, par regard (16/11/2026)
+
+`pixplot communities` calcule, pour chaque regard, des communautés Leiden sur le graphe des
+15 plus proches voisines (pondéré par la similarité) : des **groupes** (autant qu'e-means,
+pour comparer à armes égales, résolution trouvée par dichotomie) et des **familles**
+(Leiden sur le graphe des groupes : une famille est toujours une réunion de groupes). Les
+communautés de moins de 5 œuvres sont rattachées à la voisine la plus liée. Dans l'Atlas,
+menu « Vue » → couleur : « Familles Leiden » et « Groupes Leiden » pour chaque regard.
+
+Comparaison sur WikiArt 81k, 142 groupes, trois graines par méthode. Stabilité = indice de
+Rand ajusté moyen entre graines ; étiquettes = information mutuelle normalisée.
+
+| regard | méthode | stabilité | artiste | style | genre | durée |
+|---|---|---|---|---|---|---|
+| forme | e-means | 0,522 | 0,379 | 0,276 | 0,386 | 5 s |
+| forme | Leiden | **0,645** | **0,400** | 0,277 | 0,390 | 40 s |
+| sujet | e-means | 0,573 | 0,508 | 0,374 | 0,409 | 7 s |
+| sujet | Leiden | **0,675** | 0,504 | 0,364 | 0,404 | 39 s |
+| touche | e-means | 0,423 | 0,360 | 0,225 | 0,243 | 8 s |
+| touche | Leiden | **0,528** | **0,437** | **0,266** | 0,263 | 41 s |
+| couleur | e-means | **0,423** | 0,197 | 0,086 | 0,084 | 2 s |
+| couleur | Leiden | 0,355 | 0,198 | 0,085 | 0,083 | 22 s |
+
+Lecture : Leiden est nettement plus stable pour la forme, le sujet et la touche (deux calculs
+donnent des groupes plus semblables), aussi bon ou meilleur pour les étiquettes, surtout
+pour la touche (artiste : 0,36 → 0,44). La couleur fait exception : pas de communautés
+nettes dans un histogramme de palette, e-means y reste plus stable. Les tailles de groupes
+sont plus inégales (26 à 2 036 œuvres pour la forme, contre 140 à 1 190), ce qui suit le
+corpus au lieu de l'égaliser. Sur les paires, les écarts sont dans le bruit (11 paires
+annotées seulement) : à refaire avec les paires validées de l'étape 0.12.
+
+Décision : le critère de la feuille de route est rempli pour la forme, la touche et le sujet,
+pas pour la couleur. Les groupes Leiden sont disponibles pour chaque regard ; les groupes
+**nommés** de l'Atlas restent ceux d'e-means tant que les noms, le panneau des groupes et
+les étiquettes à vérifier n'ont pas été portés sur Leiden (étape suivante).

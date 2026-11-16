@@ -103,6 +103,7 @@ pixplot embed --encoder colorhist       # whole pipeline without a GPU, for test
 pixplot index [--encoder NAME]          # FAISS index of the latest run
 pixplot index --regions                 # region index → "Search a detail" in the Atlas
 pixplot maps                            # one UMAP map per way of seeing (subject, colour, touch)
+pixplot communities                     # nested Leiden groups (families ⊃ groups) for each way of seeing
 pixplot name-groups                     # name the groups (SigLIP 2 + art-history vocabulary)
 pixplot suspects                        # labels contradicted by all neighbours
 pixplot search-text "Annunciation in a garden"

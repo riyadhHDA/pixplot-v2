@@ -397,6 +397,35 @@ def cmd_maps(args) -> int:
     return 0
 
 
+def cmd_communities(args) -> int:
+    import numpy as np
+
+    from .analysis import communities as C
+    from .analysis.pairbench import load_space_matrix
+    from .api.data import AtlasData
+
+    s = get_settings(args.data)
+    analysis = _analysis_arg(s, args.analysis)
+    data = AtlasData.load(s, analysis)
+    ids = [int(i) for i in data.ids]
+    n_groups = args.groups or int(data.clusters.max()) + 1
+    n_families = args.families or max(4, round(n_groups / 6))
+    keys = args.spaces.split(",") if args.spaces else list(data.spaces.runs)
+    print(f"Analyse : {analysis.id} — groupes Leiden (≈ {n_groups} groupes, ≈ {n_families} familles)")
+    for key in keys:
+        if key in C.available(analysis) and not args.force:
+            print(f"« {key} » : déjà calculé (--force pour recalculer)")
+            continue
+        print(f"Regard « {key} »", flush=True)
+        X, row = load_space_matrix(data.spaces, key, ids)
+        present = np.array([i for i in ids if i in row], dtype=np.int64)
+        c = C.compute(key, present, X, n_groups, n_families, k=args.k, seed=args.seed,
+                      say=lambda m: print(m, flush=True))
+        print(f"  → {C.save(analysis, c)}")
+        del X
+    return 0
+
+
 def cmd_name_groups(args) -> int:
     import json
 
@@ -719,6 +748,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--spaces", help="espaces à calculer, séparés par des virgules (défaut : tous)")
     p.add_argument("--force", action="store_true", help="recalculer les cartes existantes")
     p.set_defaults(func=cmd_maps)
+
+    p = sub.add_parser("communities", help="groupes Leiden emboîtés (familles ⊃ groupes), un jeu par regard")
+    p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
+    p.add_argument("--spaces", help="regards à calculer, séparés par des virgules (défaut : tous)")
+    p.add_argument("--groups", type=int, help="nombre de groupes visé (défaut : celui d'e-means)")
+    p.add_argument("--families", type=int, help="nombre de familles visé (défaut : groupes / 6)")
+    p.add_argument("-k", type=int, default=15, help="voisines par œuvre dans le graphe")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--force", action="store_true", help="recalculer")
+    p.set_defaults(func=cmd_communities)
 
     p = sub.add_parser("name-groups", help="proposer un nom à chaque groupe (SigLIP 2 + vocabulaire)")
     p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")

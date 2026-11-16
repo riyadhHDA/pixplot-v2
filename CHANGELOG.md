@@ -14,6 +14,14 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.11.0 — 2026-11-16 · Leiden groups
+
+- `pixplot communities`: nested Leiden groups (families ⊃ groups) for each way of seeing, on the
+  neighbour graph; adjustable number of groups (`--groups`, `--families`).
+- Atlas: colour by "Familles Leiden" or "Groupes Leiden" of each way of seeing; `/api/communities/{space}` API.
+- Comparison with e-means on WikiArt 81k (ARCHITECTURE § 15): more stable for form, subject and touch,
+  better agreement with artists for touch; not for colour. Named groups stay e-means for now.
+
 ## 0.10.2 — 2026-11-16 · Project website
 
 - Presentation website in English and French (https://riyadhhda.github.io/pixplot-v2/), published on GitHub Pages by a GitHub

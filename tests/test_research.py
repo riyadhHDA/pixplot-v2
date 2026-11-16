@@ -268,3 +268,66 @@ def test_version_is_consistent():
     assert project["version"] == pixplot.__version__
     assert f"## {pixplot.__version__} " in (root / "CHANGELOG.md").read_text(encoding="utf-8")
     assert f"## {pixplot.__version__} " in (root / "CHANGELOG.fr.md").read_text(encoding="utf-8")
+
+
+def test_leiden_communities_are_nested_and_recover_blobs(tmp_path):
+    pytest.importorskip("leidenalg")
+    from sklearn.metrics import adjusted_rand_score
+
+    from pixplot.analysis import communities as C
+
+    rng = np.random.default_rng(0)
+    # 4 « familles » de 3 « groupes » chacune : centres de groupe proches de leur famille
+    fam_c = rng.normal(size=(4, 32))
+    centers = np.concatenate([f + 0.3 * rng.normal(size=(3, 32)) for f in fam_c])
+    truth = np.repeat(np.arange(12), 40)
+    X = (centers[truth] + 0.2 * rng.normal(size=(len(truth), 32))).astype(np.float32)
+    X /= np.linalg.norm(X, axis=1, keepdims=True)
+    c = C.compute("forme", np.arange(1000, 1000 + len(X)), X, n_groups=12, n_families=4, k=10,
+                  say=lambda m: None)
+    assert c.groups.max() + 1 == 12 and adjusted_rand_score(truth, c.groups) > 0.9
+    assert c.families.shape == (12,) and c.families.max() + 1 == 4
+    fam_of_work = c.families[c.groups]                      # emboîtement : chaque groupe a une famille
+    assert adjusted_rand_score(truth // 3, fam_of_work) > 0.9
+    assert np.bincount(c.groups).min() >= C.MIN_SIZE
+
+    class A:  # run d'analyse minimal
+        path = tmp_path
+    C.save(A, c)
+    back = C.load(A, "forme")
+    assert C.available(A) == ["forme"] and back["groups"].tolist() == c.groups.tolist()
+    assert back["families"].tolist() == c.families.tolist()
+    assert np.array_equal(back["ids"], c.ids)
+
+
+def test_pair_lift_and_label_agreement():
+    from pixplot.analysis.communities import label_agreement, pair_lift
+    from pixplot.analysis.pairbench import Pair
+
+    labels = np.array([0, 0, 1, 1, 2, 2])
+    row = {10 + i: i for i in range(6)}
+    lift = pair_lift(labels, row, [Pair(10, 11, "filiation"), Pair(10, 12, "temoin"), Pair(12, 13, "filiation")])
+    assert lift["filiation"] == pytest.approx(3.0) and lift["temoin"] == 0
+    assert label_agreement(labels, ["a", "a", "b", "b", "c", "c"]) == pytest.approx(1.0)
+    assert label_agreement(labels, ["a", "Unknown", "b", "b", "c", "c"]) == pytest.approx(1.0)
+
+
+def test_communities_api(env):
+    pytest.importorskip("leidenalg")
+    s, data, c = env
+    from pixplot.analysis import communities as C
+    from pixplot.analysis.pairbench import load_space_matrix
+
+    ids = [int(i) for i in data.ids]
+    X, row = load_space_matrix(data.spaces, "couleur", ids)
+    present = np.array([i for i in ids if i in row])
+    C.save(data.analysis, C.compute("couleur", present, X, n_groups=4, n_families=2, k=5, say=lambda m: None))
+    assert "couleur" in c.get("/api/info").json()["communities"]
+    r = c.get("/api/communities/couleur").json()
+    assert len(r["group"]) == len(ids) and len(r["family"]) == len(ids)
+    assert r["n_families"] <= r["n_groups"] and max(r["family"]) + 1 == r["n_families"]
+    # emboîtement : deux œuvres du même groupe sont dans la même famille
+    fam_of = {}
+    for g, f in zip(r["group"], r["family"]):
+        assert fam_of.setdefault(g, f) == f
+    assert c.get("/api/communities/inconnu").status_code == 404

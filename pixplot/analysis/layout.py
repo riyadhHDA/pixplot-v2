@@ -46,11 +46,11 @@ def load_valid(features: Run) -> tuple[np.ndarray, np.ndarray]:
     return ids, X
 
 
-def cluster_emeans(X: np.ndarray, k: int, epochs: float = 5) -> tuple[np.ndarray, np.ndarray]:
+def cluster_emeans(X: np.ndarray, k: int, epochs: float = 5, seed: int = SEED) -> tuple[np.ndarray, np.ndarray]:
     """Regroupement e-means sphérique (Meta FAIR, FAISS ≥ 1.16). Renvoie (labels, centres)."""
     from faiss.contrib.e_means import NumpyEmeans
 
-    model = NumpyEmeans(X.shape[1], k, nepochs=epochs, seed=SEED, spherical=True)
+    model = NumpyEmeans(X.shape[1], k, nepochs=epochs, seed=seed, spherical=True)
     model.train(X)
     _, labels = model.assign(X)  # affectation finale, sur les centres définitifs
     centroids = np.asarray(model.centroids, dtype=np.float32)

@@ -121,6 +121,16 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
             map_cache["map"] = data.map_payload()
         return JSONResponse(map_cache["map"])
 
+    @app.get("/api/communities/{space}")
+    def space_communities(space: str):
+        key = f"communities:{space}"
+        if key not in map_cache:
+            out = data.communities_payload(space)
+            if out is None:
+                raise HTTPException(404, f"Pas de groupes Leiden pour « {space} » : lancez `pixplot communities`.")
+            map_cache[key] = out
+        return JSONResponse(map_cache[key])
+
     @app.get("/api/layout/{space}")
     def space_layout(space: str):
         if space not in map_cache:

@@ -16,6 +16,7 @@ import numpy as np
 
 from ..catalog import db
 from ..catalog.metadata import get_metadata
+from ..analysis import communities
 from ..analysis.naming import load_names
 from ..analysis.spacemaps import available_maps, load_space_map
 from ..analysis.suspects import load_suspects
@@ -166,11 +167,24 @@ class AtlasData:
             "metadata_keys": self.category_keys(),
             "named_groups": bool(self.names),
             "space_maps": available_maps(self.analysis),
+            "communities": communities.available(self.analysis),
             "main_space": self.spaces.main,
             "suspects": (self.suspects or {}).get("counts", {}),
             "suspects_space": (self.suspects or {}).get("space"),
             "analysis_params": self.analysis.manifest.get("params", {}),
         }
+
+    def communities_payload(self, space: str) -> dict | None:
+        """Groupes et familles Leiden d'un regard, alignés sur ``ids`` (-1 : œuvre absente)."""
+        c = communities.load(self.analysis, space)
+        if c is None:
+            return None
+        pos = {int(i): n for n, i in enumerate(c["ids"])}
+        rows = [pos.get(int(i), -1) for i in self.ids]
+        group = [int(c["groups"][r]) if r >= 0 else -1 for r in rows]
+        return {"space": space, "resolution": c.get("resolution"), "n_groups": int(c["groups"].max()) + 1,
+                "n_families": int(c["families"].max()) + 1, "group": group,
+                "family": [int(c["families"][g]) if g >= 0 else -1 for g in group]}
 
     def map_payload(self) -> dict:
         """Colonnes compactes : une liste par attribut plutôt qu'un objet par œuvre."""

@@ -14,6 +14,15 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.11.0 — 16/11/2026 · Groupes Leiden
+
+- `pixplot communities` : groupes Leiden emboîtés (familles ⊃ groupes) pour chaque regard, sur le
+  graphe des voisines ; nombre de groupes réglable (`--groups`, `--families`).
+- Atlas : couleur par « Familles Leiden » ou « Groupes Leiden » de chaque regard ; API `/api/communities/{regard}`.
+- Comparaison avec e-means sur WikiArt 81k (ARCHITECTURE § 15) : plus stable pour la forme, le sujet
+  et la touche, meilleur accord avec les artistes pour la touche ; pas pour la couleur. Les groupes
+  nommés restent ceux d'e-means pour l'instant.
+
 ## 0.10.2 — 16/11/2026 · Site du projet
 
 - Site de présentation en anglais et en français (https://riyadhhda.github.io/pixplot-v2/), publié sur GitHub Pages par une

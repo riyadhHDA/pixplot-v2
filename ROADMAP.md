@@ -1,6 +1,6 @@
 # Roadmap
 
-**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-16 · Current version: **0.10.2**
+**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-16 · Current version: **0.11.0**
 
 What is done is in the [changelog](CHANGELOG.md). This document says what comes next, in
 which order, and what makes a step a success.
@@ -14,7 +14,11 @@ step becomes a minor version.
 
 ## Next steps
 
-### 0.11 — Leiden groups, nested, per way of seeing
+### 0.11 — Leiden groups, nested, per way of seeing · *done*
+
+> **Result** (ARCHITECTURE § 15): criterion met for form, subject and touch (more stable, as good
+> or better on labels), not for colour. Names, the groups panel and labels-to-check still have to
+> be ported to Leiden before it becomes the Atlas's main grouping.
 
 - **Why**: the number of groups comes from an arbitrary rule (k = √N / 2, i.e. 142 groups
   for 80,716 works) and HDBSCAN fails on a continuum without gaps.
