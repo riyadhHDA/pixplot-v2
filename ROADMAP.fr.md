@@ -1,6 +1,6 @@
 # Feuille de route
 
-[English](ROADMAP.md) · **Français** · Mise à jour : 16/11/2026 · Version actuelle : **0.12.1**
+[English](ROADMAP.md) · **Français** · Mise à jour : 16/11/2026 · Version actuelle : **0.12.2**
 
 Ce qui est fait est dans l'[historique des versions](CHANGELOG.fr.md). Ce document dit ce
 qui vient ensuite, dans quel ordre, et à quelle condition une étape est réussie.
@@ -32,7 +32,8 @@ documenté et l'on n'y revient pas. Chaque étape réussie devient une version m
 ### 0.12 — Les désaccords entre regards, et la relecture des paires · *outils faits*
 
 > Le panneau « Désaccords », l'onglet « Paires de référence » et la relecture rapide façon Anki
-> (touche R, 0.12.1) sont dans l'Atlas (ARCHITECTURE § 16 et 17). Reste le critère : la relecture des paires par l'historien.
+> (touche R, 0.12.1) sont dans l'Atlas (ARCHITECTURE § 16 et 17). **104 paires validées** (§ 18) :
+> critère atteint en nombre ; « même main » (1) et « même motif » (2) restent à étoffer. Reste le critère : la relecture des paires par l'historien.
 
 - **Pourquoi** : le résultat le plus parlant pour un historien est souvent qu'un regard
   rapproche deux œuvres et qu'un autre les sépare. Et le banc d'essai a besoin de paires

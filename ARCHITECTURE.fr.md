@@ -573,3 +573,38 @@ même sujet, touche → même facture, couleur → même palette). Une candidate
 une paire annotée (source « relecture : désaccord forme > sujet ») ; une candidate écartée est
 notée dans `bench/review_log.csv` et ne revient plus. En haut : la progression vers les 100
 paires validées et le compte par sorte, pour voir lesquelles manquent.
+
+## 18. Premier banc d'essai sur 104 paires validées (16/11/2026)
+
+104 paires validées par l'historien (et 1 rejetée, 23 candidates écartées) : 36 « même sujet »,
+26 « même palette », 16 « même facture », 14 « même composition », 9 filiations, 2 « même motif »,
+1 « même main ». 10 viennent de Honour et Fleming ou de filiations connues, 94 de la relecture
+rapide des désaccords entre regards.
+
+**Un biais à corriger.** Une paire tirée d'un désaccord a été choisie parce qu'un regard la
+rapprochait et qu'un autre l'éloignait : ces deux regards ont gagné ou perdu d'avance. On ne
+mesure donc, pour ces paires, que les deux regards qui n'ont pas servi à les choisir
+(« regards neutres »). Centile moyen de l'œuvre jumelle (0,5 = hasard, 1 = la plus proche) :
+
+| sorte de ressemblance | forme | sujet | couleur | touche |
+|---|---|---|---|---|
+| même sujet, autre composition | 0,950 | **0,966** | 0,369 | 0,847 |
+| même composition, autre sujet | 0,675 (3) | **0,992** | 0,537 | 0,887 |
+| autres artistes, facture comparable | 0,830 | 0,745 | 0,626 | **0,886** (3) |
+| même palette, autres traditions | 0,539 | 0,390 | **0,719** | 0,570 |
+| filiation (paires du livre, sans biais) | 0,993 | **0,997** | 0,626 | 0,890 |
+
+Entre parenthèses : moins de 5 paires. Chaque regard gagne sur la sorte de ressemblance qu'il
+est censé voir, sauf « même composition », où le sujet l'emporte : SigLIP 2 décrit aussi la
+mise en page (« un temple sur une place »), et trop peu de paires mesurent la forme sans biais.
+La couleur est sous le hasard pour « même sujet » : deux traitements d'un même thème changent
+de palette.
+
+**Leiden contre e-means, sur les paires** (part des paires validées rangées dans le même
+groupe, 142 groupes) : forme 24,0 % → **32,7 %**, sujet 16,3 % → **26,0 %**, touche 19,2 % →
+**26,0 %**, couleur 11,5 % = 11,5 %. Cela confirme le § 15 : Leiden suit mieux les parentés que
+l'historien reconnaît, sauf pour la couleur.
+
+**Le critère de l'étape 0.12** (≈ 100 paires validées couvrant les huit sortes) est atteint en
+nombre, pas en couverture : « même main » (1) et « même motif » (2) restent à étoffer, et il
+faudrait plus de paires « même composition » hors désaccords pour juger la forme.

@@ -14,6 +14,14 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.12.2 — 16/11/2026 · Premier banc d'essai sur 104 paires validées
+
+- 104 paires validées par l'historien, versionnées dans `bench/wikiart81k_pairs.csv` (avec les
+  étiquettes des œuvres) et le journal de relecture.
+- Résultats (ARCHITECTURE § 18), en ne mesurant que les regards qui n'ont pas servi à choisir la
+  paire : chaque regard gagne sur la ressemblance qu'il doit voir, sauf la composition (le sujet
+  l'emporte) ; Leiden range plus de paires dans un même groupe qu'e-means (forme 24 → 33 %).
+
 ## 0.12.1 — 16/11/2026 · Relecture rapide des paires
 
 - Relecture façon Anki (touche R dans l'Atlas) : une paire à la fois, en grand ; Entrée ou 1 à 7

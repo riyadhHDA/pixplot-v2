@@ -1,0 +1,106 @@
+a,b,type,status,source,note,label_a,label_b
+8038,75363,filiation,validée,"Honour et Fleming, The Visual Arts (2023), p. 709","Manet, Olympia ← Titien, Vénus d'Urbin (copiée par Manet étudiant)",edouard-manet · Realism · nude_painting,Unknown Artist · High_Renaissance · Unknown Genre
+70702,72437,filiation,validée,"Honour et Fleming, The Visual Arts (2023), p. 672","Manet, Exécution de Maximilien ← Goya, Tres de mayo (connu par une gravure ; « essentiellement dissemblables »)",Unknown Artist · Realism · Unknown Genre,Unknown Artist · Romanticism · Unknown Genre
+8154,75328,filiation,validée,"Honour et Fleming, The Visual Arts (2023), p. 671","Manet, Déjeuner sur l'herbe ← fête champêtre attribuée à Giorgione ou Titien",edouard-manet · Realism · genre_painting,Unknown Artist · High_Renaissance · Unknown Genre
+27813,8685,filiation,validée,"Honour et Fleming, The Visual Arts (2023), p. 772","Picasso, Demoiselles d'Avignon ← El Greco, Vision de saint Jean (source inversée des trois figures de gauche)",pablo-picasso · Cubism · nude_painting,el-greco · Mannerism_Late_Renaissance · religious_painting
+32148,30969,filiation,validée,"hors Honour et Fleming, à vérifier","Raphaël, Mariage de la Vierge (1504) ← Pérugin, Mariage de la Vierge (Caen)",raphael · High_Renaissance · religious_painting,pietro-perugino · High_Renaissance · religious_painting
+79406,41274,filiation,validée,"hors Honour et Fleming, à vérifier","Van Gogh, Le Semeur d'après Millet ← Millet, Le Semeur (copie déclarée, autre facture)",vincent-van-gogh · Realism · genre_painting,Unknown Artist · Realism · genre_painting
+79950,33263,filiation,validée,"hors Honour et Fleming, à vérifier","Van Gogh, Résurrection de Lazare d'après Rembrandt ← eau-forte de Rembrandt (fragment repris)",vincent-van-gogh · Post_Impressionism · religious_painting,rembrandt · Baroque · religious_painting
+27815,9779,filiation,rejetée,"hors Honour et Fleming, à vérifier","Picasso, Femmes d'Alger d'après Delacroix ← Delacroix, Femmes d'Alger",pablo-picasso · Cubism · genre_painting,eugene-delacroix · Romanticism · portrait
+6745,8154,filiation,validée,"hors Honour et Fleming, à vérifier","Monet, Déjeuner sur l'herbe ← Manet, Déjeuner sur l'herbe (réponse, même titre)",claude-monet · Impressionism · genre_painting,edouard-manet · Realism · genre_painting
+30987,30969,meme_composition,validée,"hors Honour et Fleming, à vérifier","Pérugin : Remise des clés et Mariage de la Vierge, même mise en page (temple central sur une place)",pietro-perugino · Early_Renaissance · religious_painting,pietro-perugino · High_Renaissance · religious_painting
+32148,30987,meme_composition,validée,"hors Honour et Fleming, à vérifier","Raphaël, Mariage de la Vierge et Pérugin, Remise des clés : même schéma de place et de temple",raphael · High_Renaissance · religious_painting,pietro-perugino · Early_Renaissance · religious_painting
+55250,69229,meme_composition,validée,relecture : désaccord forme > sujet,,Unknown Artist · Impressionism · landscape,Unknown Artist · Naive_Art_Primitivism · Unknown Genre
+4261,15620,meme_facture,validée,relecture : désaccord forme > couleur,,camille-pissarro · Realism · landscape,isaac-levitan · Realism · landscape
+49819,67186,meme_sujet,validée,relecture : désaccord forme > touche,,Unknown Artist · Realism · illustration,Unknown Artist · Impressionism · Unknown Genre
+1776,76652,meme_sujet,validée,relecture : désaccord sujet > forme,,andy-warhol · Pop_Art · still_life,Unknown Artist · Pop_Art · Unknown Genre
+19737,59216,meme_sujet,validée,relecture : désaccord sujet > couleur,,joseph-wright · Romanticism · landscape,Unknown Artist · Romanticism · landscape
+810,73653,meme_palette,validée,relecture : désaccord couleur > forme,,aleksey-savrasov · Realism · landscape,Unknown Artist · Impressionism · Unknown Genre
+10415,30048,meme_palette,validée,relecture : désaccord couleur > touche,,fernando-botero · Naive_Art_Primitivism · cityscape,pierre-auguste-renoir · Impressionism · sketch_and_study
+32487,75391,meme_palette,validée,relecture : désaccord touche > sujet,,raphael-kirchner · Art_Nouveau · illustration,Unknown Artist · Post_Impressionism · Unknown Genre
+9622,44514,meme_facture,validée,relecture : désaccord touche > couleur,,eugene-boudin · Impressionism · genre_painting,Unknown Artist · Realism · genre_painting
+58385,69229,meme_facture,validée,relecture : désaccord forme > sujet,,Unknown Artist · Pointillism · cityscape,Unknown Artist · Naive_Art_Primitivism · Unknown Genre
+16219,16223,meme_sujet,validée,relecture : désaccord forme > couleur,,ivan-aivazovsky · Romanticism · Unknown Genre,ivan-aivazovsky · Romanticism · landscape
+14348,22251,meme_motif,validée,relecture : désaccord forme > touche,,henri-matisse · Expressionism · genre_painting,marc-chagall · Naive_Art_Primitivism · Unknown Genre
+67453,76819,meme_motif,validée,relecture : désaccord sujet > forme,,Unknown Artist · Pop_Art · Unknown Genre,Unknown Artist · Pop_Art · Unknown Genre
+32834,33077,meme_sujet,validée,relecture : désaccord sujet > couleur,,rembrandt · Baroque · portrait,rembrandt · Baroque · portrait
+3382,73806,meme_sujet,validée,relecture : désaccord sujet > touche,,boris-kustodiev · Realism · sketch_and_study,Unknown Artist · Art_Nouveau · Unknown Genre
+20241,46755,meme_palette,validée,relecture : désaccord couleur > forme,,karl-bryullov · Romanticism · portrait,Unknown Artist · Expressionism · genre_painting
+70644,71030,meme_palette,validée,relecture : désaccord touche > forme,,Unknown Artist · Expressionism · Unknown Genre,Unknown Artist · Expressionism · Unknown Genre
+71013,75391,meme_palette,validée,relecture : désaccord touche > sujet,,Unknown Artist · Art_Nouveau · Unknown Genre,Unknown Artist · Post_Impressionism · Unknown Genre
+9622,68912,meme_facture,validée,relecture : désaccord touche > couleur,,eugene-boudin · Impressionism · genre_painting,Unknown Artist · Impressionism · Unknown Genre
+37457,66489,meme_sujet,validée,relecture : désaccord forme > sujet,,Unknown Artist · Cubism · genre_painting,Unknown Artist · Pop_Art · Unknown Genre
+21020,31498,meme_sujet,validée,relecture : désaccord forme > couleur,,konstantin-makovsky · Romanticism · portrait,pyotr-konchalovsky · Realism · portrait
+40789,59731,meme_sujet,validée,relecture : désaccord forme > touche,,Unknown Artist · Romanticism · landscape,Unknown Artist · Expressionism · landscape
+17914,76867,meme_sujet,validée,relecture : désaccord sujet > forme,,james-tissot · Symbolism · religious_painting,Unknown Artist · Pop_Art · Unknown Genre
+33028,48284,meme_sujet,validée,relecture : désaccord sujet > couleur,,rembrandt · Baroque · religious_painting,Unknown Artist · Rococo · religious_painting
+8279,60621,meme_sujet,validée,relecture : désaccord sujet > touche,,edvard-munch · Expressionism · genre_painting,Unknown Artist · Naive_Art_Primitivism · illustration
+29929,64923,meme_palette,validée,relecture : désaccord couleur > forme,,pierre-auguste-renoir · Impressionism · portrait,Unknown Artist · Pop_Art · Unknown Genre
+10906,51819,meme_palette,validée,relecture : désaccord couleur > sujet,,francisco-goya · Romanticism · portrait,Unknown Artist · Fauvism · still_life
+7169,64286,meme_palette,validée,relecture : désaccord touche > sujet,,david-burliuk · Naive_Art_Primitivism · sketch_and_study,Unknown Artist · New_Realism · Unknown Genre
+33547,81005,meme_facture,validée,relecture : désaccord touche > couleur,,rembrandt · Baroque · landscape,william-turner · Romanticism · genre_painting
+65822,71779,meme_composition,validée,relecture : désaccord forme > sujet,,Unknown Artist · Pop_Art · Unknown Genre,Unknown Artist · Pop_Art · Unknown Genre
+22435,60995,meme_composition,validée,relecture : désaccord forme > couleur,,marc-chagall · Naive_Art_Primitivism · genre_painting,Unknown Artist · Expressionism · portrait
+11653,71024,meme_sujet,validée,relecture : désaccord forme > touche,,giovanni-boldini · Impressionism · nude_painting,Unknown Artist · Pop_Art · Unknown Genre
+50525,70110,meme_palette,validée,relecture : désaccord sujet > forme,,Unknown Artist · Abstract_Expressionism · nude_painting,Unknown Artist · Pop_Art · Unknown Genre
+3188,22379,meme_sujet,validée,relecture : désaccord sujet > couleur,,boris-kustodiev · Realism · illustration,marc-chagall · Naive_Art_Primitivism · genre_painting
+60584,69635,meme_facture,validée,relecture : désaccord sujet > touche,,Unknown Artist · Art_Nouveau · illustration,Unknown Artist · Art_Nouveau · Unknown Genre
+35460,64909,meme_palette,validée,relecture : désaccord couleur > forme,,titian · Mannerism_Late_Renaissance · sketch_and_study,Unknown Artist · Pop_Art · Unknown Genre
+34036,70033,meme_palette,validée,relecture : désaccord couleur > touche,,salvador-dali · Expressionism · portrait,Unknown Artist · Fauvism · Unknown Genre
+20355,50955,meme_composition,validée,relecture : désaccord touche > sujet,,katsushika-hokusai · Ukiyo_e · still_life,Unknown Artist · Art_Nouveau · genre_painting
+8965,66489,meme_sujet,validée,relecture : désaccord forme > sujet,,ernst-ludwig-kirchner · Expressionism · genre_painting,Unknown Artist · Pop_Art · Unknown Genre
+27178,44827,meme_composition,validée,relecture : désaccord forme > couleur,,orest-kiprensky · Romanticism · portrait,Unknown Artist · Rococo · portrait
+71348,75862,meme_facture,validée,relecture : désaccord forme > touche,,Unknown Artist · Expressionism · Unknown Genre,Unknown Artist · Symbolism · Unknown Genre
+1817,65638,meme_facture,validée,relecture : désaccord sujet > forme,,andy-warhol · Pop_Art · still_life,Unknown Artist · Pop_Art · Unknown Genre
+22743,32551,meme_sujet,validée,relecture : désaccord sujet > touche,,marc-chagall · Naive_Art_Primitivism · illustration,raphael-kirchner · Art_Nouveau · Unknown Genre
+35690,76787,meme_palette,validée,relecture : désaccord couleur > forme,,Unknown Artist · Impressionism · landscape,Unknown Artist · Pop_Art · Unknown Genre
+25077,42328,meme_palette,validée,relecture : désaccord couleur > sujet,,nicholas-roerich · Symbolism · genre_painting,Unknown Artist · Fauvism · still_life
+21888,43286,meme_palette,validée,relecture : désaccord couleur > touche,,lucian-freud · Expressionism · portrait,Unknown Artist · Romanticism · genre_painting
+44002,76493,meme_facture,validée,relecture : désaccord touche > forme,,Unknown Artist · Naive_Art_Primitivism · cityscape,Unknown Artist · Early_Renaissance · Unknown Genre
+78911,79655,meme_facture,validée,relecture : désaccord touche > couleur,,vincent-van-gogh · Realism · cityscape,vincent-van-gogh · Post_Impressionism · sketch_and_study
+48392,76646,meme_composition,validée,relecture : désaccord forme > sujet,,Unknown Artist · Expressionism · portrait,Unknown Artist · Pop_Art · Unknown Genre
+31416,35524,meme_composition,validée,relecture : désaccord forme > touche,,pyotr-konchalovsky · Post_Impressionism · Unknown Genre,Unknown Artist · Northern_Renaissance · Unknown Genre
+18569,52758,meme_sujet,validée,relecture : désaccord sujet > couleur,,joaquin-sorolla · Impressionism · cityscape,Unknown Artist · Impressionism · genre_painting
+42290,64702,meme_sujet,validée,relecture : désaccord sujet > touche,,Unknown Artist · Post_Impressionism · still_life,Unknown Artist · Expressionism · Unknown Genre
+44329,80565,meme_palette,validée,relecture : désaccord couleur > forme,,Unknown Artist · Romanticism · landscape,vincent-van-gogh · Post_Impressionism · sketch_and_study
+58829,75391,meme_palette,validée,relecture : désaccord couleur > sujet,,Unknown Artist · Realism · landscape,Unknown Artist · Post_Impressionism · Unknown Genre
+45693,53350,meme_palette,validée,relecture : désaccord couleur > touche,,Unknown Artist · Impressionism · landscape,Unknown Artist · Expressionism · genre_painting
+66483,70718,meme_facture,validée,relecture : désaccord touche > sujet,,Unknown Artist · Ukiyo_e · Unknown Genre,Unknown Artist · Naive_Art_Primitivism · Unknown Genre
+11690,40702,meme_sujet,validée,relecture : désaccord touche > couleur,,giovanni-boldini · Impressionism · still_life,Unknown Artist · Post_Impressionism · still_life
+56406,58730,meme_composition,validée,relecture : désaccord forme > couleur,,Unknown Artist · Realism · genre_painting,Unknown Artist · Symbolism · landscape
+23487,66396,meme_sujet,validée,relecture : désaccord forme > touche,,martiros-saryan · Expressionism · Unknown Genre,Unknown Artist · Contemporary_Realism · Unknown Genre
+31451,71242,meme_sujet,validée,relecture : désaccord sujet > touche,,pyotr-konchalovsky · Expressionism · portrait,Unknown Artist · Ukiyo_e · Unknown Genre
+6762,18442,meme_facture,validée,relecture : désaccord couleur > touche,,claude-monet · Impressionism · cityscape,joaquin-sorolla · Impressionism · landscape
+49064,67970,meme_palette,validée,relecture : désaccord touche > forme,,Unknown Artist · Abstract_Expressionism · abstract_painting,Unknown Artist · Pop_Art · Unknown Genre
+16671,42015,meme_palette,validée,relecture : désaccord touche > sujet,,ivan-bilibin · Art_Nouveau · illustration,Unknown Artist · Pop_Art · landscape
+20392,70204,meme_palette,validée,relecture : désaccord forme > sujet,,katsushika-hokusai · Ukiyo_e · sketch_and_study,Unknown Artist · Art_Nouveau · Unknown Genre
+5053,30335,meme_composition,validée,relecture : désaccord forme > couleur,,childe-hassam · Impressionism · portrait,pierre-auguste-renoir · Impressionism · portrait
+19110,37954,meme_sujet,validée,relecture : désaccord forme > touche,,john-singer-sargent · Realism · landscape,Unknown Artist · Post_Impressionism · still_life
+25055,79148,meme_sujet,validée,relecture : désaccord sujet > forme,,nicholas-roerich · Realism · landscape,vincent-van-gogh · Post_Impressionism · still_life
+27729,28025,meme_composition,validée,relecture : désaccord sujet > couleur,,pablo-picasso · Cubism · genre_painting,pablo-picasso · Cubism · genre_painting
+42290,48962,meme_sujet,validée,relecture : désaccord sujet > touche,,Unknown Artist · Post_Impressionism · still_life,Unknown Artist · Cubism · genre_painting
+824,75062,meme_palette,validée,relecture : désaccord couleur > forme,,aleksey-savrasov · Realism · landscape,Unknown Artist · Expressionism · Unknown Genre
+59572,60290,meme_palette,validée,relecture : désaccord couleur > sujet,,Unknown Artist · Romanticism · landscape,Unknown Artist · Post_Impressionism · still_life
+11852,18697,meme_palette,validée,relecture : désaccord couleur > touche,,gustav-klimt · Art_Nouveau · religious_painting,john-henry-twachtman · Impressionism · landscape
+18497,56672,meme_facture,validée,relecture : désaccord touche > couleur,,joaquin-sorolla · Impressionism · cityscape,Unknown Artist · Expressionism · genre_painting
+37457,76746,meme_sujet,validée,relecture : désaccord forme > sujet,,Unknown Artist · Cubism · genre_painting,Unknown Artist · Pop_Art · Unknown Genre
+24374,54823,meme_composition,validée,relecture : désaccord forme > couleur,,michelangelo · High_Renaissance · religious_painting,Unknown Artist · High_Renaissance · religious_painting
+55833,79834,meme_sujet,validée,relecture : désaccord forme > touche,,Unknown Artist · Realism · genre_painting,vincent-van-gogh · Realism · genre_painting
+25488,43232,meme_sujet,validée,relecture : désaccord sujet > forme,,nicholas-roerich · Symbolism · Unknown Genre,Unknown Artist · Realism · cityscape
+31130,33966,meme_sujet,validée,relecture : désaccord sujet > couleur,,pyotr-konchalovsky · Post_Impressionism · cityscape,salvador-dali · Post_Impressionism · landscape
+22485,66396,meme_sujet,validée,relecture : désaccord sujet > touche,,marc-chagall · Naive_Art_Primitivism · Unknown Genre,Unknown Artist · Contemporary_Realism · Unknown Genre
+50851,52583,meme_facture,validée,relecture : désaccord couleur > touche,,Unknown Artist · Impressionism · genre_painting,Unknown Artist · Impressionism · landscape
+45066,73566,meme_facture,validée,relecture : désaccord touche > forme,,Unknown Artist · Realism · cityscape,Unknown Artist · Impressionism · Unknown Genre
+16620,65443,meme_composition,validée,relecture : désaccord touche > sujet,,ivan-bilibin · Art_Nouveau · illustration,Unknown Artist · Realism · Unknown Genre
+19806,61480,meme_sujet,validée,relecture : désaccord touche > couleur,,joshua-reynolds · Rococo · portrait,Unknown Artist · Baroque · portrait
+15345,34816,meme_sujet,validée,relecture : désaccord forme > sujet,,ilya-repin · Realism · genre_painting,thomas-eakins · Realism · illustration
+31534,47407,meme_sujet,validée,relecture : désaccord forme > couleur,,pyotr-konchalovsky · Realism · still_life,Unknown Artist · Contemporary_Realism · still_life
+25644,50545,meme_sujet,validée,relecture : désaccord forme > touche,,nicholas-roerich · Art_Nouveau · genre_painting,Unknown Artist · Romanticism · genre_painting
+51500,64648,meme_sujet,validée,relecture : désaccord sujet > forme,,Unknown Artist · Post_Impressionism · landscape,Unknown Artist · Contemporary_Realism · Unknown Genre
+11829,18877,meme_sujet,validée,relecture : désaccord sujet > couleur,,giovanni-boldini · Impressionism · portrait,john-singer-sargent · Realism · portrait
+41386,50093,meme_sujet,validée,relecture : désaccord sujet > touche,,Unknown Artist · Post_Impressionism · portrait,Unknown Artist · Symbolism · genre_painting
+15990,67145,meme_palette,validée,relecture : désaccord couleur > forme,,isaac-levitan · Realism · landscape,Unknown Artist · Art_Nouveau · Unknown Genre
+9639,75391,meme_main,validée,relecture : désaccord couleur > sujet,,eugene-boudin · Impressionism · landscape,Unknown Artist · Post_Impressionism · Unknown Genre
+51513,64587,meme_facture,validée,relecture : désaccord touche > forme,,Unknown Artist · Romanticism · cityscape,Unknown Artist · Impressionism · Unknown Genre
+36679,37621,meme_palette,validée,relecture : désaccord touche > sujet,,Unknown Artist · Romanticism · genre_painting,Unknown Artist · Contemporary_Realism · still_life
+63250,64985,filiation,validée,relecture : désaccord touche > couleur,,Unknown Artist · Minimalism · abstract_painting,Unknown Artist · Minimalism · Unknown Genre

@@ -535,3 +535,37 @@ subject → same subject, touch → same handling, colour → same palette). A v
 candidate becomes an annotated pair (source "relecture : désaccord forme > sujet"); a
 dismissed one is logged in `bench/review_log.csv` and never comes back. At the top: progress
 towards 100 validated pairs and the count per kind, to see which are missing.
+
+## 18. First benchmark on 104 validated pairs (16/11/2026)
+
+104 pairs validated by the art historian (plus 1 rejected and 23 dismissed candidates): 36 "same
+subject", 26 "same palette", 16 "same handling", 14 "same composition", 9 filiations, 2 "same
+motif", 1 "same hand". 10 come from Honour and Fleming or well-known filiations, 94 from the
+quick review of disagreements between ways of seeing.
+
+**A bias to correct.** A pair drawn from a disagreement was chosen because one way of seeing
+brought it together and another pulled it apart: those two ways of seeing won or lost in
+advance. For these pairs, only the two ways of seeing not used to choose them are measured
+("neutral" ways of seeing). Mean percentile of the twin (0.5 = chance, 1 = nearest):
+
+| kind of resemblance | form | subject | colour | touch |
+|---|---|---|---|---|
+| same subject, other composition | 0.950 | **0.966** | 0.369 | 0.847 |
+| same composition, other subject | 0.675 (3) | **0.992** | 0.537 | 0.887 |
+| other artists, comparable handling | 0.830 | 0.745 | 0.626 | **0.886** (3) |
+| same palette, other traditions | 0.539 | 0.390 | **0.719** | 0.570 |
+| filiation (book pairs, unbiased) | 0.993 | **0.997** | 0.626 | 0.890 |
+
+In brackets: fewer than 5 pairs. Each way of seeing wins on the kind of resemblance it is meant
+to see, except "same composition", where subject wins: SigLIP 2 also describes the layout ("a
+temple on a square"), and too few pairs measure form without bias. Colour is below chance for
+"same subject": two treatments of one theme change palette.
+
+**Leiden against e-means, on pairs** (share of validated pairs in the same group, 142 groups):
+form 24.0% → **32.7%**, subject 16.3% → **26.0%**, touch 19.2% → **26.0%**, colour 11.5% = 11.5%.
+This confirms § 15: Leiden follows the kinships the art historian recognises better, except for
+colour.
+
+**The criterion of step 0.12** (≈ 100 validated pairs covering the eight kinds) is met in number,
+not in coverage: "same hand" (1) and "same motif" (2) still need more, and more "same
+composition" pairs outside disagreements are needed to judge form.

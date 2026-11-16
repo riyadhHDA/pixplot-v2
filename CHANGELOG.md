@@ -14,6 +14,14 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.12.2 — 2026-11-16 · First benchmark on 104 validated pairs
+
+- 104 pairs validated by the art historian, versioned in `bench/wikiart81k_pairs.csv` (with the
+  works' labels) and the review log.
+- Results (ARCHITECTURE § 18), measuring only the ways of seeing not used to choose each pair:
+  each wins on the resemblance it should see, except composition (subject wins); Leiden keeps
+  more pairs in one group than e-means (form 24 → 33%).
+
 ## 0.12.1 — 2026-11-16 · Quick pair review
 
 - Anki-style review (key R in the Atlas): one pair at a time, large; Enter or 1 to 7 to validate
