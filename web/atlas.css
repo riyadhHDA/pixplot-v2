@@ -219,6 +219,11 @@ a.chip { text-decoration: none; }
 .dis-pick select { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
 .empty-note { color: var(--muted); margin: 12px 16px; font-size: 13px; }
 
+/* ---------------------------------------------------------------- lieux typés */
+.place-controls { display: grid; gap: 8px; border-top: 1px solid var(--line); padding-top: 8px; }
+.place-controls .check { display: flex; gap: 6px; align-items: flex-start; font-size: 12px; }
+.place-controls input[type=range] { width: 100%; }
+
 /* ---------------------------------------------------------------- bilan du corpus */
 .corpus-panel { padding: 4px 16px 20px; font-size: 13px; }
 .corpus-panel h3 { font: 600 15px var(--serif); margin: 16px 0 6px; }

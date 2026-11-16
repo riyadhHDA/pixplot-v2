@@ -33,6 +33,15 @@
             <select id="layout"><option value="map">Ressemblance · forme</option></select>
           </label>
           <p class="menu-note" id="layout-note"></p>
+          <div id="place-controls" class="place-controls" hidden>
+            <label>Quel lieu ?
+              <select id="place-type"></select>
+            </label>
+            <label class="check"><input type="checkbox" id="place-paths" checked> Circulations (les lieux d'une œuvre, dans l'ordre des dates)</label>
+            <label id="place-year-row" hidden>Dates des lieux : <span id="place-year-label"></span>
+              <input type="range" id="place-year" step="1">
+            </label>
+          </div>
           <label>Affichage
             <select id="display">
               <option value="sprites">Vignettes</option>

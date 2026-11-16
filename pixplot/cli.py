@@ -446,6 +446,43 @@ def cmd_disagreements(args) -> int:
     return 0
 
 
+def cmd_import_places(args) -> int:
+    from .catalog import db
+    from .catalog.places import import_places_csv
+
+    s = get_settings(args.data)
+    conn = db.connect(s.catalog_path)
+    r = import_places_csv(conn, Path(args.file), source=args.source or Path(args.file).name)
+    conn.close()
+    print(f"{r['added']} lieux importés ; {r['unmatched']} lignes sans œuvre correspondante ; "
+          f"{r['no_coords']} lieux sans coordonnées (ajoutez lat/lon ou un nom de ville connu).")
+    return 0
+
+
+def cmd_places(args) -> int:
+    from collections import Counter
+
+    from .catalog import db
+    from .catalog.metadata import get_metadata
+    from .catalog.places import PLACE_TYPES, derive_from_metadata, load_places
+
+    s = get_settings(args.data)
+    conn = db.connect(s.catalog_path)
+    if args.derive:
+        ids = [r[0] for r in conn.execute("SELECT id FROM artworks WHERE status = 'ok'")]
+        counts = derive_from_metadata(conn, get_metadata(conn, ids))
+        print("Lieux déduits des métadonnées : " + (", ".join(f"{PLACE_TYPES[t][0].lower()} {n}" for t, n in counts.items()) or "aucun"))
+    rows = load_places(conn)
+    conn.close()
+    by_type = Counter(r["type"] for r in rows)
+    print(f"{len(rows)} lieux pour {len({r['artwork_id'] for r in rows})} œuvres")
+    for t, n in by_type.most_common():
+        located = sum(1 for r in rows if r["type"] == t and r["lat"] is not None)
+        dated = sum(1 for r in rows if r["type"] == t and r["year"] is not None)
+        print(f"  {PLACE_TYPES[t][0]:<26} {n:>6}   situés {located:>6}   datés {dated:>6}")
+    return 0
+
+
 def cmd_corpus(args) -> int:
     from .api.data import AtlasData
 
@@ -847,6 +884,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--centile", type=float, default=0.35, help="centile maximal dans le regard qui sépare")
     p.add_argument("--keep", type=int, default=300, help="paires gardées par couple de regards")
     p.set_defaults(func=cmd_disagreements)
+
+    p = sub.add_parser("import-places", help="lieux typés et datés d'un fichier CSV (path|id, type, place, lat, lon, date, source)")
+    p.add_argument("file")
+    p.add_argument("--source", help="source à noter pour chaque lieu (défaut : nom du fichier)")
+    p.set_defaults(func=cmd_import_places)
+
+    p = sub.add_parser("places", help="bilan des lieux ; --derive les déduit des métadonnées (musée, naissance…)")
+    p.add_argument("--derive", action="store_true", help="déduire les lieux des métadonnées déjà importées")
+    p.set_defaults(func=cmd_places)
 
     p = sub.add_parser("corpus", help="bilan critique : ce qui manque au corpus, d'où viennent les étiquettes, ce que voit chaque regard")
     p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")

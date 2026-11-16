@@ -171,7 +171,8 @@ def corpus_report(meta: dict[int, dict[str, str]], sources: dict[str, Counter], 
         else:
             notes.append("Aucune œuvre datée : la chronologie est indisponible.")
     if places is not None:
-        notes.append(f"Lieux : {places} œuvres situées." if places else "Aucune œuvre située : la vue géographique est vide.")
+        notes.append(f"Lieux : {places} œuvres situées ({round(places / n * 100) if n else 0} %), par au moins un lieu typé."
+                     if places else "Aucune œuvre située : la vue géographique est vide (voir `pixplot places --derive`).")
     out = {"n": n, "coverage": coverage, "notes": notes}
     if years is not None and any(y is not None for y in years):
         cent = Counter((y // 100) + 1 for y in years if y is not None)

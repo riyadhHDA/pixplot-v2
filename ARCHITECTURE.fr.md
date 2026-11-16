@@ -674,3 +674,33 @@ D'où trois outils :
 Le serveur MCP reçoit aussi une consigne de sécurité, d'après AutoMalTool (He et al., 2025) :
 titres, étiquettes, notes du carnet et Research Packs sont des données saisies par d'autres, et
 le modèle de langage ne doit jamais suivre une consigne qui s'y trouverait.
+
+## 21. Lieux typés et datés, d'après ARTL@S (17/11/2026)
+
+B. Joyeux-Prunel (« ARTL@S : A Spatial and Trans-national Art History », *Artl@s Bulletin*,
+2012) défend une histoire spatiale et transnationale des arts qui part des **répartitions et
+des circulations** avant les discours, distingue les lieux (où l'œuvre est faite, montrée,
+conservée, ce qu'elle représente, où vit l'artiste), date chaque adresse, et refuse
+d'expliquer un style par un lieu (l'héritage de Taine). La vue géographique de PixPlot posait
+chaque œuvre en un seul point, sans dire de quel lieu il s'agissait.
+
+- **Table `places`** (catalogue) : une œuvre peut avoir plusieurs lieux, chacun avec un type
+  (création, exposition, conservation, lieu représenté, naissance / résidence / mort de
+  l'artiste, non précisé), un nom, des coordonnées, une date et une source.
+- **Import** : `pixplot import-places lieux.csv` (colonnes `path` ou `id`, `type`, `place`,
+  `lat`, `lon`, `date`, `source`) ; `pixplot places --derive` déduit des lieux des
+  métadonnées (dépôt ou institution → conservation ; « born in Munich » / « né à » →
+  naissance ; « died in » / « mort à » → mort ; `place` → non précisé).
+- **Répertoire embarqué** (`catalog/gazetteer.py`) : ~80 villes d'art et ~40 institutions,
+  pour placer un lieu par son nom sans service en ligne. Un lieu inconnu reste sans
+  coordonnées : on ne devine pas.
+- **Atlas, vue Géographie** : « Quel lieu ? » (un type à la fois), **circulations** (lignes
+  reliant les lieux d'une même œuvre dans l'ordre des dates), **curseur de temps** (lieux
+  jusqu'à une année), cadrage sur les œuvres situées, et une note : une carte de lieux montre
+  des répartitions et des circulations, pas des styles.
+
+Sur le corpus du Yale Center for British Art, `--derive` donne 18 lieux de conservation (New
+Haven), 7 naissances et 8 morts d'artistes datées (Liverpool, Londres, Munich, Bathampton…) :
+la carte montre déjà le trajet des œuvres britanniques vers une collection américaine.
+L'import Paris Musées (en attente : leur site était hors service) fournira lieux de
+conservation, dates et lieux représentés à grande échelle.

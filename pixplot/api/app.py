@@ -132,6 +132,12 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
             map_cache["map"] = data.map_payload()
         return JSONResponse(map_cache["map"])
 
+    @app.get("/api/places")
+    def places():
+        if "places" not in map_cache:
+            map_cache["places"] = data.places_payload()
+        return JSONResponse(map_cache["places"])
+
     @app.get("/api/corpus")
     def corpus():
         return {"report": data.corpus_report(), "spaces": data.spaces.list()}

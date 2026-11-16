@@ -14,6 +14,15 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.13.2 — 2026-11-17 · Typed, dated places
+
+- Several places per work, each with a type (creation, exhibition, holding, depicted place, artist's
+  birth / residence / death), a date and a source: `pixplot import-places`, `pixplot places --derive`
+  (inferred from metadata), bundled gazetteer of cities and institutions.
+- Geography view: choice of place type, circulations between a work's places, time slider, critical
+  note. `/api/places` API.
+- After B. Joyeux-Prunel, "ARTL@S" (2012): ARCHITECTURE § 21.
+
 ## 0.13.1 — 2026-11-17 · Critical layer
 
 - A card per way of seeing (model, training data, what it sees and does not see, biases, results) in

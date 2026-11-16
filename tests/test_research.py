@@ -465,3 +465,61 @@ def test_corpus_report_and_regard_cards(env):
     assert card("inconnu")["model"] == "inconnu"
     res = c.get("/api/corpus").json()
     assert res["report"]["n"] == len(data.ids) and all("card" in sp for sp in res["spaces"])
+
+
+def test_gazetteer_and_typed_places(tmp_path):
+    import sqlite3
+
+    from pixplot.catalog import gazetteer
+    from pixplot.catalog import places as P
+
+    assert gazetteer.find_city("Munich, Germany") == "Munich" and gazetteer.find_city("Londres") == "London"
+    assert gazetteer.find_institution_city("Yale Center for British Art") == "New Haven"
+    assert gazetteer.find_city("Atlantide") is None
+    assert P.norm_type("Exhibition") == "exposition" and P.norm_type("musée") == "conservation"
+    with pytest.raises(ValueError):
+        P.norm_type("cuisine")
+
+    conn = sqlite3.connect(tmp_path / "c.sqlite")
+    conn.executescript("CREATE TABLE artworks (id INTEGER PRIMARY KEY, path TEXT, status TEXT);")
+    conn.executemany("INSERT INTO artworks VALUES (?, ?, 'ok')", [(1, str(tmp_path / "a.jpg")), (2, str(tmp_path / "b.jpg"))])
+    meta = {1: {"repository": "Yale Center for British Art",
+                "artist": "Walter Richard Sickert, born in Munich, Germany, 1860; active in England; died in Bathampton, England, 1942"},
+            2: {"artist": "Anonyme", "place": "Atlantide"}}
+    counts = P.derive_from_metadata(conn, meta)
+    assert counts == {"conservation": 1, "naissance_artiste": 1, "deces_artiste": 1, "non_precise": 1}
+    rows = {(r["artwork_id"], r["type"]): r for r in P.load_places(conn)}
+    assert rows[(1, "naissance_artiste")]["year"] == 1860 and rows[(1, "naissance_artiste")]["lat"] == pytest.approx(48.137)
+    assert rows[(1, "conservation")]["lon"] == pytest.approx(-72.928)
+    assert rows[(2, "non_precise")]["lat"] is None                 # lieu inconnu : pas deviné
+
+    f = tmp_path / "lieux.csv"
+    f.write_text("path,type,place,lat,lon,date\nb.jpg,exposition,Salon de Paris,,,1874\n"
+                 "b.jpg,creation,Atelier,43.3,5.4,1873\ninconnu.jpg,creation,Paris,,,\n", encoding="utf-8")
+    r = P.import_places_csv(conn, f, source="essai")
+    assert r == {"added": 2, "unmatched": 1, "no_coords": 0}       # « Salon de Paris » → Paris
+    # une nouvelle déduction remplace les lieux déduits, garde ceux du fichier
+    P.derive_from_metadata(conn, meta)
+    assert sum(1 for x in P.load_places(conn) if x["source"] == "essai") == 2
+
+
+def test_places_api(env):
+    s, data, c = env
+    from pixplot.catalog import db
+    from pixplot.catalog.places import add_place, ensure
+
+    conn = db.connect(s.catalog_path)
+    ensure(conn)
+    first, second = int(data.ids[0]), int(data.ids[1])
+    add_place(conn, first, "creation", "Paris", date="1870")
+    add_place(conn, first, "conservation", "Musée du Louvre", institution=True)
+    add_place(conn, second, "represente", "Venise")
+    conn.commit()
+    conn.close()
+    data.__dict__.pop("_place_counts", None)
+    r = c.get("/api/places").json()
+    keys = {t["key"] for t in r["types"]}
+    assert {"creation", "conservation", "represente"} <= keys
+    k = next(i for i, (row, t) in enumerate(zip(r["row"], r["type"])) if t == "creation" and row == data.row_of[first])
+    assert r["year"][k] == 1870 and r["lat"][k] == pytest.approx(48.857)
+    assert "creation" in c.get("/api/info").json()["places"]

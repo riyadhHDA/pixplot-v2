@@ -107,7 +107,7 @@
       ...(state.info.space_maps || []).map((k) => [`map:${k}`, SPACE_SHORT[k] || k])]]];
     const other = [];
     if (m.year) other.push(["time", "Chronologie"]);
-    if (m.lat) other.push(["geo", "Géographie"]);
+    if (m.lat || Object.keys(state.info.places || {}).length) other.push(["geo", "Géographie (lieux)"]);
     if (other.length) groups.push(["Dates et lieux", other]);
     $("layout").innerHTML = groups.map(([g, opts]) => `<optgroup label="${esc(g)}">${opts.map(([v, l]) =>
       `<option value="${v}">${esc(l)}</option>`).join("")}</optgroup>`).join("");
@@ -347,6 +347,13 @@
         getWidth: 1, widthUnits: "pixels",
       }));
     }
+    if (state.layout === "geo") {
+      const paths = circulationPaths();
+      if (paths.length) layers.push(new deck.PathLayer({
+        id: "circulations", data: paths, getPath: (d) => d.path,
+        getColor: (d) => [...d.color, 150], getWidth: 1.5, widthUnits: "pixels", jointRounded: true,
+      }));
+    }
     layers.push(new ScatterplotLayer({
       id: "points",
       visible: !sprites,
@@ -358,7 +365,7 @@
       getRadius: 3,
       radiusMinPixels: 1, radiusMaxPixels: 6,
       pickable: true, autoHighlight: true, highlightColor: [255, 255, 255, 255],
-      updateTriggers: { getFillColor: [state.colorMode, state.highlightLabel], getPosition: [state.layout] },
+      updateTriggers: { getFillColor: [state.colorMode, state.highlightLabel], getPosition: [state.layout, state.posVersion] },
     }));
     if (state.sprites) {
       state.sprites.forEach((sheet, s) => layers.push(new IconLayer({
@@ -375,7 +382,7 @@
         pickable: true,
         autoHighlight: true, highlightColor: [224, 176, 64, 255],
         alphaCutoff: 0,
-        updateTriggers: { getColor: [state.highlightLabel], getPosition: [state.layout] },
+        updateTriggers: { getColor: [state.highlightLabel], getPosition: [state.layout, state.posVersion] },
       })));
     }
     if (sprites && state.hd.length) {
@@ -507,6 +514,70 @@
     return { pos, axis, note: `un bloc = ${step === 1 ? "une année" : `${step} ans`}, œuvres rangées par groupe` };
   }
 
+  // ------------------------------------------------------------------ lieux typés et datés (ARTL@S)
+  // Chaque œuvre peut avoir plusieurs lieux : création, exposition, conservation, lieu
+  // représenté, naissance / résidence / mort de l'artiste. La carte montre un type à la fois ;
+  // les « circulations » relient, dans l'ordre des dates, les lieux d'une même œuvre.
+  async function loadPlaces() {
+    if (state.places !== undefined) return state.places;
+    try { state.places = await getJSON("/api/places"); } catch { state.places = null; }
+    return state.places;
+  }
+
+  function placeYearRange() {
+    const ys = (state.places?.year || []).filter((y) => y != null);
+    return ys.length ? [Math.min(...ys), Math.max(...ys)] : null;
+  }
+
+  function setupPlaceControls() {
+    const P = state.places;
+    const box = $("place-controls");
+    if (!P || !P.types.length) { box.hidden = true; return; }
+    box.hidden = state.layout !== "geo";
+    const sel = $("place-type");
+    if (!sel.options.length) {
+      sel.innerHTML = P.types.map((t) => `<option value="${t.key}">${esc(t.label)} (${t.count})</option>`).join("");
+      const pref = ["conservation", "creation", "exposition", "represente", "naissance_artiste", "non_precise"]
+        .find((k) => P.types.some((t) => t.key === k));
+      sel.value = state.placeType || pref || P.types[0].key;
+      state.placeType = sel.value;
+      const range = placeYearRange();
+      const yr = $("place-year");
+      if (range) {
+        yr.min = range[0]; yr.max = range[1]; yr.value = range[1]; state.placeUntil = null;
+        $("place-year-label").textContent = `toutes les dates (${range[0]}–${range[1]})`;
+        $("place-year-row").hidden = false;
+      } else $("place-year-row").hidden = true;
+    }
+  }
+
+  // Lieux d'une œuvre (rangée r), éventuellement d'un seul type, en tenant compte du curseur.
+  function placesOf(r, type) {
+    const P = state.places;
+    if (!P) return [];
+    if (!state.placeIndex) {
+      state.placeIndex = new Map();
+      P.row.forEach((row, k) => { if (!state.placeIndex.has(row)) state.placeIndex.set(row, []); state.placeIndex.get(row).push(k); });
+    }
+    return (state.placeIndex.get(r) || []).filter((k) => (!type || P.type[k] === type) && P.lat[k] != null && P.lon[k] != null
+      && (state.placeUntil == null || P.year[k] == null || P.year[k] <= state.placeUntil));
+  }
+
+  function circulationPaths() {
+    const P = state.places, scale = (WORLD / 180) * 8, out = [];
+    if (!P || !$("place-paths").checked) return out;
+    for (const [r] of state.placeIndex || []) {
+      const ks = placesOf(r, null);
+      if (ks.length < 2) continue;
+      // ordre : lieux datés par date, puis non datés (souvent la conservation actuelle)
+      ks.sort((a, b) => (P.year[a] ?? 1e9) - (P.year[b] ?? 1e9));
+      const path = ks.map((k) => [P.lon[k] * scale, P.lat[k] * scale]);
+      if (path.some((p, i) => i && (p[0] !== path[i - 1][0] || p[1] !== path[i - 1][1])))
+        out.push({ r, path, color: PALETTE[state.map.cluster[r] % PALETTE.length] });
+    }
+    return out;
+  }
+
   function geoPositions() {
     const m = state.map, n = state.n, cell = state.iconSize * 1.05;
     const pos = new Float32Array(n * 2);
@@ -514,8 +585,15 @@
     // Échelle large par rapport aux vignettes : les spirales de villes voisines (Paris,
     // Londres, Amsterdam…) ne se recouvrent pas ; on zoome pour voir le détail.
     const scale = (WORLD / 180) * 8;
+    const P = state.places, type = state.placeType;
+    const latOf = (r) => { if (P && type) { const k = placesOf(r, type)[0]; return k == null ? null : [P.lat[k], P.lon[k]]; }
+                           return m.lat && m.lat[r] != null && m.lon[r] != null ? [m.lat[r], m.lon[r]] : null; };
+    let unplaced = 0;
+    state.geoPlaced = new Set();
     for (let r = 0; r < n; r++) {
-      const lat = m.lat[r], lon = m.lon[r];
+      const ll = latOf(r);
+      const lat = ll ? ll[0] : null, lon = ll ? ll[1] : null;
+      if (!ll) unplaced++; else state.geoPlaced.add(r);
       let x, y;
       if (lat == null || lon == null) { x = 190 * scale; y = -100 * scale; }  // sans lieu : en bas à droite
       else { x = lon * scale; y = lat * scale; }
@@ -531,9 +609,11 @@
     // graticule discret tous les 30°, et un bloc à part pour les œuvres sans lieu
     for (let lon = -180; lon <= 180; lon += 30) axis.push({ line: [[lon * scale, -60 * scale], [lon * scale, 85 * scale]] });
     for (let lat = -60; lat <= 85; lat += 30) axis.push({ line: [[-180 * scale, lat * scale], [180 * scale, lat * scale]] });
-    const unplaced = m.lat.filter((v, r) => v == null || m.lon[r] == null).length;
-    if (unplaced) axis.push({ at: [190 * scale, -100 * scale + cell * (0.6 * Math.sqrt(unplaced) + 4)], text: `sans lieu (${unplaced})` });
-    return { pos, axis, note: "longitude / latitude · fond Natural Earth" };
+    if (unplaced) axis.push({ at: [190 * scale, -100 * scale + cell * (0.6 * Math.sqrt(unplaced) + 4)], text: `sans lieu de ce type (${unplaced})` });
+    const t = P && P.types.find((x) => x.key === type);
+    const note = (t ? `${t.label} : ${t.about}. ` : "") + "Une carte de lieux montre des répartitions et des circulations, "
+      + "pas des styles : un lieu n'explique pas une manière (ARTL@S). Fond Natural Earth.";
+    return { pos, axis, note };
   }
 
   // Fond de carte : TopoJSON (world-atlas, Natural Earth 1:110 M, domaine public) embarqué
@@ -608,9 +688,14 @@
     } else if (layout === "time") ({ pos: state.positions, axis: state.axis, note } = timePositions());
     else if (layout === "geo") {
       await loadWorld();
+      await loadPlaces();
+      state.layout = "geo";
+      setupPlaceControls();
       ({ pos: state.positions, axis: state.axis, note } = geoPositions());
     } else { state.positions = state.umapPositions.slice(); state.axis = []; }
     state.layout = layout;
+    state.posVersion = (state.posVersion || 0) + 1;
+    if ($("place-controls")) $("place-controls").hidden = layout !== "geo" || !(state.places && state.places.types.length);
     state.layoutNote = note;
     $("layout-note").textContent = note;
     computeGroupLabels();
@@ -624,7 +709,9 @@
 
   function fitToPositions() {
     let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    const only = state.layout === "geo" && state.geoPlaced && state.geoPlaced.size ? state.geoPlaced : null;
     for (let r = 0; r < state.n; r++) {
+      if (only && !only.has(r)) continue;  // carte : cadrer sur les œuvres situées
       const x = state.positions[2 * r], y = state.positions[2 * r + 1];
       if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
     }
@@ -1590,6 +1677,15 @@
       if (isMapLayout()) flyTo(0, 0, state.fitZoom); else fitToPositions();
     });
     $("layout").addEventListener("change", (e) => setLayout(e.target.value));
+    $("place-type").addEventListener("change", (e) => { state.placeType = e.target.value; setLayout("geo"); });
+    $("place-paths").addEventListener("change", () => redraw());
+    $("place-year").addEventListener("input", (e) => {
+      const v = Number(e.target.value), max = Number(e.target.max);
+      state.placeUntil = v >= max ? null : v;
+      $("place-year-label").textContent = state.placeUntil == null ? `toutes les dates (${e.target.min}–${max})` : `jusqu'en ${v}`;
+      clearTimeout(state.placeTimer);
+      state.placeTimer = setTimeout(() => setLayout("geo"), 120);
+    });
     $("open-compare").addEventListener("click", openCompare);
     $("compare-close").addEventListener("click", () => { $("compare").hidden = true; });
     $("compare-clear").addEventListener("click", () => { state.compare = []; saveCompare(); $("compare").hidden = true; });

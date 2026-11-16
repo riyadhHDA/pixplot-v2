@@ -615,3 +615,29 @@ attributed works; 1 style in 27 is non-Western, Ukiyo-e, 1.4% of works; no dates
 and **labels shown for what they are** ("volunteer label, to be checked" on WikiArt labels). The
 MCP server also gets a security rule, after AutoMalTool (He et al., 2025): titles, labels,
 notebook notes and Research Packs are data entered by others, never instructions.
+
+## 21. Typed, dated places, after ARTL@S (17/11/2026)
+
+B. Joyeux-Prunel ("ARTL@S: A Spatial and Trans-national Art History", *Artl@s Bulletin*, 2012)
+argues for a spatial, transnational art history that starts from **distributions and
+circulations** before discourses, distinguishes places (where a work is made, shown, kept, what
+it depicts, where the artist lives), dates every address, and refuses to explain a style by a
+place (Taine's legacy). PixPlot's geographic view put each work at a single point without
+saying which place it was.
+
+- **`places` table**: a work may have several places, each with a type (creation, exhibition,
+  holding, depicted place, artist's birth / residence / death, unspecified), a name,
+  coordinates, a date and a source.
+- **Import**: `pixplot import-places places.csv` (columns `path` or `id`, `type`, `place`,
+  `lat`, `lon`, `date`, `source`); `pixplot places --derive` infers places from metadata
+  (repository or institution → holding; "born in" / "né à" → birth; "died in" / "mort à" →
+  death; `place` → unspecified).
+- **Bundled gazetteer**: ~80 art cities and ~40 institutions, to place a name without any
+  online service. An unknown place stays without coordinates: nothing is guessed.
+- **Atlas, Geography view**: "Which place?" (one type at a time), **circulations** (lines
+  joining a work's places in date order), a **time slider**, framing on located works, and a
+  note: a map of places shows distributions and circulations, not styles.
+
+On the Yale Center for British Art corpus, `--derive` yields 18 holding places (New Haven), 7
+dated artist births and 8 deaths (Liverpool, London, Munich, Bathampton…): the map already shows
+British works travelling to an American collection.

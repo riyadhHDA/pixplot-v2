@@ -14,6 +14,15 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.13.2 — 17/11/2026 · Lieux typés et datés
+
+- Plusieurs lieux par œuvre, chacun avec un type (création, exposition, conservation, lieu représenté,
+  naissance / résidence / mort de l'artiste), une date et une source : `pixplot import-places`,
+  `pixplot places --derive` (déduits des métadonnées), répertoire de villes et d'institutions embarqué.
+- Vue Géographie : choix du type de lieu, circulations entre les lieux d'une œuvre, curseur de temps,
+  note critique. API `/api/places`.
+- D'après B. Joyeux-Prunel, « ARTL@S » (2012) : ARCHITECTURE § 21.
+
 ## 0.13.1 — 17/11/2026 · Couche critique
 
 - Une fiche par regard (modèle, données d'entraînement, ce qu'il voit et ne voit pas, biais, résultats)

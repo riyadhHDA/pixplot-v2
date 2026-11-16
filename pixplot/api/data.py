@@ -168,6 +168,7 @@ class AtlasData:
             "named_groups": bool(self.names),
             "space_maps": available_maps(self.analysis),
             "communities": communities.available(self.analysis),
+            "places": self.place_counts(),
             "disagreements": self.disagreement_counts(),
             "main_space": self.spaces.main,
             "suspects": (self.suspects or {}).get("counts", {}),
@@ -175,6 +176,38 @@ class AtlasData:
             "suspects_space": (self.suspects or {}).get("space"),
             "analysis_params": self.analysis.manifest.get("params", {}),
         }
+
+    def places_payload(self) -> dict:
+        """Lieux typés et datés (table ``places``), en colonnes ; ``row`` = rang de l'œuvre
+        dans la carte. Les coordonnées des métadonnées (latitude/longitude) sans type
+        apparaissent comme « lieu non précisé »."""
+        from ..catalog.places import PLACE_TYPES, load_places
+
+        conn = self._conn(self.settings)
+        rows = [r for r in load_places(conn) if r["artwork_id"] in self.row_of]
+        conn.close()
+        cols = {k: [] for k in ("row", "type", "name", "lat", "lon", "year", "date", "source")}
+        for r in rows:
+            cols["row"].append(self.row_of[r["artwork_id"]])
+            for k in ("type", "name", "lat", "lon", "year", "date", "source"):
+                cols[k].append(r[k])
+        coords = self.coordinates()
+        if coords:
+            for n, (la, lo) in enumerate(zip(*coords)):
+                if la is not None and lo is not None:
+                    for k, v in (("row", n), ("type", "non_precise"), ("name", ""), ("lat", la), ("lon", lo),
+                                 ("year", None), ("date", ""), ("source", "métadonnées latitude/longitude")):
+                        cols[k].append(v)
+        counts: dict[str, int] = {}
+        for t in cols["type"]:
+            counts[t] = counts.get(t, 0) + 1
+        return {"types": [{"key": t, "label": PLACE_TYPES[t][0], "about": PLACE_TYPES[t][1], "count": counts[t]}
+                          for t in PLACE_TYPES if t in counts], **cols}
+
+    def place_counts(self) -> dict[str, int]:
+        if getattr(self, "_place_counts", None) is None:
+            self._place_counts = {t["key"]: t["count"] for t in self.places_payload()["types"]}
+        return self._place_counts
 
     def corpus_report(self) -> dict:
         """Bilan critique du corpus (voir ``analysis.critique``), mis en cache."""
@@ -184,8 +217,8 @@ class AtlasData:
             for key, src, n in conn.execute("SELECT key, source, COUNT(*) FROM metadata GROUP BY key, source"):
                 sources.setdefault(key, Counter())[src or ""] += n
             conn.close()
-            coords = self.coordinates()
-            places = sum(v is not None for v in coords[0]) if coords else 0
+            pl = self.places_payload()
+            places = len({r for r, la in zip(pl["row"], pl["lat"]) if la is not None})
             meta = {int(i): self.meta.get(int(i), {}) for i in self.ids}
             self._report = critique.corpus_report(meta, sources, self.years(), places)
         return self._report
