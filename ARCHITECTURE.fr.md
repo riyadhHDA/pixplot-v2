@@ -528,3 +528,25 @@ Décision : le critère de la feuille de route est rempli pour la forme, la touc
 pas pour la couleur. Les groupes Leiden sont disponibles pour chaque regard ; les groupes
 **nommés** de l'Atlas restent ceux d'e-means tant que les noms, le panneau des groupes et
 les étiquettes à vérifier n'ont pas été portés sur Leiden (étape suivante).
+
+## 16. Désaccords entre regards et relecture des paires (16/11/2026)
+
+`pixplot disagreements` cherche, pour chaque couple de regards, les paires d'œuvres très
+proches selon l'un (rang ≤ 5 parmi les voisines) et lointaines selon l'autre (centile
+< 0,35, estimé sur un échantillon fixe de 2 048 œuvres). Une œuvre ne peut apparaître que
+deux fois par liste, sinon quelques images « carrefour » la rempliraient ; 300 paires sont
+gardées par couple. Dans l'Atlas : bouton **Désaccords** (touche D).
+
+Sur WikiArt 81k, le nombre de paires candidates dit à quel point deux regards s'accordent :
+forme et sujet presque toujours (321 paires proches selon la forme mais loin selon le sujet,
+87 dans l'autre sens), la touche un peu moins (≈ 2 000 à 3 700), la couleur très peu
+(18 000 à 52 000 : une même composition peut avoir n'importe quelle palette). Exemples :
+proches par le sujet, loin par la forme, la *Chanel n° 5* et les *Coca-Cola* de Warhol
+(images de produits) ; proches par la forme, loin par le sujet, des toiles pointillistes de
+sujets différents (la facture domine la forme).
+
+Le bouton **À vérifier** a désormais deux onglets : les étiquettes contredites par les
+voisines et les **paires de référence** proposées, à valider ou rejeter d'un clic (avec
+« Comparer » pour les regarder côte à côte). Seules les paires validées comptent dans
+`pixplot pairs bench`. Le critère de l'étape 0.12 (≈ 100 paires validées couvrant les huit
+types) dépend de cette relecture, qui revient à l'historien.

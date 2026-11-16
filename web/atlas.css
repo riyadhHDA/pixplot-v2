@@ -202,6 +202,22 @@ a.chip { text-decoration: none; }
 .s-neigh { display: flex; gap: 4px; margin-top: 6px; }
 .s-neigh img { width: 36px; height: 36px; object-fit: cover; border-radius: 3px; cursor: pointer; }
 .pager { display: flex; gap: 6px; padding: 10px 16px; flex-wrap: wrap; }
+.pairs-review { list-style: none; margin: 0; padding: 6px 16px; display: grid; gap: 8px; }
+.pair-item { display: grid; grid-template-columns: 150px minmax(0, 1fr); gap: 10px; background: var(--panel-2);
+  border-radius: var(--radius); padding: 6px; }
+.pair-thumbs { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; align-content: start; }
+.pair-thumbs button { padding: 0; border: 0; background: #000; border-radius: 4px; cursor: pointer; }
+.pair-thumbs img { width: 100%; aspect-ratio: 1; object-fit: contain; display: block; }
+.pair-info { font-size: 13px; overflow-wrap: anywhere; display: grid; gap: 4px; align-content: start; }
+.pair-status { color: var(--muted); margin-left: 6px; }
+.pair-note { color: var(--text); font-size: 12px; }
+.pair-src { color: var(--muted); font-size: 12px; }
+.pair-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 2px; }
+.chip.on { border-color: var(--accent); color: var(--accent); }
+.dis-pick { display: flex; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--muted); }
+.dis-pick label { display: grid; gap: 4px; }
+.dis-pick select { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px; padding: 5px 8px; }
+.empty-note { color: var(--muted); margin: 12px 16px; font-size: 13px; }
 
 /* ---------------------------------------------------------------- comparateur */
 .compare { position: fixed; inset: 0; z-index: 20; background: rgba(10, 10, 11, .97); overflow-y: auto; }

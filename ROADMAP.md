@@ -1,6 +1,6 @@
 # Roadmap
 
-**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-16 · Current version: **0.11.0**
+**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-16 · Current version: **0.12.0**
 
 What is done is in the [changelog](CHANGELOG.md). This document says what comes next, in
 which order, and what makes a step a success.
@@ -28,7 +28,10 @@ step becomes a minor version.
 - **Success if**: stable from one run to the next (adjusted Rand index), and at least as
   good as e-means on labels and pairs. Otherwise e-means stays.
 
-### 0.12 — Disagreements between ways of seeing, and pair review
+### 0.12 — Disagreements between ways of seeing, and pair review · *tools done*
+
+> The "Disagreements" panel and the "Reference pairs" tab are in the Atlas (ARCHITECTURE § 16).
+> The criterion remains: the art historian's review of the pairs.
 
 - **Why**: the most telling result for an art historian is often that one way of seeing
   brings two works together while another pulls them apart. And the benchmark needs

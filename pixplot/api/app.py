@@ -121,6 +121,13 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
             map_cache["map"] = data.map_payload()
         return JSONResponse(map_cache["map"])
 
+    @app.get("/api/disagreements")
+    def disagreements_list(near: str, far: str, offset: int = Query(0, ge=0), limit: int = Query(40, ge=1, le=200)):
+        out = data.disagreements_payload(near, far, offset, limit)
+        if out is None:
+            raise HTTPException(404, "Pas de désaccords pour ces regards : lancez `pixplot disagreements`.")
+        return out
+
     @app.get("/api/communities/{space}")
     def space_communities(space: str):
         key = f"communities:{space}"
@@ -198,10 +205,11 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
         wanted = {int(x) for x in ids.split(",") if x.strip().isdigit()}
         pairs = [p for p in pairbench.load_pairs(pairs_file) if p.origin == "annotée"
                  and (not wanted or (p.a in wanted and p.b in wanted))]
+        label = lambda i: data.label(i) if i in data.row_of else f"Œuvre {i} (hors analyse)"
         return {"types": [{"key": k, "label": v[0], "expected": v[1], "question": v[2]}
                           for k, v in pairbench.TYPES.items() if k != "temoin"],
                 "statuses": list(pairbench.STATUSES),
-                "pairs": [p.__dict__ for p in pairs]}
+                "pairs": [{**p.__dict__, "label_a": label(p.a), "label_b": label(p.b)} for p in pairs]}
 
     @app.post("/api/pairs")
     def pairs_add(pair: PairIn):

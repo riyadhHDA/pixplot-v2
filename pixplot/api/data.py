@@ -16,7 +16,7 @@ import numpy as np
 
 from ..catalog import db
 from ..catalog.metadata import get_metadata
-from ..analysis import communities
+from ..analysis import communities, disagreements
 from ..analysis.naming import load_names
 from ..analysis.spacemaps import available_maps, load_space_map
 from ..analysis.suspects import load_suspects
@@ -168,11 +168,42 @@ class AtlasData:
             "named_groups": bool(self.names),
             "space_maps": available_maps(self.analysis),
             "communities": communities.available(self.analysis),
+            "disagreements": self.disagreement_counts(),
             "main_space": self.spaces.main,
             "suspects": (self.suspects or {}).get("counts", {}),
+            "annotated_pairs": self.annotated_pair_counts(),
             "suspects_space": (self.suspects or {}).get("space"),
             "analysis_params": self.analysis.manifest.get("params", {}),
         }
+
+    def annotated_pair_counts(self) -> dict[str, int]:
+        from ..analysis.pairbench import load_pairs, pairs_path
+
+        out: dict[str, int] = {}
+        for p in load_pairs(pairs_path(self.settings)):
+            if p.origin == "annotée":
+                out[p.status] = out.get(p.status, 0) + 1
+        return out
+
+    def _disagreements(self) -> dict | None:
+        if not hasattr(self, "_dis_cache"):
+            self._dis_cache = disagreements.load(self.analysis)
+        return self._dis_cache
+
+    def disagreement_counts(self) -> dict[str, int]:
+        d = self._disagreements()
+        return {k: len(v) for k, v in d["pairs"].items()} if d else {}
+
+    def disagreements_payload(self, near: str, far: str, offset: int = 0, limit: int = 40) -> dict | None:
+        d = self._disagreements()
+        if not d or f"{near}>{far}" not in d["pairs"]:
+            return None
+        items = d["pairs"][f"{near}>{far}"]
+        page = [{**x, "label_a": self.label(x["a"]), "label_b": self.label(x["b"])}
+                for x in items[offset:offset + limit]]
+        return {"near": near, "far": far, "total": len(items), "offset": offset, "items": page,
+                "rule": f"rang ≤ {d['max_rank']} selon « {near} », centile < {d['max_centile']} selon « {far} »",
+                "combos": list(d["pairs"]), "n": d["n"]}
 
     def communities_payload(self, space: str) -> dict | None:
         """Groupes et familles Leiden d'un regard, alignés sur ``ids`` (-1 : œuvre absente)."""

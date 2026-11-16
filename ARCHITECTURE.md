@@ -497,3 +497,24 @@ redone with the validated pairs of step 0.12.
 Decision: the roadmap criterion is met for form, touch and subject, not for colour. Leiden
 groups are available for every way of seeing; the Atlas's **named** groups stay e-means
 until names, the groups panel and labels-to-check are ported to Leiden (next step).
+
+## 16. Disagreements between ways of seeing, and pair review (16/11/2026)
+
+`pixplot disagreements` finds, for each couple of ways of seeing, pairs of works that are
+very close in one (rank ≤ 5 among neighbours) and far in the other (percentile < 0.35,
+estimated on a fixed sample of 2,048 works). A work may appear only twice per list,
+otherwise a few "hub" images would fill it; 300 pairs are kept per couple. In the Atlas:
+**Désaccords** button (key D).
+
+On WikiArt 81k, the number of candidate pairs tells how much two ways of seeing agree: form
+and subject almost always (321 pairs close in form but far in subject, 87 the other way),
+touch a little less (≈ 2,000 to 3,700), colour very little (18,000 to 52,000: the same
+composition can have any palette). Examples: close in subject but far in form, Warhol's
+*Chanel No. 5* and *Coca-Cola* (product images); close in form but far in subject,
+pointillist canvases of different subjects (handling outweighs form).
+
+The **À vérifier** button now has two tabs: labels contradicted by the neighbours, and the
+proposed **reference pairs**, to validate or reject in one click (with "Comparer" to look at
+them side by side). Only validated pairs count in `pixplot pairs bench`. The success
+criterion of step 0.12 (≈ 100 validated pairs covering the eight types) depends on this
+review, which is the art historian's work.

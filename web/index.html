@@ -48,9 +48,13 @@
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 4h7v12H2z M11 4h7v12h-7z"/></svg>
         <span class="label">Comparer</span><b id="compare-count">0</b>
       </button>
-      <button class="tool" id="open-suspects" hidden title="Étiquettes que toutes les voisines contredisent (V)">
+      <button class="tool" id="open-suspects" hidden title="Étiquettes contredites par les voisines, paires de référence à relire (V)">
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2l8 15H2z M10 8v4 M10 14v1"/></svg>
         <span class="label">À vérifier</span>
+      </button>
+      <button class="tool" id="open-disagreements" hidden title="Paires qu'un regard rapproche et qu'un autre sépare (D)">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 10h5 M12 10h5 M8 6l-4 4 4 4 M12 6l4 4-4 4"/></svg>
+        <span class="label">Désaccords</span>
       </button>
       <button class="tool" id="open-notebook" title="Vos pistes, sélections et notes (N)">
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2h10v16H5z M8 6h5 M8 9h5 M8 12h3"/></svg>
@@ -127,12 +131,13 @@
         <section><h3>Travailler</h3>
           <ul><li><b>Comparer</b> jusqu'à 6 œuvres côte à côte</li>
               <li><b>Carnet</b> : gardez vos pistes avec vos notes</li>
-              <li><b>À vérifier</b> : étiquettes que les voisines contredisent</li></ul></section>
+              <li><b>À vérifier</b> : étiquettes que les voisines contredisent, paires de référence à valider</li>
+              <li><b>Désaccords</b> : œuvres qu'un regard rapproche et qu'un autre sépare</li></ul></section>
       </div>
       <h3>Raccourcis</h3>
       <div class="keys">
         <span><kbd>/</kbd> chercher</span><span><kbd>G</kbd> groupes</span><span><kbd>C</kbd> comparer</span>
-        <span><kbd>N</kbd> carnet</span><span><kbd>V</kbd> à vérifier</span><span><kbd>0</kbd> vue d'ensemble</span>
+        <span><kbd>N</kbd> carnet</span><span><kbd>V</kbd> à vérifier</span><span><kbd>D</kbd> désaccords</span><span><kbd>0</kbd> vue d'ensemble</span>
         <span><kbd>?</kbd> aide</span><span><kbd>Échap</kbd> fermer</span>
       </div>
       <p class="help-note">Une proximité calculée est une piste à examiner, pas une preuve de filiation.</p>

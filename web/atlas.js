@@ -112,7 +112,8 @@
     $("layout").innerHTML = groups.map(([g, opts]) => `<optgroup label="${esc(g)}">${opts.map(([v, l]) =>
       `<option value="${v}">${esc(l)}</option>`).join("")}</optgroup>`).join("");
     $("groups-count").textContent = `· ${state.clusters.length}`;
-    $("open-suspects").hidden = !Object.keys(state.info.suspects || {}).length;
+    $("open-suspects").hidden = !Object.keys(state.info.suspects || {}).length && !Object.keys(state.info.annotated_pairs || {}).length;
+    $("open-disagreements").hidden = !Object.keys(state.info.disagreements || {}).length;
     const textOpt = $("search-mode").querySelector('option[value="text"]');
     textOpt.disabled = !state.searchStatus.text;
     textOpt.title = state.searchStatus.text ? "" : "Calculez d'abord les vecteurs SigLIP 2";
@@ -923,8 +924,132 @@
   }
 
   // ------------------------------------------------------------------ étiquettes à vérifier
+  const prettyLabel = (l) => String(l).split(" · ").map((x) => pretty(x)).join(" · ");
+
+  // ------------------------------------------------------------------ à vérifier : onglets
+  function reviewTabs(active) {
+    const nLabels = Object.values(state.info.suspects || {}).reduce((a, b) => a + b, 0);
+    const nPairs = (state.info.annotated_pairs || {})["proposée"] || 0;
+    return `<div class="spaces">
+      ${nLabels ? `<button class="space ${active === "labels" ? "on" : ""}" data-review="labels">Étiquettes <small>${nLabels}</small></button>` : ""}
+      <button class="space ${active === "pairs" ? "on" : ""}" data-review="pairs">Paires de référence <small>${nPairs} à relire</small></button></div>`;
+  }
+  function wireReviewTabs(body) {
+    body.querySelectorAll("[data-review]").forEach((b) => b.addEventListener("click", () =>
+      b.dataset.review === "labels" ? renderSuspects(null, 0) : renderPairs("proposée")));
+  }
+  function openReview() {
+    if (Object.keys(state.info.suspects || {}).length) renderSuspects(null, 0); else renderPairs("proposée");
+  }
+
+  // ------------------------------------------------------------------ paires de référence à relire
+  async function renderPairs(status) {
+    showPanel("pairs", "À vérifier");
+    state.lastList = () => renderPairs(status);
+    $("fiche-body").innerHTML = `<div class="loading">Chargement…</div>`;
+    let res;
+    try { res = await getJSON("/api/pairs"); } catch (err) {
+      $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`; return;
+    }
+    const typeLabel = Object.fromEntries(res.types.map((t) => [t.key, t.label]));
+    const counts = {};
+    for (const p of res.pairs) counts[p.status] = (counts[p.status] || 0) + 1;
+    state.info.annotated_pairs = counts;
+    const items = res.pairs.filter((p) => !status || p.status === status);
+    const filters = [["proposée", "à relire"], ["validée", "validées"], ["rejetée", "rejetées"], ["", "toutes"]].map(([v, l]) =>
+      `<button class="chip ${v === (status || "") ? "on" : ""}" data-status="${v}">${l} <small>${v ? counts[v] || 0 : res.pairs.length}</small></button>`).join("");
+    const rows = items.map((p, n) => `<li class="pair-item" data-n="${n}">
+        <div class="pair-thumbs">
+          <button data-id="${p.a}" title="${esc(prettyLabel(p.label_a))}"><img src="/api/thumb/256/${p.a}" alt="" loading="lazy"></button>
+          <button data-id="${p.b}" title="${esc(prettyLabel(p.label_b))}"><img src="/api/thumb/256/${p.b}" alt="" loading="lazy"></button>
+        </div>
+        <div class="pair-info"><div><span class="pair-tag ${p.status === "validée" ? "ok" : ""}">${esc(typeLabel[p.type] || p.type)}</span>
+          <small class="pair-status">${esc(p.status)}</small></div>
+          ${p.note ? `<div class="pair-note">${esc(p.note)}</div>` : ""}
+          ${p.source ? `<div class="pair-src">${esc(p.source)}</div>` : ""}
+          <div class="pair-actions">
+            ${p.status !== "validée" ? `<button class="chip" data-set="validée">Valider</button>` : ""}
+            ${p.status !== "rejetée" ? `<button class="chip" data-set="rejetée">Rejeter</button>` : ""}
+            <button class="chip" data-compare>Comparer</button></div></div></li>`).join("");
+    const body = $("fiche-body");
+    body.innerHTML = `<div class="results-head">${reviewTabs("pairs")}
+        <div class="sub" style="margin-top:10px">Paires choisies par l'historien pour le banc d'essai. Seules les paires
+          validées comptent dans <code>pixplot pairs bench</code>.</div>
+        <div class="chips" style="margin-top:10px">${filters}</div></div>
+      ${items.length ? `<ol class="pairs-review">${rows}</ol>` : `<p class="empty-note">Aucune paire ici. Pour en créer une : mettez deux
+        œuvres dans le comparateur et cliquez « Annoter ».</p>`}`;
+    wireReviewTabs(body);
+    body.querySelectorAll("[data-status]").forEach((b) => b.addEventListener("click", () => renderPairs(b.dataset.status)));
+    body.querySelectorAll(".pair-thumbs [data-id]").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.id), true)));
+    body.querySelectorAll(".pair-item").forEach((li) => {
+      const p = items[Number(li.dataset.n)];
+      li.querySelectorAll("[data-set]").forEach((b) => b.addEventListener("click", async () => {
+        try {
+          const r = await fetch("/api/pairs", { method: "POST", headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ a: p.a, b: p.b, type: p.type, status: b.dataset.set, source: p.source, note: p.note }) });
+          if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+          toast(b.dataset.set === "validée" ? "Paire validée" : "Paire rejetée");
+          renderPairs(status);
+        } catch (err) { toast(`Échec : ${err.message}`); }
+      }));
+      li.querySelector("[data-compare]").addEventListener("click", () => {
+        state.compare = [p.a, p.b]; saveCompare(); openCompare();
+      });
+    });
+  }
+
+  // ------------------------------------------------------------------ désaccords entre regards
+  async function renderDisagreements(near, far, offset = 0) {
+    showPanel("disagreements", "Désaccords entre regards");
+    const combos = Object.keys(state.info.disagreements || {});
+    if (!near || !far) [near, far] = (combos.find((c) => c === "forme>sujet") || combos[0]).split(">");
+    state.lastList = () => renderDisagreements(near, far, offset);
+    $("fiche-body").innerHTML = `<div class="loading">Chargement…</div>`;
+    let res;
+    try { res = await getJSON(`/api/disagreements?near=${near}&far=${far}&offset=${offset}&limit=40`); } catch (err) {
+      $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`; return;
+    }
+    const spaces = [...new Set(combos.flatMap((c) => c.split(">")))];
+    const opt = (sel) => spaces.map((s) => `<option value="${s}" ${s === sel ? "selected" : ""}>${esc(SPACE_SHORT[s] || s)}</option>`).join("");
+    const rows = res.items.map((d) => `<li class="pair-item">
+        <div class="pair-thumbs">
+          <button data-id="${d.a}" title="${esc(prettyLabel(d.label_a))}"><img src="/api/thumb/256/${d.a}" alt="" loading="lazy"></button>
+          <button data-id="${d.b}" title="${esc(prettyLabel(d.label_b))}"><img src="/api/thumb/256/${d.b}" alt="" loading="lazy"></button>
+        </div>
+        <div class="pair-info">
+          <div><b>${d.rank === 1 ? "Plus proche voisine" : `${d.rank}ᵉ voisine`}</b> selon ${esc(SPACE_SHORT[near] || near)}</div>
+          <div class="pair-src">mais plus loin que ${Math.round((1 - d.centile) * 100)} % du corpus selon ${esc(SPACE_SHORT[far] || far)}</div>
+          <div class="pair-note">${esc(prettyLabel(d.label_a))}<br>${esc(prettyLabel(d.label_b))}</div>
+          <div class="pair-actions"><button class="chip" data-compare="${d.a},${d.b}">Comparer</button></div></div></li>`).join("");
+    const more = offset + res.items.length < res.total;
+    const body = $("fiche-body");
+    body.innerHTML = `<div class="results-head">
+        <div class="dis-pick"><label>Proches selon <select id="dis-near">${opt(near)}</select></label>
+          <label>mais loin selon <select id="dis-far">${opt(far)}</select></label></div>
+        <div class="sub" style="margin-top:8px">${res.total} paires · ${esc(res.rule)} · ${res.n} œuvres connues de tous les regards</div></div>
+      <ol class="pairs-review">${rows}</ol>
+      <div class="pager">${offset > 0 ? `<button class="chip" id="d-prev">← Précédentes</button>` : ""}
+        ${more ? `<button class="chip" id="d-next">Suivantes →</button>` : ""}</div>
+      <p class="prov" style="margin:0 16px 20px">Un désaccord est une piste : une composition reprise pour un autre sujet, un
+        même thème par deux mains… ou une reproduction médiocre, un recadrage, une étiquette fausse. Regardez avant de conclure.</p>`;
+    const pick = () => {
+      const n = $("dis-near").value, f = $("dis-far").value;
+      if (n === f) { toast("Choisissez deux regards différents"); return; }
+      renderDisagreements(n, f, 0);
+    };
+    $("dis-near").addEventListener("change", pick);
+    $("dis-far").addEventListener("change", pick);
+    body.querySelectorAll(".pair-thumbs [data-id]").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.id), true)));
+    body.querySelectorAll("[data-compare]").forEach((b) => b.addEventListener("click", () => {
+      state.compare = b.dataset.compare.split(",").map(Number); saveCompare(); openCompare();
+    }));
+    if ($("d-prev")) $("d-prev").addEventListener("click", () => renderDisagreements(near, far, Math.max(0, offset - 40)));
+    if ($("d-next")) $("d-next").addEventListener("click", () => renderDisagreements(near, far, offset + 40));
+  }
+
+
   async function renderSuspects(key, offset) {
-    showPanel("suspects", "Étiquettes à vérifier");
+    showPanel("suspects", "À vérifier");
     state.lastList = () => renderSuspects(key, offset);
     $("fiche-body").innerHTML = `<div class="loading">Chargement…</div>`;
     let res;
@@ -940,8 +1065,8 @@
           <div class="s-sugg">voisines : ${esc(pretty(d.suggested))} (${Math.round(d.majority * 100)} %)</div>
           <div class="s-neigh">${d.neighbors.slice(0, 4).map((i) => `<img src="/api/thumb/256/${i}" data-id="${i}" alt="" loading="lazy">`).join("")}</div></div></li>`).join("");
     const more = offset + res.items.length < res.total;
-    $("fiche-body").innerHTML = `<div class="results-head">
-        <div class="sub">${res.total} œuvres · ${esc(res.rule)} · voisines selon ${esc(space ? space.label : res.space)}</div>
+    $("fiche-body").innerHTML = `<div class="results-head">${reviewTabs("labels")}
+        <div class="sub" style="margin-top:10px">${res.total} œuvres · ${esc(res.rule)} · voisines selon ${esc(space ? space.label : res.space)}</div>
         <div class="spaces" style="margin-top:10px">${tabs}</div></div>
       <ol class="suspects">${rows}</ol>
       <div class="pager">${offset > 0 ? `<button class="chip" id="s-prev">← Précédentes</button>` : ""}
@@ -950,6 +1075,7 @@
       <p class="prov" style="margin:0 16px 20px">Ce ne sont pas des corrections : une étiquette peut être fausse, ou l'œuvre réellement
         à part dans le corpus (un paysage chez un portraitiste). Les deux méritent un regard.</p>`;
     const body = $("fiche-body");
+    wireReviewTabs(body);
     body.querySelectorAll("[data-key]").forEach((b) => b.addEventListener("click", () => renderSuspects(b.dataset.key, 0)));
     body.querySelectorAll(".suspects [data-id]").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.id), true)));
     if ($("s-prev")) $("s-prev").addEventListener("click", () => renderSuspects(res.key, Math.max(0, offset - 40)));
@@ -1290,7 +1416,8 @@
       context: { espaces: state.spaces.map((s) => s.key).join(", ") },
     }));
     $("open-notebook").addEventListener("click", renderNotebook);
-    $("open-suspects").addEventListener("click", () => renderSuspects(null, 0));
+    $("open-suspects").addEventListener("click", openReview);
+    $("open-disagreements").addEventListener("click", () => renderDisagreements());
     $("fiche-close").addEventListener("click", closeFiche);
     $("fiche-back").addEventListener("click", () => { if (state.panelBack) state.panelBack(); });
 
@@ -1344,7 +1471,8 @@
       else if (k === "g") setGroups($("toggle-groups").getAttribute("aria-expanded") !== "true");
       else if (k === "c") openCompare();
       else if (k === "n") renderNotebook();
-      else if (k === "v" && !$("open-suspects").hidden) renderSuspects(null, 0);
+      else if (k === "v" && !$("open-suspects").hidden) openReview();
+      else if (k === "d" && !$("open-disagreements").hidden) renderDisagreements();
       else if (e.key === "0") $("reset-view").click();
     });
     addEventListener("resize", onResize);

@@ -107,6 +107,7 @@ pixplot index [--encoder NOM]           # index FAISS du dernier run
 pixplot index --regions                 # index des zones → « Chercher un détail » dans l'Atlas
 pixplot maps                            # une carte UMAP par regard (sujet, couleur, touche)
 pixplot communities                     # groupes Leiden emboîtés (familles ⊃ groupes) pour chaque regard
+pixplot disagreements                   # paires qu'un regard rapproche et qu'un autre sépare
 pixplot name-groups                     # nommer les groupes (SigLIP 2 + vocabulaire d'histoire de l'art)
 pixplot suspects                        # étiquettes que toutes les voisines contredisent
 pixplot search-text "Annonciation dans un jardin"

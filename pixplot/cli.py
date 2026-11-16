@@ -426,6 +426,26 @@ def cmd_communities(args) -> int:
     return 0
 
 
+def cmd_disagreements(args) -> int:
+    from .analysis import disagreements as D
+    from .analysis.pairbench import load_space_matrix
+    from .api.data import AtlasData
+
+    s = get_settings(args.data)
+    analysis = _analysis_arg(s, args.analysis)
+    data = AtlasData.load(s, analysis)
+    ids = [int(i) for i in data.ids]
+    keys = args.spaces.split(",") if args.spaces else list(data.spaces.runs)
+    if len(keys) < 2:
+        raise SystemExit("Il faut au moins deux regards : calculez-en d'autres avec `pixplot embed --encoder …`.")
+    print(f"Analyse : {analysis.id} — désaccords entre {', '.join(keys)}", flush=True)
+    vectors = {k: load_space_matrix(data.spaces, k, ids) for k in keys}
+    res = D.compute(vectors, ids, k=args.k, max_rank=args.rank, max_centile=args.centile,
+                    keep=args.keep, say=lambda m: print(m, flush=True))
+    print(f"Désaccords : {D.save(analysis, res)}")
+    return 0
+
+
 def cmd_name_groups(args) -> int:
     import json
 
@@ -758,6 +778,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--force", action="store_true", help="recalculer")
     p.set_defaults(func=cmd_communities)
+
+    p = sub.add_parser("disagreements", help="paires qu'un regard rapproche et qu'un autre sépare")
+    p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
+    p.add_argument("--spaces", help="regards à confronter, séparés par des virgules (défaut : tous)")
+    p.add_argument("-k", type=int, default=10, help="voisines calculées par œuvre")
+    p.add_argument("--rank", type=int, default=5, help="rang maximal dans le regard qui rapproche")
+    p.add_argument("--centile", type=float, default=0.35, help="centile maximal dans le regard qui sépare")
+    p.add_argument("--keep", type=int, default=300, help="paires gardées par couple de regards")
+    p.set_defaults(func=cmd_disagreements)
 
     p = sub.add_parser("name-groups", help="proposer un nom à chaque groupe (SigLIP 2 + vocabulaire)")
     p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")

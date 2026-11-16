@@ -331,3 +331,48 @@ def test_communities_api(env):
     for g, f in zip(r["group"], r["family"]):
         assert fam_of.setdefault(g, f) == f
     assert c.get("/api/communities/inconnu").status_code == 404
+
+
+def test_disagreements_find_planted_pair():
+    from pixplot.analysis.disagreements import centiles, compute
+
+    rng = np.random.default_rng(3)
+    n = 400
+    A = rng.normal(size=(n, 16)).astype(np.float32)
+    B = rng.normal(size=(n, 16)).astype(np.float32)
+    A[7] = A[3] + 0.01                     # 3 et 7 : jumelles selon A…
+    B[7] = -B[3]                           # … opposées selon B
+    A /= np.linalg.norm(A, axis=1, keepdims=True)
+    B /= np.linalg.norm(B, axis=1, keepdims=True)
+    ids = list(range(100, 100 + n))
+    row = {i: i - 100 for i in ids}
+    res = compute({"forme": (A, row), "sujet": (B, row)}, ids, k=5, max_rank=3, max_centile=0.2,
+                  say=lambda m: None)
+    top = res["pairs"]["forme>sujet"][0]
+    assert {top["a"], top["b"]} == {103, 107} and top["rank"] == 1 and top["centile"] < 0.01
+    assert all(p["centile"] < 0.2 for v in res["pairs"].values() for p in v)
+    # centile : une œuvre identique à elle-même est au-dessus de tout l'échantillon
+    assert centiles(B, np.array([0]), np.array([0]), np.arange(1, n))[0] == 1.0
+
+
+def test_disagreements_and_pairs_api(env):
+    s, data, c = env
+    from pixplot.analysis import disagreements as D
+    from pixplot.analysis.pairbench import load_space_matrix
+
+    ids = [int(i) for i in data.ids]
+    vec = {k: load_space_matrix(data.spaces, k, ids) for k in data.spaces.runs}
+    D.save(data.analysis, D.compute(vec, ids, k=5, max_rank=3, max_centile=0.9, say=lambda m: None))
+    data.__dict__.pop("_dis_cache", None)
+    info = c.get("/api/info").json()
+    combo = next(iter(info["disagreements"]))
+    near, far = combo.split(">")
+    r = c.get(f"/api/disagreements?near={near}&far={far}&limit=3").json()
+    assert r["total"] == info["disagreements"][combo] and len(r["items"]) <= 3 and "label_a" in r["items"][0]
+    assert c.get("/api/disagreements?near=forme&far=inconnu").status_code == 404
+    a, b = ids[2], ids[3]
+    c.post("/api/pairs", json={"a": a, "b": b, "type": "meme_sujet", "status": "proposée"})
+    listed = c.get("/api/pairs").json()["pairs"]
+    assert any(p["a"] == a and p["status"] == "proposée" and p["label_a"] for p in listed)
+    c.post("/api/pairs", json={"a": a, "b": b, "type": "meme_sujet", "status": "validée"})
+    assert c.get("/api/info").json()["annotated_pairs"].get("validée", 0) >= 1

@@ -14,6 +14,13 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.12.0 — 16/11/2026 · Désaccords entre regards, relecture des paires
+
+- `pixplot disagreements` : pour chaque couple de regards, les paires très proches selon l'un et
+  lointaines selon l'autre ; dans l'Atlas, bouton « Désaccords » (touche D).
+- « À vérifier » : onglet « Paires de référence » pour valider ou rejeter les paires proposées.
+- API `/api/disagreements` ; `/api/pairs` donne aussi les libellés des œuvres.
+
 ## 0.11.0 — 16/11/2026 · Groupes Leiden
 
 - `pixplot communities` : groupes Leiden emboîtés (familles ⊃ groupes) pour chaque regard, sur le

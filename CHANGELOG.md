@@ -14,6 +14,13 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.12.0 — 2026-11-16 · Disagreements between ways of seeing, pair review
+
+- `pixplot disagreements`: for each couple of ways of seeing, pairs very close in one and far in
+  the other; in the Atlas, "Désaccords" button (key D).
+- "À vérifier": "Paires de référence" tab to validate or reject proposed pairs.
+- `/api/disagreements` API; `/api/pairs` also returns the works' labels.
+
 ## 0.11.0 — 2026-11-16 · Leiden groups
 
 - `pixplot communities`: nested Leiden groups (families ⊃ groups) for each way of seeing, on the
