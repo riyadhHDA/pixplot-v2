@@ -145,4 +145,5 @@ PixPlot v2 est distribué sous licence **GPL-3.0** (voir [LICENSE](LICENSE)).
 - Inspiré de [PixPlot](https://github.com/YaleDHLab/pix-plot) (Yale DHLab, MIT) ; réécrit de zéro, le code original n'est pas inclus.
 - Modèles : [DINOv3](https://github.com/facebookresearch/dinov3) (Meta, licence DINOv3, poids sur demande, jamais redistribués ici), [SigLIP 2](https://huggingface.co/google/siglip2-so400m-patch16-384) (Google, Apache 2.0).
 - Bibliothèques : FAISS et e-means (Meta, MIT), UMAP, scikit-learn, deck.gl, FastAPI, le SDK Python MCP. Fond de carte : [world-atlas](https://github.com/topojson/world-atlas) (ISC), d'après [Natural Earth](https://www.naturalearthdata.com) (domaine public).
+- Vocabulaire des noms de groupes enrichi d'après le glossaire de H. Honour et J. Fleming, *The Visual Arts: A History* (7e éd. révisée, 2023) : seuls les termes sont repris.
 - Corpus d'essai : [WikiArt via huggan/wikiart](https://huggingface.co/datasets/huggan/wikiart) et le [Yale Center for British Art](https://britishart.yale.edu/) (domaine public, IIIF). Aucune image de corpus n'est stockée dans ce dépôt ; les captures montrent l'interface de l'Atlas.
