@@ -108,6 +108,7 @@ pixplot index --regions                 # index des zones → « Chercher un dé
 pixplot maps                            # une carte UMAP par regard (sujet, couleur, touche)
 pixplot communities                     # groupes Leiden emboîtés (familles ⊃ groupes) pour chaque regard
 pixplot disagreements                   # paires qu'un regard rapproche et qu'un autre sépare
+pixplot zonebench                       # chercher une zone avec des mots : banc d'essai RichArt
 pixplot name-groups                     # nommer les groupes (SigLIP 2 + vocabulaire d'histoire de l'art)
 pixplot suspects                        # étiquettes que toutes les voisines contredisent
 pixplot search-text "Annonciation dans un jardin"
@@ -152,4 +153,5 @@ PixPlot v2 est distribué sous licence **GPL-3.0** (voir [LICENSE](LICENSE)).
 - Modèles : [DINOv3](https://github.com/facebookresearch/dinov3) (Meta, licence DINOv3, poids sur demande, jamais redistribués ici), [SigLIP 2](https://huggingface.co/google/siglip2-so400m-patch16-384) (Google, Apache 2.0).
 - Bibliothèques : FAISS et e-means (Meta, MIT), UMAP, scikit-learn, deck.gl, FastAPI, le SDK Python MCP. Fond de carte : [world-atlas](https://github.com/topojson/world-atlas) (ISC), d'après [Natural Earth](https://www.naturalearthdata.com) (domaine public).
 - Vocabulaire des noms de groupes enrichi d'après le glossaire de H. Honour et J. Fleming, *The Visual Arts: A History* (7e éd. révisée, 2023) : seuls les termes sont repris.
+- Banc d'essai des zones : [RichArt](https://huggingface.co/datasets/MihaiBogdanBindila/RichArt) (ICMR 2026, CC BY-NC 4.0, usage local, jamais redistribué) ; [TIPSv2](https://huggingface.co/google/tipsv2-b14) (Google DeepMind, Apache 2.0), évalué et non retenu.
 - Corpus d'essai : [WikiArt via huggan/wikiart](https://huggingface.co/datasets/huggan/wikiart) et le [Yale Center for British Art](https://britishart.yale.edu/) (domaine public, IIIF). Aucune image de corpus n'est stockée dans ce dépôt ; les captures montrent l'interface de l'Atlas.

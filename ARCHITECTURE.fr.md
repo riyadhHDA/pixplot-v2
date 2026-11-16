@@ -608,3 +608,38 @@ l'historien reconnaît, sauf pour la couleur.
 **Le critère de l'étape 0.12** (≈ 100 paires validées couvrant les huit sortes) est atteint en
 nombre, pas en couverture : « même main » (1) et « même motif » (2) restent à étoffer, et il
 faudrait plus de paires « même composition » hors désaccords pour juger la forme.
+
+## 19. Chercher une zone avec des mots : TIPSv2 évalué, non retenu (16/11/2026)
+
+Question : peut-on taper « une auréole » ou « le clocher au fond à gauche » et retrouver la
+**zone** qui y répond, dans tout le corpus ? Banc d'essai `pixplot zonebench` sur la partie
+test de [RichArt](https://huggingface.co/datasets/MihaiBogdanBindila/RichArt) (ICMR 2026,
+CC BY-NC 4.0, usage local) : 709 tableaux, 1 243 objets décrits par les catalogues de musées,
+2 174 cadres. Deux requêtes par objet : son nom court (« church tower ») et sa phrase de
+catalogue (~35 mots). Trois méthodes : SigLIP 2 sur la zone découpée, TIPSv2 sur la zone
+découpée, TIPSv2 « dense » (une passe sur le tableau entier, moyenne des vecteurs de zones de
+14 px dans le cadre). TIPSv2 en deux tailles : B/14 (86 M de paramètres pour l'image) et
+SO400m/14 (même taille que SigLIP 2).
+
+**Retrouver la zone parmi les 2 174** (part des objets dont une zone sort en 1ʳᵉ position / dans
+les 10 premières ; rang médian) :
+
+| méthode | nom : R@1 | R@10 | rang | phrase : R@1 | R@10 | rang |
+|---|---|---|---|---|---|---|
+| **SigLIP 2, zone découpée** | **16,0 %** | **43,8 %** | **17** | **28,2 %** | **61,1 %** | **5** |
+| TIPSv2 SO400m, zone découpée | 12,7 % | 36,8 % | 32 | 20,4 % | 47,9 % | 12 |
+| TIPSv2 B/14, zone découpée | 11,6 % | 34,7 % | 37 | 15,1 % | 41,7 % | 19 |
+| TIPSv2 SO400m, dense | 10,5 % | 31,4 % | 43 | 15,4 % | 41,0 % | 17 |
+| TIPSv2 B/14, dense | 7,6 % | 25,7 % | 67 | 13,3 % | 38,6 % | 24 |
+
+**Pointer la zone dans son tableau** (la zone de 14 px la plus proche de la requête est-elle
+dans un cadre de l'objet ?) : TIPSv2 B/14 61,9 % (nom) et 56,6 % (phrase), SO400m 54,2 % et
+50,2 %. Hasard (surface couverte par les cadres) : 34,2 % ; mais **désigner toujours le centre
+du tableau** donne déjà 50,8 %. L'avantage de TIPSv2 est donc mince.
+
+Décision : le critère de l'étape 0.13 (« nettement meilleur que SigLIP 2 sur les zones
+découpées ») n'est pas rempli ; TIPSv2 n'est pas intégré à l'Atlas. L'encodeur reste dans le
+code (`tipsv2_b14`, `tipsv2_so400m14`) pour que la mesure soit reproductible. La meilleure
+méthode mesurée est **SigLIP 2 appliqué à des zones découpées** : c'est elle qu'il faudrait
+indexer pour chercher des zones par des mots, au prix d'un calcul ≈ 20 fois plus long que les
+vecteurs globaux (une vingtaine de zones par œuvre).

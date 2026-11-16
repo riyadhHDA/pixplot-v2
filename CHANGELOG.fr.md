@@ -14,6 +14,15 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.13.0 — 16/11/2026 · Chercher une zone avec des mots : TIPSv2 évalué
+
+- `pixplot zonebench` : banc d'essai sur RichArt (709 tableaux, 1 243 objets décrits par les
+  catalogues de musées) — retrouver la zone dans le corpus et la pointer dans son tableau.
+- Encodeurs `tipsv2_b14` et `tipsv2_so400m14` (Google DeepMind, Apache 2.0), gardés pour la
+  reproductibilité.
+- Résultat (ARCHITECTURE § 19) : SigLIP 2 sur des zones découpées bat TIPSv2 (28 % contre 20 % en
+  première position) ; TIPSv2 n'est pas intégré à l'Atlas. Suite : un index de zones SigLIP 2.
+
 ## 0.12.2 — 16/11/2026 · Premier banc d'essai sur 104 paires validées
 
 - 104 paires validées par l'historien, versionnées dans `bench/wikiart81k_pairs.csv` (avec les

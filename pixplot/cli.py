@@ -446,6 +446,38 @@ def cmd_disagreements(args) -> int:
     return 0
 
 
+def cmd_zonebench(args) -> int:
+    import json
+
+    from .analysis import zonebench as Z
+    from .encoders.registry import get_encoder
+
+    root = Path(args.richart)
+    if not (root / "annotations" / "test.json").exists():
+        raise SystemExit(f"RichArt introuvable dans {root} (annotations/test.json et data/test/). "
+                         "Voir docs : jeu de données MihaiBogdanBindila/RichArt, CC BY-NC 4.0, usage local.")
+    results = {}
+    for name in args.encoders.split(","):
+        print(f"Encodeur {name}…", flush=True)
+        enc = get_encoder(name)
+        is_text_image = name.startswith("siglip2")
+        res = Z.run(root, siglip=enc if is_text_image else None, tips=None if is_text_image else enc,
+                    dense_size=args.size, say=lambda m: print(m, flush=True))
+        for k, v in res["methods"].items():
+            results[k if is_text_image else k.replace("tipsv2", name)] = v
+        del enc
+    print(f"\n{'méthode':<26} {'requête':<7} {'R@1':>6} {'R@5':>6} {'R@10':>6} {'rang méd.':>9} {'pointage':>9} {'hasard':>7}")
+    for m, d in results.items():
+        for q, v in d.items():
+            pt = v.get("pointing")
+            print(f"{m:<26} {q:<7} {v['R@1']:>6.1%} {v['R@5']:>6.1%} {v['R@10']:>6.1%} {v['median_rank']:>9.0f}"
+                  + (f" {pt['hit']:>9.1%} {pt['chance']:>7.1%}" if pt else ""))
+    out = root / "zonebench.json"
+    out.write_text(json.dumps(results, indent=1, ensure_ascii=False), encoding="utf-8")
+    print(f"\nRésultats : {out}")
+    return 0
+
+
 def cmd_name_groups(args) -> int:
     import json
 
@@ -787,6 +819,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--centile", type=float, default=0.35, help="centile maximal dans le regard qui sépare")
     p.add_argument("--keep", type=int, default=300, help="paires gardées par couple de regards")
     p.set_defaults(func=cmd_disagreements)
+
+    p = sub.add_parser("zonebench", help="chercher une zone avec des mots : banc d'essai RichArt")
+    p.add_argument("--richart", default="data/richart", help="dossier RichArt (annotations/, data/test/)")
+    p.add_argument("--encoders", default="siglip2_so400m,tipsv2_b14", help="encodeurs comparés")
+    p.add_argument("--size", type=int, default=672, help="taille du carré pour les vecteurs de zones (multiple de 14)")
+    p.set_defaults(func=cmd_zonebench)
 
     p = sub.add_parser("name-groups", help="proposer un nom à chaque groupe (SigLIP 2 + vocabulaire)")
     p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")

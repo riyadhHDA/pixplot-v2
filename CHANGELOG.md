@@ -14,6 +14,14 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.13.0 — 2026-11-16 · Searching a region with words: TIPSv2 evaluated
+
+- `pixplot zonebench`: benchmark on RichArt (709 paintings, 1,243 objects described by museum
+  catalogues) — finding the region in the corpus and pointing at it in its painting.
+- `tipsv2_b14` and `tipsv2_so400m14` encoders (Google DeepMind, Apache 2.0), kept for reproducibility.
+- Result (ARCHITECTURE § 19): SigLIP 2 on cropped regions beats TIPSv2 (28% vs 20% at rank 1);
+  TIPSv2 is not integrated into the Atlas. Next: a SigLIP 2 region index.
+
 ## 0.12.2 — 2026-11-16 · First benchmark on 104 validated pairs
 
 - 104 pairs validated by the art historian, versioned in `bench/wikiart81k_pairs.csv` (with the

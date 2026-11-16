@@ -1,6 +1,6 @@
 # Feuille de route
 
-[English](ROADMAP.md) · **Français** · Mise à jour : 16/11/2026 · Version actuelle : **0.12.2**
+[English](ROADMAP.md) · **Français** · Mise à jour : 16/11/2026 · Version actuelle : **0.13.0**
 
 Ce qui est fait est dans l'[historique des versions](CHANGELOG.fr.md). Ce document dit ce
 qui vient ensuite, dans quel ordre, et à quelle condition une étape est réussie.
@@ -45,7 +45,12 @@ documenté et l'on n'y revient pas. Chaque étape réussie devient une version m
   validées couvrant les huit types, dont « même composition » et « même palette ».
   *Ce travail-là revient à l'historien.*
 
-### 0.13 — Chercher une zone avec des mots (TIPSv2)
+### 0.13 — Chercher une zone avec des mots (TIPSv2) · *mesuré, TIPSv2 non retenu*
+
+> **Résultat** (ARCHITECTURE § 19, `pixplot zonebench`) : sur RichArt, SigLIP 2 appliqué aux zones
+> découpées bat TIPSv2 (phrase : 28 % contre 20 % en première position) ; le pointage de TIPSv2
+> dépasse à peine « toujours le centre » (51 %). Suite : un **index de zones SigLIP 2** (≈ 20 zones par
+> œuvre, ≈ 6 h de calcul pour WikiArt 81k).
 
 - **Pourquoi** : aujourd'hui, on compare une zone à une zone (DINOv3) ou une phrase à une
   image entière (SigLIP 2). Rien ne compare une phrase à une zone : « auréole », « main qui

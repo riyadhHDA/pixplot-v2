@@ -416,3 +416,32 @@ def test_review_queue_decide_and_undo(env):
     c.post("/api/review/undo", json=rej)
     assert load_log(log_path(s)) == []
     assert c.post("/api/review", json={**rej, "decision": "effacer"}).status_code == 400
+
+
+def test_zonebench_geometry_and_scores():
+    from pixplot.analysis.zonebench import Region, _cells, dense_region_vectors, pointing, retrieval
+
+    p = {"w": 1000, "h": 500}                 # paysage : bandes en haut et en bas du carré
+    lb = (0, 168, 672, 336)                    # letterbox d'une image 1000×500 dans 672 px
+    rows, cols = _cells((0, 0, 500, 250), p, (1000, 500), lb, 48, 672)   # quart haut gauche
+    assert cols.min() == 0 and cols.max() == 23 and rows.min() == 12 and rows.max() == 23
+    # cadre minuscule : au moins une zone
+    r, c = _cells((10, 10, 11, 11), p, (1000, 500), lb, 48, 672)
+    assert len(r) == 1 and len(c) == 1
+
+    # grille synthétique : la zone du quart haut gauche porte un vecteur « cible »
+    D = 8
+    g = np.zeros((48, 48, D), dtype=np.float32)
+    g[..., 0] = 1
+    g[12:24, 0:24] = 0
+    g[12:24, 0:24, 1] = 1
+    grids = [(g, lb, (1000, 500))]
+    paintings = [p]
+    entities = [{"painting": 0, "boxes": [(0, 0, 500, 250)]}, {"painting": 0, "boxes": [(500, 250, 1000, 500)]}]
+    regions = [Region(0, 0, (0, 0, 500, 250)), Region(0, 1, (500, 250, 1000, 500))]
+    Q = np.eye(D, dtype=np.float32)[[1, 0]]   # requête 0 → cible, requête 1 → fond
+    G = dense_region_vectors(grids, paintings, regions)
+    rt = retrieval(Q, G, regions, entities)
+    assert rt["R@1"] == 1.0 and rt["median_rank"] == 1
+    pt = pointing(Q[:1], grids, paintings, entities[:1])
+    assert pt["hit"] == 1.0 and 0.2 < pt["chance"] < 0.3   # un quart de l'œuvre

@@ -8,6 +8,7 @@ ENCODERS = (
     "dinov3_vitb16", "dinov3_vitl16", "dinov3_vits16",
     "dinov2_vitb14_reg", "dinov2_vitl14_reg", "dinov2_vits14_reg",
     "siglip2_so400m", "siglip2_base",
+    "tipsv2_b14", "tipsv2_l14", "tipsv2_so400m14",
     "colorhist", "color_lab", "dinov3_vitb16_texture",
 )
 
@@ -33,6 +34,11 @@ def get_encoder(name: str, **kwargs) -> Encoder:
         if kwargs.get("input_size") == 448:  # 448 est la valeur par défaut de la CLI (DINOv3)
             kwargs.pop("input_size")
         return SigLIP2Encoder(arch=name, **kwargs)
+    if name.startswith("tipsv2_"):
+        from .tipsv2 import TIPSv2Encoder
+        kwargs.pop("weights", None)
+        kwargs.pop("repo", None)
+        return TIPSv2Encoder(arch=name, **kwargs)
     if name.startswith("dinov2_"):
         from .dinov2 import DINOv2Encoder
         kwargs.pop("weights", None)

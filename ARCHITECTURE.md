@@ -569,3 +569,27 @@ colour.
 **The criterion of step 0.12** (≈ 100 validated pairs covering the eight kinds) is met in number,
 not in coverage: "same hand" (1) and "same motif" (2) still need more, and more "same
 composition" pairs outside disagreements are needed to judge form.
+
+## 19. Searching a region with words: TIPSv2 evaluated, not adopted (16/11/2026)
+
+Question: can one type "a halo" or "the church tower in the left background" and find the
+**region** that answers it across the corpus? Benchmark `pixplot zonebench` on the test split of
+RichArt (ICMR 2026, CC BY-NC 4.0, local use): 709 paintings, 1,243 objects described by museum
+catalogues, 2,174 boxes; two queries per object (its short name, its catalogue sentence of ~35
+words). Methods: SigLIP 2 on the cropped region, TIPSv2 on the cropped region, TIPSv2 "dense"
+(one pass on the whole painting, mean of the 14-px region vectors inside the box); TIPSv2 in two
+sizes, B/14 and SO400m/14 (same size as SigLIP 2).
+
+**Finding the region among 2,174** (R@1 / R@10 / median rank): SigLIP 2 on crops wins clearly —
+name 16.0% / 43.8% / 17, sentence **28.2% / 61.1% / 5**; TIPSv2 SO400m on crops: sentence 20.4% /
+47.9% / 12; TIPSv2 B/14 on crops: 15.1% / 41.7% / 19; TIPSv2 dense: 13.3–15.4% / 38.6–41.0%.
+
+**Pointing at the region in its painting**: TIPSv2 B/14 61.9% (name) and 56.6% (sentence),
+SO400m 54.2% and 50.2%; chance (area covered by the boxes) 34.2%, but **always pointing at the
+centre of the painting** already gives 50.8%. TIPSv2's advantage is thin.
+
+Decision: the criterion of step 0.13 ("clearly better than SigLIP 2 on cropped regions") is not
+met; TIPSv2 is not integrated into the Atlas. The encoder stays in the code (`tipsv2_b14`,
+`tipsv2_so400m14`) so the measurement is reproducible. The best measured method is **SigLIP 2
+applied to cropped regions**: that is what should be indexed to search regions with words, at
+the cost of ≈ 20 times the computation of global vectors (about twenty regions per work).
