@@ -17,6 +17,7 @@ import numpy as np
 from ..catalog import db
 from ..catalog.metadata import get_metadata
 from ..analysis.naming import load_names
+from ..analysis.spacemaps import available_maps, load_space_map
 from ..analysis.suspects import load_suspects
 from ..config import Settings
 from ..runs import Run, latest_run
@@ -161,6 +162,8 @@ class AtlasData:
             "hdbscan": self.hdbscan is not None,
             "metadata_keys": self.category_keys(),
             "named_groups": bool(self.names),
+            "space_maps": available_maps(self.analysis),
+            "main_space": self.spaces.main,
             "suspects": (self.suspects or {}).get("counts", {}),
             "suspects_space": (self.suspects or {}).get("space"),
             "analysis_params": self.analysis.manifest.get("params", {}),
@@ -196,6 +199,15 @@ class AtlasData:
         if coords and sum(v is not None for v in coords[0]) >= 2:
             payload["lat"], payload["lon"] = coords
         return payload
+
+    def space_map_payload(self, key: str) -> dict | None:
+        """Positions des œuvres sur la carte d'un autre regard (None hors de cet espace)."""
+        coords = load_space_map(self.analysis, key)
+        if coords is None:
+            return None
+        xs = [None if np.isnan(v) else round(float(v), 5) for v in coords[:, 0]]
+        ys = [None if np.isnan(v) else round(float(v), 5) for v in coords[:, 1]]
+        return {"space": key, "x": xs, "y": ys}
 
     def clusters_payload(self) -> list[dict]:
         out = []

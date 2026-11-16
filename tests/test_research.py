@@ -172,3 +172,25 @@ def test_iiif_import(tmp_path):
     # reprise : rien n'est retéléchargé
     rep2 = import_iiif([f"{base}/collection"], tmp_path, delay=0, fetch=docs.__getitem__, get=fake_get)
     assert rep2.images == 0 and rep2.skipped == 2 and len(fetched) == 2
+
+
+def test_space_maps(env):
+    s, data, c = env
+    from pixplot.analysis.spacemaps import available_maps, compute_space_maps
+
+    done = compute_space_maps(data.analysis, s, say=lambda m: None)
+    assert list(done) == ["couleur"]                     # l'espace de l'analyse n'a pas de 2e carte
+    assert available_maps(data.analysis) == ["couleur"]
+    lay = c.get("/api/layout/couleur").json()
+    assert len(lay["x"]) == len(data.ids) and all(-1.01 <= v <= 1.01 for v in lay["x"] if v is not None)
+    assert c.get("/api/layout/inconnu").status_code == 404
+    assert c.get("/api/info").json()["space_maps"] == ["couleur"]
+    # déjà calculée : rien n'est refait sans --force
+    assert compute_space_maps(data.analysis, s, say=lambda m: None) == done
+
+
+def test_world_basemap_is_vendored():
+    from pathlib import Path
+
+    topo = json.loads((Path(__file__).parents[1] / "web" / "vendor" / "world-110m.json").read_text(encoding="utf-8"))
+    assert topo["type"] == "Topology" and {"land", "countries"} <= set(topo["objects"]) and topo["transform"]

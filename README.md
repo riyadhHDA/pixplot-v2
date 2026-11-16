@@ -50,7 +50,7 @@ in about 3 seconds and a text or detail search answers in 0.25 s.
 | **Four ways of seeing** | Neighbours by **form** (DINOv3: shapes, composition), **subject** (SigLIP 2: what you would describe in words), **colour** (CIELAB palette) and **touch** (brushwork and line, from DINOv3's middle layers). Comparing them says *why* two works look alike. |
 | **Search** | By metadata, by **free-text description** in French or English (SigLIP 2), or by **detail**: draw a box around a hand, a drapery or an object and find similar regions across the corpus. |
 | **Groups that name themselves** | Spherical e-means clusters, named from an art-history vocabulary, e.g. « Scènes religieuses · icône » (Fra Angelico), « Batailles · gravure » (Doré). These are suggestions, to be checked. |
-| **Atlas** | Interactive deck.gl map with every thumbnail visible, artwork records with sourced metadata, **comparator** (up to six works side by side, similarity in each space), **research notebook**, **timeline** and **geography** layouts when dates or coordinates exist. |
+| **Atlas** | Interactive deck.gl map with every thumbnail visible, artwork records with sourced metadata, **comparator** (up to six works side by side, similarity in each space), **research notebook**, **one map per way of seeing**, **timeline** and **geography** (offline world base map) layouts when dates or coordinates exist. Welcome screen, help and keyboard shortcuts; adapts to laptop screens. |
 | **A critical eye on the catalogue** | A blind audit (models see only pixels) and a list of **labels to check**: works whose neighbours all disagree with their label, either a cataloguing error or a genuinely singular work. |
 | **Museum collections** | `pixplot import-iiif` loads any IIIF v2/v3 manifest or collection (images at the requested size, normalised metadata, rights). |
 | **Working with Claude** | An MCP server with 14 tools: Claude searches, **looks at the images and details**, compares, reads the groups and writes to your notebook, following prudent-interpretation guidelines. |
@@ -101,6 +101,7 @@ pixplot embed --encoder color_lab       # "colour" space (no GPU needed)
 pixplot embed --encoder colorhist       # whole pipeline without a GPU, for testing
 pixplot index [--encoder NAME]          # FAISS index of the latest run
 pixplot index --regions                 # region index → "Search a detail" in the Atlas
+pixplot maps                            # one UMAP map per way of seeing (subject, colour, touch)
 pixplot name-groups                     # name the groups (SigLIP 2 + art-history vocabulary)
 pixplot suspects                        # labels contradicted by all neighbours
 pixplot search-text "Annunciation in a garden"
@@ -139,5 +140,5 @@ PixPlot v2 is released under the **GPL-3.0** licence (see [LICENSE](LICENSE)).
 
 - Inspired by [PixPlot](https://github.com/YaleDHLab/pix-plot) (Yale DHLab, MIT); rewritten from scratch, the original code is not included.
 - Models: [DINOv3](https://github.com/facebookresearch/dinov3) (Meta, DINOv3 licence, weights on request and never redistributed here), [SigLIP 2](https://huggingface.co/google/siglip2-so400m-patch16-384) (Google, Apache 2.0).
-- Libraries: FAISS and e-means (Meta, MIT), UMAP, scikit-learn, deck.gl, FastAPI, the MCP Python SDK.
+- Libraries: FAISS and e-means (Meta, MIT), UMAP, scikit-learn, deck.gl, FastAPI, the MCP Python SDK. World base map: [world-atlas](https://github.com/topojson/world-atlas) (ISC), from [Natural Earth](https://www.naturalearthdata.com) (public domain).
 - Test corpora: [WikiArt via huggan/wikiart](https://huggingface.co/datasets/huggan/wikiart) and the [Yale Center for British Art](https://britishart.yale.edu/) (public domain, IIIF). No corpus images are stored in this repository; the screenshots show the Atlas interface.

@@ -112,6 +112,15 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
             map_cache["map"] = data.map_payload()
         return JSONResponse(map_cache["map"])
 
+    @app.get("/api/layout/{space}")
+    def space_layout(space: str):
+        if space not in map_cache:
+            out = data.space_map_payload(space)
+            if out is None:
+                raise HTTPException(404, f"Pas de carte pour « {space} » : lancez `pixplot maps`.")
+            map_cache[space] = out
+        return JSONResponse(map_cache[space])
+
     @app.get("/api/clusters")
     def clusters():
         return data.clusters_payload()

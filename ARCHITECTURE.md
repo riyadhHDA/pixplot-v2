@@ -393,3 +393,23 @@ domain, 3.7 MB), all imported, full pipeline in 2 min 30. Lessons:
 - the timeline then appears by itself (20-year blocks, 1740 → 1920);
 - with 18 works, group names remain approximate (« Marines · aquarelle » for oils by
   Gainsborough and Turner): the vocabulary judges appearance, not the actual technique.
+
+
+## 13. Interface: one map per way of seeing, world base map, ergonomics (16/11/2026)
+
+**One map per way of seeing** (`pixplot maps`): the same PCA → UMAP projection computed in each
+other space (`maps/<space>.npy` in the analysis run, aligned on `ids.npy`; ≈ 4 min per space
+at 81k). The groups stay those of the main map, so a group can be followed from one map to
+another. Its number is only shown where it stays compact (spread < 18 % of the map). At 81k:
+38 of the 142 form groups stay compact on the subject map, almost none on the touch and colour
+maps — the "form" groups are not "touch" groups.
+
+**World base map** for the Geography layout: world-atlas TopoJSON (Natural Earth 1:110 M,
+public domain, 108 KB) shipped in `web/vendor/` and decoded in the browser (works offline).
+
+**Ergonomics**: header reduced to search + four tools (the map, display and colour settings
+moved to a "Vue" menu), counters in a status bar on the map, panel widths proportional to the
+window (group panel collapsible, panels overlaid below 1,100 px), right panel with a title and
+a "Back" button to the list it was opened from, welcome screen on first visit, help (`?`) and
+keyboard shortcuts (`/` search, `G` groups, `C` compare, `N` notebook, `V` labels to check, `0`
+overview, `Esc` close). Checked at 1,920, 1,536, 1,366 and 1,024 px wide.

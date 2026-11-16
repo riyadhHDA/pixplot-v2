@@ -405,3 +405,26 @@ Essai réel (16/11/2026) : 18 peintures du **Yale Center for British Art** (doma
 - la chronologie s'affiche alors d'elle-même (blocs de 20 ans, 1740 → 1920) ;
 - sur 18 œuvres, les noms de groupes restent approximatifs (« Marines · aquarelle » pour des
   huiles de Gainsborough et Turner) : le vocabulaire juge l'apparence, pas la technique réelle.
+
+
+## 13. Interface : une carte par regard, fond de carte, ergonomie (16/11/2026)
+
+**Une carte par regard** (`pixplot maps`) : la même projection PCA → UMAP calculée dans chaque
+autre espace (`maps/<espace>.npy` dans le run d'analyse, aligné sur `ids.npy` ; ≈ 4 min par
+espace à 81k). Les groupes restent ceux de la carte principale, pour suivre un groupe d'une
+carte à l'autre ; son numéro ne s'affiche que là où il reste groupé (dispersion < 18 % de la
+carte). À 81k : 38 des 142 groupes « forme » restent groupés sur la carte « sujet », presque
+aucun sur les cartes « touche » et « couleur » — les groupes de forme ne sont pas des groupes
+de facture.
+
+**Fond de carte du monde** pour la disposition « Géographie » : TopoJSON world-atlas (Natural
+Earth 1:110 M, domaine public, 108 Ko) embarqué dans `web/vendor/` et décodé dans le
+navigateur (fonctionne hors ligne).
+
+**Ergonomie** : en-tête réduit à la recherche et quatre outils (carte, affichage et couleurs
+dans un menu « Vue »), compteurs dans une barre d'état sur la carte, largeurs des panneaux
+proportionnelles à la fenêtre (panneau des groupes repliable, panneaux par-dessus la carte
+sous 1 100 px), panneau de droite avec un titre et un bouton « Retour » vers la liste d'où
+l'on vient, écran d'accueil à la première visite, aide (`?`) et raccourcis clavier (`/`
+chercher, `G` groupes, `C` comparer, `N` carnet, `V` à vérifier, `0` vue d'ensemble, `Échap`
+fermer). Vérifié à 1 920, 1 536, 1 366 et 1 024 px de large.

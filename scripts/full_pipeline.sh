@@ -40,6 +40,7 @@ step "index touche"         $PIX --data "$DATA" index --encoder dinov3_vitb16_te
 step "index couleur"        $PIX --data "$DATA" index --encoder color_lab
 step "index des zones"      $PIX --data "$DATA" index --regions --encoder dinov3_vitb16
 step "analyse (groupes, carte, planches)" $PIX --data "$DATA" analyze --encoder dinov3_vitb16 --show 30
+step "une carte par regard" $PIX --data "$DATA" maps
 step "noms des groupes"     $PIX --data "$DATA" name-groups --show 30
 step "étiquettes à vérifier" $PIX --data "$DATA" suspects
 step "audit à l'aveugle"    $PIX --data "$DATA" audit

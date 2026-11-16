@@ -37,7 +37,15 @@
     searchStatus: { region: false, text: false }, lastResults: null, drawing: false,
     spaces: [], mainSpace: null, space: null,          // espaces de ressemblance (voisines)
     layout: "map", umapPositions: null, axis: [],      // carte, chronologie ou géographie
+    groupLabels: [], layoutCache: {}, world: undefined, panelHistory: [],
     compare: [],                                       // œuvres mises de côté pour comparer
+  };
+  const svg = (d) => `<svg viewBox="0 0 20 20" aria-hidden="true"><path d="${d}"/></svg>`;
+  const ICON = {
+    detail: svg("M3 3h5M3 3v5M17 3h-5M17 3v5M3 17h5M3 17v-5M17 17h-5M17 17v-5"),
+    compare: svg("M2 4h7v12H2z M11 4h7v12h-7z"),
+    note: svg("M5 2h10v16H5z M8 6h5 M8 9h5 M8 12h3"),
+    export: svg("M10 3v10 M6 9l4 4 4-4 M4 17h12"),
   };
   const SPACE_SHORT = { forme: "Forme", sujet: "Sujet et style", couleur: "Couleur", touche: "Touche", forme_v2: "DINOv2" };
   const store = {   // préférences de ce navigateur seulement (peuvent être indisponibles)
@@ -93,17 +101,24 @@
     } catch { /* un seul espace */ }
     state.compare = store.get(`compare:${state.info.analysis}`, []).filter((id) => state.rowOf.has(id));
     updateCompareButton();
-    const layouts = [["map", "Carte des ressemblances"]];
-    if (m.year) layouts.push(["time", "Chronologie"]);
-    if (m.lat) layouts.push(["geo", "Géographie"]);
-    $("layout").innerHTML = layouts.map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
-    $("layout-wrap").hidden = layouts.length < 2;
+    // Cartes proposées : la carte de l'analyse, une par autre regard, puis dates et lieux.
+    const mainLabel = SPACE_SHORT[state.info.main_space] || "forme";
+    const groups = [[`Ressemblance`, [["map", `${mainLabel} (carte principale)`],
+      ...(state.info.space_maps || []).map((k) => [`map:${k}`, SPACE_SHORT[k] || k])]]];
+    const other = [];
+    if (m.year) other.push(["time", "Chronologie"]);
+    if (m.lat) other.push(["geo", "Géographie"]);
+    if (other.length) groups.push(["Dates et lieux", other]);
+    $("layout").innerHTML = groups.map(([g, opts]) => `<optgroup label="${esc(g)}">${opts.map(([v, l]) =>
+      `<option value="${v}">${esc(l)}</option>`).join("")}</optgroup>`).join("");
+    $("groups-count").textContent = `· ${state.clusters.length}`;
     $("open-suspects").hidden = !Object.keys(state.info.suspects || {}).length;
     const textOpt = $("search-mode").querySelector('option[value="text"]');
     textOpt.disabled = !state.searchStatus.text;
     textOpt.title = state.searchStatus.text ? "" : "Calculez d'abord les vecteurs SigLIP 2";
     buildColorOptions();
     renderGroups();
+    computeGroupLabels();
     setupDeck();
     updateStats();
     wireUI();
@@ -193,7 +208,7 @@
     const fit = computeFit();
     const changed = Math.abs(fit - state.fitZoom) > 1e-3;
     state.fitZoom = fit;
-    if (changed && !state.userMoved && state.layout === "map") {
+    if (changed && !state.userMoved && isMapLayout()) {
       state.viewState = { minZoom: fit - 2, maxZoom: 9, zoom: fit, target: [0, 0, 0] };
       deckgl.setProps({ viewState: state.viewState });
     }
@@ -303,6 +318,16 @@
     const layers = [];
     const sprites = showSprites();
     const showingIcons = sprites;
+    if (state.layout === "geo" && state.world) {
+      // fond de carte (Natural Earth 1:110 M, embarqué : fonctionne hors ligne)
+      layers.push(new deck.SolidPolygonLayer({
+        id: "world-land", data: state.world.land, getPolygon: (d) => d, getFillColor: [34, 34, 38],
+      }));
+      layers.push(new deck.PathLayer({
+        id: "world-borders", data: state.world.arcs, getPath: (d) => d, getColor: [90, 88, 84, 200],
+        getWidth: 1, widthUnits: "pixels",
+      }));
+    }
     layers.push(new ScatterplotLayer({
       id: "points",
       visible: !sprites,
@@ -373,11 +398,11 @@
         fontFamily: "Segoe UI, sans-serif",
       }));
     }
-    if (state.layout === "map" && onScreenSize() < 40 && (state.colorMode === "cluster" || sprites)) {
+    if (isMapLayout() && state.groupLabels.length && onScreenSize() < 40 && (state.colorMode === "cluster" || sprites)) {
       layers.push(new TextLayer({
-        id: "group-labels",
-        data: state.clusters,
-        getPosition: (d) => [d.center[0] * WORLD, d.center[1] * WORLD],
+        id: `group-labels-${state.layout}`,
+        data: state.groupLabels,
+        getPosition: (d) => d.at,
         getText: (d) => String(d.number),
         getSize: 13, getColor: [255, 255, 255],
         background: true, getBackgroundColor: (d) => [...PALETTE[d.cluster % PALETTE.length].map((c) => c * 0.35), 230],
@@ -484,23 +509,94 @@
       pos[2 * r + 1] = y + rad * Math.sin(th);
     }
     const axis = [];
-    for (let lon = -180; lon <= 180; lon += 30) axis.push({ line: [[lon * scale, -90 * scale], [lon * scale, 90 * scale]] },
-      { at: [lon * scale, -90 * scale - 4], text: `${lon}°`, priority: 1 });
-    for (let lat = -90; lat <= 90; lat += 30) axis.push({ line: [[-180 * scale, lat * scale], [180 * scale, lat * scale]] },
-      { at: [-180 * scale - 20, lat * scale], text: `${lat}°`, priority: 1 });
-    axis.push({ at: [190 * scale, -92 * scale], text: "sans lieu", priority: 3 });
-    return { pos, axis, note: "longitude / latitude, sans fond de carte" };
+    // graticule discret tous les 30°, et un bloc à part pour les œuvres sans lieu
+    for (let lon = -180; lon <= 180; lon += 30) axis.push({ line: [[lon * scale, -60 * scale], [lon * scale, 85 * scale]] });
+    for (let lat = -60; lat <= 85; lat += 30) axis.push({ line: [[-180 * scale, lat * scale], [180 * scale, lat * scale]] });
+    const unplaced = m.lat.filter((v, r) => v == null || m.lon[r] == null).length;
+    if (unplaced) axis.push({ at: [190 * scale, -100 * scale + cell * (0.6 * Math.sqrt(unplaced) + 4)], text: `sans lieu (${unplaced})` });
+    return { pos, axis, note: "longitude / latitude · fond Natural Earth" };
   }
 
-  function setLayout(layout) {
-    state.layout = layout;
+  // Fond de carte : TopoJSON (world-atlas, Natural Earth 1:110 M, domaine public) embarqué
+  // dans web/vendor/, décodé ici sans bibliothèque : arcs en deltas quantifiés → lon/lat.
+  async function loadWorld() {
+    if (state.world !== undefined) return state.world;
+    try {
+      const topo = await getJSON("vendor/world-110m.json");
+      const [sx, sy] = topo.transform.scale, [tx, ty] = topo.transform.translate;
+      const scale = (WORLD / 180) * 8;
+      const arcs = topo.arcs.map((arc) => {
+        let x = 0, y = 0;
+        return arc.map(([dx, dy]) => { x += dx; y += dy; return [(x * sx + tx) * scale, (y * sy + ty) * scale]; });
+      });
+      const ring = (idx) => idx.flatMap((i, k) => {
+        const pts = i >= 0 ? arcs[i] : arcs[~i].slice().reverse();
+        return k ? pts.slice(1) : pts;
+      });
+      const land = [];
+      for (const g of topo.objects.land.geometries) {
+        const polys = g.type === "Polygon" ? [g.arcs] : g.arcs;
+        for (const p of polys) land.push(p.map(ring));
+      }
+      state.world = { arcs, land };
+    } catch { state.world = null; }  // pas de fond : la grille suffit
+    return state.world;
+  }
+
+  function isMapLayout() { return state.layout === "map" || state.layout.startsWith("map:"); }
+
+  // Étiquettes de groupes : au centre du groupe sur la carte affichée (sur une carte d'un
+  // autre regard, un groupe peut être éclaté : l'étiquette va à sa médiane approchée).
+  function computeGroupLabels() {
+    if (state.layout === "map") {
+      state.groupLabels = state.clusters.map((g) => ({ ...g, at: [g.center[0] * WORLD, g.center[1] * WORLD] }));
+      return;
+    }
+    if (!isMapLayout()) { state.groupLabels = []; return; }
+    const sums = new Map();
+    for (let r = 0; r < state.n; r++) {
+      const x = state.positions[2 * r], y = state.positions[2 * r + 1];
+      if (!Number.isFinite(x) || Math.abs(x) > 1.1 * WORLD) continue;
+      const c = state.map.cluster[r], s = sums.get(c) || [0, 0, 0, 0];
+      s[0] += x; s[1] += y; s[2] += x * x + y * y; s[3]++;
+      sums.set(c, s);
+    }
+    // Sur la carte d'un autre regard, un groupe de la carte principale peut être éclaté :
+    // son numéro n'a de sens que s'il reste groupé (dispersion < 18 % de la carte).
+    state.groupLabels = state.clusters.filter((g) => sums.has(g.cluster)).flatMap((g) => {
+      const [sx, sy, sq, k] = sums.get(g.cluster);
+      const mx = sx / k, my = sy / k, spread = Math.sqrt(Math.max(0, sq / k - mx * mx - my * my));
+      return spread < 0.18 * WORLD ? [{ ...g, at: [mx, my] }] : [];
+    });
+  }
+
+  async function setLayout(layout) {
     let note = "";
-    if (layout === "time") ({ pos: state.positions, axis: state.axis, note } = timePositions());
-    else if (layout === "geo") ({ pos: state.positions, axis: state.axis, note } = geoPositions());
-    else { state.positions = state.umapPositions.slice(); state.axis = []; }
+    if (layout.startsWith("map:")) {
+      const key = layout.slice(4);
+      let res;
+      try { res = state.layoutCache[key] || (state.layoutCache[key] = await getJSON(`/api/layout/${key}`)); }
+      catch (err) { toast(`Carte indisponible : ${err.message}`); $("layout").value = state.layout; return; }
+      const pos = new Float32Array(state.n * 2);
+      for (let r = 0; r < state.n; r++) {
+        const ok = res.x[r] != null;
+        pos[2 * r] = ok ? res.x[r] * WORLD : 1.25 * WORLD;  // absentes de cet espace : rangées à droite
+        pos[2 * r + 1] = ok ? res.y[r] * WORLD : -WORLD;
+      }
+      state.positions = pos; state.axis = [];
+      const s = state.spaces.find((x) => x.key === key);
+      note = s ? `Voisines selon ${s.label} : ${s.about}. Les couleurs restent celles des groupes de la carte principale.` : "";
+    } else if (layout === "time") ({ pos: state.positions, axis: state.axis, note } = timePositions());
+    else if (layout === "geo") {
+      await loadWorld();
+      ({ pos: state.positions, axis: state.axis, note } = geoPositions());
+    } else { state.positions = state.umapPositions.slice(); state.axis = []; }
+    state.layout = layout;
     state.layoutNote = note;
+    $("layout-note").textContent = note;
+    computeGroupLabels();
     state.userMoved = false;
-    if (layout === "map") flyTo(0, 0, state.fitZoom);
+    if (isMapLayout()) flyTo(0, 0, state.fitZoom);
     else fitToPositions();
     computeHD();
     redraw();
@@ -574,6 +670,7 @@
       setHighlight(set, `Groupe ${g.number}${g.name ? ` (${g.name})` : ""}`);
       document.querySelectorAll(".group").forEach((x) => x.classList.toggle("active", x === li));
       if (state.layout === "map") flyTo(g.center[0] * WORLD, g.center[1] * WORLD, state.fitZoom + 1.6);
+      else { const [x, y] = centerOf(set); flyTo(x, y, state.viewState.zoom); }
     }));
   }
 
@@ -594,7 +691,8 @@
   function updateStats() {
     const i = state.info;
     const base = `${state.n.toLocaleString("fr-FR")} œuvres · ${i.clusters} groupes · ${i.encoder} @${i.input_size}`
-      + (state.layout !== "map" && state.layoutNote ? ` · ${state.layoutNote}` : "");
+      + (state.layout === "time" || state.layout === "geo" ? ` · ${state.layoutNote}` : "")
+      + (state.layout.startsWith("map:") ? ` · carte « ${SPACE_SHORT[state.layout.slice(4)] || state.layout.slice(4)} »` : "");
     $("stats").textContent = state.highlight
       ? `${state.highlightLabel} : ${state.highlight.size.toLocaleString("fr-FR")} œuvres  —  ${base}`
       : base;
@@ -712,7 +810,8 @@
     comparaison: "Comparaison", groupe: "Groupe" };
 
   async function renderNotebook() {
-    state.panel = "notebook";
+    showPanel("notebook", "Carnet de recherche");
+    state.lastList = renderNotebook;
     state.selected = state.selectedData = null;
     redraw();
     $("fiche").hidden = false;
@@ -731,11 +830,11 @@
           <span>${e.artwork_ids.length ? `<button class="chip" data-show="${e.id}">Montrer sur la carte</button>` : ""}
           ${e.artwork_ids.length >= 2 && e.artwork_ids.length <= 6 ? `<button class="chip" data-cmp="${e.id}">Comparer</button>` : ""}
           <button class="chip" data-del="${e.id}">Supprimer</button></span></div></li>`).join("");
-    $("fiche-body").innerHTML = `<div class="results-head"><h3>Carnet de recherche</h3>
+    $("fiche-body").innerHTML = `<div class="results-head">
         <div class="sub">${res.entries.length} entrée${res.entries.length > 1 ? "s" : ""} · enregistré dans le dossier de données (notebook.sqlite)</div>
         <div class="chips" style="margin-top:10px"><button class="chip" id="nb-new">Nouvelle note</button>
           <a class="chip" href="/api/notebook/export.md" download>Exporter en Markdown</a></div></div>
-      ${res.entries.length ? `<ol class="entries">${items}</ol>` : `<p class="loading">Rien encore. Depuis une fiche : « Carnet » ; depuis des résultats : « Ajouter au carnet ».</p>`}`;
+      ${res.entries.length ? `<ol class="entries">${items}</ol>` : `<div class="empty"><b>Le carnet est vide.</b><br>Depuis la fiche d'une œuvre : « Carnet ».<br>Depuis des résultats ou une comparaison : « Ajouter au carnet ».<br>Ou bien : « Nouvelle note ».</div>`}`;
     const body = $("fiche-body");
     $("nb-new").addEventListener("click", () => addToNotebook({ kind: "note", title: "Note", artwork_ids: [] }));
     const patch = (id, data) => fetch(`/api/notebook/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) })
@@ -766,8 +865,8 @@
 
   // ------------------------------------------------------------------ étiquettes à vérifier
   async function renderSuspects(key, offset) {
-    state.panel = "suspects";
-    $("fiche").hidden = false;
+    showPanel("suspects", "Étiquettes à vérifier");
+    state.lastList = () => renderSuspects(key, offset);
     $("fiche-body").innerHTML = `<div class="loading">Chargement…</div>`;
     let res;
     try { res = await getJSON(`/api/suspects?limit=40&offset=${offset}${key ? `&key=${encodeURIComponent(key)}` : ""}`); } catch (err) {
@@ -782,7 +881,7 @@
           <div class="s-sugg">voisines : ${esc(pretty(d.suggested))} (${Math.round(d.majority * 100)} %)</div>
           <div class="s-neigh">${d.neighbors.slice(0, 4).map((i) => `<img src="/api/thumb/256/${i}" data-id="${i}" alt="" loading="lazy">`).join("")}</div></div></li>`).join("");
     const more = offset + res.items.length < res.total;
-    $("fiche-body").innerHTML = `<div class="results-head"><h3>Étiquettes à vérifier</h3>
+    $("fiche-body").innerHTML = `<div class="results-head">
         <div class="sub">${res.total} œuvres · ${esc(res.rule)} · voisines selon ${esc(space ? space.label : res.space)}</div>
         <div class="spaces" style="margin-top:10px">${tabs}</div></div>
       <ol class="suspects">${rows}</ol>
@@ -803,7 +902,7 @@
     const set = new Set(res.items.map((d) => state.rowOf.get(d.id)).filter((r) => r !== undefined));
     state.selected = state.selectedData = null;
     setHighlight(set, `À vérifier (${LABELS[res.key] || res.key})`);
-    if (state.layout === "map") flyTo(0, 0, state.fitZoom); else fitToPositions();
+    if (isMapLayout()) flyTo(0, 0, state.fitZoom); else fitToPositions();
   }
 
   function renderFiche(d) {
@@ -823,15 +922,16 @@
       <div class="content">
         <h3>${esc(pretty(d.label))}</h3>
         <div class="sub">n° ${d.id} · ${esc(d.filename)} · ${d.width}×${d.height} px ${esc(d.format || "")}</div>
-        ${state.lastResults ? `<button class="back" id="back-results" style="padding:0 0 10px">← Retour aux résultats</button>` : ""}
+        <div class="actions">
+          ${state.searchStatus.region ? `<button class="action" id="chip-detail" title="Tracez un cadre sur l'image : main, drapé, objet…">${ICON.detail}Chercher un détail</button>` : ""}
+          <button class="action ${state.compare.includes(d.id) ? "on" : ""}" id="chip-compare" title="Mettre de côté pour comparer (6 au plus)">${ICON.compare}<span>${state.compare.includes(d.id) ? "Dans le comparateur" : "Comparer"}</span></button>
+          <button class="action" id="chip-note" title="Garder cette œuvre et ses voisines dans le carnet, avec une note">${ICON.note}Carnet</button>
+          <button class="action" id="chip-export" title="Dossier .zip : l'œuvre, ses voisines, relations et métadonnées">${ICON.export}Exporter</button>
+        </div>
         <div class="chips">
-          ${state.searchStatus.region ? `<button class="chip" id="chip-detail" title="Tracez un cadre sur l'image : main, drapé, objet…">Chercher un détail</button>` : ""}
-          <button class="chip" id="chip-group" title="${esc(d.group_name || "")}">Groupe ${d.cluster}${d.group_name ? ` · ${esc(d.group_name)}` : ""}</button>${fam}
-          <span class="chip ${atyp >= 90 ? "warn" : ""}" title="Rang d'isolement parmi toutes les œuvres">Atypicité ${atyp} %</span>
+          <button class="chip" id="chip-group" title="Voir tout le groupe sur la carte">Groupe ${d.cluster}${d.group_name ? ` · ${esc(d.group_name)}` : ""}</button>${fam}
+          <span class="chip ${atyp >= 90 ? "warn" : ""}" title="Rang d'isolement parmi toutes les œuvres : 100 % = la plus isolée">Atypicité ${atyp} %</span>
           <button class="chip" id="chip-fly">Voir sur la carte</button>
-          <button class="chip ${state.compare.includes(d.id) ? "on" : ""}" id="chip-compare" title="Mettre de côté pour comparer (6 au plus)">${state.compare.includes(d.id) ? "✓ Dans le comparateur" : "Comparer"}</button>
-          <button class="chip" id="chip-note" title="Garder cette œuvre et ses voisines dans le carnet, avec une note">Carnet</button>
-          <button class="chip" id="chip-export" title="Dossier .zip : l'œuvre, ses voisines, relations et métadonnées">Exporter avec ses voisines</button>
         </div>
         ${labelChecks(d)}
         ${meta ? `<table>${meta}</table>` : ""}
@@ -849,14 +949,13 @@
     $("chip-compare").addEventListener("click", (e) => {
       const on = toggleCompare(d.id);
       e.currentTarget.classList.toggle("on", on);
-      e.currentTarget.textContent = on ? "✓ Dans le comparateur" : "Comparer";
+      e.currentTarget.querySelector("span").textContent = on ? "Dans le comparateur" : "Comparer";
     });
     $("chip-note").addEventListener("click", () => addToNotebook({
       kind: "oeuvre", title: pretty(d.label), artwork_ids: [d.id, ...d.neighbors.slice(0, 11).map((n) => n.id)],
       context: { "œuvre": d.id, voisines: spaceLabel(d.space) },
     }));
-    $("fiche").hidden = false;
-    state.panel = "fiche";
+    showPanel("fiche", `Œuvre n° ${d.id}`, state.lastList);
     $("fiche-body").querySelectorAll(".neighbor").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.id), true)));
     $("chip-fly").addEventListener("click", () => { const [x, y] = posOf(d.id); flyTo(x, y, Math.max(state.viewState.zoom, state.fitZoom + 3)); });
     $("chip-group").addEventListener("click", () => {
@@ -870,7 +969,6 @@
       selection: { "méthode": `œuvre et ses plus proches voisines (${spaceLabel(d.space)}), depuis l'Atlas`, "œuvre de départ": `${d.id} — ${d.label}` },
       scores: Object.fromEntries(d.neighbors.map((n) => [n.id, n.score])),
     }, e.currentTarget));
-    if ($("back-results")) $("back-results").addEventListener("click", () => renderResults(state.lastResults));
     state.drawing = false;
     $("fiche").scrollTop = 0;
     setTimeout(() => deckgl.redraw(true), 0);
@@ -980,7 +1078,8 @@
       drawCrop(c, x.id, x.box, 130);
     });
     $("fiche-body").querySelectorAll(".result").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.id), true)));
-    state.panel = "results";
+    showPanel("results", r.kind === "region" ? "Détails semblables" : "Recherche par description");
+    state.lastList = () => renderResults(r);
     $("note-results").addEventListener("click", () => addToNotebook({
       kind: r.kind === "region" ? "detail" : "recherche", title: r.kind === "region" ? `Détail de l'œuvre n° ${r.query.id}` : r.title,
       artwork_ids: (r.query ? [r.query.id] : []).concat(r.results.map((x) => x.id)),
@@ -1043,10 +1142,21 @@
     }
   }
 
+  // Panneau de droite : un titre, et « Retour » vers la liste d'où l'on vient (résultats,
+  // carnet, étiquettes à vérifier) quand on a ouvert une œuvre depuis elle.
+  function showPanel(kind, title, back) {
+    state.panel = kind;
+    state.panelBack = back || null;
+    $("fiche-title").textContent = title;
+    $("fiche-back").hidden = !back;
+    $("fiche").hidden = false;
+  }
+
   function closeFiche() {
     $("fiche").hidden = true;
     state.selected = state.selectedData = null;
     state.lastResults = null;
+    state.lastList = null;
     history.replaceState(null, "", location.pathname);
     redraw();
   }
@@ -1097,7 +1207,7 @@
     $("search-clear").addEventListener("click", clearHighlight);
     $("reset-view").addEventListener("click", () => {
       clearHighlight();
-      if (state.layout === "map") flyTo(0, 0, state.fitZoom); else fitToPositions();
+      if (isMapLayout()) flyTo(0, 0, state.fitZoom); else fitToPositions();
     });
     $("layout").addEventListener("change", (e) => setLayout(e.target.value));
     $("open-compare").addEventListener("click", openCompare);
@@ -1114,9 +1224,60 @@
     $("open-notebook").addEventListener("click", renderNotebook);
     $("open-suspects").addEventListener("click", () => renderSuspects(null, 0));
     $("fiche-close").addEventListener("click", closeFiche);
+    $("fiche-back").addEventListener("click", () => { if (state.panelBack) state.panelBack(); });
+
+    // panneau des groupes : replié / déplié (mémorisé) ; en écran étroit, il passe par-dessus
+    const root = $("layout-root");
+    const narrow = () => matchMedia("(max-width: 1100px)").matches;
+    const setGroups = (open) => {
+      root.classList.toggle("no-groups", !open && !narrow());
+      root.classList.toggle("groups-open", open && narrow());
+      $("toggle-groups").setAttribute("aria-expanded", String(open));
+      if (!narrow()) store.set("groups", open);  // en écran étroit, le panneau se ferme seul : ne pas le retenir
+      setTimeout(onResize, 50);
+    };
+    setGroups(narrow() ? false : store.get("groups", true));
+    $("toggle-groups").addEventListener("click", () => setGroups($("toggle-groups").getAttribute("aria-expanded") !== "true"));
+
+    // menu « Vue » : carte, affichage, couleurs
+    const menu = $("view-menu"), viewBtn = $("open-view");
+    const setMenu = (open) => { menu.hidden = !open; viewBtn.setAttribute("aria-expanded", String(open)); };
+    viewBtn.addEventListener("click", (e) => { e.stopPropagation(); setMenu(menu.hidden); });
+    menu.addEventListener("click", (e) => e.stopPropagation());
+    document.addEventListener("click", () => setMenu(false));
+
+    // aide : à la première visite, puis par « ? »
+    const help = $("help");
+    const setHelp = (open) => { help.hidden = !open; if (!open) store.set("seenHelp", true); else $("help-start").focus(); };
+    $("open-help").addEventListener("click", () => setHelp(true));
+    $("help-close").addEventListener("click", () => setHelp(false));
+    $("help-start").addEventListener("click", () => setHelp(false));
+    help.addEventListener("click", (e) => { if (e.target === help) setHelp(false); });
+    $("help-lead").textContent = `${state.n.toLocaleString("fr-FR")} œuvres, réparties en ${state.clusters.length} groupes. `
+      + "Chaque vignette est une œuvre ; celles qui se ressemblent sont voisines sur la carte.";
+    if (!store.get("seenHelp", false)) { setHelp(true); store.set("seenHelp", true); }
+
+    // raccourcis clavier (sauf quand on écrit dans un champ)
     addEventListener("keydown", (e) => {
-      if (e.key !== "Escape") return;
-      if (!$("compare").hidden) $("compare").hidden = true; else closeFiche();
+      const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "");
+      if (e.key === "Escape") {
+        if (!help.hidden) setHelp(false);
+        else if (!menu.hidden) setMenu(false);
+        else if (!$("compare").hidden) $("compare").hidden = true;
+        else if (narrow() && root.classList.contains("groups-open")) setGroups(false);
+        else closeFiche();
+        if (typing) document.activeElement.blur();
+        return;
+      }
+      if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
+      const k = e.key.toLowerCase();
+      if (e.key === "/") { e.preventDefault(); $("search").focus(); }
+      else if (e.key === "?") setHelp(true);
+      else if (k === "g") setGroups($("toggle-groups").getAttribute("aria-expanded") !== "true");
+      else if (k === "c") openCompare();
+      else if (k === "n") renderNotebook();
+      else if (k === "v" && !$("open-suspects").hidden) renderSuspects(null, 0);
+      else if (e.key === "0") $("reset-view").click();
     });
     addEventListener("resize", onResize);
     new ResizeObserver(onResize).observe($("map"));

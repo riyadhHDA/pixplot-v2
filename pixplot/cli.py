@@ -385,6 +385,18 @@ def _analysis_arg(s, name: str | None) -> Run:
     return run
 
 
+def cmd_maps(args) -> int:
+    from .analysis.spacemaps import compute_space_maps
+
+    s = get_settings(args.data)
+    analysis = _analysis_arg(s, args.analysis)
+    print(f"Analyse : {analysis.id} — une carte UMAP par regard")
+    done = compute_space_maps(analysis, s, spaces=args.spaces.split(",") if args.spaces else None,
+                              force=args.force, say=lambda m: print(m, flush=True))
+    print(f"Cartes : {', '.join(done) or 'aucune (calculez d’abord d’autres espaces avec pixplot embed)'}")
+    return 0
+
+
 def cmd_name_groups(args) -> int:
     import json
 
@@ -607,6 +619,12 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--open", action="store_true", help="ouvrir le navigateur automatiquement")
     p.set_defaults(func=cmd_serve)
+
+    p = sub.add_parser("maps", help="une carte UMAP par regard (sujet, couleur, touche)")
+    p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
+    p.add_argument("--spaces", help="espaces à calculer, séparés par des virgules (défaut : tous)")
+    p.add_argument("--force", action="store_true", help="recalculer les cartes existantes")
+    p.set_defaults(func=cmd_maps)
 
     p = sub.add_parser("name-groups", help="proposer un nom à chaque groupe (SigLIP 2 + vocabulaire)")
     p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")

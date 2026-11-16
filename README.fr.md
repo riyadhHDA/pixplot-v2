@@ -53,7 +53,7 @@ répond en 0,25 s.
 | **Quatre regards** | Voisines selon la **forme** (DINOv3 : formes, composition), le **sujet** (SigLIP 2 : ce qu'on décrirait avec des mots), la **couleur** (palette CIELAB) et la **touche** (facture et trait, d'après les couches intermédiaires de DINOv3). Les comparer dit *pourquoi* deux œuvres se ressemblent. |
 | **Recherche** | Par métadonnées, par **description libre** en français ou en anglais (SigLIP 2), ou par **détail** : on trace un cadre autour d'une main, d'un drapé, d'un objet, et l'on retrouve les zones semblables dans tout le corpus. |
 | **Des groupes qui se nomment** | Groupes e-means sphériques, nommés d'après un vocabulaire d'histoire de l'art : « Scènes religieuses · icône » (Fra Angelico), « Batailles · gravure » (Doré)… Ce sont des propositions, à vérifier. |
-| **Atlas** | Carte interactive (deck.gl) où toutes les vignettes sont visibles, fiches d'œuvre aux métadonnées sourcées, **comparateur** (jusqu'à six œuvres côte à côte, similarité selon chaque regard), **carnet de recherche**, dispositions **chronologique** et **géographique** quand les dates ou les coordonnées existent. |
+| **Atlas** | Carte interactive (deck.gl) où toutes les vignettes sont visibles, fiches d'œuvre aux métadonnées sourcées, **comparateur** (jusqu'à six œuvres côte à côte, similarité selon chaque regard), **carnet de recherche**, **une carte par regard**, dispositions **chronologique** et **géographique** (fond de carte du monde, hors ligne) quand les dates ou les coordonnées existent. Écran d'accueil, aide et raccourcis clavier ; s'adapte aux écrans de portable. |
 | **Un regard critique sur le catalogue** | Audit à l'aveugle (les modèles ne voient que les pixels) et liste des **étiquettes à vérifier** : les œuvres que toutes leurs voisines contredisent, erreur de catalogue ou œuvre réellement singulière. |
 | **Collections de musées** | `pixplot import-iiif` charge n'importe quel manifeste ou collection IIIF v2/v3 (images à la taille voulue, métadonnées normalisées, droits). |
 | **Avec Claude** | Un serveur MCP à 14 outils : Claude cherche, **regarde les images et les détails**, compare, lit les groupes et écrit dans votre carnet, selon des consignes de prudence d'interprétation. |
@@ -104,6 +104,7 @@ pixplot embed --encoder color_lab       # espace « couleur » (sans GPU)
 pixplot embed --encoder colorhist       # tout le pipeline sans GPU, pour tester
 pixplot index [--encoder NOM]           # index FAISS du dernier run
 pixplot index --regions                 # index des zones → « Chercher un détail » dans l'Atlas
+pixplot maps                            # une carte UMAP par regard (sujet, couleur, touche)
 pixplot name-groups                     # nommer les groupes (SigLIP 2 + vocabulaire d'histoire de l'art)
 pixplot suspects                        # étiquettes que toutes les voisines contredisent
 pixplot search-text "Annonciation dans un jardin"
@@ -143,5 +144,5 @@ PixPlot v2 est distribué sous licence **GPL-3.0** (voir [LICENSE](LICENSE)).
 
 - Inspiré de [PixPlot](https://github.com/YaleDHLab/pix-plot) (Yale DHLab, MIT) ; réécrit de zéro, le code original n'est pas inclus.
 - Modèles : [DINOv3](https://github.com/facebookresearch/dinov3) (Meta, licence DINOv3, poids sur demande, jamais redistribués ici), [SigLIP 2](https://huggingface.co/google/siglip2-so400m-patch16-384) (Google, Apache 2.0).
-- Bibliothèques : FAISS et e-means (Meta, MIT), UMAP, scikit-learn, deck.gl, FastAPI, le SDK Python MCP.
+- Bibliothèques : FAISS et e-means (Meta, MIT), UMAP, scikit-learn, deck.gl, FastAPI, le SDK Python MCP. Fond de carte : [world-atlas](https://github.com/topojson/world-atlas) (ISC), d'après [Natural Earth](https://www.naturalearthdata.com) (domaine public).
 - Corpus d'essai : [WikiArt via huggan/wikiart](https://huggingface.co/datasets/huggan/wikiart) et le [Yale Center for British Art](https://britishart.yale.edu/) (domaine public, IIIF). Aucune image de corpus n'est stockée dans ce dépôt ; les captures montrent l'interface de l'Atlas.

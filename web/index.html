@@ -8,41 +8,62 @@
 </head>
 <body>
   <header class="top">
+    <button class="icon-btn" id="toggle-groups" title="Afficher / masquer les groupes (G)" aria-label="Afficher ou masquer le panneau des groupes" aria-expanded="true">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+    </button>
     <div class="brand">PixPlot <span>v2</span></div>
-    <form class="search" id="search-form" autocomplete="off">
+
+    <form class="search" id="search-form" autocomplete="off" role="search">
       <select id="search-mode" aria-label="Type de recherche">
         <option value="meta">Métadonnées</option>
-        <option value="text" disabled>Description (IA)</option>
+        <option value="text" disabled>Description</option>
       </select>
-      <input id="search" type="search" placeholder="Rechercher : artiste, style, n° d'œuvre…" aria-label="Rechercher">
+      <input id="search" type="search" placeholder="Artiste, style, n° d'œuvre…  ( / )" aria-label="Rechercher">
       <button type="button" id="search-clear" class="ghost" hidden>Effacer</button>
     </form>
-    <label class="colorby" id="layout-wrap" hidden>Disposition
-      <select id="layout">
-        <option value="map">Carte des ressemblances</option>
-      </select>
-    </label>
-    <label class="colorby">Affichage
-      <select id="display">
-        <option value="sprites">Vignettes</option>
-        <option value="points">Points colorés</option>
-      </select>
-    </label>
-    <label class="colorby">Couleur
-      <select id="colorby"></select>
-    </label>
+
     <div class="tools">
-      <button class="ghost" id="open-compare" hidden title="Comparer les œuvres mises de côté">Comparer <b id="compare-count">0</b></button>
-      <button class="ghost" id="open-suspects" hidden title="Étiquettes que toutes les voisines contredisent">À vérifier</button>
-      <button class="ghost" id="open-notebook" title="Vos pistes, sélections et notes">Carnet</button>
+      <div class="menu-wrap">
+        <button class="tool" id="open-view" aria-haspopup="true" aria-expanded="false" title="Carte, affichage et couleurs">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 5l5-2 6 2 5-2v12l-5 2-6-2-5 2z M7 3v12 M13 5v12"/></svg>
+          <span class="label">Vue</span>
+        </button>
+        <div class="menu" id="view-menu" hidden>
+          <label>Carte
+            <select id="layout"><option value="map">Ressemblance · forme</option></select>
+          </label>
+          <p class="menu-note" id="layout-note"></p>
+          <label>Affichage
+            <select id="display">
+              <option value="sprites">Vignettes</option>
+              <option value="points">Points colorés</option>
+            </select>
+          </label>
+          <label>Couleur des points
+            <select id="colorby"></select>
+          </label>
+        </div>
+      </div>
+      <button class="tool" id="open-compare" hidden title="Comparer les œuvres mises de côté (C)">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 4h7v12H2z M11 4h7v12h-7z"/></svg>
+        <span class="label">Comparer</span><b id="compare-count">0</b>
+      </button>
+      <button class="tool" id="open-suspects" hidden title="Étiquettes que toutes les voisines contredisent (V)">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M10 2l8 15H2z M10 8v4 M10 14v1"/></svg>
+        <span class="label">À vérifier</span>
+      </button>
+      <button class="tool" id="open-notebook" title="Vos pistes, sélections et notes (N)">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 2h10v16H5z M8 6h5 M8 9h5 M8 12h3"/></svg>
+        <span class="label">Carnet</span>
+      </button>
+      <button class="tool round" id="open-help" title="Aide et raccourcis (?)" aria-label="Aide">?</button>
     </div>
-    <div class="stats" id="stats">Chargement…</div>
   </header>
 
-  <main class="layout">
+  <main class="layout" id="layout-root">
     <aside class="groups" id="groups-panel">
       <div class="panel-head">
-        <h2>Groupes</h2>
+        <h2>Groupes <small id="groups-count"></small></h2>
         <button class="ghost" id="reset-view" title="Revenir à la vue d'ensemble">Vue d'ensemble</button>
       </div>
       <ol id="groups" class="group-list"></ol>
@@ -51,30 +72,76 @@
     <section class="map-wrap">
       <div id="map"></div>
       <div class="legend" id="legend"></div>
-      <div class="hint" id="hint">Molette : zoomer · glisser : se déplacer · clic sur une œuvre : sa fiche</div>
+      <div class="statusbar"><span id="stats">Chargement…</span><span id="hint"></span></div>
     </section>
 
     <aside class="fiche" id="fiche" hidden>
-      <button class="close" id="fiche-close" aria-label="Fermer le panneau">×</button>
+      <div class="fiche-bar">
+        <button class="icon-btn" id="fiche-back" hidden title="Retour" aria-label="Retour">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M12 4l-6 6 6 6"/></svg>
+        </button>
+        <span class="fiche-title" id="fiche-title"></span>
+        <button class="icon-btn" id="fiche-close" title="Fermer (Échap)" aria-label="Fermer le panneau">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>
+        </button>
+      </div>
       <div id="fiche-body"></div>
     </aside>
   </main>
 
-  <div class="compare" id="compare" hidden>
+  <div class="compare" id="compare" hidden role="dialog" aria-label="Comparaison">
     <div class="compare-head">
       <h2>Comparaison</h2>
       <div class="compare-actions">
         <button class="ghost" id="compare-note">Ajouter au carnet</button>
-        <button class="ghost" id="compare-export">Exporter en Research Pack</button>
+        <button class="ghost" id="compare-export">Exporter</button>
         <button class="ghost" id="compare-clear">Vider</button>
-        <button class="close" id="compare-close" aria-label="Fermer la comparaison">×</button>
+        <button class="icon-btn" id="compare-close" aria-label="Fermer la comparaison" title="Fermer (Échap)">
+          <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>
+        </button>
       </div>
     </div>
     <div id="compare-body"></div>
   </div>
 
+  <div class="help" id="help" hidden role="dialog" aria-labelledby="help-title">
+    <div class="help-card">
+      <button class="icon-btn help-close" id="help-close" aria-label="Fermer l'aide">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10M15 5L5 15"/></svg>
+      </button>
+      <h2 id="help-title">Bienvenue dans l'Atlas</h2>
+      <p class="help-lead" id="help-lead">Chaque vignette est une œuvre. Les œuvres qui se ressemblent sont voisines sur la carte.</p>
+      <div class="help-grid">
+        <section><h3>Explorer</h3>
+          <ul><li><b>Molette</b> : zoomer · <b>glisser</b> : se déplacer</li>
+              <li><b>Clic</b> sur une œuvre : sa fiche et ses voisines</li>
+              <li>Panneau de gauche : les <b>groupes</b>, nommés automatiquement</li></ul></section>
+        <section><h3>Chercher</h3>
+          <ul><li>Par <b>métadonnées</b> : artiste, style, n° d'œuvre</li>
+              <li>Par <b>description</b> : « Annonciation dans un jardin »</li>
+              <li>Par <b>détail</b> : dans une fiche, tracez un cadre sur l'image</li></ul></section>
+        <section><h3>Quatre regards</h3>
+          <ul><li><b>Forme</b> : composition et motifs · <b>Sujet</b> : ce qu'on décrirait avec des mots</li>
+              <li><b>Couleur</b> : la palette · <b>Touche</b> : la facture, le trait</li>
+              <li>Menu <b>Vue</b> : une carte par regard, chronologie, géographie</li></ul></section>
+        <section><h3>Travailler</h3>
+          <ul><li><b>Comparer</b> jusqu'à 6 œuvres côte à côte</li>
+              <li><b>Carnet</b> : gardez vos pistes avec vos notes</li>
+              <li><b>À vérifier</b> : étiquettes que les voisines contredisent</li></ul></section>
+      </div>
+      <h3>Raccourcis</h3>
+      <div class="keys">
+        <span><kbd>/</kbd> chercher</span><span><kbd>G</kbd> groupes</span><span><kbd>C</kbd> comparer</span>
+        <span><kbd>N</kbd> carnet</span><span><kbd>V</kbd> à vérifier</span><span><kbd>0</kbd> vue d'ensemble</span>
+        <span><kbd>?</kbd> aide</span><span><kbd>Échap</kbd> fermer</span>
+      </div>
+      <p class="help-note">Une proximité calculée est une piste à examiner, pas une preuve de filiation.</p>
+      <button class="primary" id="help-start">Commencer</button>
+    </div>
+  </div>
+
   <div class="tooltip" id="tooltip" hidden></div>
-  <div class="toast" id="toast" hidden></div>
+  <div class="toast" id="toast" hidden role="status"></div>
 
   <script src="vendor/deck.gl-9.4.1.min.js"></script>
   <script src="atlas.js"></script>
