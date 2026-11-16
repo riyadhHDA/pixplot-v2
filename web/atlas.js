@@ -926,6 +926,144 @@
   // ------------------------------------------------------------------ étiquettes à vérifier
   const prettyLabel = (l) => String(l).split(" · ").map((x) => pretty(x)).join(" · ");
 
+  // ------------------------------------------------------------------ relecture rapide (façon Anki)
+  // Une paire à la fois, une touche par décision : Entrée valide, 1–7 choisit le type,
+  // R écarte, Espace passe, Z annule, Échap quitte.
+  const rv = { queue: [], i: 0, history: [], skipped: new Set(), types: [], stats: null, busy: false };
+  const pairKey = (a, b) => `${Math.min(a, b)}-${Math.max(a, b)}`;
+
+  async function loadReviewQueue() {
+    const exclude = [...rv.skipped, ...rv.history.map((h) => pairKey(h.item.a, h.item.b))].join(",");
+    const res = await getJSON(`/api/review/queue?limit=30&exclude=${exclude}`);
+    rv.queue = res.items; rv.i = 0; rv.types = res.types; rv.stats = res.stats;
+  }
+
+  async function openReviewSession() {
+    $("review").hidden = false;
+    $("rv-card").innerHTML = `<div class="loading">Préparation de la file…</div>`;
+    rv.history = []; rv.skipped = new Set();
+    try { await loadReviewQueue(); } catch (err) {
+      $("rv-card").innerHTML = `<div class="loading">${esc(err.message)}</div>`; return;
+    }
+    showReviewCard();
+  }
+
+  function closeReviewSession() {
+    $("review").hidden = true;
+    if (state.panel === "pairs" && state.lastList) state.lastList();
+  }
+
+  function renderReviewStats() {
+    const s = rv.stats;
+    if (!s) return;
+    const done = rv.history.length;
+    $("rv-progress").textContent = `${done} relue${done > 1 ? "s" : ""} dans cette séance`;
+    $("rv-goal").style.setProperty("--v", Math.min(1, s.validated / s.goal));
+    $("rv-count").textContent = `${s.validated} / ${s.goal} paires validées`;
+    $("rv-types-count").innerHTML = rv.types.map((t, n) =>
+      `<span class="${s.by_type[t.key] ? "" : "zero"}" title="${esc(t.label)}">${n + 1}·${s.by_type[t.key] || 0}</span>`).join("");
+  }
+
+  async function showReviewCard() {
+    renderReviewStats();
+    if (rv.i >= rv.queue.length) {
+      try { await loadReviewQueue(); } catch (err) { /* garde l'écran de fin */ }
+      if (!rv.queue.length) {
+        $("rv-card").innerHTML = `<div class="rv-end"><h3>Plus rien à relire pour l'instant</h3>
+          <p>Toutes les paires proposées et les désaccords disponibles ont été vus. Pour en avoir d'autres :
+          <code>pixplot disagreements --keep 1000</code>, ou annotez vos propres paires depuis le comparateur.</p>
+          <button class="chip" id="rv-done">Fermer</button></div>`;
+        $("rv-done").addEventListener("click", closeReviewSession);
+        return;
+      }
+    }
+    const it = rv.queue[rv.i];
+    const suggested = rv.types.findIndex((t) => t.key === it.type);
+    const why = it.origin === "proposée"
+      ? `<b>Paire proposée</b>${it.source ? ` · ${esc(it.source)}` : ""}${it.note ? `<br>${esc(it.note)}` : ""}`
+      : `<b>${it.rank === 1 ? "Plus proche voisine" : `${it.rank}ᵉ voisine`}</b> selon ${esc(SPACE_SHORT[it.near] || it.near)}, mais plus loin
+         que ${Math.min(99, Math.floor((1 - it.centile) * 100))} % du corpus selon ${esc(SPACE_SHORT[it.far] || it.far)}. Y a-t-il un lien ?`;
+    $("rv-card").innerHTML = `<div class="rv-why">${why}</div>
+      <div class="rv-imgs">
+        <figure><a href="/api/image/${it.a}" target="_blank" rel="noopener"><img src="/api/thumb/1024/${it.a}" alt=""></a>
+          <figcaption>n° ${it.a} · ${esc(prettyLabel(it.label_a))}</figcaption></figure>
+        <figure><a href="/api/image/${it.b}" target="_blank" rel="noopener"><img src="/api/thumb/1024/${it.b}" alt=""></a>
+          <figcaption>n° ${it.b} · ${esc(prettyLabel(it.label_b))}</figcaption></figure>
+      </div>
+      <div class="rv-types">${rv.types.map((t, n) => `<button class="rv-type ${n === suggested ? "sugg" : ""}" data-n="${n}" title="${esc(t.question)}">
+        <kbd>${n + 1}</kbd> ${esc(t.label)}</button>`).join("")}</div>
+      <div class="rv-actions">
+        <button class="btn-main" id="rv-ok"><kbd>Entrée</kbd> Valider${suggested >= 0 ? ` : ${esc(rv.types[suggested].label)}` : ""}</button>
+        <button class="chip" id="rv-no"><kbd>R</kbd> ${it.origin === "proposée" ? "Rejeter" : "Pas de lien"}</button>
+        <button class="chip" id="rv-skip"><kbd>Espace</kbd> Passer</button>
+        <button class="chip" id="rv-undo" ${rv.history.length ? "" : "disabled"}><kbd>Z</kbd> Annuler</button>
+      </div>`;
+    $("rv-card").querySelectorAll(".rv-type").forEach((b) => b.addEventListener("click", () => reviewDecide("valider", Number(b.dataset.n))));
+    $("rv-ok").addEventListener("click", () => reviewDecide("valider", suggested));
+    $("rv-no").addEventListener("click", () => reviewDecide("rejeter"));
+    $("rv-skip").addEventListener("click", reviewSkip);
+    $("rv-undo").addEventListener("click", reviewUndo);
+    // précharge la suivante, pour que l'enchaînement soit instantané
+    const next = rv.queue[rv.i + 1];
+    if (next) { new Image().src = `/api/thumb/1024/${next.a}`; new Image().src = `/api/thumb/1024/${next.b}`; }
+  }
+
+  async function reviewDecide(decision, n) {
+    if (rv.busy || rv.i >= rv.queue.length) return;
+    const it = rv.queue[rv.i];
+    const type = decision === "valider" ? (rv.types[n] || {}).key : it.type;
+    if (!type) { toast("Choisissez la sorte de ressemblance (touches 1 à 7)"); return; }
+    const body = { a: it.a, b: it.b, decision, type, origin: it.origin, proposed_type: it.origin === "proposée" ? it.type : "",
+                   source: it.origin === "proposée" ? it.source : `relecture : ${it.source}`, note: it.note || "" };
+    rv.busy = true;
+    try {
+      const r = await fetch("/api/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
+      const out = await r.json();
+      if (!r.ok) throw new Error(out.detail || r.statusText);
+      rv.stats = out.stats;
+      rv.history.push({ item: it, body });
+      rv.i++;
+      showReviewCard();
+    } catch (err) { toast(`Échec : ${err.message}`); } finally { rv.busy = false; }
+  }
+
+  function reviewSkip() {
+    if (rv.i >= rv.queue.length) return;
+    const it = rv.queue[rv.i];
+    rv.skipped.add(pairKey(it.a, it.b));
+    rv.i++;
+    showReviewCard();
+  }
+
+  async function reviewUndo() {
+    const last = rv.history.pop();
+    if (!last || rv.busy) return;
+    rv.busy = true;
+    try {
+      const r = await fetch("/api/review/undo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(last.body) });
+      const out = await r.json();
+      if (!r.ok) throw new Error(out.detail || r.statusText);
+      rv.stats = out.stats;
+      rv.queue.splice(rv.i, 0, last.item);
+      toast("Décision annulée");
+      showReviewCard();
+    } catch (err) { rv.history.push(last); toast(`Échec : ${err.message}`); } finally { rv.busy = false; }
+  }
+
+  function reviewKeys(e) {
+    if ($("review").hidden) return;
+    const k = e.key;
+    let handled = true;
+    if (k === "Escape") closeReviewSession();
+    else if (k === "Enter") $("rv-ok") && $("rv-ok").click();
+    else if (/^[1-7]$/.test(k)) reviewDecide("valider", Number(k) - 1);
+    else if (k.toLowerCase() === "r") reviewDecide("rejeter");
+    else if (k === " ") reviewSkip();
+    else if (k.toLowerCase() === "z") reviewUndo();
+    else handled = false;
+    if (handled) { e.preventDefault(); e.stopPropagation(); }
+  }
+
   // ------------------------------------------------------------------ à vérifier : onglets
   function reviewTabs(active) {
     const nLabels = Object.values(state.info.suspects || {}).reduce((a, b) => a + b, 0);
@@ -975,10 +1113,12 @@
     body.innerHTML = `<div class="results-head">${reviewTabs("pairs")}
         <div class="sub" style="margin-top:10px">Paires choisies par l'historien pour le banc d'essai. Seules les paires
           validées comptent dans <code>pixplot pairs bench</code>.</div>
+        <button class="btn-main rv-start" id="rv-start"><kbd>R</kbd> Relecture rapide, une paire à la fois</button>
         <div class="chips" style="margin-top:10px">${filters}</div></div>
       ${items.length ? `<ol class="pairs-review">${rows}</ol>` : `<p class="empty-note">Aucune paire ici. Pour en créer une : mettez deux
         œuvres dans le comparateur et cliquez « Annoter ».</p>`}`;
     wireReviewTabs(body);
+    $("rv-start").addEventListener("click", openReviewSession);
     body.querySelectorAll("[data-status]").forEach((b) => b.addEventListener("click", () => renderPairs(b.dataset.status)));
     body.querySelectorAll(".pair-thumbs [data-id]").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.id), true)));
     body.querySelectorAll(".pair-item").forEach((li) => {
@@ -1018,7 +1158,7 @@
         </div>
         <div class="pair-info">
           <div><b>${d.rank === 1 ? "Plus proche voisine" : `${d.rank}ᵉ voisine`}</b> selon ${esc(SPACE_SHORT[near] || near)}</div>
-          <div class="pair-src">mais plus loin que ${Math.round((1 - d.centile) * 100)} % du corpus selon ${esc(SPACE_SHORT[far] || far)}</div>
+          <div class="pair-src">mais plus loin que ${Math.min(99, Math.floor((1 - d.centile) * 100))} % du corpus selon ${esc(SPACE_SHORT[far] || far)}</div>
           <div class="pair-note">${esc(prettyLabel(d.label_a))}<br>${esc(prettyLabel(d.label_b))}</div>
           <div class="pair-actions"><button class="chip" data-compare="${d.a},${d.b}">Comparer</button></div></div></li>`).join("");
     const more = offset + res.items.length < res.total;
@@ -1454,6 +1594,7 @@
 
     // raccourcis clavier (sauf quand on écrit dans un champ)
     addEventListener("keydown", (e) => {
+      if (!$("review").hidden) return;   // la relecture garde le clavier pour elle
       const typing = /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement?.tagName || "");
       if (e.key === "Escape") {
         if (!help.hidden) setHelp(false);
@@ -1473,8 +1614,11 @@
       else if (k === "n") renderNotebook();
       else if (k === "v" && !$("open-suspects").hidden) openReview();
       else if (k === "d" && !$("open-disagreements").hidden) renderDisagreements();
+      else if (k === "r") openReviewSession();
       else if (e.key === "0") $("reset-view").click();
     });
+    document.addEventListener("keydown", reviewKeys, true);
+    $("rv-close").addEventListener("click", closeReviewSession);
     addEventListener("resize", onResize);
     new ResizeObserver(onResize).observe($("map"));
     addEventListener("hashchange", () => {

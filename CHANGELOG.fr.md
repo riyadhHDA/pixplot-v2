@@ -14,6 +14,14 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.12.1 — 16/11/2026 · Relecture rapide des paires
+
+- Relecture façon Anki (touche R dans l'Atlas) : une paire à la fois, en grand ; Entrée ou 1 à 7
+  pour valider avec une sorte de ressemblance, R pour écarter, Espace pour passer, Z pour annuler.
+- La file enchaîne les paires proposées puis des candidates tirées des désaccords entre regards ;
+  les candidates écartées sont notées dans `bench/review_log.csv` et ne reviennent plus.
+- API `/api/review/queue`, `/api/review`, `/api/review/undo`.
+
 ## 0.12.0 — 16/11/2026 · Désaccords entre regards, relecture des paires
 
 - `pixplot disagreements` : pour chaque couple de regards, les paires très proches selon l'un et

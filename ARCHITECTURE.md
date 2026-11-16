@@ -518,3 +518,20 @@ proposed **reference pairs**, to validate or reject in one click (with "Comparer
 them side by side). Only validated pairs count in `pixplot pairs bench`. The success
 criterion of step 0.12 (≈ 100 validated pairs covering the eight types) depends on this
 review, which is the art historian's work.
+
+## 17. Quick pair review, Anki-style (16/11/2026)
+
+Reviewing a list of pairs card by card was too slow. **Quick review** (key R in the Atlas, or
+the button in the "Paires de référence" tab) shows one pair at a time, large, and each
+decision is one key: Enter validates with the suggested kind of resemblance; 1 to 7 validate
+as same subject, same composition, same hand, same handling, same motif, same palette,
+filiation; R rejects (proposed pair) or marks "no link" (candidate); Space skips; Z undoes
+the last decision; Escape quits.
+
+The queue starts with proposed pairs, then **candidates** drawn from disagreements between
+ways of seeing, alternating the couples of ways of seeing; the default kind of resemblance
+depends on the way of seeing that brings the pair together (form → same composition,
+subject → same subject, touch → same handling, colour → same palette). A validated
+candidate becomes an annotated pair (source "relecture : désaccord forme > sujet"); a
+dismissed one is logged in `bench/review_log.csv` and never comes back. At the top: progress
+towards 100 validated pairs and the count per kind, to see which are missing.

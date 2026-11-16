@@ -49,6 +49,17 @@ class PairIn(BaseModel):
     note: str = Field("", max_length=5000)
 
 
+class ReviewIn(BaseModel):
+    a: int
+    b: int
+    decision: str = Field(..., max_length=20)          # « valider » ou « rejeter »
+    type: str = Field(..., max_length=40)
+    origin: str = Field("proposée", max_length=20)     # « proposée » ou « désaccord »
+    proposed_type: str = Field("", max_length=40)
+    source: str = Field("", max_length=500)
+    note: str = Field("", max_length=5000)
+
+
 class NotePatch(BaseModel):
     title: str | None = Field(None, max_length=300)
     note: str | None = Field(None, max_length=20000)
@@ -221,6 +232,60 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
         except ValueError as exc:
             raise HTTPException(400, str(exc))
         return p.__dict__
+
+    # ------------------------------------------------------------- relecture rapide (façon Anki)
+    from ..analysis import review
+
+    def review_stats() -> dict:
+        done = [p for p in pairbench.load_pairs(pairs_file) if p.origin == "annotée" and p.status == "validée"]
+        return {"validated": len(done), "goal": 100,
+                "by_type": {t: sum(p.type == t for p in done) for t in review.REVIEW_TYPES}}
+
+    @app.get("/api/review/queue")
+    def review_queue(limit: int = Query(30, ge=1, le=200), exclude: str = ""):
+        ex = set()
+        for tok in exclude.split(","):
+            a, _, b = tok.partition("-")
+            if a.isdigit() and b.isdigit():
+                ex.add((min(int(a), int(b)), max(int(a), int(b))))
+        items = review.build_queue(data.analysis, data.settings, set(data.row_of), limit, ex)
+        for x in items:
+            x["label_a"], x["label_b"] = data.label(x["a"]), data.label(x["b"])
+        return {"items": items, "stats": review_stats(),
+                "types": [{"key": k, "label": pairbench.TYPES[k][0], "question": pairbench.TYPES[k][2]}
+                          for k in review.REVIEW_TYPES]}
+
+    def _apply_review(d: ReviewIn, undo: bool = False):
+        log = review.log_path(data.settings)
+        P = pairbench.Pair
+        if d.decision == "valider":
+            if undo:
+                pairbench.remove_pair(pairs_file, d.a, d.b, d.type)
+                if d.origin == "proposée":
+                    pairbench.add_pair(pairs_file, P(d.a, d.b, d.proposed_type or d.type, "annotée", "proposée", d.source, d.note))
+            else:
+                if d.origin == "proposée" and d.proposed_type and d.proposed_type != d.type:
+                    pairbench.remove_pair(pairs_file, d.a, d.b, d.proposed_type)
+                pairbench.add_pair(pairs_file, P(d.a, d.b, d.type, "annotée", "validée", d.source, d.note))
+        elif d.origin == "proposée":   # rejeter une paire proposée : elle reste, marquée « rejetée »
+            pairbench.add_pair(pairs_file, P(d.a, d.b, d.type, "annotée", "proposée" if undo else "rejetée", d.source, d.note))
+        elif undo:
+            review.unlog(log, d.a, d.b)
+        else:                           # une candidate sans lien : notée pour ne plus revenir
+            review.log_decision(log, d.a, d.b, "pas de lien", d.source)
+        return {"ok": True, "stats": review_stats()}
+
+    @app.post("/api/review")
+    def review_decide(d: ReviewIn):
+        if d.a not in data.row_of or d.b not in data.row_of:
+            raise HTTPException(404, "Œuvre absente de cette analyse")
+        if d.decision not in ("valider", "rejeter") or d.type not in pairbench.TYPES:
+            raise HTTPException(400, "Décision ou type inconnu")
+        return _apply_review(d)
+
+    @app.post("/api/review/undo")
+    def review_undo(d: ReviewIn):
+        return _apply_review(d, undo=True)
 
     # ------------------------------------------------------------- étiquettes à vérifier
     @app.get("/api/suspects")

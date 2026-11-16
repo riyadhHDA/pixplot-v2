@@ -241,3 +241,12 @@ def load_space_matrix(spaces_obj, key: str, ids: list[int]) -> tuple[np.ndarray,
     present = [i for i in ids if i in known]
     X = spaces_obj.vectors(key, present)
     return np.ascontiguousarray(X), {i: r for r, i in enumerate(present)}
+
+
+def remove_pair(path: Path, a: int, b: int, type: str) -> bool:
+    pairs = load_pairs(path)
+    keep = [p for p in pairs if _key(p.a, p.b, p.type) != _key(a, b, type)]
+    if len(keep) == len(pairs):
+        return False
+    save_pairs(path, keep)
+    return True

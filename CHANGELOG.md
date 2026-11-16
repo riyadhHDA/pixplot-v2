@@ -14,6 +14,14 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.12.1 — 2026-11-16 · Quick pair review
+
+- Anki-style review (key R in the Atlas): one pair at a time, large; Enter or 1 to 7 to validate
+  with a kind of resemblance, R to dismiss, Space to skip, Z to undo.
+- The queue chains proposed pairs, then candidates drawn from disagreements between ways of
+  seeing; dismissed candidates are logged in `bench/review_log.csv` and never come back.
+- `/api/review/queue`, `/api/review`, `/api/review/undo` API.
+
 ## 0.12.0 — 2026-11-16 · Disagreements between ways of seeing, pair review
 
 - `pixplot disagreements`: for each couple of ways of seeing, pairs very close in one and far in

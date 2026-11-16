@@ -93,6 +93,19 @@
     </aside>
   </main>
 
+  <div class="review" id="review" hidden role="dialog" aria-label="Relecture des paires">
+    <div class="rv-head">
+      <b>Relecture des paires</b>
+      <span class="rv-progress" id="rv-progress"></span>
+      <span class="rv-goal" id="rv-goal" title="Objectif : 100 paires validées"></span>
+      <span id="rv-count"></span>
+      <span class="rv-types-count" id="rv-types-count" title="Paires validées par sorte de ressemblance (touches 1 à 7)"></span>
+      <button class="icon-btn" id="rv-close" aria-label="Fermer la relecture" title="Fermer (Échap)">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M5 5l10 10 M15 5L5 15"/></svg></button>
+    </div>
+    <div class="rv-card" id="rv-card"></div>
+  </div>
+
   <div class="compare" id="compare" hidden role="dialog" aria-label="Comparaison">
     <div class="compare-head">
       <h2>Comparaison</h2>
@@ -137,7 +150,7 @@
       <h3>Raccourcis</h3>
       <div class="keys">
         <span><kbd>/</kbd> chercher</span><span><kbd>G</kbd> groupes</span><span><kbd>C</kbd> comparer</span>
-        <span><kbd>N</kbd> carnet</span><span><kbd>V</kbd> à vérifier</span><span><kbd>D</kbd> désaccords</span><span><kbd>0</kbd> vue d'ensemble</span>
+        <span><kbd>N</kbd> carnet</span><span><kbd>V</kbd> à vérifier</span><span><kbd>D</kbd> désaccords</span><span><kbd>R</kbd> relecture rapide</span><span><kbd>0</kbd> vue d'ensemble</span>
         <span><kbd>?</kbd> aide</span><span><kbd>Échap</kbd> fermer</span>
       </div>
       <p class="help-note">Une proximité calculée est une piste à examiner, pas une preuve de filiation.</p>

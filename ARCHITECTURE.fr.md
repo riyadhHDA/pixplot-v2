@@ -550,3 +550,26 @@ voisines et les **paires de référence** proposées, à valider ou rejeter d'un
 « Comparer » pour les regarder côte à côte). Seules les paires validées comptent dans
 `pixplot pairs bench`. Le critère de l'étape 0.12 (≈ 100 paires validées couvrant les huit
 types) dépend de cette relecture, qui revient à l'historien.
+
+## 17. Relecture rapide des paires, façon Anki (16/11/2026)
+
+Relire une liste de paires carte par carte était trop lent. La **relecture rapide** (touche R
+dans l'Atlas, ou le bouton de l'onglet « Paires de référence ») montre une paire à la fois,
+en grand, et chaque décision tient en une touche :
+
+| touche | effet |
+|---|---|
+| Entrée | valider avec la sorte de ressemblance proposée |
+| 1 à 7 | valider comme : même sujet, même composition, même main, même facture, même motif, même palette, filiation |
+| R | rejeter (paire proposée) ou « pas de lien » (candidate) |
+| Espace | passer |
+| Z | annuler la dernière décision |
+| Échap | quitter |
+
+La file commence par les paires proposées, puis enchaîne des **candidates** tirées des
+désaccords entre regards, en alternant les couples de regards ; la sorte de ressemblance
+proposée par défaut dépend du regard qui rapproche (forme → même composition, sujet →
+même sujet, touche → même facture, couleur → même palette). Une candidate validée devient
+une paire annotée (source « relecture : désaccord forme > sujet ») ; une candidate écartée est
+notée dans `bench/review_log.csv` et ne revient plus. En haut : la progression vers les 100
+paires validées et le compte par sorte, pour voir lesquelles manquent.

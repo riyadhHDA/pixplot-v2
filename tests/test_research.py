@@ -376,3 +376,43 @@ def test_disagreements_and_pairs_api(env):
     assert any(p["a"] == a and p["status"] == "proposée" and p["label_a"] for p in listed)
     c.post("/api/pairs", json={"a": a, "b": b, "type": "meme_sujet", "status": "validée"})
     assert c.get("/api/info").json()["annotated_pairs"].get("validée", 0) >= 1
+
+
+def test_review_queue_decide_and_undo(env):
+    s, data, c = env
+    from pixplot.analysis import disagreements as D
+    from pixplot.analysis.pairbench import Pair, add_pair, load_pairs, pairs_path
+    from pixplot.analysis.pairbench import load_space_matrix
+    from pixplot.analysis.review import load_log, log_path
+
+    ids = [int(i) for i in data.ids]
+    vec = {k: load_space_matrix(data.spaces, k, ids) for k in data.spaces.runs}
+    D.save(data.analysis, D.compute(vec, ids, k=5, max_rank=3, max_centile=0.9, say=lambda m: None))
+    path = pairs_path(s)
+    a, b = ids[10], ids[11]
+    add_pair(path, Pair(a, b, "filiation", "annotée", "proposée", "essai", ""))
+    q = c.get("/api/review/queue?limit=5").json()
+    first = q["items"][0]
+    assert first["origin"] == "proposée" and {first["a"], first["b"]} == {a, b} and len(q["types"]) == 7
+    assert any(x["origin"] == "désaccord" for x in q["items"])
+    # valider en changeant de type, puis annuler : la paire proposée revient telle quelle
+    body = {"a": a, "b": b, "decision": "valider", "type": "meme_sujet", "origin": "proposée",
+            "proposed_type": "filiation", "source": "essai"}
+    out = c.post("/api/review", json=body).json()
+    assert out["stats"]["by_type"]["meme_sujet"] >= 1
+    mine = [p for p in load_pairs(path) if {p.a, p.b} == {a, b}]
+    assert [(p.type, p.status) for p in mine] == [("meme_sujet", "validée")]
+    c.post("/api/review/undo", json=body)
+    mine = [p for p in load_pairs(path) if {p.a, p.b} == {a, b}]
+    assert [(p.type, p.status) for p in mine] == [("filiation", "proposée")]
+    # une candidate « pas de lien » est notée au journal et ne revient plus
+    cand = next(x for x in q["items"] if x["origin"] == "désaccord")
+    rej = {"a": cand["a"], "b": cand["b"], "decision": "rejeter", "type": cand["type"], "origin": "désaccord",
+           "source": cand["source"]}
+    c.post("/api/review", json=rej)
+    assert len(load_log(log_path(s))) == 1
+    again = c.get("/api/review/queue?limit=200").json()["items"]
+    assert not any({x["a"], x["b"]} == {cand["a"], cand["b"]} for x in again)
+    c.post("/api/review/undo", json=rej)
+    assert load_log(log_path(s)) == []
+    assert c.post("/api/review", json={**rej, "decision": "effacer"}).status_code == 400
