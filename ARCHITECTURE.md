@@ -202,7 +202,7 @@ Pixplot V2/
      du même peintre) ; « un navire dans la tempête » → 5 marines d'Aivazovsky. Utile pour
      défricher, à vérifier œuvre par œuvre.
 6. ~~Serveur MCP + Research Pack~~ **fait**.
-7. Comparateur, carnet de recherche, chronologie et géographie.
+7. ~~Comparateur, carnet de recherche, chronologie et géographie~~ **fait** (voir § 12).
 
 ## 6. Leçons tirées de PixPlot v1 (0.0.1.1)
 
@@ -323,3 +323,66 @@ Delacroix, Manet, Serov mal retrouvés).
 ≥ 100 → un bloc de 70 % du corpus et 0,2 % à part. WikiArt est un continuum sans creux de
 densité nets. HDBSCAN reste une option (`--hdbscan`, avertissement au-delà de 30 % à part) ;
 pour les œuvres isolées, le score d'atypicité (densité des voisins) est le signal fiable.
+
+## 12. Étape 7 : plusieurs regards, comparateur, carnet, chronologie (16/11/2026)
+
+**Quatre espaces de ressemblance.** Chaque run `features` terminé est un « regard » sur le
+corpus ; la fiche de l'Atlas, le comparateur et le serveur MCP (`similar_artworks`,
+paramètre `space`) laissent choisir :
+
+| Espace | Encodeur | Ce qu'il regarde | Calcul 81k |
+|---|---|---|---|
+| forme | `dinov3_vitb16` (CLS) | formes, composition, motifs | 97 img/s |
+| sujet | `siglip2_so400m` | ce qu'on décrit avec des mots : sujet, genre, école | 73 img/s |
+| couleur | `color_lab` | palette (histogramme CIELAB 5×7×7, sans GPU) | 127 img/s |
+| touche | `dinov3_vitb16_texture` | facture : moyenne + écart-type des patchs de la couche 6 | 125 img/s |
+
+« Couleur » et « touche » sont des statistiques : une composante commune dominerait toutes
+les similarités, d'où un **centrage sur la moyenne du corpus** en fin d'extraction
+(`center.npy` gardé dans le run). Le choix de la couche 6 vient d'un essai sur 6 424 œuvres
+équilibrées par style (couches 2 à 12, moyenne / écart-type / les deux) : les couches
+intermédiaires voient la facture, la dernière les objets.
+
+Banc d'essai WikiArt 80 716 œuvres, P@10 (même étiquette parmi les 10 plus proches) :
+
+| | artiste | style | genre | Pointillisme | Fauvisme | Ukiyo-e |
+|---|---|---|---|---|---|---|
+| forme (DINOv3) | 50,8 % | 52,4 % | 76,8 % | 21 % | 20 % | 93 % |
+| sujet (SigLIP 2) | **61,6 %** | **62,0 %** | **79,5 %** | 44 % | 26 % | **99 %** |
+| touche | 53,0 % | 49,6 % | 62,8 % | **62 %** | **30 %** | 80 % |
+| couleur | 15,0 % | 19,4 % | 30,3 % | | | |
+
+La touche reconnaît mieux la main de l'artiste que la forme et bien moins le genre :
+c'est ce qu'on attend d'un regard qui ignore le sujet. La couleur seule classe mal, mais
+répond à une autre question (« quelles œuvres ont cette palette ? »).
+
+**Noms de groupes** (`pixplot name-groups`) : le centre de chaque groupe dans l'espace
+SigLIP 2 comparé à un vocabulaire de 34 sujets et 23 techniques ou manières ; on garde le
+terme le plus *distinctif* (écart à la moyenne des groupes) parmi les 3 plus proches.
+Exemples à 81k : « Scènes religieuses · icône » (Angelico), « Scènes nocturnes · estampe
+japonaise » (Hokusai), « Batailles · gravure » (Doré), « Jardins · empâtements » (Monet).
+Ça marche sans métadonnées ; ce sont des propositions à relire.
+
+**Étiquettes à vérifier** (`pixplot suspects`, panneau « À vérifier », outil MCP
+`check_labels`) : ≥ 70 % des voisines étiquetées (espace « sujet ») partagent une autre
+valeur, ≤ 10 % la sienne. À 81k : 506 artistes, 2 771 styles, 1 607 genres. Côté artiste,
+c'est surtout « qui ressemble à qui » (Sisley → Monet, Morisot → Renoir) ; côté genre, de
+vraies erreurs de catalogue (scènes religieuses étiquetées « genre_painting »). Jamais une
+correction automatique.
+
+**Comparateur** : jusqu'à 6 œuvres côte à côte en grand, métadonnées, et la similarité de
+chaque paire dans chaque espace. **Carnet de recherche** (`<données>/notebook.sqlite`,
+séparé du catalogue) : œuvres, sélections, recherches, détails et comparaisons, avec note,
+contexte et export Markdown ; le LLM y écrit aussi via MCP (`notebook_add`), en se signalant.
+
+**Chronologie et géographie** : proposées quand les métadonnées ont des dates (première
+année lisible dans `date`, `year`, `datation`…) ou `latitude` / `longitude`. Chronologie :
+un bloc par période (pas choisi pour tenir à l'écran), œuvres rangées par groupe, bloc
+« sans date ». Géographie : longitude / latitude sans fond de carte (hors ligne), œuvres d'un
+même lieu en spirale. WikiArt n'a ni dates ni lieux : vérifié sur données fictives, et à
+valider sur une vraie collection importée par IIIF.
+
+**Importateur IIIF** (`pixplot import-iiif`) : manifestes et collections v2 / v3 (imbriquées,
+paginées), image de la première vue (ou toutes) par l'API Image à la taille voulue,
+métadonnées normalisées (titre, artiste, date, lieu, technique, droits, cote) dans
+`metadata.csv`, reprise sans retéléchargement, une requête à la fois.

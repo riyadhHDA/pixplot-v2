@@ -8,7 +8,7 @@ ENCODERS = (
     "dinov3_vitb16", "dinov3_vitl16", "dinov3_vits16",
     "dinov2_vitb14_reg", "dinov2_vitl14_reg", "dinov2_vits14_reg",
     "siglip2_so400m", "siglip2_base",
-    "colorhist",
+    "colorhist", "color_lab", "dinov3_vitb16_texture",
 )
 
 
@@ -17,6 +17,12 @@ def get_encoder(name: str, **kwargs) -> Encoder:
     if name == "colorhist":
         from .colorhist import ColorHistEncoder
         return ColorHistEncoder()
+    if name == "color_lab":
+        from .colorlab import ColorLabEncoder
+        return ColorLabEncoder()
+    if name.startswith("dinov3_") and name.endswith("_texture"):
+        from .texture import DINOv3TextureEncoder
+        return DINOv3TextureEncoder(arch=name, **kwargs)
     if name.startswith("dinov3_"):
         from .dinov3 import DINOv3Encoder
         return DINOv3Encoder(arch=name, **kwargs)

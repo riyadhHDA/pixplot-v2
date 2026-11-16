@@ -14,14 +14,17 @@ et ne transmet au LLM que ce que ses outils renvoient (textes, vignettes, détai
 |---|---|
 | `corpus_overview` | taille, modèles, groupes et leurs métadonnées dominantes |
 | `search_by_text` | œuvres correspondant à une description (SigLIP 2, français ou anglais) |
-| `similar_artworks` | plus proches voisines visuelles d'une œuvre (DINOv3) |
+| `similar_artworks` | plus proches voisines d'une œuvre, dans l'espace choisi : `forme` (DINOv3), `sujet` (SigLIP 2), `couleur`, `touche` |
 | `search_detail` | zones semblables à un détail (cadre x0, y0, x1, y1 en fractions) |
 | `get_artwork` | fiche : métadonnées et leur source, groupe, atypicité, voisines |
 | `view_artwork` | **l'image** de l'œuvre (256 à 1024 px) |
 | `view_detail` | **un détail recadré** depuis l'original |
-| `compare_artworks` | **planche numérotée** de 2 à 12 œuvres + matrice de similarité |
+| `compare_artworks` | **planche numérotée** de 2 à 12 œuvres + une matrice de similarité par espace |
 | `get_group` | un groupe de la carte, œuvres les plus centrales d'abord |
 | `find_atypical` | œuvres les plus isolées (exceptions, erreurs de catalogue…) |
+| `check_labels` | étiquettes que toutes les voisines contredisent (erreurs possibles ou œuvres singulières) |
+| `notebook_add` | ajoute une piste au **carnet de recherche** de l'historien (visible dans l'Atlas) |
+| `notebook_list` | relit le carnet (les plus récentes d'abord) |
 | `export_research_pack` | dossier .zip traçable (voir README) |
 
 Les consignes données au LLM (méthode, prudence d'interprétation, contre-exemples) sont

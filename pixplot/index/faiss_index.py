@@ -71,7 +71,8 @@ def build_global_index(features: Run, kind: str = "flat", runs_dir: Path | None 
 def find_index_for(features: Run, runs_dir: Path | None = None) -> Run | None:
     """Le dernier index terminé construit à partir de ce run de vecteurs."""
     for run in reversed(list_runs("index", runs_dir=runs_dir)):
-        if run.manifest.get("parent") == features.id:
+        # Les index de zones partagent l'étape « index » : seuls les index globaux comptent.
+        if run.manifest.get("parent") == features.id and run.path.name.startswith("global_")                 and run.manifest.get("status") == "complete":
             return run
     return None
 

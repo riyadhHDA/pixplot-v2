@@ -6,6 +6,7 @@ Tout est chargé une fois au démarrage (quelques Mo pour 500 000 œuvres, hors 
 from __future__ import annotations
 
 import json
+import re
 import sqlite3
 from collections import Counter
 from dataclasses import dataclass, field
@@ -15,10 +16,32 @@ import numpy as np
 
 from ..catalog import db
 from ..catalog.metadata import get_metadata
+from ..analysis.naming import load_names
+from ..analysis.suspects import load_suspects
 from ..config import Settings
 from ..runs import Run, latest_run
 
 LABEL_KEYS = ("artist", "date", "genre", "style")
+DATE_KEYS = ("date", "year", "annee", "année", "datation", "created", "date_creation", "dated")
+LAT_KEYS = ("latitude", "lat")
+LON_KEYS = ("longitude", "lon", "lng")
+YEAR_RE = re.compile(r"(?<!\d)(1[0-9]{3}|20[0-4][0-9]|[5-9][0-9]{2})(?!\d)")
+
+
+def parse_year(value: str | None) -> int | None:
+    """Première année lisible : « vers 1650 », « 1650-1655 », « c. 1890 » → 1650, 1650, 1890."""
+    if not value:
+        return None
+    m = YEAR_RE.search(str(value))
+    return int(m.group(1)) if m else None
+
+
+def parse_coord(value: str | None, limit: float) -> float | None:
+    try:
+        v = float(str(value).replace(",", "."))
+    except (TypeError, ValueError):
+        return None
+    return v if -limit <= v <= limit else None
 MAX_CATEGORIES = 2000  # au-delà, une métadonnée n'est pas proposée pour colorer la carte
 
 
@@ -35,8 +58,20 @@ class AtlasData:
     neighbor_scores: np.ndarray
     hdbscan: np.ndarray | None
     cluster_summary: list[dict]
+    names: dict[int, dict]
+    suspects: dict | None
     meta: dict[int, dict[str, str]]
     row_of: dict[int, int] = field(default_factory=dict)
+    suspect_of: dict[int, list] = field(default_factory=dict)
+    _spaces: object = None
+
+    @property
+    def spaces(self):
+        """Espaces de ressemblance disponibles (voir ``spaces.py``), ouverts à la demande."""
+        if self._spaces is None:
+            from .spaces import Spaces
+            self._spaces = Spaces(self)
+        return self._spaces
 
     # ------------------------------------------------------------------ chargement
     @classmethod
@@ -59,10 +94,35 @@ class AtlasData:
             neighbor_scores=np.load(p / "neighbor_scores.npy"),
             hdbscan=np.load(h) if h.exists() else None,
             cluster_summary=json.loads((p / "clusters.json").read_text(encoding="utf-8")),
+            names=load_names(analysis),
+            suspects=load_suspects(analysis),
             meta=meta,
         )
         data.row_of = {int(i): r for r, i in enumerate(ids)}
+        data.suspect_of = {}
+        for key, items in (data.suspects or {}).get("suspects", {}).items():
+            for d in items:
+                data.suspect_of.setdefault(d["id"], []).append({"key": key, **{k: v for k, v in d.items() if k != "id"}})
         return data
+
+    # ------------------------------------------------------------------ dates et lieux
+    def years(self) -> list[int | None]:
+        keys = [k for k in DATE_KEYS if any(k in m for m in self.meta.values())]
+        out = []
+        for i in self.ids:
+            m = self.meta.get(int(i), {})
+            out.append(next((y for k in keys if (y := parse_year(m.get(k))) is not None), None))
+        return out
+
+    def coordinates(self) -> tuple[list[float | None], list[float | None]] | None:
+        keys = {k for m in self.meta.values() for k in m}
+        lat_key = next((k for k in LAT_KEYS if k in keys), None)
+        lon_key = next((k for k in LON_KEYS if k in keys), None)
+        if not lat_key or not lon_key:
+            return None
+        lat = [parse_coord(self.meta.get(int(i), {}).get(lat_key), 90) for i in self.ids]
+        lon = [parse_coord(self.meta.get(int(i), {}).get(lon_key), 180) for i in self.ids]
+        return lat, lon
 
     @staticmethod
     def _conn(settings: Settings) -> sqlite3.Connection:
@@ -95,6 +155,9 @@ class AtlasData:
             "clusters": len(self.cluster_summary),
             "hdbscan": self.hdbscan is not None,
             "metadata_keys": self.category_keys(),
+            "named_groups": bool(self.names),
+            "suspects": (self.suspects or {}).get("counts", {}),
+            "suspects_space": (self.suspects or {}).get("space"),
             "analysis_params": self.analysis.manifest.get("params", {}),
         }
 
@@ -121,6 +184,12 @@ class AtlasData:
         }
         if self.hdbscan is not None:
             payload["hdbscan"] = self.hdbscan.tolist()
+        years = self.years()
+        if sum(y is not None for y in years) >= max(2, len(years) // 20):
+            payload["year"] = years
+        coords = self.coordinates()
+        if coords and sum(v is not None for v in coords[0]) >= 2:
+            payload["lat"], payload["lon"] = coords
         return payload
 
     def clusters_payload(self) -> list[dict]:
@@ -135,12 +204,26 @@ class AtlasData:
                 if vals:
                     dominant[key] = [{"value": v, "share": round(c / len(members), 3)}
                                      for v, c in Counter(vals).most_common(3)]
+            named = self.names.get(entry["cluster"], {})
             out.append({**entry, "number": entry["cluster"] + 1,
+                        "name": named.get("name") or "", "terms": named.get("terms", []),
+                        "metadata_name": named.get("metadata_name", ""),
                         "center": np.median(self.coords[rows], axis=0).round(5).tolist(),
                         "dominant": dominant})
         return out
 
-    def artwork(self, artwork_id: int, k: int = 20) -> dict | None:
+    def neighbor_list(self, artwork_id: int, k: int = 20, space: str | None = None) -> list[dict]:
+        """Voisines dans l'espace de l'analyse (précalculées) ou dans un autre espace."""
+        r = self.row_of[artwork_id]
+        if space and space != self.spaces.main:
+            pairs = self.spaces.neighbors(space, artwork_id, k)
+        else:
+            pairs = [(int(n), float(s)) for n, s in zip(self.neighbors[r][:k], self.neighbor_scores[r][:k]) if n >= 0]
+        return [{"id": nid, "score": round(score, 4), "label": self.label(nid),
+                 "cluster": int(self.clusters[self.row_of[nid]]) + 1 if nid in self.row_of else None}
+                for nid, score in pairs]
+
+    def artwork(self, artwork_id: int, k: int = 20, space: str | None = None) -> dict | None:
         r = self.row_of.get(artwork_id)
         if r is None:
             return None
@@ -149,13 +232,7 @@ class AtlasData:
         sources = {rr[0]: rr[1] for rr in conn.execute(
             "SELECT key, source FROM metadata WHERE artwork_id = ?", (artwork_id,))}
         conn.close()
-        neigh = []
-        for nid, score in zip(self.neighbors[r][:k], self.neighbor_scores[r][:k]):
-            if nid < 0:
-                continue
-            neigh.append({"id": int(nid), "score": round(float(score), 4), "label": self.label(int(nid)),
-                          "cluster": int(self.clusters[self.row_of[int(nid)]]) + 1
-                          if int(nid) in self.row_of else None})
+        neigh = self.neighbor_list(artwork_id, k, space)
         return {
             "id": artwork_id,
             "label": self.label(artwork_id),
@@ -168,6 +245,10 @@ class AtlasData:
             "atypicality": round(float(self.atypicality[r]), 3),
             "x": round(float(self.coords[r, 0]), 5), "y": round(float(self.coords[r, 1]), 5),
             "neighbors": neigh,
+            "space": space or self.spaces.main,
+            "label_checks": self.suspect_of.get(artwork_id, []),
+            "label_checks_space": (self.suspects or {}).get("space"),
+            "group_name": self.names.get(int(self.clusters[r]), {}).get("name", ""),
             "provenance": {"features": self.features.id, "analysis": self.analysis.id,
                            "encoder": self.features.manifest["params"].get("encoder")},
         }

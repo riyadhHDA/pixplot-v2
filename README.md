@@ -31,6 +31,11 @@ pixplot analyze --hdbscan              # groupes, carte UMAP, voisinages → dat
 pixplot index --regions                # index des zones → « Chercher un détail » dans l'Atlas
 pixplot embed --encoder siglip2_so400m # vecteurs texte↔image (puis pixplot index --encoder siglip2_so400m)
 pixplot search-text "Annonciation dans un jardin"   # recherche en texte libre
+pixplot embed --encoder dinov3_vitb16_texture   # espace « touche » (facture, trait, grain)
+pixplot embed --encoder color_lab      # espace « couleur » (palette CIELAB, sans GPU)
+pixplot name-groups                    # nommer les groupes (SigLIP 2 + vocabulaire d'histoire de l'art)
+pixplot suspects                       # étiquettes que toutes les voisines contredisent
+pixplot import-iiif URL --out D:/Musee # collection de musée (manifeste ou collection IIIF v2/v3)
 pixplot serve --open                   # l'Atlas : carte interactive sur http://127.0.0.1:8765
 pixplot pack --text "Annonciation" -k 20 --question "…"   # Research Pack (.zip) pour un LLM
 pixplot mcp                            # serveur MCP : brancher Claude, voir docs/MCP.md
@@ -49,8 +54,13 @@ Installation du GPU (Windows natif, WSL2 en secours) et des modèles : [docs/INS
 - [x] Étape 3 : e-means + HDBSCAN + UMAP → première carte (`pixplot analyze`)
 - [x] Étape 4 : API + Atlas interactif (`pixplot serve --open`)
 - [x] Étape 5 : recherche par détail (cadre tracé) + recherche en texte libre multilingue (SigLIP 2)
-- [x] Étape 6 : serveur MCP (11 outils, images comprises) + Research Pack
-- [ ] Étape 7 : comparateur, carnet de recherche, chronologie et géographie
+- [x] Étape 6 : serveur MCP (14 outils, images comprises) + Research Pack
+- [x] Passage à l'échelle : WikiArt complet, 80 716 œuvres en 1 h 21 (ARCHITECTURE.md § 11)
+- [x] Étape 7 : quatre espaces de ressemblance (forme, sujet, couleur, touche), comparateur,
+      carnet de recherche, chronologie et géographie, noms de groupes, étiquettes à vérifier,
+      importateur IIIF (ARCHITECTURE.md § 12)
+
+Tout enchaîner sur un corpus : `bash scripts/full_pipeline.sh data/mon_corpus` (journal chronométré).
 
 ## Licence et origine
 

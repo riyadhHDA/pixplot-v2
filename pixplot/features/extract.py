@@ -145,7 +145,11 @@ def extract(
 
     _flush(g_vec, r_vec, status)
     elapsed = time.perf_counter() - start
+    extra = {}
+    if getattr(encoder, "center_after", False):
+        extra["centered"] = center_vectors(run.path, g_vec, status)
     run.complete(
+        **extra,
         count=total,
         ok=int((status == OK).sum()),
         failed=int((status == FAILED).sum()),
@@ -154,6 +158,26 @@ def extract(
         **encoder.runtime_stats(),
     )
     return run
+
+
+def center_vectors(path: Path, g_vec, status, block: int = 65536) -> bool:
+    """Retire la moyenne du corpus puis renormalise. Pour les espaces faits de statistiques
+    (couleur, touche), une composante commune domine sinon toutes les similarités. La
+    moyenne est gardée dans ``center.npy`` (traçabilité)."""
+    rows = np.flatnonzero(status == OK)
+    if not len(rows):
+        return False
+    total = np.zeros(g_vec.shape[1], dtype=np.float64)
+    for s in range(0, len(rows), block):
+        total += g_vec[rows[s:s + block]].astype(np.float64).sum(axis=0)
+    mean = (total / len(rows)).astype(np.float32)
+    np.save(Path(path) / "center.npy", mean)
+    for s in range(0, len(rows), block):
+        r = rows[s:s + block]
+        v = g_vec[r].astype(np.float32) - mean
+        g_vec[r] = (v / np.maximum(np.linalg.norm(v, axis=1, keepdims=True), 1e-12)).astype(np.float16)
+    g_vec.flush()
+    return True
 
 
 def _flush(*arrays) -> None:

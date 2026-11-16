@@ -75,7 +75,7 @@ def test_mcp_tools(data):
         tools = {t.name for t in await srv.list_tools()}
         assert tools == {"corpus_overview", "search_by_text", "similar_artworks", "search_detail", "get_artwork",
                          "view_artwork", "view_detail", "compare_artworks", "get_group", "find_atypical",
-                         "export_research_pack"}
+                         "export_research_pack", "check_labels", "notebook_add", "notebook_list"}
         overview = json.loads((await call("corpus_overview", {})).content[0].text)
         assert overview["count"] == len(data.ids) and len(overview["groups"]) == 3
         art = json.loads((await call("get_artwork", {"artwork_id": first})).content[0].text)
@@ -88,6 +88,13 @@ def test_mcp_tools(data):
         assert [c.type for c in cmp.content] == ["text", "image", "text"]
         group = json.loads((await call("get_group", {"group_number": 1, "k": 3})).content[0].text)
         assert len(group["artworks"]) == 3
+        sim = json.loads((await call("similar_artworks", {"artwork_id": first, "k": 4, "space": "couleur"})).content[0].text)
+        assert sim["space"] == "couleur" and len(sim["neighbors"]) == 4
+        note = json.loads((await call("notebook_add", {"title": "Piste", "note": "vu / calculé / supposé",
+                                                        "artwork_ids": [first]})).content[0].text)
+        assert note["artwork_ids"] == [first] and note["context"]["auteur"].startswith("assistant")
+        listed = json.loads((await call("notebook_list", {"query": "Piste"})).content[0].text)
+        assert listed["entries"][0]["id"] == note["id"]
         atyp = json.loads((await call("find_atypical", {"k": 2})).content[0].text)
         assert len(atyp["artworks"]) == 2
         text = json.loads((await call("search_by_text", {"query": "un chat"})).content[0].text)

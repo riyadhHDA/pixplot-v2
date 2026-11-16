@@ -201,6 +201,25 @@ def cmd_import_metadata(args) -> int:
     return 0
 
 
+def cmd_import_iiif(args) -> int:
+    from .importers.iiif import import_iiif
+
+    out = Path(args.out)
+    print(f"Import IIIF vers {out} (images de {args.max_size} px au plus, une requête à la fois)…")
+    rep = import_iiif(args.urls, out, max_size=args.max_size, limit=args.limit, all_canvases=args.all_canvases,
+                      delay=args.delay, progress=lambda m: print(f"  {m}", flush=True))
+    print(f"\nManifestes lus : {rep.manifests}  ·  images : {rep.images}  ·  déjà présentes : {rep.skipped}"
+          f"  ·  échecs : {len(rep.failed)}")
+    for what, err in rep.failed[:10]:
+        print(f"  échec : {what} — {err}")
+    print(f"Métadonnées : {rep.csv_path}")
+    print("\nÉtapes suivantes :")
+    print(f"  pixplot --data {args.data or 'data'} ingest \"{out / 'images'}\"")
+    print(f"  pixplot --data {args.data or 'data'} import-metadata \"{rep.csv_path}\" --source \"IIIF\"")
+    print("Vérifiez les droits de réutilisation de chaque institution (colonne « rights »).")
+    return 0 if rep.images or rep.skipped else 1
+
+
 # --------------------------------------------------------------------------- index
 def cmd_index(args) -> int:
     from .index.faiss_index import build_global_index
@@ -356,6 +375,53 @@ def cmd_serve(args) -> int:
     return 0
 
 
+# --------------------------------------------------------------------------- noms
+def _analysis_arg(s, name: str | None) -> Run:
+    if name:
+        return Run.load(s.runs_dir / "analysis" / name)
+    run = latest_run("analysis", runs_dir=s.runs_dir)
+    if run is None:
+        raise SystemExit("Aucune analyse : lancez d'abord `pixplot analyze`.")
+    return run
+
+
+def cmd_name_groups(args) -> int:
+    import json
+
+    from .analysis.naming import name_groups
+
+    s = get_settings(args.data)
+    analysis = _analysis_arg(s, args.analysis)
+    path = name_groups(analysis, s)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    print(f"Analyse : {analysis.id}")
+    print(f"Méthode : {data['method']}\n")
+    for g in data["groups"][:args.show]:
+        meta = f"   [{g['metadata_name']}]" if g.get("metadata_name") else ""
+        print(f"  {g['cluster'] + 1:>4}  {g['name']}{meta}")
+    if len(data["groups"]) > args.show:
+        print(f"  … {len(data['groups']) - args.show} autres (--show N)")
+    print(f"\nNoms : {path}")
+    return 0
+
+
+def cmd_suspects(args) -> int:
+    from .analysis.suspects import load_suspects, write_suspects
+
+    s = get_settings(args.data)
+    analysis = _analysis_arg(s, args.analysis)
+    write_suspects(analysis, s, args.keys.split(","), space=args.space, k=args.k)
+    data = load_suspects(analysis)
+    print(f"Analyse : {analysis.id}  ·  espace : {data['space']} ({data['features']})")
+    print(f"Règle : {data['rule']}")
+    for key, items in data["suspects"].items():
+        print(f"\n{key} : {len(items)} œuvres à vérifier")
+        for d in items[:args.show]:
+            print(f"  n° {d['id']:>6}  « {d['value']} »  → voisines : {d['suggested']} ({d['majority']:.0%})")
+    print("\nÀ regarder dans l'Atlas : menu « À vérifier ». Ce sont des pistes, pas des corrections.")
+    return 0
+
+
 # --------------------------------------------------------------------------- audit
 def cmd_audit(args) -> int:
     from .analysis.audit import audit, write_report
@@ -461,6 +527,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--source", help="provenance à enregistrer (défaut : nom du fichier)")
     p.set_defaults(func=cmd_import_metadata)
 
+    p = sub.add_parser("import-iiif", help="télécharger une collection de musée (manifeste ou collection IIIF)")
+    p.add_argument("urls", nargs="+", help="adresse(s) de manifeste ou de collection IIIF (v2 ou v3)")
+    p.add_argument("--out", required=True, help="dossier où écrire images/ et metadata.csv")
+    p.add_argument("--max-size", type=int, default=1600, help="plus grand côté des images (px)")
+    p.add_argument("--limit", type=int, help="nombre maximal de manifestes par source")
+    p.add_argument("--all-canvases", action="store_true", help="toutes les vues de chaque manifeste (défaut : la première)")
+    p.add_argument("--delay", type=float, default=0.3, help="pause entre deux téléchargements (s)")
+    p.set_defaults(func=cmd_import_iiif)
+
     p = sub.add_parser("embed", help="calculer les vecteurs des œuvres")
     p.add_argument("--encoder", default="dinov3_vitb16",
                    help="dinov3_vitb16 (défaut), dinov3_vitl16, dinov2_vitb14_reg (sans demande d accès), colorhist (test sans GPU)")
@@ -532,6 +607,19 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--port", type=int, default=8765)
     p.add_argument("--open", action="store_true", help="ouvrir le navigateur automatiquement")
     p.set_defaults(func=cmd_serve)
+
+    p = sub.add_parser("name-groups", help="proposer un nom à chaque groupe (SigLIP 2 + vocabulaire)")
+    p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
+    p.add_argument("--show", type=int, default=30)
+    p.set_defaults(func=cmd_name_groups)
+
+    p = sub.add_parser("suspects", help="étiquettes probablement erronées (toutes les voisines disent autre chose)")
+    p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
+    p.add_argument("--keys", default="artist,style,genre")
+    p.add_argument("--space", help="espace de voisinage (défaut : sujet = SigLIP 2 s'il existe)")
+    p.add_argument("-k", type=int, default=10)
+    p.add_argument("--show", type=int, default=8)
+    p.set_defaults(func=cmd_suspects)
 
     p = sub.add_parser("audit", help="audit à l'aveugle : où les regroupements contredisent les étiquettes")
     p.add_argument("--analysis", help="dossier d'analyse (défaut : la plus récente)")

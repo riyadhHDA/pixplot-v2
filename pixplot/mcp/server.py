@@ -27,13 +27,22 @@ from ..runs import Run
 INSTRUCTIONS = """Tu as accès à PixPlot v2, un corpus d'œuvres d'art analysé par des modèles de vision
 (DINOv3 pour la ressemblance visuelle, SigLIP 2 pour la recherche par description).
 
+Plusieurs « espaces » de ressemblance répondent à des questions différentes (paramètre
+space de similar_artworks) : forme (DINOv3 : formes, composition, motifs), sujet (SigLIP 2 :
+sujet, genre, école, manière — le meilleur pour les catégories de l'histoire de l'art),
+couleur (palette), touche (facture, trait, grain — utile pour pointillisme, fauvisme,
+gravure). Comparer les espaces aide à dire POURQUOI deux œuvres se ressemblent.
+
 Méthode conseillée :
 1. corpus_overview pour connaître le corpus, ses groupes et ce qui est disponible.
 2. Chercher : search_by_text (description, en français ou en anglais), similar_artworks,
    search_detail (un cadre sur une œuvre : main, drapé, objet…), get_group, find_atypical.
 3. Regarder : view_artwork, view_detail, compare_artworks (planche numérotée). Ne conclus
    jamais sur une œuvre sans l'avoir regardée.
-4. Documenter : export_research_pack pour un dossier traçable.
+4. Documenter : notebook_add pour garder une piste dans le carnet de l'historien (il le voit
+   dans l'Atlas), export_research_pack pour un dossier traçable.
+5. Critiquer le catalogue : check_labels liste les étiquettes que toutes les voisines
+   contredisent — erreurs possibles OU œuvres réellement singulières, à regarder.
 
 Règles : une proximité calculée est une piste, pas une preuve d'influence ni d'attribution.
 Les scores sont des similarités cosinus, pas des probabilités. Distingue toujours ce qui se
@@ -75,11 +84,13 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
     @server.tool()
     def corpus_overview() -> dict:
         """Le corpus : taille, modèles, groupes (avec artiste/style/genre dominants), recherches disponibles."""
-        groups = [{"group": g["number"], "size": g["size"], "representative": g["representative"],
+        groups = [{"group": g["number"], "name": g.get("name", ""), "size": g["size"],
+                   "representative": g["representative"],
                    "dominant": {k: [f"{v['value']} ({round(v['share'] * 100)} %)" for v in vs]
                                 for k, vs in g["dominant"].items()}}
                   for g in data.clusters_payload()]
-        return {**data.info(), "search": engines.status(), "groups": groups}
+        return {**data.info(), "search": engines.status(), "spaces": data.spaces.list(), "groups": groups,
+                "group_names": "proposés par SigLIP 2 d'après un vocabulaire d'histoire de l'art — à vérifier"}
 
     # ------------------------------------------------------------------ recherches
     @server.tool()
@@ -92,11 +103,15 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
             return {"error": str(exc)}
 
     @server.tool()
-    def similar_artworks(artwork_id: int, k: int = 20) -> dict:
-        """Les œuvres visuellement les plus proches d'une œuvre (DINOv3), avec leur score."""
-        a = data.artwork(check(artwork_id), k=min(max(k, 1), 100))
+    def similar_artworks(artwork_id: int, k: int = 20, space: str = "forme") -> dict:
+        """Les œuvres les plus proches d'une œuvre dans un espace de ressemblance :
+        « forme » (DINOv3, défaut), « sujet » (SigLIP 2), « couleur » ou « touche »
+        (voir corpus_overview → spaces pour ceux qui sont calculés)."""
+        if space not in data.spaces.runs:
+            raise ValueError(f"Espace « {space} » indisponible (calculés : {', '.join(data.spaces.runs)})")
+        a = data.artwork(check(artwork_id), k=min(max(k, 1), 100), space=space)
         return {"artwork": {"id": a["id"], "label": a["label"], "group": a["cluster"]},
-                "neighbors": a["neighbors"]}
+                "space": space, "neighbors": a["neighbors"]}
 
     @server.tool()
     def search_detail(artwork_id: int, x0: float, y0: float, x1: float, y1: float, k: int = 20) -> dict:
@@ -162,17 +177,15 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
                 x, y = (n % cols) * cell, (n // cols) * (cell + head)
                 sheet.paste(im, (x + (cell - im.width) // 2, y + head + (cell - im.height) // 2))
                 draw.text((x + pad, y + 5), f"{n + 1}. n° {i}", fill=(224, 176, 64), font=font)
-        fp = Path(data.features.path)
-        pos = {int(v): r for r, v in enumerate(np.load(fp / "ids.npy"))}
-        X = np.asarray(np.load(fp / "global.npy", mmap_mode="r")[[pos[i] for i in ids]], dtype=np.float32)
-        X /= np.maximum(np.linalg.norm(X, axis=1, keepdims=True), 1e-12)
-        S = X @ X.T
         legend = "\n".join(f"{n + 1}. n° {i} — {data.label(i)} (groupe {int(data.clusters[data.row_of[i]]) + 1})"
                            for n, i in enumerate(ids))
-        matrix = "    " + " ".join(f"{n + 1:>5}" for n in range(len(ids))) + "\n" + "\n".join(
-            f"{a + 1:>3} " + " ".join(f"{S[a, b]:>5.2f}" for b in range(len(ids))) for a in range(len(ids)))
-        return [legend, Image(data=_jpeg(sheet), format="jpeg"),
-                "Similarité visuelle DINOv3 (cosinus) :\n" + matrix]
+        blocks = []
+        for key, S in data.spaces.pairwise(ids).items():
+            head = "    " + " ".join(f"{n + 1:>5}" for n in range(len(ids)))
+            lines = [f"{a + 1:>3} " + " ".join("  —  " if S[a][b] is None else f"{S[a][b]:>5.2f}" for b in range(len(ids)))
+                     for a in range(len(ids))]
+            blocks.append(f"Espace « {key} » (cosinus) :\n" + "\n".join([head, *lines]))
+        return [legend, Image(data=_jpeg(sheet), format="jpeg"), "\n\n".join(blocks)]
 
     # ------------------------------------------------------------------ groupes, atypiques
     @server.tool()
@@ -182,7 +195,8 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
         if info is None:
             raise ValueError(f"Groupe {group_number} inexistant")
         chosen = sel.by_cluster(data, int(group_number), k=min(max(k, 1), 200))
-        return {"group": info["number"], "size": info["size"], "dominant": info["dominant"],
+        return {"group": info["number"], "name": info.get("name", ""), "name_terms": info.get("terms", []),
+                "size": info["size"], "dominant": info["dominant"],
                 "representative": info["representative"],
                 "artworks": [data.brief(i) | {"atypicality": round(float(data.atypicality[data.row_of[i]]), 3)}
                              for i in chosen.ids]}
@@ -201,6 +215,38 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
             out.append(data.brief(i) | {"atypicality": round(float(data.atypicality[r]), 3),
                                         "hdbscan_isolated": bool(data.hdbscan is not None and data.hdbscan[r] < 0)})
         return {"artworks": out}
+
+    # ------------------------------------------------------------------ catalogue critiqué
+    @server.tool()
+    def check_labels(key: str = "", k: int = 20, offset: int = 0) -> dict:
+        """Étiquettes (artiste, style, genre…) que toutes les voisines contredisent : erreurs de
+        catalogue possibles OU œuvres réellement singulières. À regarder une par une."""
+        if not data.suspects:
+            return {"error": "Pas encore calculé : lancer « pixplot suspects »."}
+        groups = data.suspects["suspects"]
+        key = key or next(iter(groups))
+        if key not in groups:
+            raise ValueError(f"Étiquette inconnue : {key} (disponibles : {', '.join(groups)})")
+        items = [d for d in groups[key] if d["id"] in data.row_of]
+        return {"key": key, "total": len(items), "rule": data.suspects["rule"], "space": data.suspects["space"],
+                "items": [{**d, "label": data.label(d["id"])} for d in items[offset:offset + min(max(k, 1), 100)]]}
+
+    # ------------------------------------------------------------------ carnet de recherche
+    from ..notebook import Notebook
+    notebook = Notebook(data.settings.data_dir / "notebook.sqlite")
+
+    @server.tool()
+    def notebook_add(title: str, note: str, artwork_ids: list[int] | None = None, kind: str = "note") -> dict:
+        """Ajoute une entrée au carnet de recherche de l'historien (visible dans l'Atlas).
+        kind : note, oeuvre, selection, recherche, detail, comparaison ou groupe.
+        Préciser dans la note ce qui est vu, ce qui est calculé et ce qui est supposé."""
+        ids = [check(i) for i in (artwork_ids or [])]
+        return notebook.add(title, kind, note, ids, {"auteur": "assistant (serveur MCP)"})
+
+    @server.tool()
+    def notebook_list(query: str = "", limit: int = 30) -> dict:
+        """Les entrées du carnet de recherche (les plus récentes d'abord), filtrables par texte."""
+        return {"entries": notebook.list(query, limit=min(max(limit, 1), 200))}
 
     # ------------------------------------------------------------------ export
     @server.tool()

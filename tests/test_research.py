@@ -1,0 +1,163 @@
+"""Espaces de ressemblance, comparateur, carnet, étiquettes à vérifier, dates et lieux,
+noms de groupes, encodeur couleur, importateur IIIF."""
+
+import json
+
+import numpy as np
+import pytest
+from PIL import Image
+
+from tests.conftest import MISLABELED, PALETTE, PER_ARTIST
+
+
+@pytest.fixture(scope="module")
+def env(atlas_env):
+    pytest.importorskip("fastapi")
+    from fastapi.testclient import TestClient
+
+    from pixplot.analysis.suspects import write_suspects
+    from pixplot.api.app import create_app
+    from pixplot.api.data import AtlasData
+    from pixplot.runs import latest_run
+
+    s, n = atlas_env
+    analysis = latest_run("analysis", runs_dir=s.runs_dir)
+    write_suspects(analysis, s, ["school"], space="couleur", k=5)
+    data = AtlasData.load(s)
+    return s, data, TestClient(create_app(data))
+
+
+def test_spaces_and_compare(env):
+    s, data, c = env
+    sp = c.get("/api/spaces").json()
+    keys = [x["key"] for x in sp["spaces"]]
+    assert sp["main"] == "couleur_rvb" and "couleur" in keys
+    first = int(data.ids[0])
+    a = c.get(f"/api/artwork/{first}?space=couleur&k=4").json()
+    assert a["space"] == "couleur" and len(a["neighbors"]) == 4
+    assert first not in [x["id"] for x in a["neighbors"]]
+    assert c.get(f"/api/artwork/{first}?space=inconnu").status_code == 400
+    ids = [int(i) for i in data.ids[:3]]
+    cmp = c.get(f"/api/compare?ids={','.join(map(str, ids))}").json()
+    for key in keys:
+        S = np.array(cmp["similarity"][key], dtype=float)
+        assert S.shape == (3, 3) and np.allclose(np.diag(S), 1, atol=1e-2) and np.allclose(S, S.T)
+    assert c.get(f"/api/compare?ids={ids[0]}").status_code == 400
+
+
+def test_color_space_is_centered(env):
+    s, data, c = env
+    from pixplot.runs import latest_run
+
+    run = latest_run("features", name="color_lab", runs_dir=s.runs_dir)
+    assert run.manifest["outputs"]["centered"] is True and (run.path / "center.npy").exists()
+    # même artiste (même couleur dominante) → plus proches que deux artistes différents
+    reds = [i for i, m in data.meta.items() if m.get("artist") == "Rouge"]
+    blue = next(i for i, m in data.meta.items() if m.get("artist") == "Bleu")
+    S = data.spaces.pairwise([reds[1], reds[2], blue])["couleur"]
+    assert S[0][1] > S[0][2]
+
+
+def test_notebook_api(env):
+    s, data, c = env
+    first = int(data.ids[0])
+    e = c.post("/api/notebook", json={"title": "Gravures", "kind": "selection", "note": "à suivre",
+                                      "artwork_ids": [first], "context": {"requête": "test"}}).json()
+    assert e["id"] and e["artwork_ids"] == [first]
+    assert c.post("/api/notebook", json={"title": "x", "kind": "inconnu"}).status_code == 400
+    up = c.patch(f"/api/notebook/{e['id']}", json={"note": "vu de près"}).json()
+    assert up["note"] == "vu de près" and up["title"] == "Gravures"
+    assert any(x["id"] == e["id"] for x in c.get("/api/notebook?q=Grav").json()["entries"])
+    md = c.get("/api/notebook/export.md")
+    assert md.status_code == 200 and "## Gravures" in md.text and "vu de près" in md.text
+    assert c.delete(f"/api/notebook/{e['id']}").json() == {"deleted": e["id"]}
+    assert c.delete(f"/api/notebook/{e['id']}").status_code == 404
+
+
+def test_suspect_labels(env):
+    s, data, c = env
+    from pixplot.analysis.suspects import check
+
+    wrong = next(i for i, m in data.meta.items() if m.get("school") == "Bleu" and m.get("artist") == "Rouge")
+    res = c.get("/api/suspects?key=school").json()
+    assert [d["id"] for d in res["items"]] == [wrong]
+    assert res["items"][0]["suggested"] == "Rouge" and res["space"] == "couleur"
+    checks = c.get(f"/api/artwork/{wrong}").json()["label_checks"]
+    assert checks and checks[0]["key"] == "school"
+    assert check("a", ["b"] * 8 + ["a"]) is None or check("a", ["b"] * 8 + ["a"])["majority"] >= 0.7
+    assert check("a", ["b"] * 4) is None                 # trop peu de voisines étiquetées
+    assert check("a", ["b"] * 5 + ["a"] * 3) is None     # l'œuvre a des alliées
+    assert check("Unknown", ["b"] * 9) is None
+
+
+def test_years_and_places(env):
+    s, data, c = env
+    from pixplot.api.data import parse_year
+
+    assert parse_year("vers 1650") == 1650 and parse_year("1650-1655") == 1650
+    assert parse_year("c. 890") == 890 and parse_year("inconnue") is None and parse_year(None) is None
+    m = c.get("/api/map").json()
+    years = [y for y in m["year"] if y is not None]
+    assert len(years) == len(PALETTE) * (PER_ARTIST - 1) and min(years) == 1500
+    assert sorted({round(v, 2) for v in m["lat"]}) == [41.9, 48.85, 52.37]
+
+
+def test_group_naming():
+    from pixplot.analysis.naming import MANNERS, SUBJECTS, metadata_name, name_from_vectors
+
+    rng = np.random.default_rng(0)
+    S = rng.normal(size=(len(SUBJECTS), 256)).astype(np.float32)  # quasi orthogonaux
+    M = rng.normal(size=(len(MANNERS), 256)).astype(np.float32)
+    S /= np.linalg.norm(S, axis=1, keepdims=True)
+    M /= np.linalg.norm(M, axis=1, keepdims=True)
+    # dix groupes, chacun centré sur un sujet différent ; le premier a aussi une manière nette
+    subjects = [3, 7, 12, 0, 5, 9, 14, 18, 21, 25]
+    C = np.stack([S[j] for j in subjects])
+    C[0] += 0.9 * M[5]
+    C /= np.linalg.norm(C, axis=1, keepdims=True)
+    names = name_from_vectors(C, S, M)
+    assert [n["terms"][0]["term"] for n in names] == [SUBJECTS[j][0] for j in subjects]
+    assert names[0]["name"] == f"{SUBJECTS[3][0]} · {MANNERS[5][0]}"
+    meta = [{"artist": "camille-corot", "style": "Realism", "genre": "landscape"}] * 6 + [{"artist": "ivan-shishkin"}] * 4
+    assert metadata_name(meta) == "Corot, Shishkin · Realism · Landscape"
+
+
+def test_iiif_import(tmp_path):
+    from pixplot.importers.iiif import import_iiif
+
+    base = "https://musee.example/iiif"
+    docs = {
+        f"{base}/collection": {"@context": "http://iiif.io/api/presentation/3/context.json", "id": f"{base}/collection",
+                               "type": "Collection", "items": [{"id": f"{base}/m1", "type": "Manifest"},
+                                                               {"id": f"{base}/m2", "type": "Manifest"}]},
+        f"{base}/m1": {  # v3, service Image
+            "id": f"{base}/m1", "type": "Manifest", "label": {"fr": ["L'Annonciation"]},
+            "metadata": [{"label": {"en": ["Artist"]}, "value": {"none": ["<b>Fra Angelico</b>"]}},
+                         {"label": {"fr": ["Date"]}, "value": {"none": ["vers 1440"]}}],
+            "rights": "http://creativecommons.org/publicdomain/zero/1.0/",
+            "items": [{"id": f"{base}/m1/c1", "type": "Canvas", "items": [{"type": "AnnotationPage", "items": [
+                {"type": "Annotation", "body": {"id": f"{base}/img1/full/max/0/default.jpg", "type": "Image",
+                                                "service": [{"id": f"{base}/img1", "type": "ImageService3"}]}}]}]}]},
+        f"{base}/m2": {  # v2, image sans service
+            "@id": f"{base}/m2", "@type": "sc:Manifest", "label": "Vue de Delft",
+            "metadata": [{"label": "Creator", "value": "Vermeer"}, {"label": "Inventory number", "value": "SK-1"}],
+            "sequences": [{"canvases": [{"@id": f"{base}/m2/c1", "images": [
+                {"resource": {"@id": f"{base}/img2.jpg", "@type": "dctypes:Image"}}]}]}]},
+    }
+    fetched = []
+
+    def fake_get(url, dest):
+        fetched.append(url)
+        Image.new("RGB", (40, 30), (120, 80, 40)).save(dest, "JPEG")
+
+    rep = import_iiif([f"{base}/collection"], tmp_path, max_size=800, delay=0, fetch=docs.__getitem__, get=fake_get)
+    assert rep.manifests == 2 and rep.images == 2 and not rep.failed
+    assert fetched == [f"{base}/img1/full/!800,800/0/default.jpg", f"{base}/img2.jpg"]
+    import csv
+    rows = list(csv.DictReader(open(rep.csv_path, encoding="utf-8")))
+    assert rows[0]["title"] == "L'Annonciation" and rows[0]["artist"] == "Fra Angelico" and rows[0]["date"] == "vers 1440"
+    assert rows[0]["rights"].startswith("http://creativecommons") and rows[1]["identifier"] == "SK-1"
+    assert (tmp_path / rows[1]["path"]).exists()
+    # reprise : rien n'est retéléchargé
+    rep2 = import_iiif([f"{base}/collection"], tmp_path, delay=0, fetch=docs.__getitem__, get=fake_get)
+    assert rep2.images == 0 and rep2.skipped == 2 and len(fetched) == 2

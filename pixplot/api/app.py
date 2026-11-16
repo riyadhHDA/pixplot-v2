@@ -32,6 +32,20 @@ class PackQuery(BaseModel):
     details: dict[int, list[float]] = Field(default_factory=dict)
 
 
+class NoteIn(BaseModel):
+    title: str = Field("", max_length=300)
+    kind: str = Field("note", max_length=20)
+    note: str = Field("", max_length=20000)
+    artwork_ids: list[int] = Field(default_factory=list, max_length=5000)
+    context: dict = Field(default_factory=dict)
+
+
+class NotePatch(BaseModel):
+    title: str | None = Field(None, max_length=300)
+    note: str | None = Field(None, max_length=20000)
+    artwork_ids: list[int] | None = Field(None, max_length=5000)
+
+
 class RegionQuery(BaseModel):
     id: int
     box: list[float] = Field(..., min_length=4, max_length=4, description="[x0, y0, x1, y1] en fractions de l'image")
@@ -103,11 +117,80 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
         return data.clusters_payload()
 
     @app.get("/api/artwork/{artwork_id}")
-    def artwork(artwork_id: int, k: int = Query(20, ge=1, le=100)):
-        out = data.artwork(artwork_id, k=k)
+    def artwork(artwork_id: int, k: int = Query(20, ge=1, le=100), space: str | None = None):
+        if space and space not in data.spaces.runs:
+            raise HTTPException(400, f"Espace inconnu : {space}")
+        out = data.artwork(artwork_id, k=k, space=space)
         if out is None:
             raise HTTPException(404, "Œuvre absente de cette analyse")
         return out
+
+    # ------------------------------------------------------------- carnet de recherche
+    from ..notebook import Notebook
+    notebook = Notebook(data.settings.data_dir / "notebook.sqlite")
+
+    @app.get("/api/notebook")
+    def notebook_list(q: str = ""):
+        return {"entries": notebook.list(q)}
+
+    @app.post("/api/notebook")
+    def notebook_add(entry: NoteIn):
+        try:
+            return notebook.add(entry.title, entry.kind, entry.note, entry.artwork_ids, entry.context)
+        except ValueError as exc:
+            raise HTTPException(400, str(exc))
+
+    @app.patch("/api/notebook/{entry_id}")
+    def notebook_update(entry_id: int, patch: NotePatch):
+        out = notebook.update(entry_id, patch.title, patch.note, patch.artwork_ids)
+        if out is None:
+            raise HTTPException(404, "Entrée introuvable")
+        return out
+
+    @app.delete("/api/notebook/{entry_id}")
+    def notebook_delete(entry_id: int):
+        if not notebook.delete(entry_id):
+            raise HTTPException(404, "Entrée introuvable")
+        return {"deleted": entry_id}
+
+    @app.get("/api/notebook/export.md")
+    def notebook_export():
+        from fastapi.responses import Response
+        md = notebook.to_markdown(lambda i: data.label(i) if i in data.row_of else f"Œuvre {i}")
+        return Response(md, media_type="text/markdown; charset=utf-8",
+                        headers={"Content-Disposition": 'attachment; filename="carnet-pixplot.md"'})
+
+    # ------------------------------------------------------------- étiquettes à vérifier
+    @app.get("/api/suspects")
+    def suspects(key: str | None = None, offset: int = Query(0, ge=0), limit: int = Query(60, ge=1, le=500)):
+        if not data.suspects:
+            raise HTTPException(404, "Pas encore calculé : lancez `pixplot suspects`.")
+        groups = data.suspects["suspects"]
+        key = key or next(iter(groups), None)
+        if key not in groups:
+            raise HTTPException(400, f"Étiquette inconnue : {key} (disponibles : {', '.join(groups)})")
+        items = [d for d in groups[key] if d["id"] in data.row_of]
+        page = [{**d, **data.brief(d["id"])} for d in items[offset:offset + limit]]
+        return {"key": key, "keys": list(groups), "total": len(items), "space": data.suspects["space"],
+                "rule": data.suspects["rule"], "items": page}
+
+    @app.get("/api/spaces")
+    def spaces():
+        return {"main": data.spaces.main, "spaces": data.spaces.list()}
+
+    @app.get("/api/compare")
+    def compare(ids: str = Query(..., description="identifiants séparés par des virgules")):
+        try:
+            wanted = [int(x) for x in ids.split(",") if x.strip()]
+        except ValueError:
+            raise HTTPException(400, "Identifiants invalides")
+        if not 2 <= len(wanted) <= 6:
+            raise HTTPException(400, "Comparer de 2 à 6 œuvres")
+        missing = [i for i in wanted if i not in data.row_of]
+        if missing:
+            raise HTTPException(404, f"Œuvres absentes de cette analyse : {missing}")
+        return {"ids": wanted, "artworks": [data.artwork(i, k=0) for i in wanted],
+                "spaces": data.spaces.list(), "similarity": data.spaces.pairwise(wanted)}
 
     @app.get("/api/search")
     def search(q: str = Query(..., min_length=1, max_length=200)):

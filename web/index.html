@@ -17,6 +17,11 @@
       <input id="search" type="search" placeholder="Rechercher : artiste, style, n° d'œuvre…" aria-label="Rechercher">
       <button type="button" id="search-clear" class="ghost" hidden>Effacer</button>
     </form>
+    <label class="colorby" id="layout-wrap" hidden>Disposition
+      <select id="layout">
+        <option value="map">Carte des ressemblances</option>
+      </select>
+    </label>
     <label class="colorby">Affichage
       <select id="display">
         <option value="sprites">Vignettes</option>
@@ -26,6 +31,11 @@
     <label class="colorby">Couleur
       <select id="colorby"></select>
     </label>
+    <div class="tools">
+      <button class="ghost" id="open-compare" hidden title="Comparer les œuvres mises de côté">Comparer <b id="compare-count">0</b></button>
+      <button class="ghost" id="open-suspects" hidden title="Étiquettes que toutes les voisines contredisent">À vérifier</button>
+      <button class="ghost" id="open-notebook" title="Vos pistes, sélections et notes">Carnet</button>
+    </div>
     <div class="stats" id="stats">Chargement…</div>
   </header>
 
@@ -45,12 +55,26 @@
     </section>
 
     <aside class="fiche" id="fiche" hidden>
-      <button class="close" id="fiche-close" aria-label="Fermer la fiche">×</button>
+      <button class="close" id="fiche-close" aria-label="Fermer le panneau">×</button>
       <div id="fiche-body"></div>
     </aside>
   </main>
 
+  <div class="compare" id="compare" hidden>
+    <div class="compare-head">
+      <h2>Comparaison</h2>
+      <div class="compare-actions">
+        <button class="ghost" id="compare-note">Ajouter au carnet</button>
+        <button class="ghost" id="compare-export">Exporter en Research Pack</button>
+        <button class="ghost" id="compare-clear">Vider</button>
+        <button class="close" id="compare-close" aria-label="Fermer la comparaison">×</button>
+      </div>
+    </div>
+    <div id="compare-body"></div>
+  </div>
+
   <div class="tooltip" id="tooltip" hidden></div>
+  <div class="toast" id="toast" hidden></div>
 
   <script src="vendor/deck.gl-9.4.1.min.js"></script>
   <script src="atlas.js"></script>

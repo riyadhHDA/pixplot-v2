@@ -35,7 +35,25 @@
     fitZoom: 0, iconSize: 20, iconTimer: null,
     sprites: null, spriteSize: null, hd: [], display: "sprites",
     searchStatus: { region: false, text: false }, lastResults: null, drawing: false,
+    spaces: [], mainSpace: null, space: null,          // espaces de ressemblance (voisines)
+    layout: "map", umapPositions: null, axis: [],      // carte, chronologie ou géographie
+    compare: [],                                       // œuvres mises de côté pour comparer
   };
+  const SPACE_SHORT = { forme: "Forme", sujet: "Sujet et style", couleur: "Couleur", touche: "Touche", forme_v2: "DINOv2" };
+  const store = {   // préférences de ce navigateur seulement (peuvent être indisponibles)
+    get(k, d) { try { return JSON.parse(localStorage.getItem(`pixplot:${k}`)) ?? d; } catch { return d; } },
+    set(k, v) { try { localStorage.setItem(`pixplot:${k}`, JSON.stringify(v)); } catch { /* navigation privée */ } },
+  };
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toast.timer);
+    toast.timer = setTimeout(() => { t.hidden = true; }, 2600);
+  }
+  function groupName(c) {
+    const g = state.clusters.find((x) => x.cluster === c);
+    return g && g.name ? g.name : "";
+  }
   let deckgl;
   window.pixplot = state; // pour inspecter l'Atlas depuis la console du navigateur
 
@@ -64,8 +82,23 @@
       state.positions[2 * i + 1] = m.y[i] * WORLD;
       state.rowOf.set(m.ids[i], i);
     }
+    state.umapPositions = state.positions.slice();
     state.iconSize = Math.max(2, Math.min(40, (2 * WORLD / Math.sqrt(state.n)) * 0.9));
     try { state.searchStatus = await getJSON("/api/search/status"); } catch { /* recherches avancées indisponibles */ }
+    try {
+      const sp = await getJSON("/api/spaces");
+      state.spaces = sp.spaces; state.mainSpace = state.space = sp.main;
+      const saved = store.get("space", null);
+      if (saved && state.spaces.some((s) => s.key === saved)) state.space = saved;
+    } catch { /* un seul espace */ }
+    state.compare = store.get(`compare:${state.info.analysis}`, []).filter((id) => state.rowOf.has(id));
+    updateCompareButton();
+    const layouts = [["map", "Carte des ressemblances"]];
+    if (m.year) layouts.push(["time", "Chronologie"]);
+    if (m.lat) layouts.push(["geo", "Géographie"]);
+    $("layout").innerHTML = layouts.map(([v, l]) => `<option value="${v}">${l}</option>`).join("");
+    $("layout-wrap").hidden = layouts.length < 2;
+    $("open-suspects").hidden = !Object.keys(state.info.suspects || {}).length;
     const textOpt = $("search-mode").querySelector('option[value="text"]');
     textOpt.disabled = !state.searchStatus.text;
     textOpt.title = state.searchStatus.text ? "" : "Calculez d'abord les vecteurs SigLIP 2";
@@ -160,8 +193,8 @@
     const fit = computeFit();
     const changed = Math.abs(fit - state.fitZoom) > 1e-3;
     state.fitZoom = fit;
-    if (changed && !state.userMoved) {
-      state.viewState = { ...state.viewState, minZoom: fit - 2, zoom: fit, target: [0, 0, 0] };
+    if (changed && !state.userMoved && state.layout === "map") {
+      state.viewState = { minZoom: fit - 2, maxZoom: 9, zoom: fit, target: [0, 0, 0] };
       deckgl.setProps({ viewState: state.viewState });
     }
     scheduleIcons();
@@ -281,7 +314,7 @@
       getRadius: 3,
       radiusMinPixels: 1, radiusMaxPixels: 6,
       pickable: true, autoHighlight: true, highlightColor: [255, 255, 255, 255],
-      updateTriggers: { getFillColor: [state.colorMode, state.highlightLabel] },
+      updateTriggers: { getFillColor: [state.colorMode, state.highlightLabel], getPosition: [state.layout] },
     }));
     if (state.sprites) {
       state.sprites.forEach((sheet, s) => layers.push(new IconLayer({
@@ -298,7 +331,7 @@
         pickable: true,
         autoHighlight: true, highlightColor: [224, 176, 64, 255],
         alphaCutoff: 0,
-        updateTriggers: { getColor: [state.highlightLabel] },
+        updateTriggers: { getColor: [state.highlightLabel], getPosition: [state.layout] },
       })));
     }
     if (sprites && state.hd.length) {
@@ -315,7 +348,7 @@
     }
     if (state.selectedData) {
       const s = state.selectedData;
-      const from = [s.x * WORLD, s.y * WORLD];
+      const from = posOf(s.id);
       const links = s.neighbors.slice(0, 10).filter((n) => state.rowOf.has(n.id)).map((n) => {
         const j = state.rowOf.get(n.id);
         return { from, to: [state.positions[2 * j], state.positions[2 * j + 1]], score: n.score };
@@ -329,7 +362,18 @@
         stroked: true, filled: false, getLineColor: [224, 176, 64], lineWidthUnits: "pixels", getLineWidth: 3,
       }));
     }
-    if (onScreenSize() < 40 && (state.colorMode === "cluster" || sprites)) {
+    if (state.axis.length) {
+      layers.push(new LineLayer({
+        id: "axis-lines", data: state.axis.filter((a) => a.line), getSourcePosition: (d) => d.line[0], getTargetPosition: (d) => d.line[1],
+        getColor: [255, 255, 255, 40], getWidth: 1, widthUnits: "pixels",
+      }));
+      layers.push(new TextLayer({
+        id: "axis-labels", data: state.axis.filter((a) => a.text), getPosition: (d) => d.at, getText: (d) => d.text,
+        getSize: 12, getColor: [200, 196, 186], getTextAnchor: "middle", getAlignmentBaseline: "top",
+        fontFamily: "Segoe UI, sans-serif",
+      }));
+    }
+    if (state.layout === "map" && onScreenSize() < 40 && (state.colorMode === "cluster" || sprites)) {
       layers.push(new TextLayer({
         id: "group-labels",
         data: state.clusters,
@@ -353,13 +397,133 @@
     // Un zoom vers une œuvre ou un groupe n'est plus « la vue d'ensemble » : un
     // redimensionnement (ouverture de la fiche…) ne doit pas l'annuler.
     state.userMoved = !(x === 0 && y === 0 && zoom === state.fitZoom);
+    // deck.gl ajoute zoomX / zoomY / minZoomX… à l'état de vue : s'ils restent, ils priment
+    // sur « zoom » et la vue ne bouge plus. On repart d'un état propre.
+    const { minZoom = -4, maxZoom = 9 } = state.viewState;
     state.viewState = {
-      ...state.viewState, target: [x, y, 0], zoom,
+      target: [x, y, 0], zoom, minZoom: Math.min(minZoom, zoom - 1), maxZoom,
       transitionDuration: 700, transitionInterpolator: new LinearInterpolator(["target", "zoom"]),
     };
     deckgl.setProps({ viewState: state.viewState });
     scheduleIcons();
     setTimeout(scheduleIcons, 750);
+  }
+
+  // ------------------------------------------------------------------ dispositions
+  // Carte : la projection UMAP (ressemblance). Chronologie : une colonne par période, les
+  // œuvres empilées par groupe. Géographie : longitude / latitude (sans fond de carte, pour
+  // rester hors ligne), les œuvres d'un même lieu disposées en spirale.
+  function posOf(id) {
+    const r = state.rowOf.get(id);
+    return r === undefined ? [0, 0] : [state.positions[2 * r], state.positions[2 * r + 1]];
+  }
+
+  function timePositions() {
+    const m = state.map, n = state.n, cell = state.iconSize * 1.08;
+    const years = m.year.filter((y) => y != null);
+    const lo = Math.min(...years), hi = Math.max(...years);
+    const maxCols = Math.max(8, Math.floor((2 * WORLD) / cell));
+    const step = [1, 2, 5, 10, 20, 25, 50, 100, 200].find((s) => (hi - lo) / s + 1 <= maxCols) || 500;
+    const start = Math.floor(lo / step) * step;
+    const bins = Math.floor((hi - start) / step) + 2; // + un bloc « sans date »
+    const binOf = (y) => (y == null ? bins - 1 : Math.floor((y - start) / step));
+    const counts = new Array(bins).fill(0);
+    for (const y of m.year) counts[binOf(y)]++;
+    // Chaque période est un bloc de w vignettes de large ; w est choisi pour que l'ensemble
+    // ait à peu près les proportions de l'écran (sinon les périodes chargées font des tours).
+    const el = $("map"), target = el.clientWidth / Math.max(1, el.clientHeight);
+    const maxCount = Math.max(...counts);
+    let w = 1, best = Infinity;
+    for (let k = 1; k <= Math.max(1, Math.ceil(Math.sqrt(maxCount)) * 3); k++) {
+      const ratio = (bins * (k + 1)) / Math.max(1, Math.ceil(maxCount / k));
+      const err = Math.abs(Math.log(ratio / target));
+      if (err < best) { best = err; w = k; }
+    }
+    const blockW = (w + 1) * cell, x0 = -(bins * blockW) / 2, base = 0;
+    const order = [...Array(n).keys()].sort((a, b) => (m.cluster[a] - m.cluster[b]) || (a - b));
+    const fill = new Array(bins).fill(0);
+    const pos = new Float32Array(n * 2);
+    for (const r of order) {
+      const b = binOf(m.year[r]), k = fill[b]++;
+      pos[2 * r] = x0 + b * blockW + ((k % w) + 0.5) * cell;
+      pos[2 * r + 1] = base + (Math.floor(k / w) + 0.5) * cell;
+    }
+    const top = Math.ceil(maxCount / w) * cell;
+    const axis = [];
+    // Un libellé tous les k blocs, pour qu'ils gardent ~70 px d'écart à la vue d'ensemble.
+    const pxPerBin = el.clientWidth / 1.2 / bins;
+    const every = Math.max(1, Math.ceil(70 / Math.max(pxPerBin, 1)));
+    for (let b = 0; b < bins; b++) {
+      const x = x0 + b * blockW;
+      if (b < bins - 1) axis.push({ line: [[x - cell / 2, base], [x - cell / 2, top]] });
+      if (b === bins - 1 ? counts[b] > 0 : b % every === 0)
+        axis.push({ at: [x + (w * cell) / 2, base - cell * 0.3], text: b === bins - 1 ? "sans date" : String(start + b * step) });
+    }
+    return { pos, axis, note: `un bloc = ${step === 1 ? "une année" : `${step} ans`}, œuvres rangées par groupe` };
+  }
+
+  function geoPositions() {
+    const m = state.map, n = state.n, cell = state.iconSize * 1.05;
+    const pos = new Float32Array(n * 2);
+    const placed = new Map();
+    // Échelle large par rapport aux vignettes : les spirales de villes voisines (Paris,
+    // Londres, Amsterdam…) ne se recouvrent pas ; on zoome pour voir le détail.
+    const scale = (WORLD / 180) * 8;
+    for (let r = 0; r < n; r++) {
+      const lat = m.lat[r], lon = m.lon[r];
+      let x, y;
+      if (lat == null || lon == null) { x = 190 * scale; y = -100 * scale; }  // sans lieu : en bas à droite
+      else { x = lon * scale; y = lat * scale; }
+      const key = `${Math.round(x / cell)}:${Math.round(y / cell)}`;
+      const k = placed.get(key) || 0;
+      placed.set(key, k + 1);
+      // spirale de Vogel : les œuvres d'un même lieu se rangent autour du point
+      const rad = cell * 0.6 * Math.sqrt(k), th = k * 2.39996;
+      pos[2 * r] = x + rad * Math.cos(th);
+      pos[2 * r + 1] = y + rad * Math.sin(th);
+    }
+    const axis = [];
+    for (let lon = -180; lon <= 180; lon += 30) axis.push({ line: [[lon * scale, -90 * scale], [lon * scale, 90 * scale]] },
+      { at: [lon * scale, -90 * scale - 4], text: `${lon}°`, priority: 1 });
+    for (let lat = -90; lat <= 90; lat += 30) axis.push({ line: [[-180 * scale, lat * scale], [180 * scale, lat * scale]] },
+      { at: [-180 * scale - 20, lat * scale], text: `${lat}°`, priority: 1 });
+    axis.push({ at: [190 * scale, -92 * scale], text: "sans lieu", priority: 3 });
+    return { pos, axis, note: "longitude / latitude, sans fond de carte" };
+  }
+
+  function setLayout(layout) {
+    state.layout = layout;
+    let note = "";
+    if (layout === "time") ({ pos: state.positions, axis: state.axis, note } = timePositions());
+    else if (layout === "geo") ({ pos: state.positions, axis: state.axis, note } = geoPositions());
+    else { state.positions = state.umapPositions.slice(); state.axis = []; }
+    state.layoutNote = note;
+    state.userMoved = false;
+    if (layout === "map") flyTo(0, 0, state.fitZoom);
+    else fitToPositions();
+    computeHD();
+    redraw();
+    updateStats();
+  }
+
+  function fitToPositions() {
+    let x0 = Infinity, x1 = -Infinity, y0 = Infinity, y1 = -Infinity;
+    for (let r = 0; r < state.n; r++) {
+      const x = state.positions[2 * r], y = state.positions[2 * r + 1];
+      if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
+    }
+    const el = $("map");
+    // marge de 8 % : les libellés des axes (années, degrés) restent visibles
+    const zoom = Math.log2(Math.min(el.clientWidth / ((x1 - x0) * 1.16 + 4 * state.iconSize),
+      el.clientHeight / ((y1 - y0) * 1.16 + 4 * state.iconSize)));
+    flyTo((x0 + x1) / 2, (y0 + y1) / 2, zoom);
+    state.userMoved = true;
+  }
+
+  function centerOf(set) {
+    let sx = 0, sy = 0, k = 0;
+    for (const r of set) { sx += state.positions[2 * r]; sy += state.positions[2 * r + 1]; k++; }
+    return k ? [sx / k, sy / k] : [0, 0];
   }
 
   // ------------------------------------------------------------------ infobulle
@@ -380,7 +544,7 @@
     if (id == null) { tip.hidden = true; return; }
     const i = state.rowOf.get(id);
     tip.innerHTML = `<img src="/api/thumb/256/${id}" alt=""><div>${esc(labelOf(i))}</div>
-      <div style="color:var(--muted)">Groupe ${state.map.cluster[i] + 1} · n° ${id}</div>`;
+      <div style="color:var(--muted)">Groupe ${state.map.cluster[i] + 1}${groupName(state.map.cluster[i]) ? ` — ${esc(groupName(state.map.cluster[i]))}` : ""} · n° ${id}</div>`;
     const rect = $("map").getBoundingClientRect();
     tip.style.left = `${Math.min(rect.left + info.x + 16, innerWidth - 200)}px`;
     tip.style.top = `${Math.min(rect.top + info.y + 16, innerHeight - 200)}px`;
@@ -396,7 +560,9 @@
       return `<li class="group" data-cluster="${g.cluster}">
         <img src="/api/thumb/256/${g.representative}" alt="" loading="lazy">
         <div><div class="title"><span class="swatch" style="background:rgb(${col})"></span>Groupe ${g.number}
-          <span class="size">${g.size} œuvres</span></div><div class="dom">${dom}</div></div></li>`;
+          <span class="size">${g.size} œuvres</span></div>
+          ${g.name ? `<div class="gname" title="Nom proposé par SigLIP 2 d'après un vocabulaire d'histoire de l'art — à vérifier">${esc(g.name)}</div>` : ""}
+          <div class="dom">${dom}</div></div></li>`;
     }).join("");
     $("groups").querySelectorAll(".group").forEach((li) => li.addEventListener("click", () => {
       const c = Number(li.dataset.cluster);
@@ -404,9 +570,9 @@
       if (li.classList.contains("active")) { clearHighlight(); return; }
       const set = new Set();
       state.map.cluster.forEach((v, i) => { if (v === c) set.add(i); });
-      setHighlight(set, `Groupe ${g.number}`);
+      setHighlight(set, `Groupe ${g.number}${g.name ? ` (${g.name})` : ""}`);
       document.querySelectorAll(".group").forEach((x) => x.classList.toggle("active", x === li));
-      flyTo(g.center[0] * WORLD, g.center[1] * WORLD, state.fitZoom + 1.6);
+      if (state.layout === "map") flyTo(g.center[0] * WORLD, g.center[1] * WORLD, state.fitZoom + 1.6);
     }));
   }
 
@@ -426,7 +592,8 @@
   }
   function updateStats() {
     const i = state.info;
-    const base = `${state.n.toLocaleString("fr-FR")} œuvres · ${i.clusters} groupes · ${i.encoder} @${i.input_size}`;
+    const base = `${state.n.toLocaleString("fr-FR")} œuvres · ${i.clusters} groupes · ${i.encoder} @${i.input_size}`
+      + (state.layout !== "map" && state.layoutNote ? ` · ${state.layoutNote}` : "");
     $("stats").textContent = state.highlight
       ? `${state.highlightLabel} : ${state.highlight.size.toLocaleString("fr-FR")} œuvres  —  ${base}`
       : base;
@@ -435,13 +602,207 @@
   // ------------------------------------------------------------------ fiche
   async function select(id, fly) {
     let data;
-    try { data = await getJSON(`/api/artwork/${id}`); } catch { return; }
+    const space = state.space && state.space !== state.mainSpace ? `?space=${state.space}` : "";
+    try { data = await getJSON(`/api/artwork/${id}${space}`); } catch { return; }
     state.selected = id;
     state.selectedData = data;
     history.replaceState(null, "", `#oeuvre-${id}`);
     renderFiche(data);
     redraw();
-    if (fly) flyTo(data.x * WORLD, data.y * WORLD, Math.max(state.viewState.zoom, state.fitZoom + 3));
+    if (fly) { const [x, y] = posOf(id); flyTo(x, y, Math.max(state.viewState.zoom, state.fitZoom + 3)); }
+  }
+
+  function spaceLabel(key) { const s = state.spaces.find((x) => x.key === key); return s ? s.label : (key || "DINOv3"); }
+  function spaceAbout(key) {
+    const s = state.spaces.find((x) => x.key === key);
+    return s ? `Voisines selon ${s.label} : ${s.about}.` : "";
+  }
+
+  function spaceTabs(current) {
+    if (state.spaces.length < 2) return "";
+    return `<div class="spaces" role="tablist" aria-label="Voisines selon">${state.spaces.map((s) =>
+      `<button class="space ${s.key === current ? "on" : ""}" data-space="${s.key}" title="${esc(s.about)}" role="tab"
+        aria-selected="${s.key === current}">${esc(SPACE_SHORT[s.key] || s.label)}</button>`).join("")}</div>`;
+  }
+
+  function labelChecks(d) {
+    if (!d.label_checks || !d.label_checks.length) return "";
+    const space = state.spaces.find((s) => s.key === d.label_checks_space);
+    const rows = d.label_checks.map((c) => `<li><b>${esc(LABELS[c.key] || c.key)}</b> : « ${esc(pretty(c.value))} »,
+      mais ${Math.round(c.majority * 100)} % de ses voisines étiquetées sont « ${esc(pretty(c.suggested))} »</li>`).join("");
+    return `<div class="checks"><div class="checks-title">Étiquette à vérifier</div><ul>${rows}</ul>
+      <small>Voisines selon ${esc(space ? space.label : d.label_checks_space)}. Erreur de catalogue, ou œuvre réellement à part ? À regarder.</small></div>`;
+  }
+
+  // ------------------------------------------------------------------ comparateur
+  function saveCompare() { store.set(`compare:${state.info.analysis}`, state.compare); updateCompareButton(); }
+  function updateCompareButton() {
+    $("compare-count").textContent = state.compare.length;
+    $("open-compare").hidden = !state.compare.length;
+  }
+  function toggleCompare(id) {
+    const i = state.compare.indexOf(id);
+    if (i >= 0) state.compare.splice(i, 1);
+    else {
+      if (state.compare.length >= 6) { toast("Six œuvres au plus dans le comparateur"); return false; }
+      state.compare.push(id);
+    }
+    saveCompare();
+    toast(i >= 0 ? "Retirée du comparateur" : `Ajoutée au comparateur (${state.compare.length})`);
+    return i < 0;
+  }
+
+  async function openCompare() {
+    if (state.compare.length < 2) { toast("Ajoutez au moins deux œuvres (bouton « Comparer » d'une fiche)"); return; }
+    $("compare").hidden = false;
+    $("compare-body").innerHTML = `<div class="loading">Chargement…</div>`;
+    let res;
+    try { res = await getJSON(`/api/compare?ids=${state.compare.join(",")}`); } catch (err) {
+      $("compare-body").innerHTML = `<div class="loading">Échec : ${esc(err.message)}</div>`; return;
+    }
+    const n = res.ids.length;
+    const cols = res.artworks.map((a, k) => {
+      const meta = Object.entries(a.metadata).filter(([, v]) => v).map(([key, v]) =>
+        `<div><span>${esc(LABELS[key] || pretty(key))}</span> ${esc(SLUG_KEYS.has(key) ? pretty(v) : v)}</div>`).join("");
+      return `<figure class="cmp" data-id="${a.id}">
+        <div class="cmp-img"><span class="cmp-n">${k + 1}</span><img src="/api/thumb/1024/${a.id}" alt="${esc(a.label)}"></div>
+        <figcaption><b>n° ${a.id}</b> · groupe ${a.cluster}${a.group_name ? ` — ${esc(a.group_name)}` : ""}
+          <div class="cmp-meta">${meta}</div>
+          <div class="cmp-act"><button class="chip" data-open="${a.id}">Fiche</button><button class="chip" data-remove="${a.id}">Retirer</button>
+          <a class="chip" href="/api/image/${a.id}" target="_blank" rel="noopener">Original</a></div></figcaption></figure>`;
+    }).join("");
+    // Tableau des similarités : une ligne par paire, une colonne par espace.
+    const pairs = [];
+    for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) pairs.push([a, b]);
+    const spaces = res.spaces.filter((s) => res.similarity[s.key]);
+    const head = spaces.map((s) => `<th title="${esc(s.about)}">${esc(SPACE_SHORT[s.key] || s.label)}</th>`).join("");
+    const body = pairs.map(([a, b]) => `<tr><td>${a + 1} ↔ ${b + 1}</td>${spaces.map((s) => {
+      const v = res.similarity[s.key][a][b];
+      return v == null ? "<td>—</td>" : `<td><span class="bar" style="--v:${Math.max(0, v)}"></span>${v.toFixed(3)}</td>`;
+    }).join("")}</tr>`).join("");
+    $("compare-body").innerHTML = `<div class="cmp-row" style="--n:${n}">${cols}</div>
+      <div class="cmp-table"><h3>Similarités (cosinus) selon chaque regard</h3>
+        <table><thead><tr><th>paire</th>${head}</tr></thead><tbody>${body}</tbody></table>
+        <p class="prov">Chaque colonne répond à une question différente : formes et composition (DINOv3), sujet et style tels qu'on
+        les décrit (SigLIP 2), palette (couleur), facture (touche). Les valeurs ne sont pas des probabilités et ne se comparent
+        qu'à l'intérieur d'une même colonne.</p></div>`;
+    $("compare-body").querySelectorAll("[data-open]").forEach((b) => b.addEventListener("click", () => {
+      $("compare").hidden = true; select(Number(b.dataset.open), true);
+    }));
+    $("compare-body").querySelectorAll("[data-remove]").forEach((b) => b.addEventListener("click", () => {
+      toggleCompare(Number(b.dataset.remove)); if (state.compare.length >= 2) openCompare(); else $("compare").hidden = true;
+    }));
+  }
+
+  // ------------------------------------------------------------------ carnet de recherche
+  async function addToNotebook(entry) {
+    const note = prompt(`Note pour « ${entry.title} » (facultatif) :`, entry.note || "");
+    if (note === null) return;
+    try {
+      const r = await fetch("/api/notebook", { method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...entry, note }) });
+      if (!r.ok) throw new Error((await r.json()).detail || r.status);
+      toast("Ajouté au carnet");
+      if (state.panel === "notebook") renderNotebook();
+    } catch (err) { alert(`Ajout impossible : ${err.message}`); }
+  }
+
+  const KIND_LABEL = { note: "Note", oeuvre: "Œuvre", selection: "Sélection", recherche: "Recherche", detail: "Détail",
+    comparaison: "Comparaison", groupe: "Groupe" };
+
+  async function renderNotebook() {
+    state.panel = "notebook";
+    state.selected = state.selectedData = null;
+    redraw();
+    $("fiche").hidden = false;
+    let res;
+    try { res = await getJSON("/api/notebook"); } catch (err) {
+      $("fiche-body").innerHTML = `<div class="loading">Carnet indisponible : ${esc(err.message)}</div>`; return;
+    }
+    const items = res.entries.map((e) => `<li class="entry" data-id="${e.id}">
+        <div class="entry-head"><span class="chip">${esc(KIND_LABEL[e.kind] || e.kind)}</span>
+          <input class="entry-title" value="${esc(e.title)}" aria-label="Titre"></div>
+        <div class="entry-thumbs">${e.artwork_ids.slice(0, 8).map((i) => `<img src="/api/thumb/256/${i}" data-id="${i}" alt="" loading="lazy">`).join("")}
+          ${e.artwork_ids.length > 8 ? `<span class="more">+${e.artwork_ids.length - 8}</span>` : ""}</div>
+        <textarea class="entry-note" placeholder="Vos observations, hypothèses, références…" aria-label="Note">${esc(e.note)}</textarea>
+        <div class="entry-foot"><small>${e.created.slice(0, 16).replace("T", " ")} UTC${Object.keys(e.context).length
+          ? " · " + esc(Object.entries(e.context).map(([k, v]) => `${k} : ${v}`).join(" ; ")) : ""}</small>
+          <span>${e.artwork_ids.length ? `<button class="chip" data-show="${e.id}">Montrer sur la carte</button>` : ""}
+          ${e.artwork_ids.length >= 2 && e.artwork_ids.length <= 6 ? `<button class="chip" data-cmp="${e.id}">Comparer</button>` : ""}
+          <button class="chip" data-del="${e.id}">Supprimer</button></span></div></li>`).join("");
+    $("fiche-body").innerHTML = `<div class="results-head"><h3>Carnet de recherche</h3>
+        <div class="sub">${res.entries.length} entrée${res.entries.length > 1 ? "s" : ""} · enregistré dans le dossier de données (notebook.sqlite)</div>
+        <div class="chips" style="margin-top:10px"><button class="chip" id="nb-new">Nouvelle note</button>
+          <a class="chip" href="/api/notebook/export.md" download>Exporter en Markdown</a></div></div>
+      ${res.entries.length ? `<ol class="entries">${items}</ol>` : `<p class="loading">Rien encore. Depuis une fiche : « Carnet » ; depuis des résultats : « Ajouter au carnet ».</p>`}`;
+    const body = $("fiche-body");
+    $("nb-new").addEventListener("click", () => addToNotebook({ kind: "note", title: "Note", artwork_ids: [] }));
+    const patch = (id, data) => fetch(`/api/notebook/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) })
+      .then((r) => { if (r.ok) toast("Enregistré"); });
+    body.querySelectorAll(".entry").forEach((li) => {
+      const id = Number(li.dataset.id);
+      li.querySelector(".entry-title").addEventListener("change", (e) => patch(id, { title: e.target.value }));
+      li.querySelector(".entry-note").addEventListener("change", (e) => patch(id, { note: e.target.value }));
+      li.querySelectorAll(".entry-thumbs img").forEach((img) => img.addEventListener("click", () => select(Number(img.dataset.id), true)));
+    });
+    const entryOf = (id) => res.entries.find((e) => e.id === Number(id));
+    body.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", async () => {
+      if (!confirm("Supprimer cette entrée du carnet ?")) return;
+      await fetch(`/api/notebook/${b.dataset.del}`, { method: "DELETE" });
+      renderNotebook();
+    }));
+    body.querySelectorAll("[data-show]").forEach((b) => b.addEventListener("click", () => {
+      const e = entryOf(b.dataset.show);
+      const set = new Set(e.artwork_ids.map((i) => state.rowOf.get(i)).filter((r) => r !== undefined));
+      setHighlight(set, `Carnet : ${e.title}`);
+      const [x, y] = centerOf(set); flyTo(x, y, state.viewState.zoom);
+    }));
+    body.querySelectorAll("[data-cmp]").forEach((b) => b.addEventListener("click", () => {
+      state.compare = entryOf(b.dataset.cmp).artwork_ids.filter((i) => state.rowOf.has(i)).slice(0, 6);
+      saveCompare(); openCompare();
+    }));
+  }
+
+  // ------------------------------------------------------------------ étiquettes à vérifier
+  async function renderSuspects(key, offset) {
+    state.panel = "suspects";
+    $("fiche").hidden = false;
+    $("fiche-body").innerHTML = `<div class="loading">Chargement…</div>`;
+    let res;
+    try { res = await getJSON(`/api/suspects?limit=40&offset=${offset}${key ? `&key=${encodeURIComponent(key)}` : ""}`); } catch (err) {
+      $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`; return;
+    }
+    const space = state.spaces.find((s) => s.key === res.space);
+    const tabs = res.keys.map((k) => `<button class="space ${k === res.key ? "on" : ""}" data-key="${k}">${esc(LABELS[k] || pretty(k))}
+      <small>${state.info.suspects[k] ?? ""}</small></button>`).join("");
+    const rows = res.items.map((d) => `<li class="suspect">
+        <button class="s-main" data-id="${d.id}"><img src="/api/thumb/256/${d.id}" alt="" loading="lazy"></button>
+        <div class="s-text"><div>n° ${d.id} : « <b>${esc(pretty(d.value))}</b> »</div>
+          <div class="s-sugg">voisines : ${esc(pretty(d.suggested))} (${Math.round(d.majority * 100)} %)</div>
+          <div class="s-neigh">${d.neighbors.slice(0, 4).map((i) => `<img src="/api/thumb/256/${i}" data-id="${i}" alt="" loading="lazy">`).join("")}</div></div></li>`).join("");
+    const more = offset + res.items.length < res.total;
+    $("fiche-body").innerHTML = `<div class="results-head"><h3>Étiquettes à vérifier</h3>
+        <div class="sub">${res.total} œuvres · ${esc(res.rule)} · voisines selon ${esc(space ? space.label : res.space)}</div>
+        <div class="spaces" style="margin-top:10px">${tabs}</div></div>
+      <ol class="suspects">${rows}</ol>
+      <div class="pager">${offset > 0 ? `<button class="chip" id="s-prev">← Précédentes</button>` : ""}
+        ${more ? `<button class="chip" id="s-next">Suivantes →</button>` : ""}
+        <button class="chip" id="s-note">Ajouter cette page au carnet</button></div>
+      <p class="prov" style="margin:0 16px 20px">Ce ne sont pas des corrections : une étiquette peut être fausse, ou l'œuvre réellement
+        à part dans le corpus (un paysage chez un portraitiste). Les deux méritent un regard.</p>`;
+    const body = $("fiche-body");
+    body.querySelectorAll("[data-key]").forEach((b) => b.addEventListener("click", () => renderSuspects(b.dataset.key, 0)));
+    body.querySelectorAll(".suspects [data-id]").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.id), true)));
+    if ($("s-prev")) $("s-prev").addEventListener("click", () => renderSuspects(res.key, Math.max(0, offset - 40)));
+    if ($("s-next")) $("s-next").addEventListener("click", () => renderSuspects(res.key, offset + 40));
+    $("s-note").addEventListener("click", () => addToNotebook({
+      kind: "selection", title: `Étiquettes « ${LABELS[res.key] || res.key} » à vérifier`, artwork_ids: res.items.map((d) => d.id),
+      context: { règle: res.rule, espace: res.space },
+    }));
+    const set = new Set(res.items.map((d) => state.rowOf.get(d.id)).filter((r) => r !== undefined));
+    state.selected = state.selectedData = null;
+    setHighlight(set, `À vérifier (${LABELS[res.key] || res.key})`);
+    if (state.layout === "map") flyTo(0, 0, state.fitZoom); else fitToPositions();
   }
 
   function renderFiche(d) {
@@ -464,20 +825,39 @@
         ${state.lastResults ? `<button class="back" id="back-results" style="padding:0 0 10px">← Retour aux résultats</button>` : ""}
         <div class="chips">
           ${state.searchStatus.region ? `<button class="chip" id="chip-detail" title="Tracez un cadre sur l'image : main, drapé, objet…">Chercher un détail</button>` : ""}
-          <button class="chip" id="chip-group">Groupe ${d.cluster}</button>${fam}
+          <button class="chip" id="chip-group" title="${esc(d.group_name || "")}">Groupe ${d.cluster}${d.group_name ? ` · ${esc(d.group_name)}` : ""}</button>${fam}
           <span class="chip ${atyp >= 90 ? "warn" : ""}" title="Rang d'isolement parmi toutes les œuvres">Atypicité ${atyp} %</span>
           <button class="chip" id="chip-fly">Voir sur la carte</button>
+          <button class="chip ${state.compare.includes(d.id) ? "on" : ""}" id="chip-compare" title="Mettre de côté pour comparer (6 au plus)">${state.compare.includes(d.id) ? "✓ Dans le comparateur" : "Comparer"}</button>
+          <button class="chip" id="chip-note" title="Garder cette œuvre et ses voisines dans le carnet, avec une note">Carnet</button>
           <button class="chip" id="chip-export" title="Dossier .zip : l'œuvre, ses voisines, relations et métadonnées">Exporter avec ses voisines</button>
         </div>
+        ${labelChecks(d)}
         ${meta ? `<table>${meta}</table>` : ""}
         <h4>Œuvres les plus proches</h4>
+        ${spaceTabs(d.space)}
         <div class="neighbors">${neigh}</div>
-        <div class="prov">Calculé par ${esc(d.provenance.encoder)} · ${esc(d.provenance.features)} · ${esc(d.provenance.analysis)}.
-          Une proximité visuelle est une piste à examiner, pas une preuve de filiation.</div>
+        <div class="prov">${esc(spaceAbout(d.space))} Vecteurs de l'analyse : ${esc(d.provenance.features)} · ${esc(d.provenance.analysis)}.
+          Une proximité est une piste à examiner, pas une preuve de filiation.</div>
       </div>`;
+    $("fiche-body").querySelectorAll(".space[data-space]").forEach((b) => b.addEventListener("click", () => {
+      state.space = b.dataset.space;
+      store.set("space", state.space);
+      select(d.id, false);
+    }));
+    $("chip-compare").addEventListener("click", (e) => {
+      const on = toggleCompare(d.id);
+      e.currentTarget.classList.toggle("on", on);
+      e.currentTarget.textContent = on ? "✓ Dans le comparateur" : "Comparer";
+    });
+    $("chip-note").addEventListener("click", () => addToNotebook({
+      kind: "oeuvre", title: pretty(d.label), artwork_ids: [d.id, ...d.neighbors.slice(0, 11).map((n) => n.id)],
+      context: { "œuvre": d.id, voisines: spaceLabel(d.space) },
+    }));
     $("fiche").hidden = false;
+    state.panel = "fiche";
     $("fiche-body").querySelectorAll(".neighbor").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.id), true)));
-    $("chip-fly").addEventListener("click", () => flyTo(d.x * WORLD, d.y * WORLD, Math.max(state.viewState.zoom, state.fitZoom + 3)));
+    $("chip-fly").addEventListener("click", () => { const [x, y] = posOf(d.id); flyTo(x, y, Math.max(state.viewState.zoom, state.fitZoom + 3)); });
     $("chip-group").addEventListener("click", () => {
       const li = document.querySelector(`.group[data-cluster="${d.cluster - 1}"]`);
       if (li) { li.scrollIntoView({ block: "nearest" }); if (!li.classList.contains("active")) li.click(); }
@@ -486,7 +866,7 @@
     $("chip-export").addEventListener("click", (e) => exportPack({
       ids: [d.id, ...d.neighbors.map((n) => n.id)],
       title: `${pretty(d.label)} et ses voisines`,
-      selection: { "méthode": "œuvre et ses plus proches voisines (DINOv3), depuis l'Atlas", "œuvre de départ": `${d.id} — ${d.label}` },
+      selection: { "méthode": `œuvre et ses plus proches voisines (${spaceLabel(d.space)}), depuis l'Atlas`, "œuvre de départ": `${d.id} — ${d.label}` },
       scores: Object.fromEntries(d.neighbors.map((n) => [n.id, n.score])),
     }, e.currentTarget));
     if ($("back-results")) $("back-results").addEventListener("click", () => renderResults(state.lastResults));
@@ -587,7 +967,8 @@
         <div class="lbl">${esc(pretty(x.label))}</div></button>`).join("");
     $("fiche-body").innerHTML = `<div class="results-head"><h3>${esc(r.title)}</h3><div class="sub">${esc(r.sub)}</div>
         ${r.query ? `<canvas id="query-crop" width="360" height="160"></canvas>` : ""}
-        <div class="chips" style="margin-top:10px"><button class="chip" id="export-results" title="Dossier .zip : images, métadonnées, relations, résumé pour un LLM">Exporter en Research Pack</button></div></div>
+        <div class="chips" style="margin-top:10px"><button class="chip" id="export-results" title="Dossier .zip : images, métadonnées, relations, résumé pour un LLM">Exporter en Research Pack</button>
+          <button class="chip" id="note-results" title="Garder ces résultats dans le carnet, avec une note">Ajouter au carnet</button></div></div>
       <div class="results-grid">${cards}</div>
       <div class="prov" style="margin:0 16px 20px">${r.kind === "region"
         ? "Chaque vignette montre la zone de l'œuvre la plus proche du détail tracé (grilles 2×2 et 4×4)."
@@ -598,6 +979,12 @@
       drawCrop(c, x.id, x.box, 130);
     });
     $("fiche-body").querySelectorAll(".result").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.id), true)));
+    state.panel = "results";
+    $("note-results").addEventListener("click", () => addToNotebook({
+      kind: r.kind === "region" ? "detail" : "recherche", title: r.kind === "region" ? `Détail de l'œuvre n° ${r.query.id}` : r.title,
+      artwork_ids: (r.query ? [r.query.id] : []).concat(r.results.map((x) => x.id)),
+      context: r.kind === "region" ? { "œuvre": r.query.id, cadre: r.query.box.map((v) => +v.toFixed(3)).join(", ") } : { requête: r.title },
+    }));
     $("export-results").addEventListener("click", (e) => {
       const ids = (r.query ? [r.query.id] : []).concat(r.results.map((x) => x.id));
       const details = {};
@@ -707,9 +1094,29 @@
       }, 250);
     });
     $("search-clear").addEventListener("click", clearHighlight);
-    $("reset-view").addEventListener("click", () => { clearHighlight(); flyTo(0, 0, state.fitZoom); });
+    $("reset-view").addEventListener("click", () => {
+      clearHighlight();
+      if (state.layout === "map") flyTo(0, 0, state.fitZoom); else fitToPositions();
+    });
+    $("layout").addEventListener("change", (e) => setLayout(e.target.value));
+    $("open-compare").addEventListener("click", openCompare);
+    $("compare-close").addEventListener("click", () => { $("compare").hidden = true; });
+    $("compare-clear").addEventListener("click", () => { state.compare = []; saveCompare(); $("compare").hidden = true; });
+    $("compare-export").addEventListener("click", (e) => exportPack({
+      ids: state.compare, title: "Comparaison",
+      selection: { "méthode": "comparaison d'œuvres choisies dans l'Atlas" },
+    }, e.currentTarget));
+    $("compare-note").addEventListener("click", () => addToNotebook({
+      kind: "comparaison", title: `Comparaison de ${state.compare.length} œuvres`, artwork_ids: state.compare,
+      context: { espaces: state.spaces.map((s) => s.key).join(", ") },
+    }));
+    $("open-notebook").addEventListener("click", renderNotebook);
+    $("open-suspects").addEventListener("click", () => renderSuspects(null, 0));
     $("fiche-close").addEventListener("click", closeFiche);
-    addEventListener("keydown", (e) => { if (e.key === "Escape") closeFiche(); });
+    addEventListener("keydown", (e) => {
+      if (e.key !== "Escape") return;
+      if (!$("compare").hidden) $("compare").hidden = true; else closeFiche();
+    });
     addEventListener("resize", onResize);
     new ResizeObserver(onResize).observe($("map"));
     addEventListener("hashchange", () => {
