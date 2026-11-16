@@ -339,6 +339,11 @@
         background: true, getBackgroundColor: (d) => [...PALETTE[d.cluster % PALETTE.length].map((c) => c * 0.35), 230],
         backgroundPadding: [5, 2], fontWeight: 700, fontFamily: "Segoe UI, sans-serif",
         getTextAnchor: "middle", getAlignmentBaseline: "center",
+        // Avec des centaines de groupes, les étiquettes se chevauchent : celles des plus
+        // grands groupes passent devant, les autres apparaissent en zoomant.
+        extensions: deck.CollisionFilterExtension ? [new deck.CollisionFilterExtension()] : [],
+        collisionEnabled: true, getCollisionPriority: (d) => d.size || 0,
+        collisionTestProps: { sizeScale: 1.6 },
       }));
     }
     deckgl.setProps({ layers });

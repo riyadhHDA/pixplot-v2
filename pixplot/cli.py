@@ -256,6 +256,9 @@ def cmd_analyze(args) -> int:
     print(f"\nAnalyse : {run.id}  ({out['count']} œuvres, {out['clusters']} groupes)")
     if args.hdbscan:
         print(f"HDBSCAN : {out['hdbscan_clusters']} groupes, {out['hdbscan_isolated']} œuvres « à part »")
+        if out["hdbscan_isolated"] > 0.3 * out["count"]:
+            print("  Attention : plus de 30 % d'œuvres « à part » — HDBSCAN n'est pas fiable sur un "
+                  "corpus aussi dense ; préférez le score d'atypicité (find_atypical, fiche de l'Atlas).")
 
     # Résumé des groupes avec les métadonnées dominantes : de quoi juger s'ils ont un sens.
     ids = np.load(run.path / "ids.npy")

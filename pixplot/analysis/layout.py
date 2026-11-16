@@ -131,14 +131,25 @@ def atypicality(neighbor_scores: np.ndarray) -> np.ndarray:
     return (1.0 - order / max(len(order) - 1, 1)).astype(np.float32)
 
 
-def cluster_hdbscan(Z: np.ndarray, min_cluster_size: int = 10) -> np.ndarray:
-    """HDBSCAN sur une UMAP intermédiaire en 10 dimensions (méthode standard : directement
-    sur les vecteurs, la densité est trop uniforme et presque tout est déclaré « à part »).
-    Sur WikiArt : 7 familles et 2 % d'œuvres à part, contre 2 familles et 28 % sans UMAP."""
+def hdbscan_sizes(n: int) -> tuple[int, int]:
+    """(min_cluster_size, min_samples). Sur WikiArt 2 263 œuvres : 7 familles, 1,6 % à part.
+
+    Limite connue : sur un continuum dense (WikiArt 80 716 œuvres), aucun réglage n'est
+    exploitable — mcs=40 : 261 micro-familles et 53 % « à part » ; mcs≥100 : un bloc de
+    70 % du corpus et 0,2 % à part. À grande échelle, se fier au score d'atypicité."""
+    return max(15, n // 2000), 5
+
+
+def cluster_hdbscan(Z: np.ndarray, min_cluster_size: int | None = None,
+                    min_samples: int | None = None) -> np.ndarray:
+    """HDBSCAN sur une UMAP intermédiaire en 10 dimensions (directement sur les vecteurs, la
+    densité est trop uniforme et presque tout est déclaré « à part »)."""
     from sklearn.cluster import HDBSCAN
 
+    mcs, ms = hdbscan_sizes(len(Z))
     U = run_umap(Z, n_components=10, min_dist=0.0)
-    return HDBSCAN(min_cluster_size=min_cluster_size).fit_predict(U).astype(np.int32)
+    return HDBSCAN(min_cluster_size=min_cluster_size or mcs, min_samples=min_samples or ms,
+                   copy=True).fit_predict(U).astype(np.int32)
 
 
 def analyze(

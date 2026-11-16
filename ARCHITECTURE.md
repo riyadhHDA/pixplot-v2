@@ -287,3 +287,39 @@ Sur WikiArt (DINOv3 B/16, 24 groupes) : pureté des groupes 26 % (artiste), 38 %
 Pistes : espace chromatique et espace « touche » (patchs fins) pour les styles définis par la
 couleur ou la facture ; regroupement selon plusieurs espaces ; signaler à l'historien les
 étiquettes probablement erronées.
+
+## 11. Passage à l'échelle : WikiArt complet (16/11/2026)
+
+81 444 images (72 fichiers Parquet, 33,7 Go), RX 7900 GRE, Windows natif, 16 Go de RAM.
+Commande unique : `bash scripts/full_pipeline.sh data/wikiart81k` (journal chronométré).
+
+| Étape | Durée | Remarque |
+|---|---|---|
+| Extraction des Parquet | 1 min 31 | |
+| Ingestion (hash, vignettes 64/256/1024) | 35 min 47 | 80 716 œuvres, 728 doublons exacts, 0 erreur |
+| DINOv3 B/16 @448 | 14 min 17 | 96,8 img/s, 1,1 Go de VRAM |
+| SigLIP 2 So400m @384 | 18 min 51 | 73,2 img/s, 5,1 Go de VRAM |
+| Index globaux (flat) | 2 s | |
+| Index des zones | 57 s | 1,58 M zones → IVF-PQ (nlist 5032, m 32) |
+| Analyse (e-means 142 groupes, UMAP, planches) | 8 min 30 | 5 planches de 4096 px, cases de 32 px |
+| Audit + banc d'essai | 1 min 10 | |
+| **Total** | **≈ 1 h 21** | |
+
+**Atlas** : 80 716 vignettes affichées d'un coup ; chargement ≈ 3 s (carte 2 Mo gzip,
+35 Mo de planches), 144 images/s à l'arrêt. Avec 142 groupes, les numéros se chevauchaient :
+filtre de collision deck.gl, les plus grands groupes passent devant. **Recherche** : 0,25 s par
+requête (texte comme détail) une fois les modèles chargés ; premier appel 15 à 27 s.
+
+**Banc d'essai (P@1, k=10)** — plus de voisins possibles qu'à 2 263 œuvres, d'où des scores
+plus hauts : DINOv3 artiste 65,6 %, style 64,8 %, genre 80,9 % ; **SigLIP 2 artiste 73,0 %,
+style 71,4 %, genre 83,4 %**. Sur les catégories de l'histoire de l'art, l'espace texte-image
+retrouve mieux que l'espace purement visuel : un second « mode de voisinage » SigLIP dans
+l'Atlas serait utile. L'audit confirme § 10 (Fauvisme 20 %, Pointillisme 21 % en P@10 ;
+Delacroix, Manet, Serov mal retrouvés).
+
+**HDBSCAN ne passe pas l'échelle sur ce corpus.** Avec le réglage qui donne 7 familles et
+1,6 % « à part » sur 2 263 œuvres, on obtient 692 micro-familles et 52 % « à part » sur
+80 716. Aucun réglage intermédiaire : `min_cluster_size` 40 → 261 familles / 53 % à part ;
+≥ 100 → un bloc de 70 % du corpus et 0,2 % à part. WikiArt est un continuum sans creux de
+densité nets. HDBSCAN reste une option (`--hdbscan`, avertissement au-delà de 30 % à part) ;
+pour les œuvres isolées, le score d'atypicité (densité des voisins) est le signal fiable.
