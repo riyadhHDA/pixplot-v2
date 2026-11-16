@@ -134,7 +134,7 @@ d'influence ni d'attribution.
 
 ## Auteur
 
-**Riyadh HADJBA**, étudiant en histoire de l'art.
+**Riyadh HADJBA**, étudiant en histoire de l'art à l'[Université de Strasbourg](https://www.unistra.fr).
 PixPlot v2 a été conçu et dirigé par Riyadh HADJBA, et écrit avec l'aide de Claude (Anthropic).
 
 ## Licence et crédits

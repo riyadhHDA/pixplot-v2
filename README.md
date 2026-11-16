@@ -130,7 +130,7 @@ similarity score is a lead, not proof of influence or attribution.
 
 ## Author
 
-**Riyadh HADJBA**, art history student.
+**Riyadh HADJBA**, art history student at the [University of Strasbourg](https://www.unistra.fr).
 PixPlot v2 was designed and directed by Riyadh HADJBA and written with the help of Claude (Anthropic).
 
 ## Licence and credits
