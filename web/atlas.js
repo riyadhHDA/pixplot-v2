@@ -304,20 +304,23 @@
     state.iconTimer = setTimeout(() => { computeHD(); redraw(); }, 120);
   }
 
-  // Haute définition : trois niveaux, chacun dans UNE texture de 4 096 px de côté, de taille
-  // fixe, gérée ici (cases recyclées : les vignettes les moins récemment vues partent).
+  // Haute définition : trois niveaux, chacun dans UNE texture de taille fixe (8 192 px de côté
+  // si la carte graphique le permet), gérée ici (cases recyclées : les moins récemment vues partent).
+  // Un niveau ne sert que s'il peut couvrir TOUTES les vignettes à l'écran, et il les dessine dans
+  // le même ordre que les planches : une œuvre ne passe jamais devant ou derrière sa voisine selon
+  // le zoom (les vignettes se chevauchent sur la carte).
   // Avant, deck.gl empilait chaque vignette dans une texture qui grandissait sans limite
   // (cases noires, ralentissements). Les images arrivent du centre de l'écran vers les bords,
   // huit à la fois ; celles qui ne sont plus à l'écran ne sont pas téléchargées.
   //   cell : taille d'une case (px) · src : vignette demandée au serveur
-  //   from : taille à l'écran (px physiques) à partir de laquelle ce niveau sert · max : combien à la fois
+  //   from : taille à l'écran (px physiques) à partir de laquelle ce niveau sert
   const HD_TIERS = [
-    { cell: 128, src: 256, from: 34, max: 900 },
-    { cell: 512, src: 1024, from: 150, max: 56 },
-    { cell: 1024, src: 1024, from: 520, max: 14 },
-  ].map((t) => ({ ...t, tex: null, slots: [], cache: new Map(), mapping: {}, shown: [], version: 0 }));
-  state.hdTiers = HD_TIERS; // pour mesurer depuis la console
-  const HD_SHEET = 4096, HD_PARALLEL = 8;
+    { cell: 128, src: 256, from: 34 },
+    { cell: 512, src: 1024, from: 150 },
+    { cell: 1024, src: 1024, from: 520 },
+  ].map((t) => ({ ...t, tex: null, slots: [], cap: 0, cache: new Map(), pending: new Set(), mapping: {}, shown: [], version: 0 }));
+  state.hdTiers = HD_TIERS; state.flyTo = (...a) => flyTo(...a); // pour mesurer depuis la console
+  const HD_PARALLEL = 6;          // lots en cours à la fois
   const hdQueue = [];
   let hdActive = 0, hdFlush = null, hdClock = 0;
 
@@ -325,11 +328,14 @@
     if (t.tex) return t.tex;
     const device = deckgl && deckgl.device;
     if (!device) return null;
+    const side = Math.min(8192, (device.limits && device.limits.maxTextureDimension2D) || 4096);
     t.tex = device.createTexture({
-      width: HD_SHEET, height: HD_SHEET, format: "rgba8unorm",
+      width: side, height: side, format: "rgba8unorm",
+      // sans mipmaps : essayés, ils provoquaient des erreurs WebGL et ralentissaient le chargement
       sampler: { minFilter: "linear", magFilter: "linear", addressModeU: "clamp-to-edge", addressModeV: "clamp-to-edge" },
     });
-    const per = HD_SHEET / t.cell;
+    const per = side / t.cell;
+    t.cap = Math.floor(per * per * 0.9); // on garde une marge pour recycler
     for (let i = 0; i < per * per; i++) t.slots.push({ x: (i % per) * t.cell, y: Math.floor(i / per) * t.cell, id: null, used: 0 });
     return t.tex;
   }
@@ -346,42 +352,82 @@
     return best;
   }
 
+  // Les vignettes partent par lots (une requête pour plusieurs dizaines d'images : le navigateur
+  // n'ouvre que 6 connexions à la fois) vers deux « workers » qui les décodent et les mettent à la
+  // taille de leur case hors du fil principal ; il ne reste ici qu'à les copier dans la texture.
+  const HD_BATCH = { 256: 48, 1024: 8 };     // vignettes par lot, selon leur taille
+  const hdWorkers = [];
+  const hdJobs = new Map();
+  let hdJobId = 0;
+
+  function hdWorker() {
+    if (!hdWorkers.length) {
+      for (let k = 0; k < 2; k++) {
+        const w = new Worker("hd-worker.js");
+        w.onmessage = (e) => hdReceive(e.data);
+        hdWorkers.push(w);
+      }
+    }
+    return hdWorkers[hdJobId % hdWorkers.length];
+  }
+
+  function hdSize(t, r) {
+    const a = state.map.aspect[r] || 1; // largeur / hauteur
+    return a >= 1 ? [t.cell, Math.max(1, Math.round(t.cell / a))] : [Math.max(1, Math.round(t.cell * a)), t.cell];
+  }
+
   function hdPump() {
     while (hdActive < HD_PARALLEL && hdQueue.length) {
-      const job = hdQueue.shift();
-      const { t, id } = job;
-      if (t.cache.has(id) || job.gen !== hdClock) continue;
+      const t = hdQueue[0].t, max = HD_BATCH[t.src] || 16, batch = [];
+      while (hdQueue.length && hdQueue[0].t === t && batch.length < max) {
+        const job = hdQueue.shift();
+        if (!t.cache.has(job.id) && job.gen === hdClock && !t.pending.has(job.id)) batch.push(job);
+      }
+      if (!batch.length) continue;
+      const job = ++hdJobId;
+      batch.forEach((b) => t.pending.add(b.id));
+      hdJobs.set(job, { t, batch });
       hdActive++;
-      fetch(`/api/thumb/${t.src}/${id}`)
-        .then((r) => (r.ok ? r.blob() : Promise.reject(r.status)))
-        .then((blob) => createImageBitmap(blob))
-        .then(async (img) => {
-          const k = Math.min(1, t.cell / Math.max(img.width, img.height));
-          const w = Math.max(1, Math.round(img.width * k)), h = Math.max(1, Math.round(img.height * k));
-          const fitted = k < 1 ? await createImageBitmap(img, { resizeWidth: w, resizeHeight: h, resizeQuality: "high" }) : img;
-          const slot = hdFree(t, t.wanted || new Set());
-          if (!slot || !hdTexture(t)) return;
-          t.tex.copyExternalImage({ image: fitted, x: slot.x, y: slot.y, width: w, height: h });
-          if (fitted !== img) fitted.close();
-          img.close();
-          slot.id = id; slot.used = performance.now();
-          t.cache.set(id, slot);
-          t.mapping[id] = { x: slot.x, y: slot.y, width: w, height: h };
-          hdChanged();
-        })
-        .catch(() => {})
-        .finally(() => { hdActive--; hdPump(); });
+      hdWorker().postMessage({
+        job, url: `/api/thumbs/${t.src}?ids=${batch.map((b) => b.id).join(",")}`,
+        dims: batch.map((b) => hdSize(t, state.rowOf.get(b.id))),
+      });
     }
   }
 
+  function hdReceive({ job, images }) {
+    const { t, batch } = hdJobs.get(job) || {};
+    hdJobs.delete(job);
+    hdActive--;
+    if (!t) return;
+    batch.forEach((b) => t.pending.delete(b.id));
+    if (images && hdTexture(t)) {
+      const now = performance.now();
+      batch.forEach((b, k) => {
+        const img = images[k];
+        if (!img) return;
+        const slot = t.cache.has(b.id) ? null : hdFree(t, t.wanted || new Set());
+        if (slot) {
+          t.tex.copyExternalImage({ image: img, x: slot.x, y: slot.y, width: img.width, height: img.height });
+          slot.id = b.id; slot.used = now;
+          t.cache.set(b.id, slot);
+          t.mapping[b.id] = { x: slot.x, y: slot.y, width: img.width, height: img.height };
+        }
+        img.close();
+      });
+      hdChanged();
+    }
+    hdPump();
+  }
+
   function hdChanged() {
-    // regrouper : une mise à jour de l'affichage toutes les 80 ms au plus
+    // regrouper : une mise à jour de l'affichage toutes les 40 ms au plus
     if (hdFlush) return;
     hdFlush = setTimeout(() => {
       hdFlush = null;
       HD_TIERS.forEach(hdShown);
       redraw();
-    }, 80);
+    }, 40);
   }
 
   function hdShown(t) {
@@ -417,20 +463,27 @@
     }
     visible.sort((a, b) => a[1] - b[1]); // le centre de l'écran d'abord
     let total = 0;
+    const byRow = visible.map(([r]) => r).sort((a, b) => a - b); // l'ordre des planches
     HD_TIERS.forEach((t) => {
-      const on = dpx >= t.from && hdTexture(t);
-      t.order = on ? visible.slice(0, t.max).map(([r]) => ({ r, id: state.map.ids[r] })) : [];
+      const on = dpx >= t.from && hdTexture(t) && visible.length <= t.cap;
+      t.order = on ? byRow.map((r) => ({ r, id: state.map.ids[r] })) : [];
       t.wanted = new Set(t.order.map((d) => d.id));
-      if (on) total = Math.max(total, t.order.length);
+      if (on) total = visible.length;
     });
-    // file d'attente : le niveau le plus fin d'abord (peu d'images, celles qu'on regarde),
-    // puis le niveau moyen, qui couvre tout l'écran
-    [...HD_TIERS].reverse().forEach((t) => t.order.forEach((d) => {
-      if (!t.cache.has(d.id)) hdQueue.push({ t, id: d.id, gen: hdClock });
-    }));
+    // file d'attente : du centre vers les bords ; le niveau le plus fin d'abord (peu d'images,
+    // celles qu'on regarde), puis le niveau moyen
+    [...HD_TIERS].reverse().forEach((t) => {
+      if (!t.order.length) return;
+      for (const [r] of visible) {
+        const id = state.map.ids[r];
+        if (!t.cache.has(id)) hdQueue.push({ t, id, gen: hdClock });
+      }
+    });
     HD_TIERS.forEach(hdShown);
     hdPump();
-    $("hint").textContent = `Haute définition : ${total} vignettes au centre · clic : fiche`;
+    $("hint").textContent = total
+      ? `Haute définition : ${total} vignettes · clic : fiche`
+      : `${state.n.toLocaleString("fr-FR")} vignettes · zoomez pour la haute définition · clic : fiche`;
   }
 
   function spriteColor(r) {

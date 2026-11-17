@@ -14,6 +14,17 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.13.5 — 17/11/2026 · Images : ordre stable et chargement par lots
+
+- Correction : selon le zoom, des vignettes qui se chevauchent passaient l'une devant l'autre (la haute
+  définition ne couvrait que le centre de l'écran). Chaque niveau couvre désormais toutes les vignettes
+  visibles (textures de 8 192 px si la carte graphique le permet), dans le même ordre que les planches.
+- Vignettes par lots : `/api/thumbs/{taille}?ids=…` en renvoie jusqu'à 48 en une requête (le navigateur
+  n'ouvre que 6 connexions à la fois) ; deux *workers* les décodent et les mettent à la taille de leur
+  case hors du fil principal.
+- WikiArt 81k, six zooms : 3 053 vignettes en 1,2 s au lieu de 6,7 s ; dans des zones jamais visitées,
+  environ 925 vignettes par seconde au lieu de 450 ; aucune image de plus de 10 ms.
+
 ## 0.13.4 — 17/11/2026 · Affichage des images plus rapide
 
 - Atlas : les vignettes en haute définition passent par trois textures de taille fixe (4 096 px), gérées

@@ -1,6 +1,6 @@
 # Feuille de route
 
-[English](ROADMAP.md) · **Français** · Mise à jour : 16/11/2026 · Version actuelle : **0.13.4**
+[English](ROADMAP.md) · **Français** · Mise à jour : 16/11/2026 · Version actuelle : **0.13.5**
 
 Ce qui est fait est dans l'[historique des versions](CHANGELOG.fr.md). Ce document dit ce
 qui vient ensuite, dans quel ordre, et à quelle condition une étape est réussie.

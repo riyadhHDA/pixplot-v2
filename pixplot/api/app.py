@@ -11,7 +11,7 @@ from pathlib import Path
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.gzip import GZipMiddleware
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
@@ -369,6 +369,25 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
         if not p.exists():
             raise HTTPException(404, "Vignette absente")
         return FileResponse(p, media_type="image/webp", headers=CACHE)
+
+    @app.get("/api/thumbs/{size}")
+    def thumbs(size: int, ids: str = Query(..., max_length=2000)):
+        """Plusieurs vignettes en une réponse (l'Atlas en demande des centaines d'un coup ; le
+        navigateur n'ouvre que 6 connexions à la fois). Corps : les fichiers WebP bout à bout ;
+        en-tête ``X-Lengths`` : la taille de chacun, 0 si absent, dans l'ordre de ``ids``."""
+        if size not in THUMB_SIZES:
+            raise HTTPException(400, f"Tailles disponibles : {THUMB_SIZES}")
+        try:
+            wanted = [int(x) for x in ids.split(",") if x][:128]
+        except ValueError:
+            raise HTTPException(400, "ids : des numéros séparés par des virgules")
+        parts = []
+        for i in wanted:
+            p = thumb_path(data.settings.thumbs_dir, i, size) if i in data.row_of else None
+            parts.append(p.read_bytes() if p is not None and p.exists() else b"")
+        return Response(b"".join(parts), media_type="application/octet-stream",
+                        headers={**CACHE, "X-Lengths": ",".join(str(len(b)) for b in parts),
+                                 "Access-Control-Expose-Headers": "X-Lengths"})
 
     @app.get("/api/image/{artwork_id}")
     def image(artwork_id: int):

@@ -60,6 +60,15 @@ def test_images_and_search(client):
     assert r.status_code == 200 and r.headers["content-type"] == "image/webp"
     assert c.get(f"/api/thumb/999/{first}").status_code == 400
     assert c.get("/api/thumb/64/999999").status_code == 404
+    # plusieurs vignettes en une requête : fichiers bout à bout, tailles dans X-Lengths
+    ids = c.get("/api/map").json()["ids"][:3]
+    one = [c.get(f"/api/thumb/256/{i}").content for i in ids]
+    r = c.get("/api/thumbs/256", params={"ids": ",".join(map(str, [*ids, 999999]))})
+    assert r.status_code == 200
+    assert r.headers["x-lengths"] == ",".join(str(len(b)) for b in one) + ",0"   # 999999 : absente
+    assert r.content == b"".join(one)
+    assert c.get("/api/thumbs/999", params={"ids": "1"}).status_code == 400
+    assert c.get("/api/thumbs/256", params={"ids": "a,b"}).status_code == 400
     assert c.get(f"/api/image/{first}").status_code == 200
     res = c.get("/api/search", params={"q": "rouge"}).json()
     assert res["count"] == 6

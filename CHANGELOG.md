@@ -14,6 +14,16 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.13.5 — 2026-11-17 · Images: stable order and batched loading
+
+- Fix: depending on zoom, overlapping thumbnails swapped places (high definition only covered the centre
+  of the screen). Each level now covers every visible thumbnail (8,192 px textures when the GPU allows),
+  in the same order as the sprite sheets.
+- Batched thumbnails: `/api/thumbs/{size}?ids=…` returns up to 48 in one request (browsers open only 6
+  connections at a time); two workers decode them and size them to their cell off the main thread.
+- WikiArt 81k, six zooms: 3,053 thumbnails in 1.2 s instead of 6.7 s; in never-visited areas, about 925
+  thumbnails per second instead of 450; no frame over 10 ms.
+
 ## 0.13.4 — 2026-11-17 · Faster image display
 
 - Atlas: high-definition thumbnails now go through three fixed-size textures (4,096 px) managed by the

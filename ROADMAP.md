@@ -1,6 +1,6 @@
 # Roadmap
 
-**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-16 · Current version: **0.13.4**
+**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-16 · Current version: **0.13.5**
 
 What is done is in the [changelog](CHANGELOG.md). This document says what comes next, in
 which order, and what makes a step a success.
