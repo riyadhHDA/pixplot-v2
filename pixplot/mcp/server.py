@@ -36,7 +36,8 @@ gravure). Comparer les espaces aide à dire POURQUOI deux œuvres se ressemblent
 Méthode conseillée :
 1. corpus_overview pour connaître le corpus, ses groupes et ce qui est disponible.
 2. Chercher : search_by_text (description, en français ou en anglais), similar_artworks,
-   search_detail (un cadre sur une œuvre : main, drapé, objet…), get_group, find_atypical.
+   search_detail (un cadre sur une œuvre : main, drapé, objet…), search_zones (un détail
+   décrit par des mots : « une auréole », « un crâne »), get_group, find_atypical.
 3. Regarder : view_artwork, view_detail, compare_artworks (planche numérotée). Ne conclus
    jamais sur une œuvre sans l'avoir regardée.
 4. Documenter : notebook_add pour garder une piste dans le carnet de l'historien (il le voit
@@ -129,6 +130,16 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
         a = data.artwork(check(artwork_id), k=min(max(k, 1), 100), space=space)
         return {"artwork": {"id": a["id"], "label": a["label"], "group": a["cluster"]},
                 "space": space, "neighbors": a["neighbors"]}
+
+    @server.tool()
+    def search_zones(query: str, k: int = 20) -> dict:
+        """Œuvres dont une ZONE (un quart ou un seizième de l'image) répond à une description :
+        « une auréole », « un crâne », « une main qui bénit ». Chaque résultat donne la zone
+        (box, en fractions de l'image) : regarde-la avec view_detail avant de conclure."""
+        try:
+            return engines.zones(query, k=min(max(k, 1), 100))
+        except SearchUnavailable as exc:
+            return {"error": str(exc)}
 
     @server.tool()
     def search_detail(artwork_id: int, x0: float, y0: float, x1: float, y1: float, k: int = 20) -> dict:

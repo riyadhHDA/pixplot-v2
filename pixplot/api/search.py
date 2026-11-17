@@ -16,6 +16,7 @@ import numpy as np
 from ..encoders.registry import get_encoder
 from ..features.store import FeatureStore
 from ..index.regions import RegionIndex, encode_box, find_region_index, square_to_image
+from ..index.textzones import ZoneIndex, find_zone_index
 from ..runs import list_runs
 
 
@@ -32,6 +33,7 @@ class SearchEngines:
         self._text_encoder = None
         self._text_store = None
         self._text_index = None
+        self._zone_index = None
 
     # ------------------------------------------------------------------ disponibilité
     def text_run(self):
@@ -42,7 +44,10 @@ class SearchEngines:
     def status(self) -> dict:
         regions = find_region_index(self.data.features, runs_dir=self.data.settings.runs_dir)
         text = self.text_run()
+        zones = find_zone_index(self.data.settings.runs_dir)
         return {
+            "zones": zones is not None,
+            "zone_index": zones.id if zones else None,
             "region": regions is not None,
             "region_index": regions.id if regions else None,
             "text": text is not None,
@@ -113,3 +118,18 @@ class SearchEngines:
             pairs = self._text_store.search(vec, k=k * 2)
         results = [{**self.data.brief(i), "score": round(s, 4)} for i, s in pairs if i in self.data.row_of][:k]
         return {"query": query, "features": self._text_store.run.id, "results": results}
+
+    # ------------------------------------------------------------------ zone décrite par des mots
+    def zones(self, query: str, k: int = 60) -> dict:
+        """Les œuvres dont une zone (grilles 2×2 et 4×4) répond le mieux à la description."""
+        if self._zone_index is None:
+            run = find_zone_index(self.data.settings.runs_dir)
+            if run is None:
+                raise SearchUnavailable("Index des zones absent : lancez `pixplot zones`.")
+            self._zone_index = ZoneIndex(run)
+        with self._lock:
+            self._load_text()
+            vec = self._text_encoder.encode_text([query])[0]
+        hits = self._zone_index.search(vec, k=k, allowed=self.data.row_of)
+        results = [{**self.data.brief(h["id"]), "score": h["score"], "box": h["box"], "grid": h["grid"]} for h in hits]
+        return {"query": query, "index": self._zone_index.run.id, "results": results}

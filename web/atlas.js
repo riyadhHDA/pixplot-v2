@@ -117,6 +117,9 @@
     const textOpt = $("search-mode").querySelector('option[value="text"]');
     textOpt.disabled = !state.searchStatus.text;
     textOpt.title = state.searchStatus.text ? "" : "Calculez d'abord les vecteurs SigLIP 2";
+    const zoneOpt = $("search-mode").querySelector('option[value="zone"]');
+    zoneOpt.disabled = !state.searchStatus.zones;
+    zoneOpt.title = state.searchStatus.zones ? "Chercher une zone d'œuvre avec des mots : « une auréole », « un crâne »" : "Calculez d'abord l'index des zones : pixplot zones";
     buildColorOptions();
     renderGroups();
     computeGroupLabels();
@@ -1501,6 +1504,17 @@
       query: { id: d.id, box }, results: res.results });
   }
 
+  async function runZoneSearch(q) {
+    showPanel("results", "Zones décrites");
+    $("fiche-body").innerHTML = `<div class="loading">Recherche des zones « ${esc(q)} »…<br><small>La toute première recherche charge SigLIP 2 (jusqu'à une minute).</small></div>`;
+    try {
+      const res = await getJSON(`/api/search/zones?q=${encodeURIComponent(q)}&k=60`);
+      renderResults({ kind: "zone", title: `« ${q} »`, sub: `${res.results.length} œuvres dont une zone répond à la description`, results: res.results });
+    } catch (err) {
+      $("fiche-body").innerHTML = `<div class="loading">Échec : ${esc(err.message)}</div>`;
+    }
+  }
+
   // ------------------------------------------------------------------ panneau de résultats
   function drawCrop(canvas, id, box, maxH) {
     const img = new Image();
@@ -1519,7 +1533,7 @@
   function renderResults(r) {
     state.lastResults = r;
     const cards = r.results.map((x, n) => `<button class="result" data-id="${x.id}" title="${esc(x.label)}">
-        ${r.kind === "region" ? `<canvas width="300" height="130" data-n="${n}"></canvas>` : `<img src="/api/thumb/256/${x.id}" alt="" loading="lazy">`}
+        ${r.kind === "region" || r.kind === "zone" ? `<canvas width="300" height="130" data-n="${n}"></canvas>` : `<img src="/api/thumb/256/${x.id}" alt="" loading="lazy">`}
         <div class="score">${x.score.toFixed(3)} · groupe ${x.cluster}</div>
         <div class="lbl">${esc(pretty(x.label))}</div></button>`).join("");
     $("fiche-body").innerHTML = `<div class="results-head"><h3>${esc(r.title)}</h3><div class="sub">${esc(r.sub)}</div>
@@ -1529,14 +1543,16 @@
       <div class="results-grid">${cards}</div>
       <div class="prov" style="margin:0 16px 20px">${r.kind === "region"
         ? "Chaque vignette montre la zone de l'œuvre la plus proche du détail tracé (grilles 2×2 et 4×4)."
-        : "Classement par SigLIP 2 : ressemblance entre la description et l'image, à vérifier œuvre par œuvre."}</div>`;
+        : r.kind === "zone"
+          ? "Chaque vignette montre la zone de l'œuvre (grilles 2×2 et 4×4) que SigLIP 2 rapproche le plus de la description. Une zone couvre un quart ou un seizième de l'œuvre : le détail est dedans, pas forcément au centre. À vérifier œuvre par œuvre."
+          : "Classement par SigLIP 2 : ressemblance entre la description et l'image, à vérifier œuvre par œuvre."}</div>`;
     if (r.query) drawCrop($("query-crop"), r.query.id, r.query.box, 160);
-    if (r.kind === "region") $("fiche-body").querySelectorAll(".result canvas").forEach((c) => {
+    if (r.kind === "region" || r.kind === "zone") $("fiche-body").querySelectorAll(".result canvas").forEach((c) => {
       const x = r.results[Number(c.dataset.n)];
       drawCrop(c, x.id, x.box, 130);
     });
     $("fiche-body").querySelectorAll(".result").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.id), true)));
-    showPanel("results", r.kind === "region" ? "Détails semblables" : "Recherche par description");
+    showPanel("results", r.kind === "region" ? "Détails semblables" : r.kind === "zone" ? "Zones décrites" : "Recherche par description");
     state.lastList = () => renderResults(r);
     $("note-results").addEventListener("click", () => addToNotebook({
       kind: r.kind === "region" ? "detail" : "recherche", title: r.kind === "region" ? `Détail de l'œuvre n° ${r.query.id}` : r.title,
@@ -1546,15 +1562,13 @@
     $("export-results").addEventListener("click", (e) => {
       const ids = (r.query ? [r.query.id] : []).concat(r.results.map((x) => x.id));
       const details = {};
-      if (r.kind === "region") {
-        details[r.query.id] = r.query.box;
-        r.results.forEach((x) => { if (x.box) details[x.id] = x.box; });
-      }
+      if (r.kind === "region") details[r.query.id] = r.query.box;
+      if (r.kind === "region" || r.kind === "zone") r.results.forEach((x) => { if (x.box) details[x.id] = x.box; });
       exportPack({
         ids, title: r.kind === "region" ? "Détails semblables" : r.title,
         selection: r.kind === "region"
           ? { "méthode": "recherche par détail dans l'Atlas", "œuvre de départ": String(r.query.id), "cadre": JSON.stringify(r.query.box.map((v) => +v.toFixed(3))) }
-          : { "méthode": "recherche en texte libre (SigLIP 2) dans l'Atlas", "requête": r.title },
+          : { "méthode": r.kind === "zone" ? "zone décrite par des mots (SigLIP 2 sur 20 zones par œuvre)" : "recherche en texte libre (SigLIP 2) dans l'Atlas", "requête": r.title },
         scores: Object.fromEntries(r.results.map((x) => [x.id, x.score])), details,
       }, e.currentTarget);
     });
@@ -1649,19 +1663,22 @@
     $("search-mode").addEventListener("change", (e) => {
       $("search").placeholder = e.target.value === "text"
         ? "Décrivez ce que vous cherchez, puis Entrée : « Annonciation dans un jardin »…"
-        : "Rechercher : artiste, style, n° d'œuvre…";
+        : e.target.value === "zone"
+          ? "Décrivez un détail, puis Entrée : « une auréole », « un crâne », « une main qui bénit »…"
+          : "Rechercher : artiste, style, n° d'œuvre…";
       $("search").focus();
     });
     $("search-form").addEventListener("submit", (e) => {
       e.preventDefault();
       const q = $("search").value.trim();
       if ($("search-mode").value === "text" && q.length >= 2) runTextSearch(q);
+      if ($("search-mode").value === "zone" && q.length >= 2) runZoneSearch(q);
     });
     $("search").addEventListener("input", (e) => {
       clearTimeout(t);
       const q = e.target.value.trim();
       $("search-clear").hidden = !q;
-      if ($("search-mode").value === "text") return; // recherche lancée par Entrée seulement
+      if ($("search-mode").value !== "meta") return; // recherche lancée par Entrée seulement
       t = setTimeout(async () => {
         if (!q) { clearHighlight(); return; }
         const res = await getJSON(`/api/search?q=${encodeURIComponent(q)}`);

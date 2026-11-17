@@ -483,6 +483,42 @@ def cmd_places(args) -> int:
     return 0
 
 
+def cmd_zones(args) -> int:
+    from .encoders.registry import get_encoder
+    from .index.textzones import build_zone_index, extract_zones, find_zone_run
+
+    import time
+
+    s = get_settings(args.data)
+    log = Path(s.data_dir) / "zones.log"
+
+    def say(m):
+        print(m, flush=True)
+        with open(log, "a", encoding="utf-8") as f:
+            f.write(f"{time.strftime('%H:%M:%S')} {m}\n")
+
+    if not args.index_only:
+        runs = [r for r in list_runs("features", runs_dir=s.runs_dir)
+                if str(r.manifest["params"].get("encoder", "")).startswith("siglip2")
+                and r.manifest.get("status") == "complete" and not r.manifest["params"].get("limit")]
+        if not runs:
+            raise SystemExit("Pas de vecteurs SigLIP 2 : lancez d'abord `pixplot embed --encoder siglip2_so400m`.")
+        text_run = runs[-1]
+        p = text_run.manifest["params"]
+        say(f"Zones SigLIP 2 d'après {text_run.id} (grilles 2×2 et 4×4 : 20 zones par œuvre)")
+        enc = get_encoder(p["encoder"], hf_model=p.get("weights"), input_size=p.get("input_size"))
+        zone_run = extract_zones(s, text_run, enc, batch_images=args.batch, workers=args.workers,
+                                 limit=args.limit, say=say)
+        del enc
+    else:
+        zone_run = find_zone_run(s.runs_dir, complete_only=True)
+        if zone_run is None:
+            raise SystemExit("Aucune extraction de zones terminée.")
+    build_zone_index(zone_run, runs_dir=s.runs_dir, say=say)
+    say("Terminé : la recherche « zone par des mots » est disponible dans l'Atlas (mode Description → Zones).")
+    return 0
+
+
 def cmd_corpus(args) -> int:
     from .api.data import AtlasData
 
@@ -884,6 +920,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--centile", type=float, default=0.35, help="centile maximal dans le regard qui sépare")
     p.add_argument("--keep", type=int, default=300, help="paires gardées par couple de regards")
     p.set_defaults(func=cmd_disagreements)
+
+    p = sub.add_parser("zones", help="chercher une zone avec des mots : 20 zones par œuvre vues par SigLIP 2, puis index")
+    p.add_argument("--limit", type=int, help="seulement les N premières œuvres (essai)")
+    p.add_argument("--batch", type=int, default=4, help="œuvres par lot GPU (× 20 zones)")
+    p.add_argument("--workers", type=int, default=4, help="fils de lecture et découpage des images")
+    p.add_argument("--index-only", action="store_true", help="reconstruire seulement l'index")
+    p.set_defaults(func=cmd_zones)
 
     p = sub.add_parser("import-places", help="lieux typés et datés d'un fichier CSV (path|id, type, place, lat, lon, date, source)")
     p.add_argument("file")

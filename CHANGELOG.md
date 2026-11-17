@@ -14,6 +14,15 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.13.3 — 2026-11-17 · Searching a region with words
+
+- `pixplot zones`: each work cut into 20 regions (2×2 and 4×4 grids) run through SigLIP 2, resumable
+  extraction, then a compressed index with exact re-ranking.
+- Atlas: "Zone décrite" search mode ("a halo", "a skull"); `/api/search/zones` API; `search_zones`
+  MCP tool (15 tools).
+- WikiArt 81k: 1,614,320 regions in 6 h 21; a search in 0.5 s (ARCHITECTURE § 22).
+- Fix: region runs are no longer mistaken for whole-work vectors.
+
 ## 0.13.2 — 2026-11-17 · Typed, dated places
 
 - Several places per work, each with a type (creation, exhibition, holding, depicted place, artist's

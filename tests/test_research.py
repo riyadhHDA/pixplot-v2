@@ -523,3 +523,34 @@ def test_places_api(env):
     k = next(i for i, (row, t) in enumerate(zip(r["row"], r["type"])) if t == "creation" and row == data.row_of[first])
     assert r["year"][k] == 1870 and r["lat"][k] == pytest.approx(48.857)
     assert "creation" in c.get("/api/info").json()["places"]
+
+
+def test_zone_boxes_and_index(tmp_path):
+    pytest.importorskip("faiss")
+    from pixplot.index.textzones import ZoneIndex, build_zone_index, crops, zone_boxes
+    from pixplot.runs import create_run
+
+    boxes = zone_boxes()
+    assert len(boxes) == 20 and boxes[0] == (2, (0.0, 0.0, 0.5, 0.5)) and boxes[-1] == (4, (0.75, 0.75, 1.0, 1.0))
+    parts = crops(Image.new("RGB", (400, 200)), boxes)
+    assert parts[0].size == (200, 100) and parts[-1].size == (100, 50)
+
+    # 30 œuvres × 20 zones aléatoires ; une zone « cible » plantée dans l'œuvre 7, case 13
+    rng = np.random.default_rng(0)
+    D = 64
+    Z = rng.normal(size=(30, 20, D)).astype(np.float32)
+    target = rng.normal(size=D).astype(np.float32)
+    target /= np.linalg.norm(target)
+    Z[7, 13] = target * 3
+    Z /= np.linalg.norm(Z, axis=2, keepdims=True)
+    zr = create_run("features", "zones_essai", {"encoder": "essai", "grids": [2, 4]}, runs_dir=tmp_path)
+    np.save(zr.path / "ids.npy", np.arange(100, 130))
+    np.save(zr.path / "zones.npy", Z.astype(np.float16))
+    np.save(zr.path / "done.npy", np.ones(30, dtype=bool))
+    zr.complete()
+    run = build_zone_index(zr, runs_dir=tmp_path, pca_dim=16, say=lambda m: None)
+    zi = ZoneIndex(run)
+    hit = zi.search(target, k=3)[0]
+    assert hit["id"] == 107 and hit["box"] == list(boxes[13][1]) and hit["grid"] == 4
+    assert hit["score"] == pytest.approx(1.0, abs=2e-3)   # reclassement exact
+    assert all(h["id"] != 107 for h in zi.search(target, k=3, allowed={100, 101, 102}))

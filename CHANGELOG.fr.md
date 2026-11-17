@@ -14,6 +14,15 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.13.3 — 17/11/2026 · Chercher une zone avec des mots
+
+- `pixplot zones` : chaque œuvre découpée en 20 zones (grilles 2×2 et 4×4) passées dans SigLIP 2,
+  extraction reprenable, puis index compressé avec reclassement exact.
+- Atlas : mode de recherche « Zone décrite » (« une auréole », « un crâne ») ; API `/api/search/zones` ;
+  outil MCP `search_zones` (15 outils).
+- WikiArt 81k : 1 614 320 zones en 6 h 21 ; une recherche en 0,5 s (ARCHITECTURE § 22).
+- Correction : les runs de zones ne sont plus pris pour des vecteurs d'œuvres entières.
+
 ## 0.13.2 — 17/11/2026 · Lieux typés et datés
 
 - Plusieurs lieux par œuvre, chacun avec un type (création, exposition, conservation, lieu représenté,

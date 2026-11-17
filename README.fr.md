@@ -12,7 +12,7 @@
   <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776ab">
   <img alt="100 % local" src="https://img.shields.io/badge/100%25-local-2c2c31">
   <img alt="GPU : AMD ROCm ou CPU" src="https://img.shields.io/badge/GPU-AMD%20ROCm%20%7C%20CPU-9b978e">
-  <img alt="Serveur MCP" src="https://img.shields.io/badge/MCP-14%20outils-e0b040">
+  <img alt="Serveur MCP" src="https://img.shields.io/badge/MCP-15%20outils-e0b040">
 </p>
 
 # PixPlot v2
@@ -57,7 +57,7 @@ répond en 0,25 s.
 | **Atlas** | Carte interactive (deck.gl) où toutes les vignettes sont visibles, fiches d'œuvre aux métadonnées sourcées, **comparateur** (jusqu'à six œuvres côte à côte, similarité selon chaque regard), **carnet de recherche**, **une carte par regard**, dispositions **chronologique** et **géographique** (fond de carte du monde, hors ligne) quand les dates ou les coordonnées existent. Écran d'accueil, aide et raccourcis clavier ; s'adapte aux écrans de portable. |
 | **Un regard critique sur le catalogue** | Audit à l'aveugle (les modèles ne voient que les pixels) et liste des **étiquettes à vérifier** : les œuvres que toutes leurs voisines contredisent, erreur de catalogue ou œuvre réellement singulière. |
 | **Collections de musées** | `pixplot import-iiif` charge n'importe quel manifeste ou collection IIIF v2/v3 (images à la taille voulue, métadonnées normalisées, droits). |
-| **Avec Claude** | Un serveur MCP à 14 outils : Claude cherche, **regarde les images et les détails**, compare, lit les groupes et écrit dans votre carnet, selon des consignes de prudence d'interprétation. |
+| **Avec Claude** | Un serveur MCP à 15 outils : Claude cherche, **regarde les images et les détails**, compare, lit les groupes et écrit dans votre carnet, selon des consignes de prudence d'interprétation. |
 | **Traçabilité** | Chaque résultat est un *run* versionné (modèle, paramètres, run parent). Les Research Packs (.zip) réunissent images, métadonnées sourcées, relations explicites et provenance, pour un collègue ou un autre LLM. |
 
 ## Ce que les expériences ont montré
@@ -109,6 +109,7 @@ pixplot maps                            # une carte UMAP par regard (sujet, coul
 pixplot communities                     # groupes Leiden emboîtés (familles ⊃ groupes) pour chaque regard
 pixplot disagreements                   # paires qu'un regard rapproche et qu'un autre sépare
 pixplot zonebench                       # chercher une zone avec des mots : banc d'essai RichArt
+pixplot zones                           # index des zones (20 par œuvre, SigLIP 2) : « une auréole », « un crâne »
 pixplot corpus                          # bilan critique : ce qui manque au corpus, ce que voit chaque regard
 pixplot places --derive                 # lieux typés et datés déduits des métadonnées (musée, naissance…)
 pixplot import-places lieux.csv         # lieux typés et datés d'un fichier (création, exposition, conservation…)

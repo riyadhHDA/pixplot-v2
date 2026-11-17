@@ -116,7 +116,7 @@ Commande : `pixplot analyze [--clusters N] [--hdbscan]`. Graine fixe : reproduct
   `/api/clusters`, `/api/artwork/{id}` (métadonnées + sources, voisines, provenance du calcul),
   `/api/search?q=`, `/api/thumb/{taille}/{id}`, `/api/image/{id}` (images servies par
   identifiant uniquement, jamais par chemin). Documentation automatique : `/api/docs`.
-- **Serveur MCP** (`pixplot mcp`, stdio, SDK officiel `mcp` 2.x) : 14 outils —
+- **Serveur MCP** (`pixplot mcp`, stdio, SDK officiel `mcp` 2.x) : 15 outils —
   `corpus_overview`, `search_by_text`, `similar_artworks` (paramètre `space`),
   `search_detail`, `get_artwork`, `view_artwork`, `view_detail`, `compare_artworks`,
   `get_group`, `find_atypical`, `check_labels`, `notebook_add`, `notebook_list`,
@@ -704,3 +704,35 @@ Haven), 7 naissances et 8 morts d'artistes datées (Liverpool, Londres, Munich, 
 la carte montre déjà le trajet des œuvres britanniques vers une collection américaine.
 L'import Paris Musées (en attente : leur site était hors service) fournira lieux de
 conservation, dates et lieux représentés à grande échelle.
+
+## 22. Index des zones SigLIP 2 : chercher un détail avec des mots (17/11/2026)
+
+Suite logique du § 19 : puisque SigLIP 2 appliqué à des **zones découpées** est la meilleure
+méthode mesurée sur RichArt, `pixplot zones` découpe chaque œuvre selon des grilles 2 × 2 et
+4 × 4 (20 zones, un quart ou un seizième de l'œuvre), passe chaque zone dans SigLIP 2 et
+indexe le tout.
+
+- **Extraction** (GPU, reprenable, journal dans `<données>/zones.log`) : zones découpées dans
+  les vignettes de 1 024 px, mises au format du modèle sans recadrage (letterbox), vecteurs
+  gardés en float16 (`features/zones_*`, 3,7 Go pour 80 716 œuvres).
+- **Index** (`index/textzones_*`) : PCA à 256 dimensions, index FAISS en float16. Les vecteurs
+  projetés ne sont **pas renormalisés** : le produit scalaire avec une phrase vaut alors
+  q·v − q·moyenne, dont le second terme est le même pour toutes les zones, ce qui préserve le
+  classement. Les meilleures candidates sont ensuite **reclassées exactement** avec leurs
+  vecteurs d'origine : sur le corpus d'essai, les cinq premiers résultats sont identiques à
+  ceux d'un calcul complet, pour toutes les requêtes testées.
+- **Atlas** : mode de recherche **« Zone décrite »** (« une auréole », « un crâne », « une
+  main qui bénit ») ; chaque résultat montre la zone découpée. API `/api/search/zones`, outil
+  MCP `search_zones` (15 outils).
+- Les runs de zones sont exclus des listes de vecteurs (`list_runs`) : ce ne sont pas des
+  regards, et la recherche par description ne doit jamais les prendre pour des vecteurs
+  d'œuvres entières (bug trouvé en test et corrigé).
+
+**Sur WikiArt 81k** (17/11/2026) : 1 614 320 zones pour 80 716 œuvres, calculées d'une traite
+en 6 h 21 sur la RX 7900 GRE (71 zones par seconde, sans erreur) ; la PCA garde 92 % de la
+variance ; l'index pèse 818 Mo (les vecteurs d'origine 3,5 Go). Une recherche répond en
+0,5 s. Essais : « a halo around a saint's head » → six auréoles, dont des auréoles
+rayonnantes ; « a skull » → six crânes, peints ou gravés ; « a hand holding a letter » → six
+mains tenant une lettre ; « a sailing ship » → des voiliers. Une location de GPU (H100) aurait
+ramené le calcul à 30–45 min, mais avec l'envoi des images et la mise en route, le gain réel
+aurait été de l'ordre de 2 à 3 h de bout en bout, au prix d'images sorties de la machine.

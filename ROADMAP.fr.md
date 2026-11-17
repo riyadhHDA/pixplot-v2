@@ -1,6 +1,6 @@
 # Feuille de route
 
-[English](ROADMAP.md) · **Français** · Mise à jour : 16/11/2026 · Version actuelle : **0.13.2**
+[English](ROADMAP.md) · **Français** · Mise à jour : 16/11/2026 · Version actuelle : **0.13.3**
 
 Ce qui est fait est dans l'[historique des versions](CHANGELOG.fr.md). Ce document dit ce
 qui vient ensuite, dans quel ordre, et à quelle condition une étape est réussie.
@@ -49,8 +49,8 @@ documenté et l'on n'y revient pas. Chaque étape réussie devient une version m
 
 > **Résultat** (ARCHITECTURE § 19, `pixplot zonebench`) : sur RichArt, SigLIP 2 appliqué aux zones
 > découpées bat TIPSv2 (phrase : 28 % contre 20 % en première position) ; le pointage de TIPSv2
-> dépasse à peine « toujours le centre » (51 %). Suite : un **index de zones SigLIP 2** (≈ 20 zones par
-> œuvre, ≈ 6 h de calcul pour WikiArt 81k).
+> dépasse à peine « toujours le centre » (51 %). **Index de zones SigLIP 2 fait en 0.13.3** : 1,6 million de
+> zones, recherche « Zone décrite » dans l'Atlas (ARCHITECTURE § 22).
 
 - **Pourquoi** : aujourd'hui, on compare une zone à une zone (DINOv3) ou une phrase à une
   image entière (SigLIP 2). Rien ne compare une phrase à une zone : « auréole », « main qui

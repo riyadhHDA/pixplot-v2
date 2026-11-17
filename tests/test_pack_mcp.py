@@ -73,7 +73,7 @@ def test_mcp_tools(data):
 
     async def scenario():
         tools = {t.name for t in await srv.list_tools()}
-        assert tools == {"corpus_overview", "search_by_text", "similar_artworks", "search_detail", "get_artwork",
+        assert tools == {"corpus_overview", "search_by_text", "similar_artworks", "search_detail", "search_zones", "get_artwork",
                          "view_artwork", "view_detail", "compare_artworks", "get_group", "find_atypical",
                          "export_research_pack", "check_labels", "notebook_add", "notebook_list"}
         overview = json.loads((await call("corpus_overview", {})).content[0].text)

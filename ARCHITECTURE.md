@@ -115,7 +115,7 @@ Command: `pixplot analyze [--clusters N] [--hdbscan]`. Fixed seed: reproducible.
   computation), search (metadata, text, detail), comparator, notebook, labels to check,
   thumbnails and images (served by identifier only, never by path). Automatic
   documentation: `/api/docs`.
-- **MCP server** (`pixplot mcp`, stdio, official `mcp` 2.x SDK): 14 tools —
+- **MCP server** (`pixplot mcp`, stdio, official `mcp` 2.x SDK): 15 tools —
   `corpus_overview`, `search_by_text`, `similar_artworks` (with a `space` parameter),
   `search_detail`, `get_artwork`, `view_artwork`, `view_detail`, `compare_artworks`,
   `get_group`, `find_atypical`, `check_labels`, `notebook_add`, `notebook_list`,
@@ -641,3 +641,28 @@ saying which place it was.
 On the Yale Center for British Art corpus, `--derive` yields 18 holding places (New Haven), 7
 dated artist births and 8 deaths (Liverpool, London, Munich, Bathampton…): the map already shows
 British works travelling to an American collection.
+
+## 22. SigLIP 2 region index: searching a detail with words (17/11/2026)
+
+The logical follow-up to § 19: since SigLIP 2 applied to **cropped regions** is the best method
+measured on RichArt, `pixplot zones` cuts each work along 2 × 2 and 4 × 4 grids (20 regions, a
+quarter or a sixteenth of the work), runs each region through SigLIP 2 and indexes them.
+
+- **Extraction** (GPU, resumable, log in `<data>/zones.log`): regions cut from the 1,024-px
+  thumbnails, letterboxed to the model's input without cropping, vectors kept in float16
+  (`features/zones_*`, 3.7 GB for 80,716 works).
+- **Index** (`index/textzones_*`): PCA to 256 dimensions, float16 FAISS index. Projected vectors
+  are **not renormalised**: the dot product with a sentence is then q·v − q·mean, whose second
+  term is the same for all regions, so the ranking is preserved. The best candidates are then
+  **re-ranked exactly** with their original vectors: on the test corpus the top five results
+  match a full computation for every query tested.
+- **Atlas**: **"Zone décrite"** search mode ("a halo", "a skull", "a blessing hand"); each
+  result shows the cropped region. `/api/search/zones` API, `search_zones` MCP tool (15 tools).
+- Region runs are excluded from feature listings (`list_runs`): they are not ways of seeing, and
+  text search must never mistake them for whole-work vectors (a bug found in testing and fixed).
+
+**On WikiArt 81k** (2026-11-17): 1,614,320 regions for 80,716 works, computed in one go in 6 h 21
+on the RX 7900 GRE (71 regions per second, no errors); PCA keeps 92% of the variance; the index
+weighs 818 MB (original vectors 3.5 GB). A search answers in 0.5 s. Trials: "a halo around a
+saint's head" → six halos, including radiant ones; "a skull" → six skulls, painted or engraved;
+"a hand holding a letter" → six hands holding a letter; "a sailing ship" → sailing ships.

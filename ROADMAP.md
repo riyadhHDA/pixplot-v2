@@ -1,6 +1,6 @@
 # Roadmap
 
-**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-16 · Current version: **0.13.2**
+**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-16 · Current version: **0.13.3**
 
 What is done is in the [changelog](CHANGELOG.md). This document says what comes next, in
 which order, and what makes a step a success.
@@ -48,7 +48,7 @@ step becomes a minor version.
 
 > **Result** (ARCHITECTURE § 19, `pixplot zonebench`): on RichArt, SigLIP 2 on cropped regions beats
 > TIPSv2 (sentence: 28% vs 20% at rank 1); TIPSv2's pointing barely beats "always the centre" (51%).
-> Next: a **SigLIP 2 region index** (≈ 20 regions per work, ≈ 6 h of computation for WikiArt 81k).
+> **SigLIP 2 region index done in 0.13.3**: 1.6 million regions, "Zone décrite" search in the Atlas (ARCHITECTURE § 22).
 
 - **Why**: today we compare a region with a region (DINOv3) or a sentence with a whole
   image (SigLIP 2). Nothing compares a sentence with a region: "halo", "blessing hand",

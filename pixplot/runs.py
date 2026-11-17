@@ -107,8 +107,14 @@ def list_runs(
     name: str | None = None,
     status: str | None = "complete",
     runs_dir: Path | None = None,
+    include_zones: bool = False,
 ) -> list[Run]:
-    """Runs d'une étape, du plus ancien au plus récent."""
+    """Runs d'une étape, du plus ancien au plus récent.
+
+    Les runs de zones (``features/zones_*`` : 20 vecteurs par œuvre, pour chercher une zone
+    avec des mots) ne sont pas des espaces de ressemblance : ils sont exclus sauf demande
+    explicite (``include_zones``), pour qu'aucun regard ni recherche ne les prenne pour des
+    vecteurs d'œuvres entières."""
     base = _stage_dir(stage, runs_dir)
     if not base.exists():
         return []
@@ -117,6 +123,7 @@ def list_runs(
         r for r in runs
         if (name is None or r.manifest["name"] == name)
         and (status is None or r.manifest["status"] == status)
+        and (include_zones or not (stage == "features" and r.manifest["name"].startswith("zones_")))
     ]
     return sorted(runs, key=lambda r: (r.manifest["created"], r.path.name))
 

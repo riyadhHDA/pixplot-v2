@@ -122,6 +122,13 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
         except SearchUnavailable as exc:
             raise HTTPException(503, str(exc))
 
+    @app.get("/api/search/zones")
+    def search_zones(q: str = Query(..., min_length=2, max_length=300), k: int = Query(60, ge=1, le=300)):
+        try:
+            return engines.zones(q, k=k)
+        except SearchUnavailable as exc:
+            raise HTTPException(503, str(exc))
+
     @app.get("/api/info")
     def info():
         return data.info()
