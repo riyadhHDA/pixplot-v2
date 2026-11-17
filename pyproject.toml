@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pixplot"
-version = "0.13.3"
+version = "0.13.4"
 description = "PixPlot v2 — visual exploration of large art corpora for art history"
 authors = [{ name = "Riyadh HADJBA" }]
 readme = "README.md"

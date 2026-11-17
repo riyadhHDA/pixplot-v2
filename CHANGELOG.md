@@ -14,6 +14,16 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.13.4 — 2026-11-17 · Faster image display
+
+- Atlas: high-definition thumbnails now go through three fixed-size textures (4,096 px) managed by the
+  Atlas, instead of one texture that grew without limit as you moved around (black squares, slowdowns
+  getting worse over time).
+- Loading from the centre of the screen outwards, 8 images at a time; images no longer on screen are not
+  downloaded; the small thumbnail stays visible until the large one arrives.
+- High definition from 34 px on screen (instead of 72): no more blurry stage. On WikiArt 81k, medium
+  zoom: 489 thumbnails in about 2 s; up close, under half a second.
+
 ## 0.13.3 — 2026-11-17 · Searching a region with words
 
 - `pixplot zones`: each work cut into 20 regions (2×2 and 4×4 grids) run through SigLIP 2, resumable

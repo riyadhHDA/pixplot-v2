@@ -10,7 +10,6 @@
   const { Deck, OrthographicView, ScatterplotLayer, IconLayer, TextLayer, LineLayer, LinearInterpolator } = deck;
 
   const WORLD = 1000;            // les coordonnées [-1, 1] deviennent [-1000, 1000]
-  const MAX_HD = 300;            // vignettes haute définition posées à la fois (au centre de l écran)
   const PALETTE = [
     [230, 159, 0], [86, 180, 233], [0, 158, 115], [240, 228, 66], [0, 114, 178], [213, 94, 0],
     [204, 121, 167], [148, 103, 189], [140, 86, 75], [127, 201, 127], [253, 192, 134], [190, 174, 212],
@@ -33,7 +32,7 @@
     selected: null, selectedData: null,
     viewState: { target: [0, 0, 0], zoom: 0, minZoom: -4, maxZoom: 9 },
     fitZoom: 0, iconSize: 20, iconTimer: null,
-    sprites: null, spriteSize: null, hd: [], display: "sprites",
+    sprites: null, spriteSize: null, display: "sprites",
     searchStatus: { region: false, text: false }, lastResults: null, drawing: false,
     spaces: [], mainSpace: null, space: null,          // espaces de ressemblance (voisines)
     layout: "map", umapPositions: null, axis: [],      // carte, chronologie ou géographie
@@ -268,7 +267,7 @@
   function pickedId(info) {
     if (!info || !info.layer || info.index < 0) return null;
     const id = info.layer.id;
-    if (id.startsWith("sheet-") || id === "hd") return state.map.ids[info.object.r ?? info.object];
+    if (id.startsWith("sheet-") || id.startsWith("hd-")) return state.map.ids[info.object.r ?? info.object];
     if (id === "points") return state.map.ids[info.index];
     return null;
   }
@@ -302,13 +301,106 @@
   function scheduleIcons() { scheduleHD(); }
   function scheduleHD() {
     clearTimeout(state.iconTimer);
-    state.iconTimer = setTimeout(() => { computeHD(); redraw(); }, 180);
+    state.iconTimer = setTimeout(() => { computeHD(); redraw(); }, 120);
+  }
+
+  // Haute définition : trois niveaux, chacun dans UNE texture de 4 096 px de côté, de taille
+  // fixe, gérée ici (cases recyclées : les vignettes les moins récemment vues partent).
+  // Avant, deck.gl empilait chaque vignette dans une texture qui grandissait sans limite
+  // (cases noires, ralentissements). Les images arrivent du centre de l'écran vers les bords,
+  // huit à la fois ; celles qui ne sont plus à l'écran ne sont pas téléchargées.
+  //   cell : taille d'une case (px) · src : vignette demandée au serveur
+  //   from : taille à l'écran (px physiques) à partir de laquelle ce niveau sert · max : combien à la fois
+  const HD_TIERS = [
+    { cell: 128, src: 256, from: 34, max: 900 },
+    { cell: 512, src: 1024, from: 150, max: 56 },
+    { cell: 1024, src: 1024, from: 520, max: 14 },
+  ].map((t) => ({ ...t, tex: null, slots: [], cache: new Map(), mapping: {}, shown: [], version: 0 }));
+  state.hdTiers = HD_TIERS; // pour mesurer depuis la console
+  const HD_SHEET = 4096, HD_PARALLEL = 8;
+  const hdQueue = [];
+  let hdActive = 0, hdFlush = null, hdClock = 0;
+
+  function hdTexture(t) {
+    if (t.tex) return t.tex;
+    const device = deckgl && deckgl.device;
+    if (!device) return null;
+    t.tex = device.createTexture({
+      width: HD_SHEET, height: HD_SHEET, format: "rgba8unorm",
+      sampler: { minFilter: "linear", magFilter: "linear", addressModeU: "clamp-to-edge", addressModeV: "clamp-to-edge" },
+    });
+    const per = HD_SHEET / t.cell;
+    for (let i = 0; i < per * per; i++) t.slots.push({ x: (i % per) * t.cell, y: Math.floor(i / per) * t.cell, id: null, used: 0 });
+    return t.tex;
+  }
+
+  function hdFree(t, keep) {
+    // une case vide, sinon la moins récemment vue parmi celles qui ne sont pas à l'écran
+    let best = null;
+    for (const s of t.slots) {
+      if (s.id == null) return s;
+      if (keep.has(s.id)) continue;
+      if (!best || s.used < best.used) best = s;
+    }
+    if (best) { t.cache.delete(best.id); delete t.mapping[best.id]; }
+    return best;
+  }
+
+  function hdPump() {
+    while (hdActive < HD_PARALLEL && hdQueue.length) {
+      const job = hdQueue.shift();
+      const { t, id } = job;
+      if (t.cache.has(id) || job.gen !== hdClock) continue;
+      hdActive++;
+      fetch(`/api/thumb/${t.src}/${id}`)
+        .then((r) => (r.ok ? r.blob() : Promise.reject(r.status)))
+        .then((blob) => createImageBitmap(blob))
+        .then(async (img) => {
+          const k = Math.min(1, t.cell / Math.max(img.width, img.height));
+          const w = Math.max(1, Math.round(img.width * k)), h = Math.max(1, Math.round(img.height * k));
+          const fitted = k < 1 ? await createImageBitmap(img, { resizeWidth: w, resizeHeight: h, resizeQuality: "high" }) : img;
+          const slot = hdFree(t, t.wanted || new Set());
+          if (!slot || !hdTexture(t)) return;
+          t.tex.copyExternalImage({ image: fitted, x: slot.x, y: slot.y, width: w, height: h });
+          if (fitted !== img) fitted.close();
+          img.close();
+          slot.id = id; slot.used = performance.now();
+          t.cache.set(id, slot);
+          t.mapping[id] = { x: slot.x, y: slot.y, width: w, height: h };
+          hdChanged();
+        })
+        .catch(() => {})
+        .finally(() => { hdActive--; hdPump(); });
+    }
+  }
+
+  function hdChanged() {
+    // regrouper : une mise à jour de l'affichage toutes les 80 ms au plus
+    if (hdFlush) return;
+    hdFlush = setTimeout(() => {
+      hdFlush = null;
+      HD_TIERS.forEach(hdShown);
+      redraw();
+    }, 80);
+  }
+
+  function hdShown(t) {
+    const now = performance.now();
+    t.shown = (t.order || []).filter((d) => t.cache.has(d.id)).map((d) => {
+      t.cache.get(d.id).used = now;
+      return { ...d, key: String(d.id) };
+    });
+    t.mapping = { ...t.mapping }; // nouvelle référence : deck.gl relit les coordonnées
+    t.version++;
   }
 
   function computeHD() {
     const px = onScreenSize();
-    if (!showSprites() || px < 72) {
-      state.hd = [];
+    const dpx = px * (window.devicePixelRatio || 1);
+    hdClock++;
+    hdQueue.length = 0;
+    if (!showSprites() || dpx < HD_TIERS[0].from) {
+      HD_TIERS.forEach((t) => { t.order = []; t.wanted = new Set(); t.shown = []; });
       $("hint").textContent = state.display === "sprites"
         ? `${state.n.toLocaleString("fr-FR")} vignettes · zoomez pour la haute définition · clic : fiche`
         : "Molette : zoomer · glisser : se déplacer · clic sur une œuvre : sa fiche";
@@ -317,19 +409,28 @@
     const el = $("map"), scale = Math.pow(2, state.viewState.zoom);
     const halfW = el.clientWidth / 2 / scale + state.iconSize, halfH = el.clientHeight / 2 / scale + state.iconSize;
     const [cx, cy] = state.viewState.target;
-    let visible = [];
+    const visible = [];
     for (let r = 0; r < state.n; r++) {
       if (state.highlight && !state.highlight.has(r)) continue;
       const dx = state.positions[2 * r] - cx, dy = state.positions[2 * r + 1] - cy;
       if (Math.abs(dx) < halfW && Math.abs(dy) < halfH) visible.push([r, dx * dx + dy * dy]);
     }
     visible.sort((a, b) => a[1] - b[1]); // le centre de l'écran d'abord
-    const size = px > 160 ? 1024 : 256;
-    state.hd = visible.slice(0, MAX_HD).map(([r]) => {
-      const a = state.map.aspect[r] || 1;
-      return { r, id: state.map.ids[r], size, w: a >= 1 ? size : Math.round(size * a), h: a >= 1 ? Math.round(size / a) : size };
+    let total = 0;
+    HD_TIERS.forEach((t) => {
+      const on = dpx >= t.from && hdTexture(t);
+      t.order = on ? visible.slice(0, t.max).map(([r]) => ({ r, id: state.map.ids[r] })) : [];
+      t.wanted = new Set(t.order.map((d) => d.id));
+      if (on) total = Math.max(total, t.order.length);
     });
-    $("hint").textContent = `Haute définition : ${state.hd.length} vignettes au centre · clic : fiche`;
+    // file d'attente : le niveau le plus fin d'abord (peu d'images, celles qu'on regarde),
+    // puis le niveau moyen, qui couvre tout l'écran
+    [...HD_TIERS].reverse().forEach((t) => t.order.forEach((d) => {
+      if (!t.cache.has(d.id)) hdQueue.push({ t, id: d.id, gen: hdClock });
+    }));
+    HD_TIERS.forEach(hdShown);
+    hdPump();
+    $("hint").textContent = `Haute définition : ${total} vignettes au centre · clic : fiche`;
   }
 
   function spriteColor(r) {
@@ -388,18 +489,21 @@
         updateTriggers: { getColor: [state.highlightLabel], getPosition: [state.layout, state.posVersion] },
       })));
     }
-    if (sprites && state.hd.length) {
+    if (sprites) HD_TIERS.forEach((t) => {
+      if (!t.tex || !t.shown.length) return;
       layers.push(new IconLayer({
-        id: "hd",
-        data: state.hd,
-        getIcon: (d) => ({ url: `/api/thumb/${d.size}/${d.id}`, width: d.w, height: d.h, id: `${d.size}-${d.id}` }),
+        id: `hd-${t.cell}`,
+        data: t.shown,
+        iconAtlas: t.tex,
+        iconMapping: t.mapping,
+        getIcon: (d) => d.key,
         getPosition: (d) => [state.positions[2 * d.r], state.positions[2 * d.r + 1]],
         getSize: (d) => state.spriteSize[d.r],
         sizeUnits: "common",
-        pickable: true,
-        alphaCutoff: 0,
+        getColor: (d) => spriteColor(d.r),
+        updateTriggers: { getColor: [state.highlightLabel], getPosition: [state.layout, state.posVersion], getIcon: [t.version] },
       }));
-    }
+    });
     if (state.selectedData) {
       const s = state.selectedData;
       const from = posOf(s.id);
