@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://riyadhhda.github.io/pixplot-v2/sitemap.xml
