@@ -67,6 +67,34 @@ In `%APPDATA%\Claude\claude_desktop_config.json` (absolute paths):
 
 Then restart Claude Desktop.
 
+## Codex (OpenAI)
+
+In `.codex/config.toml` at the project root (local, not versioned) or in
+`%USERPROFILE%\.codex\config.toml`, absolute paths:
+
+```toml
+[mcp_servers.pixplot]
+command = 'C:\path\to\pixplot-v2\.venv\Scripts\pixplot.exe'
+args = ["--data", 'C:\path\to\pixplot-v2\data', "mcp"]
+```
+
+## Gemini (Gemini CLI, Antigravity)
+
+In `.gemini/settings.json` at the project root (local, not versioned), absolute paths:
+
+```json
+{
+  "mcpServers": {
+    "pixplot": {
+      "command": "C:\\path\\to\\pixplot-v2\\.venv\\Scripts\\pixplot.exe",
+      "args": ["--data", "C:\\path\\to\\pixplot-v2\\data", "mcp"]
+    }
+  }
+}
+```
+
+Repository instructions shared by all assistants are in [`AGENTS.md`](../AGENTS.md) (in French).
+
 ## Good to know
 
 - The server loads the most recent analysis (`--analysis <folder>` to pick another).

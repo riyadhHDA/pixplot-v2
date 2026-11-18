@@ -17,8 +17,10 @@ web/dist/
 # Référence locale (PixPlot v1 de Yale), non publiée
 /pix-plot-0.0.1.1/
 
-# Réglages locaux de Claude Code
+# Réglages locaux des assistants (chemins propres à ce PC) — consignes communes : AGENTS.md
 /.claude/
+/.codex/
+/.gemini/
 
 # Configuration MCP locale (chemins propres à ce PC) — modèle dans docs/MCP.md
 /.mcp.json
