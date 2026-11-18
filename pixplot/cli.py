@@ -599,6 +599,58 @@ def cmd_name_groups(args) -> int:
     return 0
 
 
+def cmd_composition(args) -> int:
+    """Banc d'essai « composition » (étape 0.15) : regards existants, PE-Spatial, dispositions 4 × 4."""
+    import json
+    from pathlib import Path
+
+    from .analysis.composition import score_layout
+    from .analysis.pairbench import TYPES, load_pairs, load_space_matrix, pairs_path, score_pairs
+    from .api.data import AtlasData
+
+    s = get_settings(args.data)
+    pairs = [p for p in load_pairs(pairs_path(s)) if p.origin == "annotée"]
+    if not pairs:
+        raise SystemExit("Aucune paire annotée : voir `pixplot pairs`.")
+    from .api.spaces import Spaces
+
+    Spaces.include_not_kept = True        # le banc d'essai mesure aussi les modèles non retenus
+    data = AtlasData.load(s, _analysis_arg(s, args.analysis))
+    ids = [int(i) for i in data.ids]
+    results = []
+    for key in data.spaces.runs:
+        print(f"Regard « {key} »…", flush=True)
+        X, row = load_space_matrix(data.spaces, key, ids)
+        results += score_pairs(pairs, {key: (X, row)})[0]
+        del X
+    for key, run in data.spaces.runs.items():
+        if (Path(run.path) / "regions.npy").exists() and key in ("forme", "composition"):
+            for kind, name in (("layout", f"{key}_4x4"), ("layout_communes", f"{key}_4x4c"),
+                               ("global_masque", f"{key}_masq")):
+                print(f"Variante « {name} »…", flush=True)
+                results += score_layout(name, Path(run.path), pairs, ids, kind)
+    order = ["forme", "forme_masq", "forme_4x4", "forme_4x4c", "composition", "composition_masq",
+             "composition_4x4", "composition_4x4c", "sujet", "couleur", "touche"]
+    print(f"\nBanc d'essai « composition » · {len(ids)} œuvres · paires validées par l'utilisateur")
+    print("centile : part du corpus plus éloignée que l'œuvre jumelle (0,5 = hasard, 1 = la plus proche)")
+    print(f"{'type':<44} {'regard':<16} {'n':>4} {'R@10':>6} {'R@100':>6} {'rang méd.':>9} {'centile':>8}")
+    for t in TYPES:
+        rows = sorted((r for r in results if r.type == t),
+                      key=lambda r: order.index(r.space) if r.space in order else 99)
+        if not rows:
+            continue
+        best = max(rows, key=lambda r: r.centile).space
+        for r in rows:
+            print(f"{TYPES[t][0][:44]:<44} {r.space:<16} {r.n:>4} {r.r10:>6.1%} {r.r100:>6.1%} "
+                  f"{r.median_rank:>9.0f} {r.centile:>8.3f}{' ◀' if r.space == best else ''}")
+    out = pairs_path(s).parent / f"composition_report_{Path(data.analysis.path).name}.json"
+    out.write_text(json.dumps({"analysis": data.analysis.id, "n_artworks": len(ids),
+                               "results": [r.__dict__ for r in results]}, ensure_ascii=False, indent=1),
+                   encoding="utf-8")
+    print(f"\nRapport : {out}")
+    return 0
+
+
 def cmd_suspects(args) -> int:
     from .analysis.suspects import load_suspects, write_suspects
 
@@ -972,6 +1024,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-k", type=int, default=10)
     p.add_argument("--keys", default="artist,style,genre")
     p.set_defaults(func=cmd_bench)
+
+    p = sub.add_parser("composition", help="banc d'essai « composition » : regards, PE-Spatial, dispositions 4 × 4")
+    p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
+    p.set_defaults(func=cmd_composition)
 
     p = sub.add_parser("pairs", help="banc d'essai par paires : quel regard retrouve quelle ressemblance")
     p.add_argument("action", choices=["types", "add", "list", "generate", "bench"])

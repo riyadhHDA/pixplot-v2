@@ -9,7 +9,7 @@ ENCODERS = (
     "dinov2_vitb14_reg", "dinov2_vitl14_reg", "dinov2_vits14_reg",
     "siglip2_so400m", "siglip2_base",
     "tipsv2_b14", "tipsv2_l14", "tipsv2_so400m14",
-    "colorhist", "color_lab", "dinov3_vitb16_texture",
+    "colorhist", "color_lab", "dinov3_vitb16_texture", "pe_spatial_b16",
 )
 
 
@@ -39,6 +39,9 @@ def get_encoder(name: str, **kwargs) -> Encoder:
         kwargs.pop("weights", None)
         kwargs.pop("repo", None)
         return TIPSv2Encoder(arch=name, **kwargs)
+    if name.startswith("pe_spatial_"):
+        from .pe_spatial import PESpatialEncoder
+        return PESpatialEncoder(arch=name, **{k: v for k, v in kwargs.items() if k in ("input_size", "device", "fp16")})
     if name.startswith("dinov2_"):
         from .dinov2 import DINOv2Encoder
         kwargs.pop("weights", None)

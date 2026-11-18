@@ -81,6 +81,9 @@ documenté et l'on n'y revient pas. Chaque étape réussie devient une version m
 - **Réussi si** : il gagne sur les paires « même composition » et « filiation » validées
   à l'étape 0.12. Sinon, c'est documenté et abandonné.
 
+> **Fait le 18/11/2026 : non retenu.** PE-Spatial et la disposition 4 × 4 restent loin derrière
+> DINOv3 sur les paires « même composition » (rang médian 286 au mieux, contre 8) : ARCHITECTURE § 24.
+
 ## Plus tard, ou à surveiller
 
 - **Entropie et complexité** (Sigaki, Perc et Ribeiro, PNAS 2018) : un regard « ordre et
