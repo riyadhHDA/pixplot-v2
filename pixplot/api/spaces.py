@@ -31,9 +31,14 @@ KINDS = [
      "ce que l'on décrirait avec des mots : sujet, genre, école, manière"),
     ("dinov3", "forme", "Forme et composition (DINOv3)",
      "ressemblance visuelle : formes, composition, motifs"),
+    ("pe_spatial", "composition", "Composition (PE-Spatial)",
+     "ce qui est représenté et où : la disposition des formes dans l'œuvre (en essai)"),
     ("dinov2", "forme_v2", "Forme (DINOv2)", "ancien modèle, pour comparaison"),
 ]
-ORDER = ["forme", "sujet", "couleur", "touche", "forme_v2", "couleur_rvb"]
+# Modèles évalués mais non retenus comme regards : leurs vecteurs restent sur le disque pour
+# les bancs d'essai, mais l'Atlas et le serveur MCP ne les proposent pas (ARCHITECTURE § 24).
+NOT_KEPT = ("pe_spatial",)
+ORDER = ["forme", "sujet", "couleur", "touche", "composition", "forme_v2", "couleur_rvb"]
 
 
 def describe_encoder(encoder: str) -> tuple[str, str, str]:
@@ -44,6 +49,8 @@ def describe_encoder(encoder: str) -> tuple[str, str, str]:
 
 
 class Spaces:
+    include_not_kept = False   # True pour les bancs d'essai (``pixplot composition``)
+
     def __init__(self, data):
         self.data = data
         self._lock = threading.Lock()
@@ -57,6 +64,8 @@ class Spaces:
         out: dict[str, Run] = {}
         for run in list_runs("features", runs_dir=self.data.settings.runs_dir):
             if run.manifest.get("status") != "complete" or run.manifest["params"].get("limit"):
+                continue
+            if str(run.manifest["params"].get("encoder", "")).startswith(NOT_KEPT) and not self.include_not_kept:
                 continue
             key = describe_encoder(run.manifest["params"].get("encoder", run.manifest["name"]))[0]
             out[key] = run

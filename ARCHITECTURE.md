@@ -666,3 +666,43 @@ on the RX 7900 GRE (71 regions per second, no errors); PCA keeps 92% of the vari
 weighs 818 MB (original vectors 3.5 GB). A search answers in 0.5 s. Trials: "a halo around a
 saint's head" → six halos, including radiant ones; "a skull" → six skulls, painted or engraved;
 "a hand holding a letter" → six hands holding a letter; "a sailing ship" → sailing ships.
+
+## 24. Composition: PE-Spatial evaluated, not adopted (18/11/2026)
+
+Step 0.15. Question: does a "spatial" model, or a cell-by-cell comparison, find a work that reuses
+the **layout** of another (same composition, different subject) better than an existing regard?
+
+- **Candidates.** [PE-Spatial B/16](https://huggingface.co/timm/vit_pe_spatial_base_patch16_512.fb)
+  (Meta, 2025, Apache 2.0, via `timm`), vectors computed for all 80,716 works (68 images/s, 1.4 GB of
+  GPU memory, about 20 min): global vector = mean of patches. And, for PE-Spatial and DINOv3, a **4×4
+  layout**: the work as 16 cells, each compared with the cell at the same place in the other work
+  (mean of the 16 cosines). STELLAR (Microsoft) was not tried: trained on ImageNet only, it had no
+  expected advantage over DINOv3.
+- **Measure.** `pixplot composition`: the user-validated pairs (§ 18), exact ranks over the whole
+  corpus, both directions, as in `pixplot pairs bench`.
+- **Review by Codex** (OpenAI, first two-assistant job): cell slicing, rank computation and work
+  alignment checked; two fairer variants suggested and measured: global vector **over the work only**
+  (without the bands added to square it) and layout **over the cells filled in both works** (two
+  different formats are no longer penalised).
+
+| "Same composition, different subject" (14 pairs, 28 queries) | in top 10 | in top 100 | median rank |
+|---|---|---|---|
+| **Form (DINOv3), current regard** | **54 %** | **71 %** | **8** |
+| Form, work only | 18 % | 46 % | 203 |
+| Form, 4×4 layout (common cells) | 0 % | 32 % | 332 |
+| PE-Spatial, 4×4 layout (common cells) | 7 % | 29 % | 286 |
+| PE-Spatial, global | 4 % | 29 % | 960 |
+| PE-Spatial, global over the work only | 11 % | 25 % | 1,406 |
+| Subject (SigLIP 2) | 21 % | 29 % | 814 |
+
+**Conclusion: PE-Spatial is not adopted, nor is the 4×4 layout.** DINOv3's global regard remains
+clearly the best at finding the same composition. The cell-by-cell comparison fails because a reused
+composition is rarely in the same place: shifted, cropped or in another format, it no longer falls in
+the same cells. One nuance: DINOv3's 4×4 layout fails badly less often (centile 0.958 vs 0.928),
+without ever putting the twin first. On attested filiations (18 queries) all variants are within a
+few ranks of each other; the sample is too small to separate them.
+
+PE-Spatial vectors stay on disk for benchmarks (`features/pe_spatial_b16_*`), but the Atlas and the
+MCP server do not offer them as a regard (`NOT_KEPT` in `api/spaces.py`). Limit: 14 "same
+composition" pairs; a broader conclusion would need more validated pairs, and a grid aligned on the
+work rather than on the square (new computation).

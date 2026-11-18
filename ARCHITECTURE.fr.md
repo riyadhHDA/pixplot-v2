@@ -736,3 +736,46 @@ rayonnantes ; « a skull » → six crânes, peints ou gravés ; « a hand holdi
 mains tenant une lettre ; « a sailing ship » → des voiliers. Une location de GPU (H100) aurait
 ramené le calcul à 30–45 min, mais avec l'envoi des images et la mise en route, le gain réel
 aurait été de l'ordre de 2 à 3 h de bout en bout, au prix d'images sorties de la machine.
+
+## 24. La composition : PE-Spatial évalué, non retenu (18/11/2026)
+
+Étape 0.15. Question : un modèle « spatial » ou une comparaison case à case retrouve-t-il mieux
+qu'un regard existant une œuvre qui reprend la **disposition** d'une autre (même composition,
+sujet différent) ?
+
+- **Candidats.** [PE-Spatial B/16](https://huggingface.co/timm/vit_pe_spatial_base_patch16_512.fb)
+  (Meta, 2025, Apache 2.0, par `timm`), vecteurs calculés pour les 80 716 œuvres (68 images/s, 1,4 Go
+  de mémoire graphique, environ 20 min) : vecteur global = moyenne des patchs. Et, pour PE-Spatial et
+  pour DINOv3, une **disposition 4 × 4** : l'œuvre en 16 cases, chaque case comparée à la case au
+  même endroit dans l'autre œuvre (moyenne des 16 cosinus). STELLAR (Microsoft) n'a pas été essayé :
+  entraîné sur ImageNet seul, il n'avait pas d'avantage attendu sur DINOv3.
+- **Mesure.** `pixplot composition` : les paires validées par l'utilisateur (§ 18), rangs exacts sur
+  tout le corpus, dans les deux sens, comme `pixplot pairs bench`.
+- **Relecture par Codex** (OpenAI, premier travail à deux assistants) : découpage des cases, calcul
+  des rangs et alignement des œuvres vérifiés ; deux variantes plus équitables proposées et mesurées :
+  vecteur global **sur l'œuvre seule** (sans les bandes ajoutées pour la mettre au carré) et
+  disposition **sur les seules cases remplies dans les deux œuvres** (deux formats différents ne sont
+  plus pénalisés).
+
+| « Même composition, sujet différent » (14 paires, 28 recherches) | dans les 10 premières | dans les 100 premières | rang médian |
+|---|---|---|---|
+| **Forme (DINOv3), regard actuel** | **54 %** | **71 %** | **8** |
+| Forme, œuvre seule | 18 % | 46 % | 203 |
+| Forme, disposition 4 × 4 (cases communes) | 0 % | 32 % | 332 |
+| PE-Spatial, disposition 4 × 4 (cases communes) | 7 % | 29 % | 286 |
+| PE-Spatial, global | 4 % | 29 % | 960 |
+| PE-Spatial, global sur l'œuvre seule | 11 % | 25 % | 1 406 |
+| Sujet (SigLIP 2) | 21 % | 29 % | 814 |
+
+**Conclusion : PE-Spatial n'est pas retenu, la disposition 4 × 4 non plus.** Le regard global de
+DINOv3 reste nettement le meilleur pour retrouver une même composition. La comparaison case à case
+échoue parce qu'une composition reprise est rarement au même endroit : décalée, recadrée, dans un autre
+format, elle ne tombe plus dans les mêmes cases. Seule nuance : la disposition 4 × 4 de DINOv3 rate
+moins souvent de très loin (centile 0,958 contre 0,928), sans jamais placer l'œuvre jumelle en tête.
+Sur les filiations attestées (18 recherches), toutes les variantes se valent à quelques rangs près ;
+l'échantillon est trop petit pour les départager.
+
+Les vecteurs PE-Spatial restent sur le disque pour les bancs d'essai (`features/pe_spatial_b16_*`),
+mais l'Atlas et le serveur MCP ne les proposent pas comme regard (`NOT_KEPT` dans `api/spaces.py`).
+Limite : 14 paires « même composition » ; une conclusion plus large demanderait plus de paires
+validées, et une grille calée sur l'œuvre plutôt que sur le carré (nouveau calcul).

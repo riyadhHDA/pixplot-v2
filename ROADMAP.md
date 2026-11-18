@@ -80,6 +80,9 @@ step becomes a minor version.
 - **Success if**: it wins on the "same composition" and "filiation" pairs validated in
   step 0.12. Otherwise it is documented and dropped.
 
+> **Done on 2026-11-18: not adopted.** PE-Spatial and the 4×4 layout stay far behind DINOv3 on
+> "same composition" pairs (median rank 286 at best, vs 8): ARCHITECTURE § 24.
+
 ## Later, or to watch
 
 - **Entropy and complexity** (Sigaki, Perc and Ribeiro, PNAS 2018): an "order and complexity" way

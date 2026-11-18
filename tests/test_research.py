@@ -554,3 +554,45 @@ def test_zone_boxes_and_index(tmp_path):
     assert hit["id"] == 107 and hit["box"] == list(boxes[13][1]) and hit["grid"] == 4
     assert hit["score"] == pytest.approx(1.0, abs=2e-3)   # reclassement exact
     assert all(h["id"] != 107 for h in zi.search(target, k=3, allowed={100, 101, 102}))
+
+
+def test_composition_layout_ranks(tmp_path):
+    from pixplot.analysis.composition import layout, layout_ranks, layout_rows
+    from pixplot.features.extract import OK
+
+    rng = np.random.default_rng(1)
+    n, D = 40, 8
+    R = rng.normal(size=(n, 21, D)).astype(np.float16)
+    R[7, 5:] = R[3, 5:] + np.float16(0.05) * rng.normal(size=(16, D)).astype(np.float16)  # même disposition
+    R[7, :5] = rng.normal(size=(5, D))                                                    # mais autre ensemble
+    np.save(tmp_path / "regions.npy", R)
+    np.save(tmp_path / "ids.npy", np.arange(100, 100 + n))
+    status = np.full(n, OK, dtype=np.int8)
+    status[0] = OK + 1                                                     # une œuvre en échec : ignorée
+    np.save(tmp_path / "status.npy", status)
+
+    L = layout(R[[3, 7]])
+    assert L.shape == (2, 16 * D) and np.allclose(np.linalg.norm(L, axis=1), 1, atol=1e-5)
+    cells = R[[3, 7], 5:].astype(np.float32)
+    cells /= np.linalg.norm(cells, axis=2, keepdims=True)
+    assert np.isclose(L[0] @ L[1], (cells[0] * cells[1]).sum(axis=1).mean(), atol=1e-5)  # moyenne des 16 cosinus
+
+    rows, row = layout_rows(tmp_path, list(range(100, 100 + n)))
+    assert 100 not in row and len(rows) == n - 1
+    ranks = layout_ranks(tmp_path, rows, np.array([row[103], row[107]]), np.array([row[107], row[103]]), chunk=7)
+    assert ranks.tolist() == [1, 1]
+
+
+def test_composition_common_cells():
+    """Deux œuvres de même disposition mais de proportions différentes : la variante « cases
+    communes » ne les pénalise pas pour les cases vides (bandes) de l'une d'elles."""
+    from pixplot.analysis.composition import _cells, similarities
+
+    rng = np.random.default_rng(2)
+    R = rng.normal(size=(2, 21, 6)).astype(np.float32)
+    R[1] = R[0]
+    R[1, 17:21] = 0                                      # dernière rangée de cases : dans les bandes
+    a, b = _cells(R[:1]), _cells(R[1:])
+    blk = lambda c: (c[0].reshape(len(c[0]), -1), c[1])
+    assert np.isclose(similarities("layout", blk(a), blk(b))[0, 0], 12 / 16)
+    assert np.isclose(similarities("layout_communes", blk(a), blk(b))[0, 0], 1.0)
