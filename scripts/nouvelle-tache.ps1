@@ -33,7 +33,13 @@ $Branch = "$Agent/$Nom"
 $Python = Join-Path $Root ".venv\Scripts\python.exe"
 $Data   = Join-Path $Root "data\$Corpus"
 
-function RunGit { & git.exe -C $Root @args; if ($LASTEXITCODE) { throw "git $args : échec" } }
+# git écrit ses avertissements (fins de ligne…) sur la sortie d'erreur : sous PowerShell 5.1, avec
+# ErrorActionPreference = Stop, ils deviendraient des erreurs. Seul le code de sortie compte.
+function RunGit {
+  $ErrorActionPreference = "Continue"
+  & git.exe -C $Root @args 2>&1 | ForEach-Object { "$_" }
+  if ($LASTEXITCODE) { throw "git $args : échec" }
+}
 function Utf8($path, $text) { [IO.File]::WriteAllText($path, $text, (New-Object Text.UTF8Encoding $false)) }
 
 # ------------------------------------------------------------------ abandonner
@@ -47,7 +53,7 @@ if ($Abandonner) {
 # ------------------------------------------------------------------ terminer
 if ($Terminer) {
   if (-not (Test-Path $Dir)) { throw "Pas de copie de travail $Dir." }
-  $dirty = & git.exe -C $Dir status --porcelain
+  $ErrorActionPreference = "Continue"; $dirty = & git.exe -C $Dir status --porcelain 2>$null; $ErrorActionPreference = "Stop"
   if ($dirty) { throw "Il reste des modifications non commitées dans $Dir :`n$($dirty -join "`n")" }
   Write-Host "Tests de la branche $Branch…"
   Push-Location $Dir
@@ -67,11 +73,20 @@ if ($Terminer) {
 if (Test-Path $Dir) { throw "$Dir existe déjà." }
 RunGit worktree add $Dir -b $Branch main
 
-# un port libre pour l'Atlas de cette tâche (8770, 8771…)
+# un port libre pour l'Atlas de cette tâche (8770, 8771…) : ni pris en ce moment, ni réservé
+# par une autre copie de travail (même si son Atlas ne tourne pas)
+$taken = @()
+foreach ($f in Get-ChildItem (Split-Path $Root -Parent) -Filter ".pixplot-tache" -Recurse -Depth 1 -Force -ErrorAction SilentlyContinue) {
+  $m = Select-String -Path $f.FullName -Pattern '^port\s*=\s*(\d+)'
+  if ($m) { $taken += [int]$m.Matches[0].Groups[1].Value }
+}
 $Port = 8770
 while ($true) {
-  $l = New-Object Net.Sockets.TcpListener ([Net.IPAddress]::Loopback, $Port)
-  try { $l.Start(); $l.Stop(); break } catch { $Port++ }
+  if ($taken -notcontains $Port) {
+    $l = New-Object Net.Sockets.TcpListener ([Net.IPAddress]::Loopback, $Port)
+    try { $l.Start(); $l.Stop(); break } catch { }
+  }
+  $Port++
 }
 
 # serveur MCP PixPlot (lecture du corpus) pour Codex, Claude et Gemini : chemins absolus,

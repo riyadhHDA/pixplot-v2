@@ -41,14 +41,14 @@ bash scripts/build_site.sh                                     # site → _site/
 
 Commandes `pixplot` : `doctor ingest import-metadata import-iiif embed similar index search-text
 analyze pack mcp serve maps communities disagreements zones import-places places corpus zonebench
-iconclass name-groups suspects audit bench pairs status runs` (`pixplot <commande> -h`).
+composition name-groups suspects audit bench pairs status runs` (`pixplot <commande> -h`).
 
 ## Carte du code
 
 | Dossier | Rôle |
 |---|---|
 | `pixplot/catalog/` | catalogue SQLite, ingestion, métadonnées, lieux typés, répertoire de villes |
-| `pixplot/encoders/` | modèles (DINOv3, SigLIP 2, TIPSv2, couleur, texture) ; `registry.py` |
+| `pixplot/encoders/` | modèles (DINOv3, SigLIP 2, couleur, texture ; TIPSv2 et PE-Spatial évalués, non retenus) ; `registry.py` |
 | `pixplot/features/` | extraction des vecteurs (reprenable), stockage |
 | `pixplot/index/` | FAISS, zones (`regions.py`), index des zones décrites (`textzones.py`) |
 | `pixplot/analysis/` | UMAP, Leiden, noms de groupes (lexique, Iconclass), bancs d'essai, désaccords, critique |
@@ -123,7 +123,11 @@ Si tu travailles dans une copie de travail (il y a un fichier `.pixplot-tache` �
    étiquettes ou releases : l'intégrateur le fait au moment de fusionner.
 5. **Compte rendu** : écris `docs/handoff/<agent>-<tache>.md` (ce qui est fait, mesures, ce qui reste,
    ce que l'utilisateur doit décider), commite tout sur ta branche, ne pousse pas.
-6. **Ressources partagées** : le dossier de données est commun. Un seul calcul GPU long à la fois et
+6. **Codex** (application ou plugin de Claude Code) : son bac à sable coupe par défaut le réseau et
+   l'écriture hors de la copie de travail ; c'est à l'utilisateur de les ouvrir dans ses réglages s'il
+   le souhaite. Claude peut lui confier une relecture ou une tâche avec le plugin Codex (`/codex:review`,
+   `/codex:rescue`).
+7. **Ressources partagées** : le dossier de données est commun. Un seul calcul GPU long à la fois et
    un seul import dans `catalog.sqlite` à la fois : demande à l'utilisateur avant d'en lancer un.
    Les *runs* sont datés et ne s'écrasent pas. Ton Atlas utilise ton port (8770 et suivants).
 
