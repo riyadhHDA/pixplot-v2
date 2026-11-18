@@ -14,6 +14,18 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.15.0 — 18/11/2026 · La composition : PE-Spatial évalué, non retenu
+
+- `pixplot composition` : banc d'essai sur les paires validées (regards existants, PE-Spatial,
+  dispositions 4 × 4 case à case, variantes « œuvre seule » et « cases communes »).
+- Encodeur PE-Spatial B/16 (Meta, Apache 2.0, par `timm`) ; vecteurs pour WikiArt 81k en 20 min.
+- Résultat : sur les paires « même composition », DINOv3 reste le meilleur (rang médian 8 ;
+  PE-Spatial 286 au mieux). PE-Spatial n'est pas retenu : vecteurs gardés pour les bancs d'essai,
+  masqués dans l'Atlas et le MCP. Code relu par Codex. ARCHITECTURE § 24.
+- Travail à plusieurs assistants : `AGENTS.md` (consignes communes à Codex, Gemini, Claude),
+  `docs/HANDOFF.md` (passation), `scripts/nouvelle-tache.ps1` (une copie de travail par assistant).
+- La 0.14 (noms Iconclass) attend sa relecture et sortira ensuite.
+
 ## 0.13.5 — 17/11/2026 · Images : ordre stable et chargement par lots
 
 - Correction : selon le zoom, des vignettes qui se chevauchent passaient l'une devant l'autre (la haute

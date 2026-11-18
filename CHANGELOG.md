@@ -14,6 +14,18 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.15.0 — 2026-11-18 · Composition: PE-Spatial evaluated, not adopted
+
+- `pixplot composition`: benchmark on validated pairs (existing regards, PE-Spatial, cell-by-cell
+  4×4 layouts, "work only" and "common cells" variants).
+- PE-Spatial B/16 encoder (Meta, Apache 2.0, via `timm`); vectors for WikiArt 81k in 20 min.
+- Result: on "same composition" pairs, DINOv3 stays best (median rank 8; PE-Spatial 286 at best).
+  PE-Spatial is not adopted: vectors kept for benchmarks, hidden in the Atlas and MCP. Code reviewed
+  by Codex. ARCHITECTURE § 24.
+- Multi-assistant work: `AGENTS.md` (shared instructions for Codex, Gemini, Claude),
+  `docs/HANDOFF.md` (handoff), `scripts/nouvelle-tache.ps1` (one worktree per assistant).
+- 0.14 (Iconclass names) awaits review and will follow.
+
 ## 0.13.5 — 2026-11-17 · Images: stable order and batched loading
 
 - Fix: depending on zoom, overlapping thumbnails swapped places (high definition only covered the centre

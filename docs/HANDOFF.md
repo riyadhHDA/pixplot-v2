@@ -8,17 +8,8 @@ avec n'importe quel modèle.
 
 ## Version publiée
 
-**0.13.5** (17/11/2026) : affichage des images de l'Atlas par lots, dans un ordre stable. Historique
+**0.15.0** (18/11/2026) : la composition, PE-Spatial évalué et non retenu (ARCHITECTURE § 24). Historique
 complet dans le [CHANGELOG](../CHANGELOG.fr.md), étapes suivantes dans la [ROADMAP](../ROADMAP.fr.md).
-
-## Fusionné dans main, pas encore publié (pas de version, pas de push)
-
-**Étape 0.15, la composition : PE-Spatial évalué, non retenu** (ARCHITECTURE § 24, compte rendu
-`docs/handoff/claude-composition.md`). Sur les 14 paires « même composition », DINOv3 reste le meilleur
-(rang médian 8 ; PE-Spatial 286 au mieux). Code relu par Codex (plugin), qui a proposé deux variantes,
-mesurées, sans changement de verdict. Vecteurs PE-Spatial sur le disque, masqués dans l'Atlas
-(`NOT_KEPT`). À décider avec l'utilisateur : publier en 0.15.0 (résultat négatif documenté, comme la
-0.13.0) ou attendre.
 
 ## Travail en cours, sur une branche
 
@@ -33,7 +24,8 @@ un échantillon relu »).
 - Données : `data/iconclass/` (CC0, non versionné) ; résultat dans
   `data/wikiart81k/runs/analysis/dinov3_vitb16_20261116-111508/names_iconclass.json`.
 - Résultat sur WikiArt 81k : 37 groupes « sûr », 47 « possible », 58 sans notion affichée.
-- Reste à faire quand l'utilisateur aura relu : entrée de CHANGELOG (FR + EN), version 0.14.0
+- Reste à faire quand l'utilisateur aura relu : rebaser la branche sur `main`, entrée de CHANGELOG
+  (FR + EN), version 0.15.1 ou 0.16.0 (la 0.15.0 est sortie avant ; à voir avec l'utilisateur)
   (voir la liste des fichiers dans AGENTS.md), commit, étiquette, release.
 
 ## En attente de l'utilisateur
