@@ -40,8 +40,12 @@ function renderGroups() {
       <div><div class="title"><span class="swatch" style="background:rgb(${col})"></span>Groupe ${g.number}
         <span class="size">${g.size} œuvres</span></div>
         ${g.name ? `<div class="gname" title="Nom proposé par SigLIP 2 d'après un vocabulaire d'histoire de l'art — à vérifier">${esc(g.name)}</div>` : ""}
+        ${(g.iconclass || []).map((t) => `<a class="iconclass ${t.confidence === "sûr" ? "sure" : ""}" href="${esc(t.url)}" target="_blank" rel="noopener"
+          title="Iconclass ${esc(t.notation)} — ${esc(t.en)} · ${t.confidence === "sûr" ? "proposition solide" : "proposition possible"}, à vérifier"
+          ><span>${esc(t.notation)}</span> ${esc(t.fr)}</a>`).join("")}
         <div class="dom">${dom}</div></div></li>`;
   }).join("");
+  $("groups").querySelectorAll(".group a.iconclass").forEach((a) => a.addEventListener("click", (e) => e.stopPropagation()));
   $("groups").querySelectorAll(".group").forEach((li) => li.addEventListener("click", () => {
     const c = Number(li.dataset.cluster);
     const g = state.clusters.find((x) => x.cluster === c);

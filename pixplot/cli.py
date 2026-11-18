@@ -656,6 +656,38 @@ def cmd_composition(args) -> int:
                                "results": [r.__dict__ for r in results]}, ensure_ascii=False, indent=1),
                    encoding="utf-8")
     print(f"\nRapport : {out}")
+
+def cmd_iconclass(args) -> int:
+    import json
+
+    from .analysis import iconclass
+
+    s = get_settings(args.data)
+    if args.fetch:
+        d = iconclass.fetch(iconclass.icon_dir(s))
+        print(f"Iconclass (CC0) dans {d}")
+    if args.fetch_only:
+        return 0
+    analysis = _analysis_arg(s, args.analysis)
+    path = iconclass.name_groups(analysis, s)
+    data = json.loads(path.read_text(encoding="utf-8"))
+    names = {}
+    try:
+        from .analysis.naming import load_names
+        names = load_names(analysis)
+    except Exception:
+        pass
+    print(f"Analyse : {analysis.id}")
+    print(f"Méthode : {data['method']}")
+    print()
+    for g in data["groups"][:args.show]:
+        cur = names.get(g["cluster"], {}).get("name", "")
+        terms = " · ".join(f"{t['notation']} {t['fr'][:40]}" for t in g["terms"])
+        print(f"  {g['cluster'] + 1:>4}  {terms}")
+        if cur:
+            print(f"        [actuel : {cur}]")
+    print()
+    print(f"Noms Iconclass : {path}  ·  à vérifier sur https://iconclass.org")
     return 0
 
 
@@ -1009,6 +1041,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--encoders", default="siglip2_so400m,tipsv2_b14", help="encodeurs comparés")
     p.add_argument("--size", type=int, default=672, help="taille du carré pour les vecteurs de zones (multiple de 14)")
     p.set_defaults(func=cmd_zonebench)
+
+    p = sub.add_parser("iconclass", help="nommer les groupes avec Iconclass (classification iconographique, CC0)")
+    p.add_argument("--analysis", default=None)
+    p.add_argument("--fetch", action="store_true", help="télécharger les données Iconclass d'abord")
+    p.add_argument("--fetch-only", action="store_true", help="seulement télécharger")
+    p.add_argument("--show", type=int, default=40)
+    p.set_defaults(func=cmd_iconclass)
 
     p = sub.add_parser("name-groups", help="proposer un nom à chaque groupe (SigLIP 2 + vocabulaire)")
     p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
