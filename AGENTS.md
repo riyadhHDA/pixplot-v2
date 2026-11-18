@@ -100,6 +100,33 @@ iconclass name-groups suspects audit bench pairs status runs` (`pixplot <command
 - **Chaque calcul long** est reprenable, journalisé (`<données>/*.log`) et lancé en arrière-plan
   (terminal à part) ; ne pas bloquer la session dessus.
 
+## Travail en parallèle (plusieurs assistants)
+
+L'utilisateur peut faire travailler plusieurs assistants en même temps (par ex. Codex et Claude).
+Le dossier principal (`Pixplot V2`, branche `main`) est celui de l'**intégrateur** ; chaque autre
+assistant travaille dans **sa propre copie de travail**, créée par :
+
+```powershell
+.\scripts\nouvelle-tache.ps1 <tache> -Agent <codex|claude|gemini>   # → ..\pixplot-<tache>, branche <agent>/<tache>
+.\scripts\nouvelle-tache.ps1 <tache> -Agent <agent> -Terminer       # tests, fusion dans main (sans push), nettoyage
+```
+
+Si tu travailles dans une copie de travail (il y a un fichier `.pixplot-tache` à la racine) :
+
+1. **Lis `.pixplot-tache`** : ta tâche, ta branche, le dossier de données partagé, ton port.
+2. **Lance PixPlot avec l'interpréteur du dossier principal et `-m`** (la copie n'a ni `.venv` ni
+   `data/`) : `& '<python>' -m pytest -q tests`, `& '<python>' -m pixplot.cli --data '<données>' …`.
+   Avec `pixplot.exe`, c'est le code de `main` qui tournerait, pas le tien.
+3. **Reste dans ton périmètre** : ne modifie que les fichiers de ta tâche ; si tu dois toucher un
+   fichier commun (`web/atlas.js`, `pixplot/cli.py`), fais-le en ajouts courts et localisés.
+4. **Ne change pas de version** et ne touche ni aux CHANGELOG, ni à `docs/HANDOFF.md`, ni aux
+   étiquettes ou releases : l'intégrateur le fait au moment de fusionner.
+5. **Compte rendu** : écris `docs/handoff/<agent>-<tache>.md` (ce qui est fait, mesures, ce qui reste,
+   ce que l'utilisateur doit décider), commite tout sur ta branche, ne pousse pas.
+6. **Ressources partagées** : le dossier de données est commun. Un seul calcul GPU long à la fois et
+   un seul import dans `catalog.sqlite` à la fois : demande à l'utilisateur avant d'en lancer un.
+   Les *runs* sont datés et ne s'écrasent pas. Ton Atlas utilise ton port (8770 et suivants).
+
 ## Méthode
 
 - **Mesurer avant et après** chaque changement qui prétend améliorer quelque chose (bancs d'essai :
