@@ -14,6 +14,23 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.17.0 — 19/11/2026 · Axes conceptuels, mesures visuelles, principes de lecture
+
+Travail de Gemini 4 Neon (Antigravity), relu et vérifié par Claude ; trois lectures intégrées
+(ARCHITECTURE § 26).
+
+- **Axes conceptuels** (L. Impett et F. Offert, *Visual Resources*, 2024) : nouvelle vue de la carte,
+  chaque œuvre placée selon sa proximité avec deux mots (« sacré » / « profane », « mer » / « montagne »…) ;
+  les œuvres qui s'écartent de la diagonale en ressortent. API `/api/layout/concepts`, outil MCP
+  `probe_concepts`.
+- **Mesures visuelles sans modèle** (D. G. Stork, *Pixels & Paintings*, 2024) : barycentre de la
+  lumière et de la saturation, symétrie gauche-droite, dynamique tonale, entropie chromatique et
+  première coupe de la composition, dans la fiche d'œuvre. API `/api/artwork/{id}/measures`, outil MCP
+  `measure_artwork` (18 outils).
+- **Principes de lecture** (J.-L. Giavitto et P. Saint-Germier dir., *L'art au temps de l'IA*,
+  Centre Pompidou, 2025) dans le panneau Corpus et les consignes du serveur MCP.
+- README, feuille de route, documentation MCP et pages du site réécrits sur un ton plus direct.
+
 ## 0.16.3 — 19/11/2026 · Corrections d'après trois audits de Gemini 4 Argon
 
 Trois audits du code par Antigravity (Gemini 4 Argon, en lecture seule) ; chaque point vérifié avant

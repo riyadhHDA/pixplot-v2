@@ -1,6 +1,6 @@
 # Feuille de route
 
-[English](ROADMAP.md) · **Français** · Mise à jour : 19/11/2026 · Version actuelle : **0.16.3**
+[English](ROADMAP.md) · **Français** · Mise à jour : 19/11/2026 · Version actuelle : **0.17.0**
 
 Ce qui est déjà sorti figure dans [CHANGELOG.fr.md](CHANGELOG.fr.md). Ici sont rassemblées
 les prochaines étapes, les essais écartés et les pistes à tester.

@@ -14,6 +14,22 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.17.0 — 2026-11-19 · Concept axes, visual measures, reading principles
+
+Work by Gemini 4 Neon (Antigravity), reviewed and checked by Claude; three readings integrated
+(ARCHITECTURE § 26).
+
+- **Concept axes** (L. Impett and F. Offert, *Visual Resources*, 2024): a new map view placing each work
+  by its closeness to two words ("sacred" / "profane", "sea" / "mountain"…); works far from the diagonal
+  stand out. API `/api/layout/concepts`, MCP tool `probe_concepts`.
+- **Visual measures without a model** (D. G. Stork, *Pixels & Paintings*, 2024): barycentre of
+  lightness and saturation, left-right symmetry, tonal range, chromatic entropy and the first cut of the
+  composition, in the artwork record. API `/api/artwork/{id}/measures`, MCP tool `measure_artwork`
+  (18 tools).
+- **Reading principles** (J.-L. Giavitto and P. Saint-Germier eds, *L'art au temps de l'IA*, Centre
+  Pompidou, 2025) in the Corpus panel and the MCP server instructions.
+- README, roadmap, MCP docs and site pages rewritten in a more direct tone.
+
 ## 0.16.3 — 2026-11-19 · Fixes after three Gemini 4 Argon audits
 
 Three code audits by Antigravity (Gemini 4 Argon, read-only); each point checked before fixing.

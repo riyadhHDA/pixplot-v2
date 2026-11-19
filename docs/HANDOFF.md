@@ -8,8 +8,8 @@ avec n'importe quel modèle.
 
 ## Version publiée
 
-**0.16.3** (19/11/2026) : corrections d'après trois audits de Gemini 4 Argon (voir plus bas).
-**Commité sur `main` (non poussé, pas encore publié en version)** :
+**0.17.0** (19/11/2026) : travail de Gemini 4 Neon, relu par Claude (65 tests, Atlas vérifié ;
+axes conceptuels : 42 s au premier appel, le temps de charger SigLIP 2, puis ~1,2 s dans le navigateur) —
 intégration de trois lectures (`C:\Users\Riyadh\Downloads\Livre`, restées hors dépôt) — voir
 `ARCHITECTURE.fr.md` § 26 :
 - **Axes conceptuels 2D** (L. Impett & F. Offert, *Visual Resources*, 2024) : `/api/layout/concepts`,
@@ -26,6 +26,7 @@ intégration de trois lectures (`C:\Users\Riyadh\Downloads\Livre`, restées hors
   `ROADMAP.md`, `docs/MCP.fr.md` / `docs/MCP.md` et les 4 pages du site (`site/index.html`,
   `site/fr/index.html`, `site/guide/index.html`, `site/fr/guide/index.html`) réécrites sur un ton
   plus direct et naturel, et synchronisées avec l'état réel (18 outils MCP, § 26).
+**0.16.3** : corrections d'après trois audits de Gemini 4 Argon (voir plus bas).
 **0.16.2** : Antigravity sous Windows (`pixplot antigravity-mcp`, second avis en
 lecture seule ; PixPlot dans Antigravity par `.agents/mcp_config.json`), compétence d'accessibilité,
 « Pourquoi ? » corrigé. **0.16.1** : outil MCP `why_similar` (16 outils) et guide de l'historien de l'art sur
