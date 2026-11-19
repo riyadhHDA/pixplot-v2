@@ -1179,3 +1179,202 @@ aucun chiffre publié ne change.
   règles.
 - **Doublons** (§ 29) : les retirer change P@1 de moins d'un point (style : 64,8 % → 65,3 % pour
   Forme, 71,4 % → 72,0 % pour Sujet).
+
+## 31. Évaluation de PE-Core L/14 contre SigLIP 2 So400m pour le regard « sujet » (19/11/2026)
+
+Question : **PE-Core** (*Perception Encoder*, Bolya et al., Meta, 2025, `arXiv:2504.13181`) peut-il
+remplacer **SigLIP 2 So400m** pour le regard « sujet » (ressemblance sémantique et recherche par
+phrase) ?
+
+- **Licence et variante retenue.** Fiche Hugging Face vérifiée avant téléchargement : licence **Apache
+  2.0** sans demande d'accès (`facebook/PE-Core-L14-336`, remappage OpenCLIP maintenu par `timm` :
+  `timm/PE-Core-L-14-336`). Variante choisie : **PE-Core L/14 @336** (0,32 Md de paramètres visuels
+  + 0,31 Md texte, 1 024 dimensions, fenêtre de 32 jetons, 2,68 Go) — de taille comparable à SigLIP 2
+  So400m @384 (0,4 Md visuel, 1 152 dimensions). La variante `G/14 @448` (1,88 Md visuel, 9,68 Go,
+  1 024 patchs contre 576) aurait coûté environ 10 fois plus de calcul (~3 h sur 81k).
+- **Implémentation et extraction.** Encodeur `pixplot/encoders/pe_core.py` : tour visuelle chargée par
+  `timm` (`vit_pe_core_large_patch14_336`), tour texte causale en PyTorch fidèle à l'implémentation
+  officielle (GELU, padding `0`, pooling `argmax` sur le jeton EOT, sans dépendance `open_clip`).
+  Prétraitement : *letterbox* sans recadrage, fond gris neutre, normalisation `(x − 0,5) / 0,5`.
+  Recherche par phrase branchée via `pixplot search-text --encoder pe_core_l14` (SigLIP 2 reste la
+  valeur par défaut). Extraction complète sur WikiArt 81k (`features/pe_core_l14_20261119-225940`,
+  journal `data/wikiart81k/pe_core.log`) : **80 716 œuvres**, **0 échec**, **20 min 18 s**,
+  **65,5 images/s**, **3 806 MiB** VRAM (RX 7900 GRE, FP16, lots de 64).
+
+### 1. Étiquettes WikiArt 81k (`pixplot bench`, k = 10, P@1 selon § 30)
+
+| Modèle | Étiquette | n | P@1 | P@10 | Hasard | Vitesse |
+|---|---|---:|---:|---:|---:|---:|
+| SigLIP 2 So400m @384 | Artiste (`huggan/wikiart` seul) | 39 499 | 73,0 % | 61,6 % | 1,5 % | 73,2 img/s |
+| **PE-Core L/14 @336** | Artiste (`huggan/wikiart` seul) | 39 499 | **74,5 %** | **62,6 %** | 1,5 % | 65,5 img/s |
+| SigLIP 2 So400m @384 | Artiste (catalogue enrichi MMArt) | 74 684 | 59,3 % | 42,9 % | 0,5 % | 73,2 img/s |
+| **PE-Core L/14 @336** | Artiste (catalogue enrichi MMArt) | 74 684 | **61,5 %** | **44,3 %** | 0,5 % | 65,5 img/s |
+| SigLIP 2 So400m @384 | Style | 80 716 | 71,4 % | 62,0 % | 7,9 % | 73,2 img/s |
+| **PE-Core L/14 @336** | Style | 80 716 | **72,0 %** | **62,3 %** | 7,9 % | 65,5 img/s |
+| SigLIP 2 So400m @384 | Genre | 64 929 | 83,4 % | 79,5 % | 14,6 % | 73,2 img/s |
+| **PE-Core L/14 @336** | Genre | 64 929 | **83,6 %** | **79,7 %** | 14,6 % | 65,5 img/s |
+
+En image → image, PE-Core L/14 devance légèrement SigLIP 2 So400m sur toutes les étiquettes
+(+1,5 à +2,2 pt sur l'artiste, +0,6 pt sur le style, +0,2 pt sur le genre).
+
+### 2. Paires validées et paires de métadonnées (`pixplot pairs bench`, 80 716 œuvres)
+
+| Catégorie (n recherches) | SigLIP 2 R@10 / R@100 / méd. / cent. | PE-Core L/14 R@10 / R@100 / méd. / cent. |
+|---|---|---|
+| **Même sujet, composition diff.** (annotées, 74) | **37,8 %** / **54,1 %** / **30** / 0,919 | 28,4 % / 43,2 % / 174 / **0,929** |
+| *— dont 21 paires issues de `désaccord sujet > …` (42)* | *57,1 % / 69,0 % / 4 / 0,980* | *33,3 % / 54,8 % / 38 / 0,976* |
+| *— dont 16 autres paires, sans biais vers SigLIP 2 (32)* | *12,5 % / 34,4 % / 1 152 / 0,838* | ***21,9 %** / 28,1 % / **573** / **0,867*** |
+| **Filiation attestée** (annotées, 20) | **45,0 %** / **70,0 %** / **17** / **0,998** | **45,0 %** / **70,0 %** / 18 / 0,996 |
+| Même composition, sujet diff. (annotées, 28) | 21,4 % / 28,6 % / 814 / 0,738 | 21,4 % / **39,3 %** / **566** / **0,859** |
+| Même motif, époque diff. (annotées, 4) | **50,0 %** / 75,0 % / 26 / 0,980 | 0,0 % / 75,0 % / **21** / **0,996** |
+| Métadonnées : même sujet (600) | 0,0 % / 0,5 % / **15 424** / **0,726** | 0,0 % / **0,7 %** / 16 424 / 0,714 |
+| Métadonnées : même artiste, styles diff. (600) | 0,3 % / 2,2 % / **9 374** / 0,790 | **0,5 %** / **3,3 %** / 9 756 / **0,791** |
+| Métadonnées : artistes diff., même facture (500) | 0,2 % / 5,8 % / 5 356 / 0,831 | **1,0 %** / **7,8 %** / **5 112** / **0,865** |
+
+Sur les 10 paires `filiation`, les deux modèles font jeu égal (R@10 45,0 %, R@100 70,0 %, rang médian
+17 contre 18 ; tous deux trouvent Raphaël/Pérugin et Rubens/Titien au rang (1, 1) ; SigLIP 2 garde
+l'avantage sur *Olympia* [4, 58 vs 10, 200] et *Résurrection de Lazare* [591, 1 814 vs 1 699, 3 273],
+PE-Core sur Monet/Manet [16, 2 vs 22, 3]). Sur « même sujet », l'avance apparente de SigLIP 2 en R@10
+vient du biais de sélection des 21 paires issues de `désaccord sujet > …` : sur les 16 paires non
+biaisées, PE-Core obtient un meilleur R@10 (21,9 % vs 12,5 %) et un meilleur rang médian (573 vs 1 152).
+
+### 3. Recherche par phrase : 10 requêtes d'historien (vérification visuelle des 10 premiers résultats)
+
+Chaque requête a été testée en **français** (usage réel dans PixPlot) et dans sa **traduction anglaise**,
+et les 200 vignettes renvoyées par modèle (10 × 10 par langue) ont été inspectées visuellement sur
+planches contact :
+
+| Requête (FR / EN) | SigLIP 2 FR | PE-Core FR | SigLIP 2 EN | PE-Core EN |
+|---|---:|---:|---:|---:|
+| « Annonciation » / *Annunciation* | **10/10** | 4/10 | **10/10** | **10/10** |
+| « vanité avec un crâne » / *vanitas still life with a skull* | **10/10** | **10/10** | **10/10** | **10/10** |
+| « paysage d'hiver avec patineurs » / *winter landscape with ice skaters* | **9/10** | 6/10 | 9/10 | **10/10** |
+| « Crucifixion » / *Crucifixion* | **10/10** | **10/10** | **10/10** | **10/10** |
+| « bouquet de fleurs dans un vase » / *bouquet of flowers in a vase* | **10/10** | **10/10** | **10/10** | **10/10** |
+| « tempête en mer avec un navire » / *stormy sea with a ship* | **10/10** | **10/10** | **10/10** | **10/10** |
+| « autoportrait d'un peintre avec sa palette » / *self-portrait of a painter holding a palette* | **9/10** | 8/10 | **10/10** | 9/10 |
+| « femme lisant une lettre » / *woman reading a letter* | **9/10** | 5/10 | **8/10** | 5/10 |
+| « pont sur une rivière » / *bridge over a river* | **10/10** | **10/10** | **10/10** | **10/10** |
+| « estampe japonaise du mont Fuji » / *Japanese woodblock print of Mount Fuji* | **10/10** | 8/10 | **9/10** | 8/10 |
+| **Total (sur 100 résultats examinés)** | **97 / 100** | **81 / 100** | **96 / 100** | **92 / 100** |
+
+- **Lecture.** Le point faible de PE-Core est immédiatement visible en français : sa tour texte emploie
+  un vocabulaire BPE CLIP anglophone (49 408 jetons, fenêtre courte de 32 jetons), non conçu pour le
+  multilingue. Sur « Annonciation » en français, PE-Core tombe à **4/10** (il renvoie un portrait de
+  Corot, un portrait d'Holbein, un logo « A » de Roerich et deux scènes de saints, et s'appuie sur le
+  texte *The Annunciation* imprimé sur les gravures), alors qu'il atteint **10/10** sur *Annunciation*
+  en anglais. Même constat sur « paysage d'hiver avec patineurs » (6/10 en FR → 10/10 en EN) et
+  « autoportrait d'un peintre avec sa palette » (affiche *Musée des Augustins* sans palette en FR).
+  Même en anglais, SigLIP 2 garde l'avantage (96/100 contre 92/100), notamment sur les scènes d'action
+  précises (*woman reading a letter* : 8/10 contre 5/10, PE-Core renvoyant quatre portraits de femmes
+  sans lettre).
+- **Décision : garder SigLIP 2 So400m comme regard « sujet » par défaut.** Le faible gain de PE-Core
+  en image → image (+0,2 à +2,2 pt sur les étiquettes) ne compense pas la perte nette en recherche par
+  phrase en français (−16 points), ni le coût de recalculer l'index des 1,61 million de zones, les
+  noms Iconclass et les axes conceptuels 2D. PE-Core L/14 reste dans `NOT_KEPT` (hors Atlas et MCP),
+  avec ses vecteurs conservés sur disque pour comparaison (`pixplot search-text --encoder pe_core_l14`,
+  `pixplot pairs bench --spaces …,sujet_pe`).
+- **Limites.** Seule la variante L/14 @336 a été mesurée (pas G/14 @448, trop lourde pour un PC local).
+  La recherche par phrase a été jugée sur 10 requêtes (100 résultats par langue) et sans reformulation
+  de prompt ; les deux modèles ont probablement vu des reproductions issues de WikiArt pendant leur
+  préentraînement sur le web.
+
+## 32. Évaluation de CSD ViT-L/14 contre « touche » (DINOv3, couche 6) (19/11/2026)
+
+Question : **CSD** (*Contrastive Style Descriptors*, Somepalli et al., ECCV 2024, `arXiv:2404.01292`)
+peut-il remplacer le regard **« touche »** (DINOv3 ViT-B/16, couche 6, moyenne et écart-type des
+patchs, § 11) pour rapprocher des œuvres de facture ou de manière comparable ?
+
+- **Licences vérifiées avant téléchargement.** Code officiel (`learn2phoenix/CSD`) sous licence **MIT** ;
+  poids publiés sur Hugging Face (`tomg-group-umd/CSD-ViT-L`, `pytorch_model.bin`, 2,44 Go) sous
+  licence **CC BY 4.0**, accès libre — compatibles avec un usage de recherche local.
+- **Implémentation et extraction.** Encodeur `pixplot/encoders/csd.py` (autonome en PyTorch, sans
+  dépendance au paquet `openai/clip`) : backbone CLIP ViT-L/14 (QuickGELU, normalisation CLIP,
+  *letterbox* sans recadrage à 224 px) + tête de projection style `last_layer_style` normalisée L2
+  (768 dimensions). L'inspection du fichier `pytorch_model.bin` révèle un point important : le
+  checkpoint public Hugging Face a été sauvegardé à l'itération **15 000** (`iters = 40 000`,
+  `lambda_c = 0.0`, alors que l'article décrit 80 000 itérations), ce qui concorde avec l'avertissement
+  du README officiel signalant un écart avec les chiffres publiés. Extraction sur WikiArt 81k
+  (`features/csd_vitl14_20261119-232036`, journal `data/wikiart81k/csd.log`) : **80 716 œuvres**,
+  **0 échec**, **8 min 38 s**, **149,8 images/s**, **1 985 MiB** VRAM (RX 7900 GRE, FP16, lots de 64).
+
+### 1. Étiquettes WikiArt 81k (`pixplot bench`, k = 10, P@1 selon § 30)
+
+| Modèle | Artiste P@1 / P@10 (n = 74 684) | Style P@1 / P@10 (n = 80 716) | Genre P@1 / P@10 (n = 64 929) | Vitesse |
+|---|---|---|---|---:|
+| Touche (DINOv3 L6 @448) | 51,9 % / 35,0 % | 61,3 % / 49,6 % | 69,4 % / 62,8 % | 124,5 img/s |
+| **CSD ViT-L/14 @224** | **54,8 %** / **40,0 %** | **67,0 %** / **57,7 %** | **75,4 %** / **69,8 %** | **149,8 img/s** |
+| *Repère : Sujet (SigLIP 2 @384)* | *59,3 % / 42,9 %* | *71,4 % / 62,0 %* | *83,4 % / 79,5 %* | *73,2 img/s* |
+
+Détail par style (P@10 sur WikiArt 81k) :
+
+| Style (n) | Touche (DINOv3 L6) | CSD ViT-L/14 | Écart | Type de style |
+|---|---:|---:|---:|---|
+| `Analytical_Cubism` (110) | **58,1 %** | 56,0 % | −2,1 pt | facture / structure |
+| `Pointillism` (511) | 61,8 % | **63,0 %** | +1,2 pt | facture pure |
+| `Fauvism` (822) | 29,8 % | **31,8 %** | +2,0 pt | facture / couleur |
+| `Impressionism` (13 025) | 64,9 % | **67,6 %** | +2,7 pt | facture large |
+| `Action_painting` (98) | 38,8 % | **46,9 %** | +8,2 pt | geste / texture |
+| `Minimalism` (1 331) | 59,8 % | **65,4 %** | +5,6 pt | forme / école |
+| `Pop_Art` (1 473) | 39,0 % | **45,7 %** | +6,7 pt | mouvement / culture visuelle |
+| `High_Renaissance` (1 340) | 33,7 % | **45,5 %** | **+11,8 pt** | école historique |
+| `Baroque` (4 211) | 51,9 % | **67,4 %** | **+15,5 pt** | école historique |
+| `Ukiyo_e` (1 163) | 80,3 % | **96,3 %** | **+16,0 pt** | médium / tradition |
+
+### 2. Paires validées et paires de métadonnées (`pixplot pairs bench`, 80 716 œuvres)
+
+| Catégorie (n recherches) | Touche (DINOv3 L6) R@10 / R@100 / méd. / cent. | CSD ViT-L/14 R@10 / R@100 / méd. / cent. |
+|---|---|---|
+| **Artistes diff., facture comparable** (annotées, 34) | **29,4 %** / **47,1 %** / **202** / 0,710 | 0,0 % / 5,9 % / 7 666 / **0,836** |
+| *— dont 9 paires issues de `désaccord touche > …` (18)* | *55,6 % / 83,3 % / 5 / 0,999* | *0,0 % / 11,1 % / 3 583 / 0,890* |
+| *— dont 8 autres paires (16, dont 4 `… > touche`)* | *0,0 % / 6,2 % / 65 772 / 0,386* | *0,0 % / 0,0 % / **10 312** / **0,774*** |
+| **Même artiste, facture différente** (annotées, 2) | 0,0 % / 0,0 % / 56 470 / 0,300 | 0,0 % / 0,0 % / **31 724** / **0,607** |
+| **Métadonnées : artistes diff., même facture** (500) | 1,6 % / 7,0 % / 7 750 / 0,803 | **1,8 %** / **10,4 %** / **2 157** / **0,854** |
+| **Métadonnées : même artiste, styles diff.** (600) | 0,0 % / 1,0 % / 22 217 / 0,660 | **0,2 %** / **1,7 %** / **14 910** / **0,746** |
+| **Métadonnées : même sujet, styles diff.** (600) | 0,0 % / 0,0 % / 28 160 / 0,622 | 0,0 % / 0,3 % / **31 368** / **0,591** |
+
+Recouvrement moyen des 10 plus proches voisines (sondage aléatoire de 2 000 œuvres) :
+`csd ∩ sujet` = **16,2 %** · `csd ∩ touche` = 15,3 % · `csd ∩ forme` = 12,2 % (contre
+`touche ∩ sujet` = **12,0 %** et `touche ∩ forme` = **10,8 %**).
+
+### 3. Lecture critique et contamination des données (point essentiel)
+
+À première vue, CSD devance Touche sur les étiquettes de style (+5,7 pt P@1, +8,1 pt P@10) et sur les
+paires de métadonnées « artistes différents, facture comparable » (rang médian 2 157 contre 7 750,
+centile 0,854 contre 0,803), tout en restant bien détaché du genre sur les paires de métadonnées
+« même sujet » (centile 0,591 contre 0,622 pour Touche).
+
+**Mais trois limites majeures interdisent de prendre ces chiffres pour une preuve de supériorité sur
+la facture :**
+
+1. **Contamination directe par WikiArt et supervision par étiquettes.** La section 4 de l'article
+   (Somepalli et al., 2024) précise que CSD est initialisé sur OpenAI CLIP ViT-L/14 puis affiné sur
+   **LAION-Styles** : 511 921 images extraites de **LAION-Aesthetics 6+** (dédupliquées entre elles par
+   SSCD, mais **jamais purgées des œuvres de WikiArt**) et étiquetées par **3 840 mots-clés d'artistes,
+   de médiums et de mouvements** issus de CLIP Interrogator. LAION-Aesthetics 6+ contenant massivement
+   des reproductions WikiArt accompagnées de leurs noms d'artistes et de styles, **nos œuvres de test
+   risquent fort d'avoir figuré dans l'entraînement de CSD** (et sous leurs propres étiquettes). Un
+   score gonflé sur WikiArt ne prouve donc rien de généralisable.
+2. **CSD mesure le « style nommé », pas seulement la touche.** Le détail par style le montre
+   clairement : sur les styles définis par la pure facture de surface (`Analytical_Cubism`,
+   `Pointillism`, `Fauvism`, `Impressionism`), Touche (purement auto-supervisé, sans jamais avoir vu un
+   seul nom de style ni d'artiste) fait jeu égal ou mieux (58,1 % vs 56,0 % sur le cubisme analytique,
+   61,8 % vs 63,0 % sur le pointillisme). L'énorme avance de CSD vient des écoles historiques et des
+   médiums nommés dans les légendes web (`Ukiyo_e` +16,0 pt, `Baroque` +15,5 pt, `High_Renaissance`
+   +11,8 pt). De plus, CSD partage plus de voisines avec Sujet (16,2 %) que Touche (12,0 %), tout en
+   restant derrière SigLIP 2 sur le style (67,0 % vs 71,4 % P@1).
+3. **Résolution et checkpoint public.** Entrée à 224 px (contre 448 px pour Touche), ce qui efface le
+   grain fin des grandes toiles ; et poids Hugging Face sauvegardés à l'itération 15 000 (écart signalé
+   par les auteurs).
+
+- **Décision : garder « touche » (DINOv3, couche 6) par défaut et laisser CSD dans `NOT_KEPT`.**
+  Touche répond plus proprement à la question « texture de surface sans connaissance des étiquettes »,
+  reste le regard le plus orthogonal à Forme et Sujet, et ne souffre d'aucune fuite de données
+  WikiArt. CSD reste disponible sur disque pour les bancs d'essai (`pixplot pairs bench --spaces
+  …,touche_csd`), et méritera d'être réévalué le jour où PixPlot disposera d'un corpus muséal hors
+  WikiArt/LAION (par ex. Paris Musées IIIF).
+- **Limites.** Les paires annotées `meme_facture` sont peu nombreuses (17 paires, dont 13 issues des
+  désaccords impliquant Touche) et `meme_main` ne compte qu'une paire annotée : l'évaluation sans biais
+  de sélection repose surtout sur les paires de métadonnées. La contamination exacte entre WikiArt 81k
+  et LAION-Styles n'a pas été décomptée œuvre par œuvre (le jeu LAION-Styles complet n'étant pas
+  téléchargé localement).

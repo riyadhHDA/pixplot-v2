@@ -1085,3 +1085,185 @@ Gap with the two other possible rules, measured on WikiArt 81k (10 neighbours, f
 - **No conclusion changes**: Subject stays ahead of Form for all three labels, under all three rules.
 - **Duplicates** (§ 29): removing them changes P@1 by less than a point (style: 64.8 % → 65.3 % for
   Form, 71.4 % → 72.0 % for Subject).
+
+## 31. Evaluating PE-Core L/14 against SigLIP 2 So400m for the "subject" space (19/11/2026)
+
+Question: can **PE-Core** (*Perception Encoder*, Bolya et al., Meta, 2025, `arXiv:2504.13181`) replace
+**SigLIP 2 So400m** for the "subject" space (semantic similarity and free-text search)?
+
+- **Licence and chosen variant.** Hugging Face card verified before download: **Apache 2.0** licence,
+  no access request (`facebook/PE-Core-L14-336`, OpenCLIP remap maintained by `timm`:
+  `timm/PE-Core-L-14-336`). Chosen variant: **PE-Core L/14 @336** (0.32B vision parameters + 0.31B
+  text, 1,024 dimensions, 32-token context, 2.68 GB) — comparable in size to SigLIP 2 So400m @384
+  (0.4B vision, 1,152 dimensions). `G/14 @448` (1.88B vision, 9.68 GB, 1,024 patches vs 576) would
+  cost roughly 10× more compute (~3 h on 81k).
+- **Implementation and extraction.** Encoder `pixplot/encoders/pe_core.py`: vision tower loaded via
+  `timm` (`vit_pe_core_large_patch14_336`), causal PyTorch text tower faithful to Meta's official code
+  (GELU, `0` padding, `argmax` EOT pooling, without requiring `open_clip`). Preprocessing: uncropped
+  letterbox, neutral grey fill, `(x − 0.5) / 0.5` normalisation. Free-text search wired via
+  `pixplot search-text --encoder pe_core_l14` (SigLIP 2 remains default). Full extraction on WikiArt
+  81k (`features/pe_core_l14_20261119-225940`, log `data/wikiart81k/pe_core.log`): **80,716 artworks**,
+  **0 failed**, **20 min 18 s**, **65.5 images/s**, **3,806 MiB** VRAM (RX 7900 GRE, FP16, batch 64).
+
+### 1. WikiArt 81k labels (`pixplot bench`, k = 10, P@1 per § 30)
+
+| Model | Label | n | P@1 | P@10 | Chance | Speed |
+|---|---|---:|---:|---:|---:|---:|
+| SigLIP 2 So400m @384 | Artist (`huggan/wikiart` only) | 39,499 | 73.0 % | 61.6 % | 1.5 % | 73.2 img/s |
+| **PE-Core L/14 @336** | Artist (`huggan/wikiart` only) | 39,499 | **74.5 %** | **62.6 %** | 1.5 % | 65.5 img/s |
+| SigLIP 2 So400m @384 | Artist (MMArt-enriched catalogue) | 74,684 | 59.3 % | 42.9 % | 0.5 % | 73.2 img/s |
+| **PE-Core L/14 @336** | Artist (MMArt-enriched catalogue) | 74,684 | **61.5 %** | **44.3 %** | 0.5 % | 65.5 img/s |
+| SigLIP 2 So400m @384 | Style | 80,716 | 71.4 % | 62.0 % | 7.9 % | 73.2 img/s |
+| **PE-Core L/14 @336** | Style | 80,716 | **72.0 %** | **62.3 %** | 7.9 % | 65.5 img/s |
+| SigLIP 2 So400m @384 | Genre | 64,929 | 83.4 % | 79.5 % | 14.6 % | 73.2 img/s |
+| **PE-Core L/14 @336** | Genre | 64,929 | **83.6 %** | **79.7 %** | 14.6 % | 65.5 img/s |
+
+Image-to-image, PE-Core L/14 slightly edges out SigLIP 2 So400m on every label metric (+1.5 to +2.2 pts
+artist, +0.6 pt style, +0.2 pt genre).
+
+### 2. Validated and metadata pairs (`pixplot pairs bench`, 80,716 artworks)
+
+| Category (n queries) | SigLIP 2 R@10 / R@100 / med. / pct. | PE-Core L/14 R@10 / R@100 / med. / pct. |
+|---|---|---|
+| **Same subject, diff. composition** (annotated, 74) | **37.8 %** / **54.1 %** / **30** / 0.919 | 28.4 % / 43.2 % / 174 / **0.929** |
+| *— of which 21 pairs from `subject > …` disagreements (42)* | *57.1 % / 69.0 % / 4 / 0.980* | *33.3 % / 54.8 % / 38 / 0.976* |
+| *— of which 16 other pairs, unbiased wrt SigLIP 2 (32)* | *12.5 % / 34.4 % / 1,152 / 0.838* | ***21.9 %** / 28.1 % / **573** / **0.867*** |
+| **Attested filiation** (annotated, 20) | **45.0 %** / **70.0 %** / **17** / **0.998** | **45.0 %** / **70.0 %** / 18 / 0.996 |
+| Same composition, diff. subject (annotated, 28) | 21.4 % / 28.6 % / 814 / 0.738 | 21.4 % / **39.3 %** / **566** / **0.859** |
+| Same motif, diff. period (annotated, 4) | **50.0 %** / 75.0 % / 26 / 0.980 | 0.0 % / 75.0 % / **21** / **0.996** |
+| Metadata: same subject (600) | 0.0 % / 0.5 % / **15,424** / **0.726** | 0.0 % / **0.7 %** / 16,424 / 0.714 |
+| Metadata: same artist, diff. styles (600) | 0.3 % / 2.2 % / **9,374** / 0.790 | **0.5 %** / **3.3 %** / 9,756 / **0.791** |
+| Metadata: diff. artists, same brushwork (500) | 0.2 % / 5.8 % / 5,356 / 0.831 | **1.0 %** / **7.8 %** / **5,112** / **0.865** |
+
+On the 10 `filiation` pairs, both models tie (R@10 45.0 %, R@100 70.0 %, median rank 17 vs 18). On
+"same subject", SigLIP 2's apparent R@10 lead comes from selection bias on the 21 pairs sourced from
+`subject > …` disagreements: on the 16 unbiased pairs, PE-Core scores higher (R@10 21.9 % vs 12.5 %,
+median 573 vs 1,152).
+
+### 3. Free-text search: 10 art-historian queries (visual check of top 10 results)
+
+Each query was tested in **French** (actual PixPlot usage) and in its **English translation**, with all
+200 top-10 thumbnails per model (10 × 10 per language) visually inspected on contact sheets:
+
+| Query (FR / EN) | SigLIP 2 FR | PE-Core FR | SigLIP 2 EN | PE-Core EN |
+|---|---:|---:|---:|---:|
+| "Annonciation" / *Annunciation* | **10/10** | 4/10 | **10/10** | **10/10** |
+| "vanité avec un crâne" / *vanitas still life with a skull* | **10/10** | **10/10** | **10/10** | **10/10** |
+| "paysage d'hiver avec patineurs" / *winter landscape with ice skaters* | **9/10** | 6/10 | 9/10 | **10/10** |
+| "Crucifixion" / *Crucifixion* | **10/10** | **10/10** | **10/10** | **10/10** |
+| "bouquet de fleurs dans un vase" / *bouquet of flowers in a vase* | **10/10** | **10/10** | **10/10** | **10/10** |
+| "tempête en mer avec un navire" / *stormy sea with a ship* | **10/10** | **10/10** | **10/10** | **10/10** |
+| "autoportrait d'un peintre avec sa palette" / *self-portrait of a painter holding a palette* | **9/10** | 8/10 | **10/10** | 9/10 |
+| "femme lisant une lettre" / *woman reading a letter* | **9/10** | 5/10 | **8/10** | 5/10 |
+| "pont sur une rivière" / *bridge over a river* | **10/10** | **10/10** | **10/10** | **10/10** |
+| "estampe japonaise du mont Fuji" / *Japanese woodblock print of Mount Fuji* | **10/10** | 8/10 | **9/10** | 8/10 |
+| **Total (out of 100 inspected results)** | **97 / 100** | **81 / 100** | **96 / 100** | **92 / 100** |
+
+- **Reading.** PE-Core's weakness shows immediately in French: its text tower uses an English-centric
+  CLIP BPE vocabulary (49,408 tokens, 32-token context). On French "Annonciation", PE-Core drops to
+  **4/10** (returning portraits by Corot and Holbein, a circled "A" logo by Roerich, and relying on
+  printed captions *The Annunciation*), whereas it jumps to **10/10** on English *Annunciation*. The
+  same drop appears on "paysage d'hiver avec patineurs" (6/10 FR → 10/10 EN). Even in English, SigLIP 2
+  stays ahead (96/100 vs 92/100), notably on fine action scenes (*woman reading a letter*: 8/10 vs 5/10,
+  where PE-Core returns four portraits with no letter).
+- **Decision: keep SigLIP 2 So400m as the default "subject" space.** PE-Core's small image-to-image
+  lead (+0.2 to +2.2 pts) does not offset the clear loss on French text search (−16 points) nor the
+  cost of rebuilding the 1.61M-zone index, Iconclass names, and 2D concept axes. PE-Core L/14 stays in
+  `NOT_KEPT` (hidden from Atlas and MCP), with vectors retained on disk (`pixplot search-text --encoder
+  pe_core_l14`, `pixplot pairs bench --spaces …,sujet_pe`).
+- **Limits.** Only L/14 @336 was tested (not G/14 @448, too heavy for a single local PC). Text search
+  was judged on 10 queries without prompt engineering; both models likely saw WikiArt reproductions
+  during web pretraining.
+
+## 32. Evaluating CSD ViT-L/14 against "brushwork" (DINOv3, layer 6) (19/11/2026)
+
+Question: can **CSD** (*Contrastive Style Descriptors*, Somepalli et al., ECCV 2024, `arXiv:2404.01292`)
+replace the **"brushwork"** space (DINOv3 ViT-B/16, layer 6, patch mean and std, § 11) for retrieving
+artworks with comparable brushwork or manner?
+
+- **Licences verified before download.** Official repository (`learn2phoenix/CSD`): **MIT**; published
+  Hugging Face weights (`tomg-group-umd/CSD-ViT-L`, `pytorch_model.bin`, 2.44 GB): **CC BY 4.0**, open
+  access — suitable for local research use.
+- **Implementation and extraction.** Encoder `pixplot/encoders/csd.py` (standalone PyTorch, no
+  `openai/clip` dependency): CLIP ViT-L/14 backbone (QuickGELU, CLIP normalisation, uncropped 224 px
+  letterbox) + L2-normalised `last_layer_style` projection head (768 dimensions). Inspecting
+  `pytorch_model.bin` shows that the public Hugging Face checkpoint was saved at iteration **15,000**
+  (`iters = 40,000`, `lambda_c = 0.0`, whereas the paper reports 80,000 iterations), matching the
+  authors' GitHub disclaimer noting a discrepancy with paper numbers. Extraction on WikiArt 81k
+  (`features/csd_vitl14_20261119-232036`, log `data/wikiart81k/csd.log`): **80,716 artworks**,
+  **0 failed**, **8 min 38 s**, **149.8 images/s**, **1,985 MiB** VRAM (RX 7900 GRE, FP16, batch 64).
+
+### 1. WikiArt 81k labels (`pixplot bench`, k = 10, P@1 per § 30)
+
+| Model | Artist P@1 / P@10 (n = 74,684) | Style P@1 / P@10 (n = 80,716) | Genre P@1 / P@10 (n = 64,929) | Speed |
+|---|---|---|---|---:|
+| Brushwork (DINOv3 L6 @448) | 51.9 % / 35.0 % | 61.3 % / 49.6 % | 69.4 % / 62.8 % | 124.5 img/s |
+| **CSD ViT-L/14 @224** | **54.8 %** / **40.0 %** | **67.0 %** / **57.7 %** | **75.4 %** / **69.8 %** | **149.8 img/s** |
+| *Reference: Subject (SigLIP 2 @384)* | *59.3 % / 42.9 %* | *71.4 % / 62.0 %* | *83.4 % / 79.5 %* | *73.2 img/s* |
+
+Per-style breakdown (P@10 on WikiArt 81k):
+
+| Style (n) | Brushwork (DINOv3 L6) | CSD ViT-L/14 | Gap | Style type |
+|---|---:|---:|---:|---|
+| `Analytical_Cubism` (110) | **58.1 %** | 56.0 % | −2.1 pts | brushwork / structure |
+| `Pointillism` (511) | 61.8 % | **63.0 %** | +1.2 pts | pure brushwork |
+| `Fauvism` (822) | 29.8 % | **31.8 %** | +2.0 pts | brushwork / colour |
+| `Impressionism` (13,025) | 64.9 % | **67.6 %** | +2.7 pts | broad brushwork |
+| `Action_painting` (98) | 38.8 % | **46.9 %** | +8.2 pts | gesture / texture |
+| `Minimalism` (1,331) | 59.8 % | **65.4 %** | +5.6 pts | form / movement |
+| `Pop_Art` (1,473) | 39.0 % | **45.7 %** | +6.7 pts | movement / visual culture |
+| `High_Renaissance` (1,340) | 33.7 % | **45.5 %** | **+11.8 pts** | historical school |
+| `Baroque` (4,211) | 51.9 % | **67.4 %** | **+15.5 pts** | historical school |
+| `Ukiyo_e` (1,163) | 80.3 % | **96.3 %** | **+16.0 pts** | medium / tradition |
+
+### 2. Validated and metadata pairs (`pixplot pairs bench`, 80,716 artworks)
+
+| Category (n queries) | Brushwork (DINOv3 L6) R@10 / R@100 / med. / pct. | CSD ViT-L/14 R@10 / R@100 / med. / pct. |
+|---|---|---|
+| **Diff. artists, comparable brushwork** (annotated, 34) | **29.4 %** / **47.1 %** / **202** / 0.710 | 0.0 % / 5.9 % / 7,666 / **0.836** |
+| *— of which 9 pairs from `brushwork > …` disagreements (18)* | *55.6 % / 83.3 % / 5 / 0.999* | *0.0 % / 11.1 % / 3,583 / 0.890* |
+| *— of which 8 other pairs (16, incl. 4 `… > brushwork`)* | *0.0 % / 6.2 % / 65,772 / 0.386* | *0.0 % / 0.0 % / **10,312** / **0.774*** |
+| **Same artist, diff. brushwork** (annotated, 2) | 0.0 % / 0.0 % / 56,470 / 0.300 | 0.0 % / 0.0 % / **31,724** / **0.607** |
+| **Metadata: diff. artists, same brushwork** (500) | 1.6 % / 7.0 % / 7,750 / 0.803 | **1.8 %** / **10.4 %** / **2,157** / **0.854** |
+| **Metadata: same artist, diff. styles** (600) | 0.0 % / 1.0 % / 22,217 / 0.660 | **0.2 %** / **1.7 %** / **14,910** / **0.746** |
+| **Metadata: same subject, diff. styles** (600) | 0.0 % / 0.0 % / 28,160 / 0.622 | 0.0 % / 0.3 % / **31,368** / **0.591** |
+
+Mean top-10 neighbour overlap (random sample of 2,000 artworks):
+`csd ∩ subject` = **16.2 %** · `csd ∩ brushwork` = 15.3 % · `csd ∩ form` = 12.2 % (vs
+`brushwork ∩ subject` = **12.0 %** and `brushwork ∩ form` = **10.8 %**).
+
+### 3. Critical reading and training-data contamination (key limit)
+
+At first glance, CSD beats Brushwork on style labels (+5.7 pts P@1, +8.1 pts P@10) and on metadata
+"different artists, comparable brushwork" pairs (median 2,157 vs 7,750, percentile 0.854 vs 0.803),
+while staying slightly more decoupled from genre on metadata "same subject" pairs (percentile 0.591 vs
+0.622).
+
+**Three major caveats prevent reading these scores as proof of superior brushwork retrieval:**
+
+1. **Direct WikiArt contamination and label supervision.** Section 4 of Somepalli et al. (2024) shows
+   that CSD is initialised from OpenAI CLIP ViT-L/14 and fine-tuned on **LAION-Styles**: 511,921 images
+   from **LAION-Aesthetics 6+** (deduplicated internally with SSCD, but **never deduplicated against
+   WikiArt**) using **3,840 artist, medium, and movement tags** from CLIP Interrogator. Because
+   LAION-Aesthetics 6+ contains abundant WikiArt reproductions captioned with artist and movement names,
+   **our WikiArt artworks are likely present in CSD's training data** under their own labels. An
+   inflated WikiArt score does not prove generalisation.
+2. **CSD measures "named style", not pure surface brushwork.** The per-style table confirms it: on
+   surface-texture styles (`Analytical_Cubism`, `Pointillism`, `Fauvism`, `Impressionism`), purely
+   self-supervised Brushwork (which never saw an artist or style label) ties or beats CSD (58.1 % vs
+   56.0 % on Analytical Cubism, 61.8 % vs 63.0 % on Pointillism). CSD's big gains come on historical
+   schools and mediums prominent in web captions (`Ukiyo_e` +16.0 pts, `Baroque` +15.5 pts,
+   `High_Renaissance` +11.8 pts). CSD also overlaps more with Subject (16.2 %) than Brushwork does
+   (12.0 %), while still trailing SigLIP 2 on style overall (67.0 % vs 71.4 % P@1).
+3. **Resolution and public checkpoint.** 224 px input (vs 448 px for Brushwork) blurs fine surface
+   grain, and the public Hugging Face checkpoint stops at iteration 15,000 (discrepancy noted by the
+   authors).
+
+- **Decision: keep "brushwork" (DINOv3, layer 6) as default and leave CSD in `NOT_KEPT`.** Brushwork
+  answers the stricter question of unsupervised surface texture, remains more orthogonal to Form and
+  Subject, and has zero WikiArt label leakage. CSD remains on disk for benchmarks (`pixplot pairs bench
+  --spaces …,touche_csd`) and can be re-evaluated later on a non-WikiArt museum corpus (e.g. Paris
+  Musées IIIF).
+- **Limits.** Only 17 annotated `meme_facture` pairs (13 drawn from disagreements involving Brushwork)
+  and 1 annotated `meme_main` pair exist; unbiased evaluation rests mainly on metadata pairs. Exact
+  image-level overlap between WikiArt 81k and LAION-Styles was not enumerated locally.
