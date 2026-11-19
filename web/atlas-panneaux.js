@@ -167,9 +167,10 @@ async function openCompare() {
     return `<tr><td>${a + 1} ↔ ${b + 1}</td>${spaces.map((s) => {
       const v = res.similarity[s.key][a][b];
       return v == null ? "<td>—</td>" : `<td><span class="bar" style="--v:${Math.max(0, v)}"></span>${v.toFixed(3)}</td>`;
-    }).join("")}<td class="pair-cell">${tags}${ref.types.length ? `<button class="chip" data-annotate="${a},${b}">Annoter</button>` : ""}</td></tr>`;
+    }).join("")}<td class="pair-cell"><button class="chip" data-why="${a},${b}" title="Montrer les zones de ces deux œuvres qui se répondent le plus">Pourquoi ?</button>${tags}${ref.types.length ? `<button class="chip" data-annotate="${a},${b}">Annoter</button>` : ""}</td></tr>`;
   }).join("");
   $("compare-body").innerHTML = `<div class="cmp-row" style="--n:${n}">${cols}</div>
+    <div class="cmp-why" id="cmp-why" hidden></div>
     <div class="cmp-table"><h3>Similarités (cosinus) selon chaque regard</h3>
       <table><thead><tr><th>paire</th>${head}<th title="Paires de référence du banc d'essai (pixplot pairs bench)">référence</th></tr></thead><tbody>${body}</tbody></table>
       <form class="pair-form" id="pair-form" hidden>
@@ -190,6 +191,10 @@ async function openCompare() {
   }));
   $("compare-body").querySelectorAll("[data-remove]").forEach((b) => b.addEventListener("click", () => {
     toggleCompare(Number(b.dataset.remove)); if (state.compare.length >= 2) openCompare(); else $("compare").hidden = true;
+  }));
+  $("compare-body").querySelectorAll("[data-why]").forEach((btn) => btn.addEventListener("click", () => {
+    const [a, b] = btn.dataset.why.split(",").map(Number);
+    showWhy(res.ids[a], res.ids[b], a, b, btn);
   }));
   const form = $("pair-form");
   if (!form) return;
@@ -213,6 +218,54 @@ async function openCompare() {
       openCompare();
     } catch (err) { toast(`Échec : ${err.message}`); }
   });
+}
+
+// « Pourquoi ces deux œuvres se ressemblent ? » : les zones qui se répondent (cases 4 × 4, regard
+// forme), dessinées sur les deux images avec le même numéro et la même couleur.
+const WHY_COLORS = ["#e0b040", "#56b4e9", "#cc79a7", "#00b079", "#f0e442", "#d55e00", "#0072b2", "#ffffff"];
+
+function clearWhy() {
+  document.querySelectorAll("#compare-body .why-box").forEach((el) => el.remove());
+  document.querySelectorAll("#compare-body [data-why]").forEach((el) => el.classList.remove("on"));
+  const box = $("cmp-why"); if (box) { box.hidden = true; box.innerHTML = ""; }
+}
+
+async function showWhy(idA, idB, nA, nB, btn) {
+  const wasOn = btn.classList.contains("on");
+  clearWhy();
+  if (wasOn) return;                                       // second clic : on efface
+  let r;
+  try { r = await getJSON(`/api/correspond?a=${idA}&b=${idB}`); } catch (err) { toast(`Échec : ${err.message}`); return; }
+  btn.classList.add("on");
+  const draw = (id, key) => {
+    const fig = document.querySelector(`#compare-body .cmp[data-id="${id}"] .cmp-img`);
+    const img = fig && fig.querySelector("img");
+    if (!img) return;
+    const place = () => {
+      fig.querySelectorAll(".why-box").forEach((el) => el.remove());
+      const rect = imageRect(img);
+      r.pairs.forEach((p, k) => {
+        const [x0, y0, x1, y1] = p[key];
+        const el = document.createElement("div");
+        el.className = "why-box";
+        el.style.cssText = `left:${rect.left + x0 * rect.w}px;top:${rect.top + y0 * rect.h}px;` +
+          `width:${(x1 - x0) * rect.w}px;height:${(y1 - y0) * rect.h}px;--c:${WHY_COLORS[k % WHY_COLORS.length]}`;
+        el.innerHTML = `<span>${k + 1}</span>`;
+        fig.appendChild(el);
+      });
+    };
+    if (img.complete && img.naturalWidth) place(); else img.addEventListener("load", place, { once: true });
+  };
+  draw(idA, "box_a"); draw(idB, "box_b");
+  const box = $("cmp-why");
+  box.hidden = false;
+  box.innerHTML = r.pairs.length
+    ? `<h3>Pourquoi ${nA + 1} et ${nB + 1} se ressemblent-elles ? <small>regard « ${esc(SPACE_SHORT[r.space] || r.space)} », cases ${esc(r.grid)}</small></h3>
+       <ol>${r.pairs.map((p, k) => `<li style="--c:${WHY_COLORS[k % WHY_COLORS.length]}">zone ${k + 1} ↔ zone ${k + 1} :
+         cosinus ${p.sim.toFixed(2)}, ${p.lift >= 0 ? "+" : ""}${p.lift.toFixed(2)} au-dessus de leur ressemblance moyenne</li>`).join("")}</ol>
+       <p class="prov">${esc(r.note)} Le regard compare des formes : à vous de dire si ces zones partagent un motif,
+       une pose, une composition, ou seulement un fond semblable.</p>`
+    : `<p class="prov">Aucune zone ne se répond nettement entre ces deux œuvres (selon le regard « ${esc(r.space)} »).</p>`;
 }
 
 // ------------------------------------------------------------------ carnet de recherche

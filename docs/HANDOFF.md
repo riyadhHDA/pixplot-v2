@@ -12,6 +12,13 @@ avec n'importe quel modèle.
 citable (CITATION.cff, DOI Zenodo à chaque release). Avant : 0.15.0, la composition (ARCHITECTURE § 24). Historique
 complet dans le [CHANGELOG](../CHANGELOG.fr.md), étapes suivantes dans la [ROADMAP](../ROADMAP.fr.md).
 
+## Fait, commité dans main, pas encore publié
+
+**« Pourquoi ces deux œuvres se ressemblent ? »** (ARCHITECTURE § 25) : bouton « Pourquoi ? » dans le
+comparateur, API `/api/correspond`, `pixplot/analysis/correspondences.py`, tests. Vérifié dans l'Atlas
+81k (Raphaël / Pérugin, Rubens / Titien). À publier en 0.16.0 avec l'accord de l'utilisateur. Suite
+possible : un outil MCP équivalent (le serveur passerait de 15 à 16 outils).
+
 ## Travail en cours, sur une branche
 
 **0.14 : nommer les groupes avec Iconclass** — branche `claude/iconclass` (commit `598b83c`, non

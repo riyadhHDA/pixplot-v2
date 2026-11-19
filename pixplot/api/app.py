@@ -336,6 +336,26 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
         return {"ids": wanted, "artworks": [data.artwork(i, k=0) for i in wanted],
                 "spaces": data.spaces.list(), "similarity": data.spaces.pairwise(wanted)}
 
+    @app.get("/api/correspond")
+    def correspond(a: int, b: int, space: str | None = None, k: int = Query(4, ge=1, le=8)):
+        """Zones qui se répondent entre deux œuvres, selon un regard qui garde des vecteurs par zone."""
+        from ..analysis.correspondences import correspondences
+
+        available = data.spaces.region_spaces()
+        if not available:
+            raise HTTPException(404, "Aucun regard n'a de vecteurs par zone")
+        space = space or ("forme" if "forme" in available else available[0])
+        if space not in available:
+            raise HTTPException(400, f"Regards possibles : {available}")
+        ra, rb = data.spaces.regions(space, a), data.spaces.regions(space, b)
+        if ra is None or rb is None:
+            raise HTTPException(404, "Œuvre absente de ce regard")
+        sizes = data.sizes([a, b])
+        pairs = correspondences(ra[0], rb[0], sizes.get(a, (1, 1)), sizes.get(b, (1, 1)), grids=ra[1], k=k)
+        return {"a": a, "b": b, "space": space, "spaces": available, "grid": "4 × 4", "pairs": pairs,
+                "note": "Zones qui se répondent le plus (correspondances mutuelles, classées par ce qui les "
+                        "distingue de la ressemblance moyenne). Une piste pour regarder, pas une explication."}
+
     @app.get("/api/search")
     def search(q: str = Query(..., min_length=1, max_length=200)):
         hits = data.search(q)

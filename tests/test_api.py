@@ -69,6 +69,15 @@ def test_images_and_search(client):
     assert r.content == b"".join(one)
     assert c.get("/api/thumbs/999", params={"ids": "1"}).status_code == 400
     assert c.get("/api/thumbs/256", params={"ids": "a,b"}).status_code == 400
+    # « Pourquoi ? » : zones qui se répondent entre deux œuvres, cadres en fractions de l'image
+    r = c.get("/api/correspond", params={"a": ids[0], "b": ids[1]})
+    assert r.status_code == 200, r.text
+    w = r.json()
+    assert w["space"] in w["spaces"] and 1 <= len(w["pairs"]) <= 4
+    for p in w["pairs"]:
+        assert all(0 <= v <= 1 for v in p["box_a"] + p["box_b"]) and -1 <= p["sim"] <= 1
+    assert c.get("/api/correspond", params={"a": ids[0], "b": ids[1], "space": "inconnu"}).status_code == 400
+    assert c.get("/api/correspond", params={"a": ids[0], "b": 999999}).status_code == 404
     assert c.get(f"/api/image/{first}").status_code == 200
     res = c.get("/api/search", params={"q": "rouge"}).json()
     assert res["count"] == 6

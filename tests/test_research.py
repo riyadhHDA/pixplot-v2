@@ -599,3 +599,31 @@ def test_composition_common_cells():
     blk = lambda c: (c[0].reshape(len(c[0]), -1), c[1])
     assert np.isclose(similarities("layout", blk(a), blk(b))[0, 0], 12 / 16)
     assert np.isclose(similarities("layout_communes", blk(a), blk(b))[0, 0], 1.0)
+
+
+def test_correspondences_mutual_and_masked():
+    """Les zones qui se répondent : correspondances mutuelles seulement, cases hors de l'œuvre
+    exclues, cadres ramenés à l'image."""
+    from pixplot.analysis.correspondences import cells_of, correspondences, match
+
+    rng = np.random.default_rng(3)
+    D = 16
+    Ra = rng.normal(size=(21, D)).astype(np.float32)
+    Rb = rng.normal(size=(21, D)).astype(np.float32)
+    Rb[5 + 6] = Ra[5 + 1] * 2 + 0.01 * rng.normal(size=D)       # case 1 de A ↔ case 6 de B
+    assert cells_of(Ra).shape == (16, D) and np.allclose(cells_of(Ra)[0], Ra[5])
+
+    # deux œuvres carrées : toutes les cases sont sur l'œuvre
+    m = correspondences(Ra, Rb, (1000, 1000), (1000, 1000), k=8)
+    top = m[0]
+    assert (top["cell_a"], top["cell_b"]) == (1, 6) and top["sim"] > 0.99
+    assert top["box_a"] == [0.25, 0.0, 0.5, 0.25] and top["box_b"] == [0.5, 0.25, 0.75, 0.5]
+    for x in m:                                                  # chaque paire est mutuelle
+        S = cells_of(Ra) @ cells_of(Rb).T
+        assert x["cell_b"] in np.argsort(-S[x["cell_a"]])[:16]
+
+    # œuvre très large : la première rangée de cases tombe dans les bandes → jamais retenue
+    boxes = [None] * 4 + [[0, 0, 1, 1]] * 12
+    m = match(cells_of(Ra), cells_of(Ra), boxes, boxes, k=16)
+    assert m and all(x["cell_a"] >= 4 and x["cell_b"] >= 4 for x in m)
+    assert match(cells_of(Ra), cells_of(Rb), [None] * 16, boxes) == []

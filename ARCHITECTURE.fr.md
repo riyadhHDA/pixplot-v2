@@ -779,3 +779,25 @@ Les vecteurs PE-Spatial restent sur le disque pour les bancs d'essai (`features/
 mais l'Atlas et le serveur MCP ne les proposent pas comme regard (`NOT_KEPT` dans `api/spaces.py`).
 Limite : 14 paires « même composition » ; une conclusion plus large demanderait plus de paires
 validées, et une grille calée sur l'œuvre plutôt que sur le carré (nouveau calcul).
+
+## 25. « Pourquoi ces deux œuvres se ressemblent ? » (19/11/2026)
+
+Dans le comparateur, le bouton **« Pourquoi ? »** d'une paire dessine sur les deux images les zones
+qui se répondent le plus, avec le même numéro et la même couleur, et une légende chiffrée. Le but :
+qu'une proximité calculée devienne discutable, en montrant sur quoi le regard s'appuie.
+
+- **Calcul** (`pixplot/analysis/correspondences.py`, API `/api/correspond`) : pour un regard qui
+  garde des vecteurs par zone (aujourd'hui la forme, DINOv3), chaque œuvre est découpée en 16 cases
+  (4 × 4) ; on calcule les 16 × 16 cosinus entre les cases des deux œuvres et on garde les
+  **correspondances mutuelles** (chacune est la plus proche de l'autre). Elles sont classées par ce
+  qui les distingue : le cosinus moins la ressemblance moyenne des deux cases avec toutes les autres,
+  pour ne pas mettre en tête deux fonds quelconques. Les cases qui tombent dans les bandes ajoutées
+  pour mettre l'œuvre au carré sont exclues ; les cadres sont ramenés à l'image.
+- **Coût** : nul à l'avance, quelques millisecondes à la demande (les vecteurs par zone existent déjà).
+- **Exemple** (paire validée « même composition ») : Raphaël, *Mariage de la Vierge*, et Pérugin,
+  *Remise des clés* : les zones retenues sont le temple central et les groupes de personnages au
+  premier plan, dans les deux œuvres. Sur la copie de Rubens d'après l'*Enlèvement d'Europe* de
+  Titien, les quatre zones sont aux mêmes endroits dans les deux tableaux.
+- **Limites** : une grille fixe, calée sur le carré et non sur l'œuvre ; une case d'un format très
+  large couvre une bande haute de l'image. Le regard compare des formes : c'est à l'historien de dire
+  si les zones partagent un motif, une pose, une composition, ou seulement un fond semblable.

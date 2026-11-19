@@ -12,6 +12,7 @@ utilisation.
 from __future__ import annotations
 
 import threading
+from pathlib import Path
 
 import numpy as np
 
@@ -110,6 +111,22 @@ class Spaces:
                 v = store.global_vectors[rows[i]].astype(np.float32)
                 out[n] = v / max(float(np.linalg.norm(v)), 1e-12)
         return out
+
+    def region_spaces(self) -> list[str]:
+        """Regards qui gardent des vecteurs par zone (``regions.npy``) : ceux où l'on peut montrer
+        quelles zones de deux œuvres se répondent."""
+        return [k for k, run in self.runs.items() if (Path(run.path) / "regions.npy").exists()]
+
+    def regions(self, key: str, artwork_id: int):
+        """Vecteurs par zone d'une œuvre (R, D) et grilles du run, ou None."""
+        self._open(key)
+        run = self.runs[key]
+        p = Path(run.path) / "regions.npy"
+        if not p.exists() or artwork_id not in self._rows[key]:
+            return None
+        R = np.load(p, mmap_mode="r")
+        grids = tuple(run.manifest["params"].get("region_grids") or (1, 2, 4))
+        return np.asarray(R[self._rows[key][artwork_id]], dtype=np.float32), grids
 
     def neighbors(self, key: str, artwork_id: int, k: int = 20) -> list[tuple[int, float]]:
         """Les ``k`` plus proches voisines dans cet espace, limitées aux œuvres de l'analyse."""

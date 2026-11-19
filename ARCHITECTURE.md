@@ -706,3 +706,24 @@ PE-Spatial vectors stay on disk for benchmarks (`features/pe_spatial_b16_*`), bu
 MCP server do not offer them as a regard (`NOT_KEPT` in `api/spaces.py`). Limit: 14 "same
 composition" pairs; a broader conclusion would need more validated pairs, and a grid aligned on the
 work rather than on the square (new computation).
+
+## 25. "Why do these two works look alike?" (19/11/2026)
+
+In the comparator, a pair's **"Pourquoi ?"** button draws on both images the zones that answer each
+other most, with the same number and colour, and a legend with figures. The aim: to make a computed
+proximity open to discussion, by showing what the regard relies on.
+
+- **Computation** (`pixplot/analysis/correspondences.py`, API `/api/correspond`): for a regard that
+  keeps region vectors (today form, DINOv3), each work is cut into 16 cells (4×4); the 16×16 cosines
+  between the cells of the two works are computed and **mutual matches** are kept (each is the other's
+  nearest). They are ranked by what sets them apart: the cosine minus the two cells' mean similarity
+  to all others, so that two ordinary backgrounds do not come first. Cells that fall in the bands added
+  to square the work are excluded; boxes are mapped back to the image.
+- **Cost**: nothing in advance, a few milliseconds on demand (region vectors already exist).
+- **Example** (validated "same composition" pair): Raphael, *Marriage of the Virgin*, and Perugino,
+  *Delivery of the Keys*: the zones found are the central temple and the groups of figures in the
+  foreground, in both works. On Rubens's copy after Titian's *Rape of Europa*, the four zones are at
+  the same places in both paintings.
+- **Limits**: a fixed grid, aligned on the square rather than the work; a cell of a very wide format
+  covers a tall band of the image. The regard compares shapes: it is for the historian to say whether
+  the zones share a motif, a pose, a composition, or only a similar background.
