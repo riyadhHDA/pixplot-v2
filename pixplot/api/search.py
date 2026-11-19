@@ -34,12 +34,14 @@ class SearchEngines:
         self._text_encoder = None
         self._text_store = None
         self._text_index = None
+        self._text_backends: dict[str, tuple] = {}
         self._zone_index = None
 
     # ------------------------------------------------------------------ disponibilité
-    def text_run(self):
+    def text_run(self, encoder: str | None = None):
+        prefix = encoder or "siglip2"
         runs = [r for r in list_runs("features", runs_dir=self.data.settings.runs_dir)
-                if str(r.manifest["params"].get("encoder", "")).startswith("siglip2")]
+                if str(r.manifest["params"].get("encoder", "")).startswith(prefix)]
         return runs[-1] if runs else None
 
     def status(self) -> dict:
@@ -91,34 +93,54 @@ class SearchEngines:
                 "index": self._region_index.run.id, "results": results}
 
     # ------------------------------------------------------------------ texte
-    def _load_text(self):
-        if self._text_store is None:
-            run = self.text_run()
+    def _load_text(self, encoder: str | None = None):
+        if encoder is None:
+            if self._text_store is None:
+                run = self.text_run()
+                if run is None:
+                    raise SearchUnavailable("Vecteurs SigLIP 2 absents : lancez `pixplot embed --encoder siglip2_so400m`.")
+                self._text_store = FeatureStore.open(run)
+                try:
+                    from ..index.faiss_index import GlobalIndex, find_index_for
+                    idx = find_index_for(run, runs_dir=self.data.settings.runs_dir)
+                    self._text_index = GlobalIndex.open(idx) if idx else None
+                except ImportError:
+                    self._text_index = None
+            if self._text_encoder is None:
+                p = self._text_store.run.manifest["params"]
+                self._text_encoder = get_encoder(p["encoder"], hf_model=p.get("weights"),
+                                                 input_size=p.get("input_size"))
+            return self._text_store, self._text_index, self._text_encoder
+
+        if encoder not in self._text_backends:
+            run = self.text_run(encoder)
             if run is None:
-                raise SearchUnavailable("Vecteurs SigLIP 2 absents : lancez `pixplot embed --encoder siglip2_so400m`.")
-            self._text_store = FeatureStore.open(run)
+                raise SearchUnavailable(f"Vecteurs {encoder} absents : lancez `pixplot embed --encoder {encoder}`.")
+            store = FeatureStore.open(run)
             try:
                 from ..index.faiss_index import GlobalIndex, find_index_for
                 idx = find_index_for(run, runs_dir=self.data.settings.runs_dir)
-                self._text_index = GlobalIndex.open(idx) if idx else None
+                index = GlobalIndex.open(idx) if idx else None
             except ImportError:
-                self._text_index = None
-        if self._text_encoder is None:
-            p = self._text_store.run.manifest["params"]
-            self._text_encoder = get_encoder(p["encoder"], hf_model=p.get("weights"),
-                                             input_size=p.get("input_size"))
+                index = None
+            p = store.run.manifest["params"]
+            enc = get_encoder(p["encoder"], hf_model=p.get("weights"), input_size=p.get("input_size"))
+            if not hasattr(enc, "encode_text"):
+                raise SearchUnavailable(f"L'encodeur {p['encoder']} ne gère pas la recherche par phrase.")
+            self._text_backends[encoder] = (store, index, enc)
+        return self._text_backends[encoder]
 
-    def text(self, query: str, k: int = 60) -> dict:
+    def text(self, query: str, k: int = 60, encoder: str | None = None) -> dict:
         with self._lock:
-            self._load_text()
-            vec = self._text_encoder.encode_text([query])[0]
-        if self._text_index is not None:
-            found, scores = self._text_index.search(vec, k=k * 2)
+            store, index, enc = self._load_text(encoder)
+            vec = enc.encode_text([query])[0]
+        if index is not None:
+            found, scores = index.search(vec, k=k * 2)
             pairs = [(int(i), float(s)) for i, s in zip(found[0], scores[0]) if i >= 0]
         else:
-            pairs = self._text_store.search(vec, k=k * 2)
+            pairs = store.search(vec, k=k * 2)
         results = [{**self.data.brief(i), "score": round(s, 4)} for i, s in pairs if i in self.data.row_of][:k]
-        return {"query": query, "features": self._text_store.run.id, "results": results}
+        return {"query": query, "features": store.run.id, "results": results}
 
     # ------------------------------------------------------------------ zone décrite par des mots
     def zones(self, query: str, k: int = 60) -> dict:

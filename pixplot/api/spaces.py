@@ -38,12 +38,16 @@ KINDS = [
      "empreinte de détection de copies : répliques, gravures d'après, reprises proches (en essai)"),
     ("depth_anything", "profondeur", "Profondeur (Depth Anything V2)",
      "agencement des plans en profondeur (premier plan, fond) sur une grille 8 × 8 (en essai)"),
+    ("pe_core", "sujet_pe", "Sujet (PE-Core)",
+     "ce que l'on décrirait avec des mots : sujet, genre, école, manière (PE-Core, en essai)"),
+    ("csd", "touche_csd", "Style / touche (CSD)",
+     "descripteur contrastif de style (CSD ViT-L/14, entraîné sur LAION-Styles, en essai)"),
     ("dinov2", "forme_v2", "Forme (DINOv2)", "ancien modèle, pour comparaison"),
 ]
 # Modèles évalués mais non retenus comme regards : leurs vecteurs restent sur le disque pour
 # les bancs d'essai, mais l'Atlas et le serveur MCP ne les proposent pas (ARCHITECTURE § 24).
-NOT_KEPT = ("pe_spatial", "sscd", "depth_anything")
-ORDER = ["forme", "sujet", "couleur", "touche", "composition", "profondeur", "copie", "forme_v2", "couleur_rvb"]
+NOT_KEPT = ("pe_spatial", "sscd", "depth_anything", "pe_core", "csd")
+ORDER = ["forme", "sujet", "couleur", "touche", "composition", "profondeur", "copie", "sujet_pe", "touche_csd", "forme_v2", "couleur_rvb"]
 
 
 def describe_encoder(encoder: str) -> tuple[str, str, str]:

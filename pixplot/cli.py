@@ -96,7 +96,7 @@ def cmd_embed(args) -> int:
 
     s = get_settings(args.data)
     kwargs = {}
-    if args.encoder.startswith(("dinov3_", "dinov2_", "siglip2_", "depth_anything_")):
+    if args.encoder.startswith(("dinov3_", "dinov2_", "siglip2_", "depth_anything_", "pe_core_", "csd_")):
         kwargs = {"weights": args.weights, "repo": args.repo, "hf_model": args.hf_model,
                   "input_size": args.input_size}
     elif args.encoder.startswith("sscd_"):
@@ -250,7 +250,7 @@ def cmd_search_text(args) -> int:
 
     s = get_settings(args.data)
     engines = SearchEngines(AtlasData.load(s))
-    res = engines.text(args.query, k=args.k)
+    res = engines.text(args.query, k=args.k, encoder=args.encoder)
     print(f"« {args.query} »  —  {res['features']}")
     for rank, r in enumerate(res["results"], 1):
         print(f"{rank:>3}. #{r['id']:<7} {r['score']:.4f}  groupe {r['cluster']:<3} {r['label']}")
@@ -1044,9 +1044,10 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--regions", action="store_true", help="index des zones, pour la recherche par détail")
     p.set_defaults(func=cmd_index)
 
-    p = sub.add_parser("search-text", help="chercher des œuvres par une description (SigLIP 2)")
+    p = sub.add_parser("search-text", help="chercher des œuvres par une description (SigLIP 2 ou PE-Core)")
     p.add_argument("query", help="ex. « Annonciation dans un jardin »")
     p.add_argument("-k", type=int, default=15)
+    p.add_argument("--encoder", default=None, help="préfixe d'encodeur texte-image (défaut : siglip2)")
     p.set_defaults(func=cmd_search_text)
 
     p = sub.add_parser("analyze", help="groupes (e-means), carte (UMAP), voisinages, œuvres atypiques")

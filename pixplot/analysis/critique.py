@@ -132,6 +132,50 @@ CARDS: dict[str, dict] = {
                     "la combinaison Forme + profondeur n'améliore pas Forme en validation croisée "
                     "(ARCHITECTURE § 28)",
     },
+    "sujet_pe": {
+        "model": "PE-Core L/14 @336 (Meta, Perception Encoder, 2025, licence Apache 2.0), "
+                 "images et textes (32 jetons)",
+        "trained_on": "milliards de paires image-texte du web (majoritairement anglaises) puis "
+                      "affinage sur vidéos légendées synthétiquement",
+        "sees": "ce qui se décrit par des mots en anglais : sujet, genre, artiste, école, scène",
+        "blind_to": "le vocabulaire iconographique français hors mots transparents (biais vers le "
+                    "texte imprimé dans l'image) et ce qui échappe aux légendes du web",
+        "biases": [
+            "tour texte entraînée principalement en anglais (vocabulaire BPE CLIP de 49 408 jetons, "
+            "fenêtre de 32 jetons) : perte nette en recherche par phrase en français",
+            "sensible au texte imprimé ou inscrit sur les reproductions (titres, affiches, cartels)",
+            "a probablement vu des reproductions de WikiArt lors de son entraînement sur le web",
+        ],
+        "measured": "évalué contre SigLIP 2, non retenu par défaut : légèrement devant sur les "
+                    "étiquettes (+0,2 à +1,5 pt) et égal sur « filiation » (R@10 45,0 %, rang 18 vs 17), "
+                    "mais nettement en retrait en recherche par phrase en français (81/100 contre "
+                    "97/100 ; 92/100 contre 96/100 en anglais) (ARCHITECTURE § 31)",
+    },
+    "touche_csd": {
+        "model": "CSD ViT-L/14 @224 (Somepalli et al., ECCV 2024, code MIT, poids CC BY 4.0), "
+                 "tête style (768 d)",
+        "trained_on": "initialisé sur OpenAI CLIP ViT-L/14, affiné par apprentissage contrastif "
+                      "multi-étiquettes sur LAION-Styles (511 921 images de LAION-Aesthetics 6+, "
+                      "3 840 étiquettes d'artistes, médiums et mouvements)",
+        "sees": "la manière globale, l'école, le médium et le mouvement artistique tels que "
+                "nommés dans les légendes du web",
+        "blind_to": "la facture fine à haute résolution (entrée 224 px) et les gestes sans "
+                    "étiquette stylistique courante dans LAION",
+        "biases": [
+            "risque de contamination sur WikiArt : LAION-Aesthetics 6+ contient de nombreuses "
+            "reproductions issues de WikiArt (non écartées à l'entraînement) et des étiquettes "
+            "d'artistes et mouvements, ce qui peut gonfler les scores sur ce corpus",
+            "le checkpoint public Hugging Face est sauvegardé à l'itération 15 000 (les auteurs "
+            "signalent un écart avec les chiffres de l'article)",
+            "plus proche du regard « sujet » (16,2 % de voisines communes) que « touche » (12,0 %) : "
+            "mesure autant le style nommé que la facture de surface",
+        ],
+        "measured": "évalué contre Touche (DINOv3 couche 6), non retenu par défaut : devant sur "
+                    "les étiquettes de style (P@1 67,0 % vs 61,3 %, P@10 57,7 % vs 49,6 %) et les "
+                    "paires de métadonnées « même facture » (méd. 2 157 vs 7 750), mais scores "
+                    "possiblement gonflés par LAION-Styles et moins spécifique à la texture pure "
+                    "(ARCHITECTURE § 32)",
+    },
 }
 
 
