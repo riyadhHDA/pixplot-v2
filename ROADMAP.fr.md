@@ -1,16 +1,16 @@
 # Feuille de route
 
-[English](ROADMAP.md) · **Français** · Mise à jour : 16/11/2026 · Version actuelle : **0.16.3**
+[English](ROADMAP.md) · **Français** · Mise à jour : 19/11/2026 · Version actuelle : **0.16.3**
 
-Ce qui est fait est dans l'[historique des versions](CHANGELOG.fr.md). Ce document dit ce
-qui vient ensuite, dans quel ordre, et à quelle condition une étape est réussie.
+Ce qui est déjà sorti figure dans [CHANGELOG.fr.md](CHANGELOG.fr.md). Ici sont rassemblées
+les prochaines étapes, les essais écartés et les pistes à tester.
 
-## La règle : mesurer avant d'ajouter
+## Principe : tester avant d'adopter
 
-PixPlot n'empile pas les modèles. Un nouveau modèle ou une nouvelle méthode n'entre dans le
-projet que s'il **gagne sur un banc d'essai** (paires annotées, étiquettes, RichArt…) et
-s'il apporte un signal que les regards existants n'ont pas. Sinon, le résultat négatif est
-documenté et l'on n'y revient pas. Chaque étape réussie devient une version mineure.
+On évite d'empiler les modèles sans preuve. Une nouvelle méthode n'est intégrée que si elle
+améliore réellement un banc d'essai (paires annotées, étiquettes, RichArt…) en apportant un
+signal que les autres regards n'ont pas déjà. Quand un essai échoue, on documente les
+chiffres et on passe à autre chose.
 
 ## Prochaines étapes
 
@@ -90,8 +90,22 @@ documenté et l'on n'y revient pas. Chaque étape réussie devient une version m
   complexité » calculé sans GPU, et un axe possible pour la chronologie.
 - **ArtEmis** (CVPR 2021) : 455 000 annotations d'émotion sur les œuvres de WikiArt ; les
   regards captent-ils l'effet ressenti ou seulement le sujet ?
-- **« Pourquoi ces deux œuvres se ressemblent ? »** : montrer, dans le comparateur, quelles zones
-  de l'une répondent à quelles zones de l'autre (réponse au biais perceptif décrit par Wasielewski).
+- **« Pourquoi ces deux œuvres se ressemblent ? »** *(fait en 0.16.0, ARCHITECTURE § 25)* : montrer,
+  dans le comparateur, quelles zones de l'une répondent à quelles zones de l'autre (réponse au biais
+  perceptif décrit par Wasielewski).
+- **Axes conceptuels (Impett et Offert, 2024) et mesures visuelles (Stork, 2024)** *(fait,
+  ARCHITECTURE § 26)* : projection 2D sur deux concepts SigLIP 2, équilibre visuel et entropie
+  chromatique sans GPU.
+- **Pistes issues des lectures récentes** (à passer aux bancs d'essai sur ce PC) :
+  - **LocalMAP** (AAAI 2025, `pacmap`, 100 % CPU) : alternative à UMAP qui réajuste les liens locaux
+    sur les continuums denses.
+  - **CSD** (ECCV 2024) pour le style pur face à la « touche », **SSCD** (CVPR 2022) pour les copies,
+    gravures et inversions miroir, et **Depth Anything V2** (NeurIPS 2024) comme piste de composition
+    par la profondeur après le résultat négatif de PE-Spatial (§ 24).
+  - **Postures et regards** (Stork § 8.3 & § 9.3.1 ; *Human-Art* CVPR 2023 ; Madhu et al.) :
+    détection de squelettes pour les *Pathosformeln* et la symétrie des figures.
+  - **Auto-encodeurs parcimonieux** (*PatchSAE* ICLR 2025, *Matryoshka SAE* ICML 2025) sur les
+    vecteurs déjà calculés, et hiérarchie Iconclass enrichie (*Visual Narratives*, WACV 2024).
 - **Collection Space Navigator** (Ohm et al., 2023) : filtres multidimensionnels et export de
   sélection pour l'Atlas.
 

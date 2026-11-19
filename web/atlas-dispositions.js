@@ -214,13 +214,33 @@ function computeGroupLabels() {
   });
 }
 
+function conceptAxisOverlay(xLabel, yLabel) {
+  const L = WORLD * 1.08;
+  return [
+    { line: [[-L, 0], [L, 0]] },
+    { line: [[0, -L], [0, L]] },
+    { line: [[-L, -L], [L, L]] },         // diagonale : même rang sur les deux axes
+    { line: [[-L, -L], [L, -L]] },
+    { line: [[-L, L], [L, L]] },
+    { line: [[-L, -L], [-L, L]] },
+    { line: [[L, -L], [L, L]] },
+    { at: [L * 0.72, -L - 35], text: `plus « ${xLabel} » →` },
+    { at: [-L * 0.72, -L - 35], text: `← moins « ${xLabel} »` },
+    { at: [0, L + 55], text: `↑ plus « ${yLabel} »` },
+    { at: [0, -L - 75], text: `↓ moins « ${yLabel} »` },
+    { at: [L * 0.85, L * 0.92], text: "diagonale (X = Y)" },
+  ];
+}
+
 async function setLayout(layout) {
+  const seq = ++state.conceptSeq;
   let note = "";
   if (layout.startsWith("map:")) {
     const key = layout.slice(4);
     let res;
     try { res = state.layoutCache[key] || (state.layoutCache[key] = await getJSON(`/api/layout/${key}`)); }
     catch (err) { toast(`Carte indisponible : ${err.message}`); $("layout").value = state.layout; return; }
+    if (seq !== state.conceptSeq) return;
     const pos = new Float32Array(state.n * 2);
     for (let r = 0; r < state.n; r++) {
       const ok = res.x[r] != null;
@@ -230,10 +250,40 @@ async function setLayout(layout) {
     state.positions = pos; state.axis = [];
     const s = state.spaces.find((x) => x.key === key);
     note = s ? `Voisines selon ${s.label} : ${s.about}. Les couleurs restent celles des groupes de la carte principale.` : "";
+  } else if (layout === "concepts") {
+    const xq = ($("concept-x")?.value || state.conceptAxes.x || "sacré").trim();
+    const yq = ($("concept-y")?.value || state.conceptAxes.y || "profane").trim();
+    if (xq.length < 2 || yq.length < 2) { toast("Entrez deux mots ou expressions (2 caractères au moins)"); return; }
+    if ($("concept-controls")) $("concept-controls").hidden = false;
+    $("layout-note").textContent = `Calcul des axes « ${xq} » et « ${yq} »…`;
+    let res;
+    try {
+      res = await getJSON(`/api/layout/concepts?x=${encodeURIComponent(xq)}&y=${encodeURIComponent(yq)}`);
+    } catch (err) {
+      if (seq !== state.conceptSeq) return;
+      toast(`Axes conceptuels indisponibles : ${err.message}`);
+      $("layout").value = state.layout;
+      if ($("concept-controls")) $("concept-controls").hidden = state.layout !== "concepts";
+      $("layout-note").textContent = state.layoutNote || "";
+      return;
+    }
+    if (seq !== state.conceptSeq) return;
+    const pos = new Float32Array(state.n * 2);
+    for (let r = 0; r < state.n; r++) {
+      const ok = res.x[r] != null && res.y[r] != null;
+      pos[2 * r] = ok ? res.x[r] * WORLD : 1.25 * WORLD;
+      pos[2 * r + 1] = ok ? res.y[r] * WORLD : -WORLD;
+    }
+    state.positions = pos;
+    state.axis = conceptAxisOverlay(xq, yq);
+    state.conceptAxes = { x: xq, y: yq, corr: res.correlation };
+    note = `→ « ${xq} » · ↑ « ${yq} » (corrélation r = ${res.correlation.toFixed(2)}). `
+      + "Ce qui s'écarte de la diagonale éclaire à la fois le corpus et l'imaginaire vectoriel de SigLIP 2 (Impett et Offert, 2024).";
   } else if (layout === "time") ({ pos: state.positions, axis: state.axis, note } = timePositions());
   else if (layout === "geo") {
     await loadWorld();
     await loadPlaces();
+    if (seq !== state.conceptSeq) return;
     state.layout = "geo";
     setupPlaceControls();
     ({ pos: state.positions, axis: state.axis, note } = geoPositions());
@@ -241,6 +291,7 @@ async function setLayout(layout) {
   state.layout = layout;
   state.posVersion = (state.posVersion || 0) + 1;
   if ($("place-controls")) $("place-controls").hidden = layout !== "geo" || !(state.places && state.places.types.length);
+  if ($("concept-controls")) $("concept-controls").hidden = layout !== "concepts";
   state.layoutNote = note;
   $("layout-note").textContent = note;
   computeGroupLabels();
@@ -258,6 +309,7 @@ function fitToPositions() {
   for (let r = 0; r < state.n; r++) {
     if (only && !only.has(r)) continue;  // carte : cadrer sur les œuvres situées
     const x = state.positions[2 * r], y = state.positions[2 * r + 1];
+    if (state.layout === "concepts" && Math.abs(x) > 1.15 * WORLD) continue;
     if (x < x0) x0 = x; if (x > x1) x1 = x; if (y < y0) y0 = y; if (y > y1) y1 = y;
   }
   const el = $("map");

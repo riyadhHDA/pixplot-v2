@@ -32,7 +32,8 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const pretty = (v) => String(v ?? "").replace(/_/g, " ").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const state = {
-  searchSeq: 0, searchTimer: null,
+  searchSeq: 0, searchTimer: null, conceptSeq: 0, measuresSeq: 0,
+  conceptAxes: { x: "sacré", y: "profane", corr: null },
   info: null, map: null, clusters: [], n: 0, comm: {},
   positions: null, rowOf: new Map(),
   colorMode: "cluster", highlight: null, highlightLabel: "",
@@ -114,7 +115,8 @@ async function init() {
   const other = [];
   if (m.year) other.push(["time", "Chronologie"]);
   if (m.lat || Object.keys(state.info.places || {}).length) other.push(["geo", "Géographie (lieux)"]);
-  if (other.length) groups.push(["Dates et lieux", other]);
+  if (state.searchStatus.text) other.push(["concepts", "Axes conceptuels (2 mots)"]);
+  if (other.length) groups.push(["Dates, lieux et concepts", other]);
   $("layout").innerHTML = groups.map(([g, opts]) => `<optgroup label="${esc(g)}">${opts.map(([v, l]) =>
     `<option value="${esc(v)}">${esc(l)}</option>`).join("")}</optgroup>`).join("");
   $("groups-count").textContent = `· ${state.clusters.length}`;

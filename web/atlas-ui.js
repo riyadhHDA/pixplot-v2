@@ -68,6 +68,19 @@ function wireUI() {
     if (isMapLayout()) flyTo(0, 0, state.fitZoom); else fitToPositions();
   });
   $("layout").addEventListener("change", (e) => setLayout(e.target.value));
+  if ($("concept-controls")) {
+    $("concept-controls").addEventListener("submit", (e) => {
+      e.preventDefault();
+      $("layout").value = "concepts";
+      setLayout("concepts");
+    });
+    $("concept-controls").querySelectorAll(".concept-preset").forEach((b) => b.addEventListener("click", () => {
+      $("concept-x").value = b.dataset.x;
+      $("concept-y").value = b.dataset.y;
+      $("layout").value = "concepts";
+      setLayout("concepts");
+    }));
+  }
   $("place-type").addEventListener("change", (e) => { state.placeType = e.target.value; setLayout("geo"); });
   $("place-paths").addEventListener("change", () => redraw());
   $("place-year").addEventListener("input", (e) => {

@@ -74,6 +74,7 @@ function updateStats() {
   const i = state.info;
   const base = `${state.n.toLocaleString("fr-FR")} œuvres · ${i.clusters} groupes · ${i.encoder} @${i.input_size}`
     + (state.layout === "time" || state.layout === "geo" ? ` · ${state.layoutNote}` : "")
+    + (state.layout === "concepts" ? ` · axes « ${state.conceptAxes.x} » / « ${state.conceptAxes.y} »` : "")
     + (state.layout.startsWith("map:") ? ` · carte « ${SPACE_SHORT[state.layout.slice(4)] || state.layout.slice(4)} »` : "");
   $("stats").textContent = state.highlight
     ? `${state.highlightLabel} : ${state.highlight.size.toLocaleString("fr-FR")} œuvres  —  ${base}`
@@ -345,6 +346,34 @@ async function renderNotebook() {
 }
 
 
+function renderMeasuresBody(m) {
+  const r = Math.max(0.4, Math.min(2.4, m.aspect_ratio || 1));
+  const w = r >= 1 ? 84 : Math.round(84 * r), h = r >= 1 ? Math.round(84 / r) : 84;
+  const [lx, ly] = m.balance.lightness, [sx, sy] = m.balance.saturation;
+  const sp = m.chromatic;
+  const splitLine = sp.split_orientation === "horizontale"
+    ? `<line x1="0" y1="${(sp.split_position * h).toFixed(1)}" x2="${w}" y2="${(sp.split_position * h).toFixed(1)}" stroke="#e0b040" stroke-width="1.2" stroke-dasharray="3 2"/>`
+    : `<line x1="${(sp.split_position * w).toFixed(1)}" y1="0" x2="${(sp.split_position * w).toFixed(1)}" y2="${h}" stroke="#e0b040" stroke-width="1.2" stroke-dasharray="3 2"/>`;
+  return `<div class="measures-grid">
+      <svg class="measures-svg" viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" style="width:${w}px;height:${h}px" role="img"
+        aria-label="Schéma du barycentre de luminance, de saturation et de la première coupe compositionnelle">
+        <rect x="0.5" y="0.5" width="${w - 1}" height="${h - 1}" fill="#121214" stroke="#3a3a42"/>
+        <line x1="${(w / 2).toFixed(1)}" y1="0" x2="${(w / 2).toFixed(1)}" y2="${h}" stroke="#ffffff22"/>
+        <line x1="0" y1="${(h / 2).toFixed(1)}" x2="${w}" y2="${(h / 2).toFixed(1)}" stroke="#ffffff22"/>
+        ${splitLine}
+        <circle cx="${(sx * w).toFixed(1)}" cy="${(sy * h).toFixed(1)}" r="3.2" fill="none" stroke="#e9e6df" stroke-width="1.2"/>
+        <circle cx="${(lx * w).toFixed(1)}" cy="${(ly * h).toFixed(1)}" r="3.8" fill="#e0b040"/>
+      </svg>
+      <dl class="measures-dl">
+        <dt>Barycentre (clarté)</dt><dd>${Math.round(lx * 100)} % → · ${Math.round(ly * 100)} % ↓ <small>(écart centre ${(m.balance.center_offset * 100).toFixed(1)} %, dispersion ${(m.balance.local_spread * 100).toFixed(1)} %)</small></dd>
+        <dt>Symétrie gauche-droite</dt><dd>${m.symmetry_lr.toFixed(2)} <small>(−1 à +1)</small></dd>
+        <dt>Entropie chromatique</dt><dd>${sp.entropy_bits.toFixed(2)} / ${sp.max_bits.toFixed(1)} bits · coupe ${esc(sp.split_orientation)} à ${Math.round(sp.split_position * 100)} % <small>(gain ${sp.split_gain_bits.toFixed(2)} bits)</small></dd>
+        <dt>Clarté et part sombre</dt><dd>moy. ${Math.round(m.tone.mean_lightness * 100)} % · contraste ${Math.round(m.tone.contrast_p5_p95 * 100)} % · tons sombres ${Math.round(m.tone.dark_share * 100)} %</dd>
+      </dl>
+    </div>
+    <p class="prov">${esc(m.note)}</p>`;
+}
+
 function renderFiche(d) {
   const meta = Object.entries(d.metadata).filter(([, v]) => v).map(([k, v]) =>
     `<tr><th>${esc(LABELS[k] || pretty(k))}</th><td>${esc(SLUG_KEYS.has(k) ? pretty(v) : v)}${d.metadata_sources[k] ? `<small title="${esc((d.metadata_source_notes || {})[k] || "")}">source : ${esc(d.metadata_sources[k])}${(d.metadata_source_notes || {})[k] ? " · étiquette bénévole, à vérifier" : ""}</small>` : ""}</td></tr>`).join("");
@@ -375,6 +404,10 @@ function renderFiche(d) {
       </div>
       ${labelChecks(d)}
       ${meta ? `<table>${meta}</table>` : ""}
+      <details class="measures-box" id="fiche-measures">
+        <summary>Mesures visuelles <small>équilibre, symétrie, entropie · Stork</small></summary>
+        <div id="fiche-measures-body" class="measures-body"><span class="sub">Cliquez pour calculer…</span></div>
+      </details>
       <h4>Œuvres les plus proches</h4>
       ${spaceTabs(d.space)}
       <div class="neighbors">${neigh}</div>
@@ -403,6 +436,22 @@ function renderFiche(d) {
     if (li) { li.scrollIntoView({ block: "nearest" }); if (!li.classList.contains("active")) li.click(); }
   });
   if ($("chip-detail")) $("chip-detail").addEventListener("click", () => toggleDrawing(d));
+  const mbox = $("fiche-measures");
+  if (mbox) mbox.addEventListener("toggle", async () => {
+    if (!mbox.open || mbox.dataset.loaded) return;
+    const seq = ++state.measuresSeq;
+    const body = $("fiche-measures-body");
+    body.innerHTML = `<span class="sub">Calcul…</span>`;
+    try {
+      const m = await getJSON(`/api/artwork/${d.id}/measures`);
+      if (seq !== state.measuresSeq || state.selected !== d.id) return;
+      mbox.dataset.loaded = "1";
+      body.innerHTML = renderMeasuresBody(m);
+    } catch (err) {
+      if (seq !== state.measuresSeq) return;
+      body.innerHTML = `<span class="sub">Indisponible : ${esc(err.message)}</span>`;
+    }
+  });
   $("chip-export").addEventListener("click", (e) => exportPack({
     ids: [d.id, ...d.neighbors.map((n) => n.id)],
     title: `${pretty(d.label)} et ses voisines`,

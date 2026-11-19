@@ -2,13 +2,14 @@
 
 [English](MCP.md) · **Français**
 
-`pixplot mcp` démarre un serveur [MCP](https://modelcontextprotocol.io) qui donne au LLM un
-accès direct au corpus : il cherche, **regarde les images**, explore les groupes et
-exporte des Research Packs. Tout reste sur votre PC : le serveur lit vos fichiers locaux
-et ne transmet au LLM que ce que ses outils renvoient (textes, vignettes, détails).
+`pixplot mcp` démarre un serveur [MCP](https://modelcontextprotocol.io) pour brancher un
+assistant directement sur le corpus local : il peut lancer des recherches, afficher les
+images, parcourir les groupes, écrire dans le carnet et exporter des *Research Packs*. Les
+fichiers restent sur la machine ; le serveur ne renvoie au modèle que le résultat des outils
+appelés (textes, vignettes, recadrages).
 
-> Rôles : PixPlot calcule, observe et organise. Le LLM questionne et propose.
-> L'historien vérifie, interprète et construit le savoir.
+En pratique, PixPlot calcule les voisinages, l'assistant aide à formuler des pistes et à
+comparer, et la vérification reste côté historien.
 
 ## Outils fournis
 
@@ -24,6 +25,8 @@ et ne transmet au LLM que ce que ses outils renvoient (textes, vignettes, détai
 | `view_detail` | **un détail recadré** depuis l'original |
 | `compare_artworks` | **planche numérotée** de 2 à 12 œuvres + une matrice de similarité par espace |
 | `why_similar` | **planche des deux œuvres** où les zones qui se répondent (cases 4 × 4, regard forme) portent le même numéro, + leurs cosinus |
+| `probe_concepts` | compare **deux concepts textuels** sur tout le corpus (SigLIP 2, façon *2D CLIP* d'Impett & Offert) : corrélation, extrêmes et écarts à la diagonale |
+| `measure_artwork` | **mesures visuelles sans GPU** (Stork) : barycentre de luminance/saturation, dispersion locale, symétrie gauche-droite, entropie chromatique et première coupe |
 | `get_group` | un groupe de la carte, œuvres les plus centrales d'abord |
 | `find_atypical` | œuvres les plus isolées (exceptions, erreurs de catalogue…) |
 | `check_labels` | étiquettes que toutes les voisines contredisent (erreurs possibles ou œuvres singulières) |

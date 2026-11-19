@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Guide de l'historien de l'art — PixPlot v2</title>
-<meta name="description" content="Comment lire une proximité calculée, trois parcours de recherche (filiation, étiquette, motif), travailler avec un assistant et citer ses résultats : le guide de PixPlot v2 pour les historiens de l'art.">
-<meta property="og:title" content="Guide de l'historien de l'art — PixPlot v2">
-<meta property="og:description" content="Lire une proximité calculée, retrouver une filiation, critiquer une étiquette, chercher un motif.">
+<title>Guide pratique — PixPlot v2</title>
+<meta name="description" content="Comment interpréter une proximité calculée dans PixPlot v2, trois cas d'usage concrets (filiation, étiquette douteuse, motif), utiliser un assistant MCP et citer ses résultats.">
+<meta property="og:title" content="Guide pratique — PixPlot v2">
+<meta property="og:description" content="Lire une proximité calculée, suivre une filiation, vérifier une étiquette et chercher un motif dans PixPlot v2.">
 <meta property="og:image" content="https://riyadhhda.github.io/pixplot-v2/images/banner.png">
 <meta name="theme-color" content="#0f0f10">
 <link rel="canonical" href="https://riyadhhda.github.io/pixplot-v2/fr/guide/">
@@ -24,8 +24,8 @@
     <a class="brand" href="../">PixPlot <b>v2</b></a>
     <button class="menu-btn" aria-expanded="false" aria-controls="nav-links">Menu</button>
     <nav class="nav-links" id="nav-links">
-      <a href="#lire">Lire une proximité</a>
-      <a href="#parcours">Parcours</a>
+      <a href="#lire">Lire les scores</a>
+      <a href="#parcours">Cas d'usage</a>
       <a href="#assistant">Avec un assistant</a>
       <a href="#citer">Citer</a>
       <a href="../">Le projet</a>
@@ -36,135 +36,134 @@
 
 <main id="top">
   <div class="hero wrap">
-    <p class="eyebrow">Guide</p>
-    <h1>Le guide de <em>l'historien de l'art</em></h1>
-    <p class="lead">PixPlot ne dit pas qu'une œuvre en a influencé une autre : il dit qu'un modèle de vision les
-      trouve proches. Ce guide explique comment lire ces proximités, et comment en faire des pistes de recherche
-      que vous vérifiez vous-même.</p>
+    <p class="eyebrow">Guide d'utilisation</p>
+    <h1>Utiliser PixPlot v2 en <em>histoire de l'art</em></h1>
+    <p class="lead">Un modèle de vision compare des pixels, pas des archives. Cette page résume comment lire les
+      scores de l'Atlas, quoi vérifier avant de tirer une conclusion, et comment documenter une recherche.</p>
   </div>
 
   <section>
     <div class="wrap prose">
       <h2>Avant de commencer</h2>
       <div class="roles">
-        <div class="role"><span class="who">PixPlot</span><p>calcule, observe et organise.</p></div>
-        <div class="role"><span class="who">Un assistant</span><p>questionne et propose.</p></div>
-        <div class="role"><span class="who">Vous</span><p>vérifiez, interprétez et construisez le savoir.</p></div>
+        <div class="role"><span class="who">PixPlot</span><p>Calcule les voisinages, indexe les zones et construit les cartes.</p></div>
+        <div class="role"><span class="who">Un assistant</span><p>Interroge le corpus, monte des planches et propose des pistes.</p></div>
+        <div class="role"><span class="who">Vous</span><p>Regardez les images, vérifiez les sources et tranchez.</p></div>
       </div>
-      <p>Une proximité calculée est une <b>piste</b>, jamais une preuve d'influence ni d'attribution. Le corpus
-        d'essai, WikiArt, est rempli par des bénévoles : la moitié des œuvres n'a pas d'artiste nommé, le canon
-        occidental y domine, les dates et les lieux manquent. Le bouton <b>Corpus</b> (touche <kbd>I</kbd>) de l'Atlas
-        en fait le bilan : lisez-le avant de généraliser.</p>
+      <p>Le jeu d'essai habituel (WikiArt) est rempli par des bénévoles : la moitié des œuvres n'a pas d'artiste
+        renseigné, la peinture occidentale y est ultra-majoritaire, et il n'y a ni dates ni lieux. Ouvrez le panneau
+        <b>Corpus</b> (touche <kbd>I</kbd>) pour voir ces manques avant d'interpréter une tendance générale.</p>
     </div>
   </section>
 
   <section id="lire" class="alt">
     <div class="wrap prose">
-      <h2>Lire une proximité</h2>
-      <p class="section-lead">Quatre regards, quatre questions. Deux œuvres proches selon un regard et lointaines selon
-        un autre vous disent <em>en quoi</em> elles se ressemblent.</p>
+      <h2>Lire les scores et les regards</h2>
+      <p class="section-lead">PixPlot calcule quatre espaces séparés. Croiser leurs réponses permet vite de voir si
+        deux œuvres se rapprochent par leur mise en page, leur sujet, leur palette ou leur facture.</p>
       <div class="grid4">
-        <div class="card"><span class="tag">DINOv3</span><h3>Forme</h3><p class="q">Quelle mise en page ?</p>
-          <p>Formes, composition, motifs. Le meilleur pour retrouver une copie ou une reprise de composition.</p></div>
-        <div class="card"><span class="tag">SigLIP 2</span><h3>Sujet</h3><p class="q">Que représente-t-elle ?</p>
-          <p>Ce qu'on décrirait avec des mots : sujet, genre, école. Le meilleur pour les catégories de la discipline.</p></div>
-        <div class="card"><span class="tag">CIELAB</span><h3>Couleur</h3><p class="q">Quelle palette ?</p>
-          <p>Proportions des teintes, clartés et saturations, quel que soit le sujet.</p></div>
-        <div class="card"><span class="tag">DINOv3, couche 6</span><h3>Touche</h3><p class="q">Quelle facture ?</p>
-          <p>Trait, grain, empâtement : utile pour le pointillisme, la gravure, le dessin.</p></div>
+        <div class="card"><span class="tag">DINOv3</span><h3>Forme</h3><p class="q">Même composition ?</p>
+          <p>Silhouettes, cadrage et motifs. C'est le meilleur point de départ pour retrouver une copie ou une reprise de composition.</p></div>
+        <div class="card"><span class="tag">SigLIP 2</span><h3>Sujet</h3><p class="q">Même thème ?</p>
+          <p>Ce qu'on décrirait avec des mots : sujet, genre, école. Le plus proche des catégories usuelles.</p></div>
+        <div class="card"><span class="tag">CIELAB</span><h3>Couleur</h3><p class="q">Même palette ?</p>
+          <p>Répartition des teintes, clartés et saturations, quel que soit le sujet représenté.</p></div>
+        <div class="card"><span class="tag">DINOv3, couche 6</span><h3>Touche</h3><p class="q">Même facture ?</p>
+          <p>Trait, grain, empâtements. Utile pour le pointillisme, la gravure ou le dessin.</p></div>
       </div>
       <ul class="points">
-        <li><b>Les chiffres sont des cosinus, pas des probabilités.</b> Ils ne se comparent qu'à l'intérieur d'un même
-          regard : 0,87 en sujet et 0,67 en forme ne veulent pas dire « plus ressemblant par le sujet ».</li>
-        <li><b>Un modèle voit ce que vous ne regardez pas</b> : le grain d'une reproduction, un cadre, une
-          photographie de mauvaise qualité. Chaque regard a une fiche (bouton Corpus) : sur quoi il a été entraîné,
-          ce qu'il voit, ses biais connus.</li>
-        <li><b>Demandez « pourquoi ? ».</b> Dans le comparateur, le bouton <b>Pourquoi ?</b> entoure les zones des deux
-          œuvres qui se répondent le plus. C'est là que se joue votre jugement : un motif, une pose, une composition,
-          ou seulement un fond semblable ?</li>
-        <li><b>Cherchez les contre-exemples.</b> Le panneau <b>Désaccords</b> (touche <kbd>D</kbd>) montre les paires
-          qu'un regard rapproche et qu'un autre sépare : ce sont souvent les plus instructives.</li>
+        <li><b>Les scores sont des cosinus relatifs au corpus.</b> On ne peut les comparer qu'à l'intérieur d'un même
+          regard : 0,87 en sujet et 0,67 en forme ne veut pas dire « plus proche par le sujet ». Une distance ne décide
+          pas seule d'une parenté (Bureau et Doras, 2025).</li>
+        <li><b>Les modèles réagissent aussi à la reproduction.</b> Grain du scan, vernis jauni, cadre resté sur la
+          photo ou mauvaise balance des blancs peuvent rapprocher deux œuvres. Le panneau <b>Corpus</b> détaille les
+          données d'entraînement et les biais connus de chaque regard.</li>
+        <li><b>Tester les biais avec les axes conceptuels.</b> Dans le menu <b>Vue</b>, la carte <b>Axes conceptuels
+          (2 mots)</b> projette le corpus sur deux mots dans SigLIP 2 (façon <i>2D CLIP</i> d'Impett et Offert, 2024).
+          Les œuvres qui s'écartent de la diagonale montrent autant les habitudes du modèle que le corpus lui-même.</li>
+        <li><b>Ouvrir « Pourquoi ? » et les mesures visuelles.</b> Dans le comparateur, le bouton <b>Pourquoi ?</b>
+          encadre les zones qui se répondent entre deux images. Sur chaque fiche, le bloc <b>Mesures visuelles</b> donne
+          barycentre, symétrie, entropie chromatique et première coupe sans modèle de neurones (Stork, 2024).</li>
+        <li><b>Regarder les désaccords.</b> Le panneau <b>Désaccords</b> (touche <kbd>D</kbd>) liste les paires proches
+          selon un regard et très éloignées selon un autre : c'est souvent là qu'apparaissent les cas intéressants.</li>
       </ul>
     </div>
   </section>
 
   <section id="parcours">
     <div class="wrap prose">
-      <h2>Trois parcours</h2>
+      <h2>Trois cas d'usage</h2>
 
-      <h3>1. Retrouver une filiation</h3>
-      <p>Une copie, une citation, un modèle repris : partir d'une œuvre et voir ce qui lui répond.</p>
+      <h3>1. Suivre une filiation ou une copie</h3>
+      <p>Partir d'une œuvre connue pour voir quelles autres compositions ou reprises lui répondent.</p>
       <ol class="steps">
-        <li>Cherchez l'œuvre (touche <kbd>/</kbd>, mode <i>Métadonnées</i> : un artiste, un titre, un numéro) et ouvrez
-          sa fiche.</li>
-        <li>Dans <b>Œuvres les plus proches</b>, passez d'un regard à l'autre : <i>Forme</i> d'abord pour une composition
-          reprise, <i>Sujet</i> pour un même thème traité autrement.</li>
-        <li>Mettez les candidates de côté avec <b>Comparer</b>, puis ouvrez le comparateur (touche <kbd>C</kbd>).</li>
-        <li>Cliquez sur <b>Pourquoi ?</b> : les zones qui se répondent sont dessinées sur les deux images.</li>
-        <li>Si la parenté est attestée (une source, un catalogue), enregistrez-la avec <b>Annoter</b> : elle rejoint
-          le banc d'essai qui mesure quel regard retrouve quoi. Gardez la trace dans le <b>Carnet</b>.</li>
+        <li>Cherchez l'œuvre (touche <kbd>/</kbd>, mode <i>Métadonnées</i> : artiste, titre ou numéro) et ouvrez sa fiche.</li>
+        <li>Dans <b>Œuvres les plus proches</b>, passez de <i>Forme</i> (pour une composition reprise) à <i>Sujet</i>
+          (pour le même thème traité différemment).</li>
+        <li>Ajoutez les candidates au comparateur (<b>Comparer</b>, puis touche <kbd>C</kbd>).</li>
+        <li>Cliquez sur <b>Pourquoi ?</b> pour voir quelles zones sont effectivement mises en correspondance.</li>
+        <li>Si la parenté est documentée dans une source, vous pouvez l'enregistrer avec <b>Annoter</b> pour alimenter
+          le banc d'essai, et noter vos remarques dans le <b>Carnet</b>.</li>
       </ol>
-      <p class="fine">Exemple : Raphaël, <i>Mariage de la Vierge</i>, et Pérugin, <i>Remise des clés</i>. Le bouton
-        Pourquoi ? retrouve le temple central et, au premier plan, deux figures face à face : Joseph passant
-        l'anneau, le Christ remettant les clés.</p>
+      <p class="fine">Exemple : sur le <i>Mariage de la Vierge</i> de Raphaël et la <i>Remise des clés</i> de Pérugin,
+        le bouton Pourquoi ? encadre le temple central et les groupes de figures au premier plan.</p>
 
-      <h3>2. Critiquer une étiquette</h3>
-      <p>Les étiquettes de WikiArt sont des propositions de bénévoles. PixPlot repère celles que toutes les voisines
-        contredisent.</p>
+      <h3>2. Vérifier une étiquette douteuse</h3>
+      <p>Dans un corpus comme WikiArt, les étiquettes contiennent de nombreuses erreurs. PixPlot rassemble celles que
+        toutes les voisines contredisent.</p>
       <ol class="steps">
-        <li>Ouvrez <b>À vérifier</b> (touche <kbd>V</kbd>) : pour chaque étiquette (artiste, style, genre), la liste des
-          œuvres dont les voisines disent autre chose.</li>
-        <li>Regardez l'œuvre et ses voisines : erreur de catalogue, ou œuvre réellement singulière ? Les deux
-          existent, et la seconde est souvent la plus intéressante.</li>
-        <li>Notez votre conclusion dans le <b>Carnet</b> ; PixPlot ne corrige jamais une étiquette à votre place.</li>
+        <li>Ouvrez <b>À vérifier</b> (touche <kbd>V</kbd>) et choisissez artiste, style ou genre.</li>
+        <li>Examinez l'œuvre face à ses voisines : il peut s'agir d'une vraie erreur de catalogue ou d'un tableau
+          atypique dans l'œuvre de l'artiste.</li>
+        <li>Gardez votre conclusion dans le <b>Carnet</b> (le logiciel ne modifie jamais les métadonnées à votre place).</li>
       </ol>
 
-      <h3>3. Chercher un motif</h3>
-      <p>Un détail plutôt qu'une œuvre entière : une auréole, un crâne, une main qui bénit.</p>
+      <h3>3. Chercher un motif ou un détail</h3>
+      <p>Pour repérer un objet précis (auréole, crâne, main qui bénit, drapé) sans passer par le titre.</p>
       <ol class="steps">
-        <li><b>Par des mots</b> : mode <i>Zone décrite</i>, puis « une auréole », « a skull », « une main tenant une
-          lettre ». PixPlot cherche parmi 1,6 million de zones et montre chaque zone trouvée.</li>
-        <li><b>Par l'image</b> : dans la fiche d'une œuvre, <b>Chercher un détail</b>, puis tracez un cadre autour du
-          motif. Les zones semblables d'autres œuvres s'affichent.</li>
-        <li><b>Par la description</b> : mode <i>Description</i> pour une scène entière (« une nature morte avec un crâne
-          et une bougie »).</li>
+        <li><b>Avec des mots</b> : choisissez le mode <i>Zone décrite</i> (« une auréole », « a skull », « une main
+          tenant une lettre »). La recherche porte sur 1,6 million de zones découpées.</li>
+        <li><b>À partir d'une image</b> : sur la fiche d'une œuvre, cliquez sur <b>Chercher un détail</b> et tracez un
+          cadre autour du motif.</li>
+        <li><b>Pour une scène complète</b> : passez en mode <i>Description</i> (« nature morte avec un crâne et une
+          bougie »).</li>
       </ol>
     </div>
   </section>
 
   <section id="assistant" class="alt">
     <div class="wrap prose">
-      <h2>Travailler avec un assistant</h2>
-      <p>PixPlot se branche sur un assistant (Claude, ou tout modèle qui parle le protocole MCP) par un serveur à
-        16 outils. L'assistant peut chercher, <b>regarder les images</b> et les détails, comparer, demander pourquoi
-        deux œuvres se ressemblent, lire les groupes et écrire dans votre carnet. Il reçoit des consignes de prudence :
-        distinguer ce qui se voit, ce que disent les métadonnées, ce que calcule PixPlot et son interprétation, et
-        chercher les contre-exemples.</p>
-      <p>Une bonne question : « Parmi les œuvres proches de cette Annonciation, lesquelles reprennent sa composition ?
-        Regarde-les et dis ce qui se répond. » Une mauvaise : « Qui a influencé ce peintre ? »</p>
-      <p class="fine">Branchement : <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/docs/MCP.fr.md">docs/MCP.fr.md</a>.</p>
+      <h2>Brancher un assistant (MCP)</h2>
+      <p>Le serveur MCP expose 18 outils à Claude ou à tout autre client compatible. L'assistant peut lancer des
+        recherches, <b>ouvrir les images</b> et les recadrages, comparer des tableaux, calculer les mesures visuelles,
+        tester deux axes conceptuels et ajouter des notes dans votre carnet. Ses consignes lui demandent de toujours
+        séparer ce qu'il observe sur l'image, ce que disent les métadonnées, ce que calcule PixPlot et son hypothèse.</p>
+      <p>Une question utile ressemble à : « Parmi les voisines de cette Annonciation, lesquelles reprennent la même
+        disposition ? Regarde les images et dis quels éléments se répondent. » À l'inverse, demander directement
+        « Qui a influencé ce peintre ? » pousse le modèle à spéculer hors du corpus.</p>
+      <p class="fine">Configuration : <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/docs/MCP.fr.md">docs/MCP.fr.md</a>.</p>
     </div>
   </section>
 
   <section id="citer">
     <div class="wrap prose">
-      <h2>Garder la trace et citer</h2>
+      <h2>Archiver et citer</h2>
       <ul class="points">
-        <li><b>Le carnet</b> (touche <kbd>N</kbd>) garde vos pistes, sélections et notes, avec les œuvres concernées.</li>
-        <li><b>Exporter</b> produit un <i>Research Pack</i> : un dossier .zip avec les images, les métadonnées et leur
-          source, les scores et la provenance de chaque calcul (modèle, paramètres, date). De quoi refaire le chemin.</li>
-        <li><b>Citer le logiciel</b> : Riyadh HADJBA, <i>PixPlot v2 : un laboratoire d'exploration visuelle pour
-          l'histoire de l'art</i>, logiciel, Université de Strasbourg, 2026,
-          DOI <a href="https://doi.org/10.5281/zenodo.24363789">10.5281/zenodo.24363789</a>. Indiquez aussi la
-          version utilisée.</li>
+        <li><b>Carnet</b> (touche <kbd>N</kbd>) : enregistre vos sélections et vos notes en local (exportable en Markdown).</li>
+        <li><b>Export</b> : génère un <i>Research Pack</i> (.zip) regroupant les images, les métadonnées avec leur
+          source, les scores et le détail du calcul (modèle, paramètres, date) pour pouvoir vérifier ou refaire le chemin.</li>
+        <li><b>Citation</b> : Riyadh HADJBA, <i>PixPlot v2 : un laboratoire d'exploration visuelle pour l'histoire de
+          l'art</i>, logiciel, Université de Strasbourg, 2026,
+          DOI <a href="https://doi.org/10.5281/zenodo.24363789">10.5281/zenodo.24363789</a> (préciser la version utilisée).</li>
       </ul>
-      <h2 style="margin-top:40px">Limites connues</h2>
+      <h2 style="margin-top:40px">Limites actuelles</h2>
       <ul class="points">
-        <li>Le corpus d'essai est WikiArt : ce qu'il ne contient pas, PixPlot ne peut pas le trouver.</li>
-        <li>Aucun regard ne suit une filiation dès que l'artiste transforme fortement son modèle ; un modèle « spatial »
-          a été essayé sans succès (<a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/ARCHITECTURE.fr.md">ARCHITECTURE</a>, § 24).</li>
-        <li>Le bouton Pourquoi ? compare 16 cases fixes : une reprise décalée ou dans un autre format se voit moins bien.</li>
-        <li>Les noms de groupes sont des propositions d'un modèle, à relire.</li>
+        <li>Ce qui est absent du corpus (WikiArt en particulier) ne peut évidemment pas ressortir.</li>
+        <li>Quand un artiste réinterprète librement un modèle (ex. Picasso d'après Le Greco ou Delacroix), aucun regard
+          ne retrouve la filiation ; PE-Spatial a été testé sans amélioration (<a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/ARCHITECTURE.fr.md">ARCHITECTURE</a>, § 24).</li>
+        <li>Le bouton « Pourquoi ? » repose sur une grille fixe de 16 cases : un motif très décalé ou dans un autre
+          format est moins bien apparié.</li>
+        <li>Les noms automatiques de groupes restent indicatifs et doivent être relus.</li>
       </ul>
     </div>
   </section>

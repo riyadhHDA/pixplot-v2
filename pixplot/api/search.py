@@ -14,6 +14,7 @@ from pathlib import Path
 import numpy as np
 
 from ..encoders.registry import get_encoder
+from ..features.extract import OK as FEAT_OK
 from ..features.store import FeatureStore
 from ..index.regions import RegionIndex, encode_box, find_region_index, square_to_image
 from ..index.textzones import ZoneIndex, find_zone_index
@@ -133,3 +134,110 @@ class SearchEngines:
         hits = self._zone_index.search(vec, k=k, allowed=self.data.row_of)
         results = [{**self.data.brief(h["id"]), "score": h["score"], "box": h["box"], "grid": h["grid"]} for h in hits]
         return {"query": query, "index": self._zone_index.run.id, "results": results}
+
+    # ------------------------------------------------------------------ axes conceptuels (2D SigLIP, Impett & Offert 2024)
+    def concept_axes(self, x_query: str, y_query: str, k: int = 8, include_coords: bool = True) -> dict:
+        """Place le corpus selon deux concepts textuels (d'après *2D CLIP*, Impett & Offert, 2024).
+
+        Chaque œuvre reçoit ses similarités cosinus avec ``x_query`` et ``y_query`` dans SigLIP 2,
+        normalisées par centiles (p1–p99) pour l'affichage en nuage 2D, ainsi que les œuvres qui
+        s'écartent le plus de la diagonale (plus proches d'un concept que de l'autre).
+        """
+        with self._lock:
+            self._load_text()
+            tvecs = np.asarray(self._text_encoder.encode_text([x_query, y_query]), dtype=np.float32)
+            store = self._text_store
+            n_store = len(store.ids)
+            raw = np.empty((n_store, 2), dtype=np.float32)
+            block = 65536
+            for s in range(0, n_store, block):
+                raw[s:s + block] = store.global_vectors[s:s + block].astype(np.float32) @ tvecs.T
+            bad = store.status != FEAT_OK
+            raw[bad] = np.nan
+            id_to_srow = {int(i): r for r, i in enumerate(store.ids) if not bad[r]}
+
+        n = len(self.data.ids)
+        sx = np.full(n, np.nan, dtype=np.float32)
+        sy = np.full(n, np.nan, dtype=np.float32)
+        for r, aid in enumerate(self.data.ids):
+            sr = id_to_srow.get(int(aid))
+            if sr is not None:
+                sx[r], sy[r] = raw[sr, 0], raw[sr, 1]
+
+        valid = np.isfinite(sx) & np.isfinite(sy)
+        vx, vy = sx[valid].astype(np.float64), sy[valid].astype(np.float64)
+        n_valid = int(valid.sum())
+        if n_valid == 0:
+            raise SearchUnavailable("Aucune œuvre de cette analyse n'a de vecteur SigLIP 2.")
+
+        def norm_axis(arr: np.ndarray, vals: np.ndarray) -> tuple[list[float | None], dict]:
+            lo, med, hi = np.percentile(vals, [1, 50, 99]) if len(vals) >= 2 else (vals[0], vals[0], vals[0])
+            span = float(hi - lo)
+            coords: list[float | None] = []
+            if include_coords:
+                if span > 1e-6:
+                    scaled = np.clip(2.0 * (arr - lo) / span - 1.0, -1.08, 1.08)
+                else:
+                    scaled = np.zeros_like(arr)
+                coords = [round(float(v), 4) if np.isfinite(v) else None for v in scaled]
+            return coords, {
+                "min": round(float(vals.min()), 4),
+                "median": round(float(med), 4),
+                "max": round(float(vals.max()), 4),
+            }
+
+        cx, x_stats = norm_axis(sx, vx)
+        cy, y_stats = norm_axis(sy, vy)
+
+        std_x, std_y = float(vx.std()), float(vy.std())
+        if n_valid >= 2 and std_x > 1e-9 and std_y > 1e-9:
+            corr = float(np.mean((vx - vx.mean()) * (vy - vy.mean())) / (std_x * std_y))
+            zx = (sx - vx.mean()) / std_x
+            zy = (sy - vy.mean()) / std_y
+        else:
+            corr = 0.0
+            zx = sx - float(vx.mean())
+            zy = sy - float(vy.mean())
+        diff = zx - zy  # > 0 : plus X que Y (sous la diagonale) ; < 0 : plus Y que X (au-dessus)
+
+        def pick(metric: np.ndarray, take: int) -> list[dict]:
+            ok_idx = np.flatnonzero(valid)
+            if not len(ok_idx):
+                return []
+            take = min(take, len(ok_idx))
+            vals = metric[ok_idx]
+            order = ok_idx[np.argsort(-vals)[:take]]
+            return [
+                {
+                    **self.data.brief(int(self.data.ids[r])),
+                    "score_x": round(float(sx[r]), 4),
+                    "score_y": round(float(sy[r]), 4),
+                    "gap_z": round(float(diff[r]), 3),
+                }
+                for r in order
+            ]
+
+        out = {
+            "x_query": x_query,
+            "y_query": y_query,
+            "features": store.run.id,
+            "count": n_valid,
+            "correlation": round(corr, 4),
+            "x_stats": x_stats,
+            "y_stats": y_stats,
+            "extremes": {
+                "top_x": pick(sx, k),
+                "top_y": pick(sy, k),
+                "more_x": pick(diff, k),
+                "more_y": pick(-diff, k),
+            },
+            "note": (
+                "Chaque œuvre est placée selon sa proximité avec les deux mots dans SigLIP 2. "
+                "Ce qui s'écarte de la diagonale éclaire à la fois le corpus et l'imaginaire "
+                "vectoriel du modèle (L. Impett et F. Offert, Visual Resources, 2024)."
+            ),
+        }
+        if include_coords:
+            out["x"] = cx
+            out["y"] = cy
+        return out

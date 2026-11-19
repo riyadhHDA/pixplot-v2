@@ -1,20 +1,26 @@
 """Couche critique : dire ce que voit chaque regard, d'où viennent les étiquettes, et de quoi
 est fait le corpus.
 
-Deux livres en sont à l'origine.
+Cinq lectures en sont à l'origine :
 
-- A. Wasielewski, *Computational Formalism* (MIT Press, 2023) : les modèles regardent des
-  traits très fins (grain, contours, textures) que l'historien ne regarde pas — un « biais
-  perceptif » ; les étiquettes de style de WikiArt sont remplies par des bénévoles et reprises
-  sans examen ; le canon occidental, seul vraiment numérisé avec des métadonnées complètes,
-  domine les corpus.
+- A. Wasielewski, *Computational Formalism* (MIT Press, 2023) : biais perceptif (traits fins de
+  la reproduction que l'historien ne regarde pas), étiquettes WikiArt bénévoles, canon occidental.
 - T. Arnold et L. Tilton, *Distant Viewing* (MIT Press, 2023) : chaque algorithme encode une
   « manière de voir » qu'il faut rendre explicite ; annoter, c'est perdre et interpréter ; ne
   pas « fétichiser la taille ».
+- L. Impett et F. Offert, « There Is a Digital Art History » (*Visual Resources*, 38:2, 2024) :
+  un modèle multimodal porte un « imaginaire vectoriel » (*vector imaginary*) ; en lisant un
+  corpus à travers le modèle, on lit toujours aussi le modèle à travers le corpus.
+- D. G. Stork, *Pixels & Paintings: Foundations of Computer-assisted Connoisseurship* (Wiley,
+  2024) : le calcul assiste l'œil du connaisseur sans jugement normatif, porte sur la reproduction
+  numérique plutôt que l'œuvre matérielle, et n'a de sens que replacé dans le contexte historique.
+- J.-L. Giavitto et P. Saint-Germier (dir.), *L'art au temps de l'IA* (Centre Pompidou, 2025) :
+  les espaces latents réduisent le visible au « dicible » (Lista / Somaini) ; une distance
+  calculée n'a de sens que relative au corpus et ne remplace jamais l'acte d'expertise humaine
+  (Bureau et Doras) ; la numérisation porte ses conditions matérielles (Ebner et Frydryszak-Rétat).
 
-D'où trois outils : une **fiche par regard** (ce qu'il voit, sur quoi il a été entraîné, ses
-biais, ce que le banc d'essai a mesuré), des **notes sur les sources d'étiquettes**, et un
-**bilan du corpus** qui rend visibles ses trous et ses déséquilibres.
+D'où quatre outils : une **fiche par regard**, des **principes de lecture**, des **notes sur les
+sources d'étiquettes**, et un **bilan du corpus** qui rend visibles ses trous et ses déséquilibres.
 """
 
 from __future__ import annotations
@@ -45,6 +51,9 @@ CARDS: dict[str, dict] = {
         "biases": [
             "a appris des légendes qui nomment styles et artistes : il peut reconnaître une étiquette "
             "plutôt que voir une facture",
+            "réduit le visible au « dicible » et porte son propre imaginaire vectoriel : lire le corpus "
+            "par SigLIP 2, c'est aussi lire SigLIP 2 à travers le corpus (Impett et Offert, 2024 ; "
+            "Lista / Somaini, 2025)",
             "a peut-être vu WikiArt pendant son entraînement : ses scores sur WikiArt sont sans doute optimistes",
             "légendes du web majoritairement en anglais et centrées sur l'art occidental",
         ],
@@ -97,6 +106,32 @@ CARDS: dict[str, dict] = {
 def card(space: str) -> dict:
     return CARDS.get(space, {"model": space, "trained_on": "inconnu", "sees": "", "blind_to": "",
                              "biases": [], "measured": ""})
+
+
+# ------------------------------------------------------------------ principes de lecture
+PRINCIPLES: list[dict[str, str]] = [
+    {
+        "title": "Un score n'a de sens que relatif au corpus",
+        "text": "Une similarité cosinus ne vaut pas décision binaire (proche / loin) : elle situe "
+                "deux œuvres par rapport aux autres paires du corpus. Juger d'une parenté reste "
+                "un acte d'expertise humaine multifactoriel.",
+        "source": "S. Bureau et G. Doras, dans L'art au temps de l'IA (Centre Pompidou, 2025)",
+    },
+    {
+        "title": "Lire le corpus par le modèle, c'est aussi lire le modèle",
+        "text": "Les modèles multimodaux (SigLIP 2) encodent un « imaginaire vectoriel » issu "
+                "du web et réduisent l'image au dicible. La carte par axes conceptuels (2 mots) "
+                "permet d'éprouver ces biais sur votre corpus.",
+        "source": "L. Impett et F. Offert, Visual Resources (2024) ; M. Lista, Centre Pompidou (2025)",
+    },
+    {
+        "title": "La reproduction numérique n'est pas l'œuvre matérielle",
+        "text": "Résolution, vernis jauni, balance des blancs, recadrage ou traces de numérisation "
+                "pèsent sur tous les calculs. Les mesures visuelles (équilibre, entropie) assistent "
+                "l'œil du connaisseur sans jugement normatif et toujours en contexte historique.",
+        "source": "D. G. Stork, Pixels & Paintings (Wiley, 2024) ; F. Ebner et O. Frydryszak-Rétat (2025)",
+    },
+]
 
 
 # ------------------------------------------------------------------ sources d'étiquettes

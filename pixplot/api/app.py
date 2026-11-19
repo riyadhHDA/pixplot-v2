@@ -15,6 +15,7 @@ from fastapi.responses import FileResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
+from ..analysis import connoisseur, critique
 from ..catalog.ingest import THUMB_SIZES, thumb_path
 from .data import AtlasData
 from .search import SearchEngines, SearchUnavailable
@@ -175,7 +176,7 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
 
     @app.get("/api/corpus")
     def corpus():
-        return {"report": data.corpus_report(), "spaces": data.spaces.list()}
+        return {"report": data.corpus_report(), "spaces": data.spaces.list(), "principles": critique.PRINCIPLES}
 
     @app.get("/api/disagreements")
     def disagreements_list(near: str, far: str, offset: int = Query(0, ge=0), limit: int = Query(40, ge=1, le=200)):
@@ -194,6 +195,15 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
             map_cache[key] = out
         return JSONResponse(map_cache[key])
 
+    @app.get("/api/layout/concepts")
+    def concept_layout(x: str = Query(..., min_length=2, max_length=200),
+                       y: str = Query(..., min_length=2, max_length=200),
+                       k: int = Query(8, ge=1, le=30)):
+        try:
+            return JSONResponse(engines.concept_axes(x, y, k=k, include_coords=True))
+        except SearchUnavailable as exc:
+            raise HTTPException(503, str(exc))
+
     @app.get("/api/layout/{space}")
     def space_layout(space: str):
         if space not in map_cache:
@@ -206,6 +216,25 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
     @app.get("/api/clusters")
     def clusters():
         return data.clusters_payload()
+
+    measures_cache: dict[int, dict] = {}
+
+    @app.get("/api/artwork/{artwork_id}/measures")
+    def artwork_measures(artwork_id: int):
+        if artwork_id not in data.row_of:
+            raise HTTPException(404, "Œuvre absente de cette analyse")
+        if artwork_id in measures_cache:
+            return measures_cache[artwork_id]
+        path = thumb_path(data.settings.thumbs_dir, artwork_id, 256)
+        if not path.exists():
+            path = data.original_path(artwork_id)
+        if path is None or not path.exists():
+            raise HTTPException(404, "Image introuvable")
+        out = {"id": artwork_id, **connoisseur.measure_path(path)}
+        if len(measures_cache) >= 512:
+            measures_cache.pop(next(iter(measures_cache)))
+        measures_cache[artwork_id] = out
+        return out
 
     @app.get("/api/artwork/{artwork_id}")
     def artwork(artwork_id: int, k: int = Query(20, ge=1, le=100), space: str | None = None):

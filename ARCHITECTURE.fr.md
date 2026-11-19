@@ -801,3 +801,48 @@ qu'une proximité calculée devienne discutable, en montrant sur quoi le regard 
 - **Limites** : une grille fixe, calée sur le carré et non sur l'œuvre ; une case d'un format très
   large couvre une bande haute de l'image. Le regard compare des formes : c'est à l'historien de dire
   si les zones partagent un motif, une pose, une composition, ou seulement un fond semblable.
+
+## 26. Trois lectures intégrées : axes conceptuels, mesures visuelles et couche critique (19/11/2026)
+
+Trois lectures récentes ont été intégrées directement dans le code, l'Atlas et le serveur MCP :
+
+1. **Axes conceptuels 2D, d'après *2D CLIP* (L. Impett et F. Offert, « There Is a Digital Art
+   History », *Visual Resources*, 38:2, 2024).** Les auteurs montrent qu'un modèle multimodal porte
+   un « imaginaire vectoriel » (*vector imaginary*) et qu'en lisant un corpus à travers le modèle, on
+   lit toujours aussi le modèle à travers le corpus. L'Atlas propose désormais une vue **Axes
+   conceptuels (2 mots)** (`/api/layout/concepts`, outil MCP `probe_concepts`) qui projette tout le
+   corpus sur deux requêtes textuelles SigLIP 2 (normalisées par centiles p1–p99), avec la diagonale
+   `X = Y` et les œuvres qui s'en écartent le plus.
+   - **Mesure sur WikiArt 81k (80 716 œuvres)** : **582 à 592 ms** par paire de mots à chaud (après
+     le chargement initial de SigLIP 2), sans précalcul.
+   - **Exemples révélateurs** : `naked` / `nude` donne une corrélation forte (`r = 0,87`), avec des
+     écarts à la diagonale nets comme dans la fig. 8 de l'article ; `linéaire` / `pictural` (axes de
+     Wölfflin, repris par Stork § 9.1) donne `r = 0,16` et sépare nettement le Minimalisme géométrique
+     du Romantisme/Expressionnisme atmosphérique (Aïvazovski) ; `sacré` / `profane` (`r = 0,41`)
+     illustre la thèse même d'Impett et Offert : les œuvres tirées le plus fortement vers « sacré »
+     loin de « profane » sont des vues parisiennes d'Édouard Cortès — parce que « sacré » active
+     « Sacré-Cœur » dans l'imaginaire vectoriel du web.
+2. **Mesures visuelles explicites, sans modèle de neurones, d'après D. G. Stork (*Pixels &
+   Paintings: Foundations of Computer-assisted Connoisseurship*, Wiley, 2024).** Le module
+   `pixplot/analysis/connoisseur.py` (`/api/artwork/{id}/measures`, bloc pliable **Mesures visuelles**
+   dans la fiche d'œuvre, outil MCP `measure_artwork`) calcule à la demande : le barycentre de
+   luminance et de saturation ainsi que la dispersion des barycentres de sous-fenêtres (§ 9.3, Park
+   2019), la symétrie gauche-droite (§ 9.3.1), la dynamique tonale (§ 1.5.3), et l'entropie
+   chromatique `H(C)` avec la première coupe horizontale ou verticale maximisant le gain
+   d'information (§ 9.5.1, alg. 8, Lee et al., PNAS 2020).
+   - **Mesure sur WikiArt 81k** : **14,5 ms** par œuvre en moyenne sur 100 vignettes 256 px (100 %
+     CPU). Une première version à quantification adaptative (`MEDIANCUT`, 16 couleurs) écrasait
+     l'entropie près du maximum (~3,9–4,0 bits) ; remplacée par une grille chromatique fixe
+     4 × 4 × 4 (64 teintes, max 6 bits), l'entropie s'étale de **0,07 à 3,52 bits** (médiane 1,56) :
+     0,02 bit pour une esquisse monochrome de Dürer (`#101`) contre 3,31 et 2,80 bits pour la paire
+     Rubens / Titien (`#64269` / `#67405`), dont les barycentres coïncident (`[0,52 ; 0,44]` vs
+     `[0,53 ; 0,47]`).
+   - **Limites** : ces chiffres décrivent la *reproduction numérique* (résolution, vernis, balance
+     des blancs) et ne portent aucun jugement normatif (« équilibré » ne veut pas dire « meilleur »).
+3. **Couche critique enrichie, d'après J.-L. Giavitto et P. Saint-Germier (dir.), *L'art au temps de
+   l'IA* (Centre Pompidou, 2025).** La fiche **Corpus** (`critique.PRINCIPLES`, `/api/corpus`,
+   `corpus_overview` et consignes MCP) intègre trois garde-fous issus de l'ouvrage : une distance
+   latente n'a de sens que *relative* au corpus et ne remplace pas l'acte performatif d'expertise
+   humaine (S. Bureau et G. Doras) ; les modèles texte-image réduisent le visible au « dicible »
+   (M. Lista, d'après A. Somaini et H. Steyerl) ; la numérisation porte ses conditions matérielles
+   (F. Ebner et O. Frydryszak-Rétat).

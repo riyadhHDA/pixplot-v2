@@ -727,3 +727,46 @@ proximity open to discussion, by showing what the regard relies on.
 - **Limits**: a fixed grid, aligned on the square rather than the work; a cell of a very wide format
   covers a tall band of the image. The regard compares shapes: it is for the historian to say whether
   the zones share a motif, a pose, a composition, or only a similar background.
+
+## 26. Three integrated readings: conceptual axes, visual measures and critical layer (19/11/2026)
+
+Three recent readings were integrated directly into the code, the Atlas and the MCP server:
+
+1. **2D conceptual axes, after *2D CLIP* (L. Impett and F. Offert, "There Is a Digital Art
+   History", *Visual Resources*, 38:2, 2024).** The authors argue that a multimodal model carries a
+   "vector imaginary" and that reading a corpus through the model always means reading the model
+   through the corpus as well. The Atlas now offers a **Conceptual axes (2 words)** layout
+   (`/api/layout/concepts`, MCP tool `probe_concepts`) that projects the entire corpus along two
+   SigLIP 2 text prompts (normalised by p1–p99 percentiles), with the `X = Y` diagonal and the works
+   that deviate most from it.
+   - **Measured on WikiArt 81k (80,716 works)**: **582 to 592 ms** warm per pair of words (after
+     initial SigLIP 2 loading), with no precomputation.
+   - **Revealing examples**: `naked` / `nude` yields a strong correlation (`r = 0.87`) with clear
+     off-diagonal deviations mirroring Fig. 8 of the paper; `linéaire` / `pictural` (Wölfflin's axes,
+     discussed in Stork § 9.1) gives `r = 0.16` and cleanly separates geometric Minimalism from
+     atmospheric Romanticism/Expressionism (Aivazovsky); `sacré` / `profane` (`r = 0.41`) directly
+     demonstrates Impett and Offert's thesis: the works pulled most strongly toward "sacré" away
+     from "profane" are Parisian cityscapes by Édouard Cortès — because "sacré" triggers
+     "Sacré-Cœur" in the web's vector imaginary.
+2. **Explicit neural-free visual measures, after D. G. Stork (*Pixels & Paintings: Foundations of
+   Computer-assisted Connoisseurship*, Wiley, 2024).** `pixplot/analysis/connoisseur.py`
+   (`/api/artwork/{id}/measures`, collapsible **Visual measures** block on the artwork card, MCP
+   tool `measure_artwork`) computes on demand: lightness and saturation barycentres plus local
+   sub-window barycentre spread (§ 9.3, Park 2019), left–right symmetry (§ 9.3.1), tonal dynamics
+   (§ 1.5.3), and chromatic Shannon entropy `H(C)` with the optimal horizontal or vertical
+   compositional split (§ 9.5.1, Alg. 8, Lee et al., PNAS 2020).
+   - **Measured on WikiArt 81k**: **14.5 ms** per work on average across 100 thumbnails (256 px,
+     100 % CPU). An initial adaptive-quantisation (`MEDIANCUT`, 16 colours) version compressed
+     entropy near its ceiling (~3.9–4.0 bits); switching to a fixed 4 × 4 × 4 colour grid (64 bins,
+     max 6 bits) spreads entropy from **0.07 to 3.52 bits** (median 1.56): 0.02 bit for a
+     monochrome Dürer sketch (`#101`) versus 3.31 and 2.80 bits for the Rubens / Titian pair
+     (`#64269` / `#67405`), whose lightness barycentres align (`[0.52, 0.44]` vs `[0.53, 0.47]`).
+   - **Limits**: these figures describe the *digital reproduction* (resolution, varnish, white
+     balance) and carry no normative judgement ("balanced" never means "better").
+3. **Expanded critical layer, after J.-L. Giavitto and P. Saint-Germier (eds.), *L'art au temps de
+   l'IA* (Centre Pompidou, 2025).** The **Corpus** panel (`critique.PRINCIPLES`, `/api/corpus`,
+   `corpus_overview` and MCP instructions) incorporates three safeguards: a latent distance is only
+   meaningful *relative* to the corpus and never replaces the performative act of human expertise
+   (S. Bureau and G. Doras); text–image models reduce the visible to the "sayable" (M. Lista, after
+   A. Somaini and H. Steyerl); digitised reproductions carry their material conditions of capture
+   (F. Ebner and O. Frydryszak-Rétat).

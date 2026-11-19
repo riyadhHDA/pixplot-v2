@@ -4,11 +4,28 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 19/11/2026, soir.*
+*Dernière mise à jour : 19/11/2026 (intégration des 3 lectures).*
 
 ## Version publiée
 
 **0.16.3** (19/11/2026) : corrections d'après trois audits de Gemini 4 Argon (voir plus bas).
+**Commité sur `main` (non poussé, pas encore publié en version)** :
+intégration de trois lectures (`C:\Users\Riyadh\Downloads\Livre`, restées hors dépôt) — voir
+`ARCHITECTURE.fr.md` § 26 :
+- **Axes conceptuels 2D** (L. Impett & F. Offert, *Visual Resources*, 2024) : `/api/layout/concepts`,
+  vue « Axes conceptuels (2 mots) » dans l'Atlas (`web/atlas-dispositions.js`, `web/index.html`),
+  outil MCP `probe_concepts` ; mesuré à 582–592 ms à chaud sur WikiArt 81k.
+- **Mesures visuelles sans GPU** (D. G. Stork, *Pixels & Paintings*, Wiley, 2024) :
+  `pixplot/analysis/connoisseur.py`, `/api/artwork/{id}/measures`, bloc pliable « Mesures visuelles »
+  dans la fiche d'œuvre (`web/atlas-panneaux.js`), outil MCP `measure_artwork` (18 outils au total) ;
+  mesuré à 14,5 ms/œuvre sur 100 vignettes 256 px (grille fixe 4 × 4 × 4, H de 0,07 à 3,52 bits).
+- **Couche critique enrichie** (J.-L. Giavitto & P. Saint-Germier dir., *L'art au temps de l'IA*,
+  Centre Pompidou, 2025) : `critique.PRINCIPLES`, panneau Corpus, consignes MCP, README / ROADMAP /
+  MCP / Guide de l'historien (FR + EN). 65 tests passent.
+- **Réécriture éditoriale** : `README.fr.md` / `README.md`, `ROADMAP.fr.md` /
+  `ROADMAP.md`, `docs/MCP.fr.md` / `docs/MCP.md` et les 4 pages du site (`site/index.html`,
+  `site/fr/index.html`, `site/guide/index.html`, `site/fr/guide/index.html`) réécrites sur un ton
+  plus direct et naturel, et synchronisées avec l'état réel (18 outils MCP, § 26).
 **0.16.2** : Antigravity sous Windows (`pixplot antigravity-mcp`, second avis en
 lecture seule ; PixPlot dans Antigravity par `.agents/mcp_config.json`), compétence d'accessibilité,
 « Pourquoi ? » corrigé. **0.16.1** : outil MCP `why_similar` (16 outils) et guide de l'historien de l'art sur

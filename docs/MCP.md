@@ -2,14 +2,13 @@
 
 **English** · [Français](MCP.fr.md)
 
-`pixplot mcp` starts an [MCP](https://modelcontextprotocol.io) server that gives the LLM
-direct access to the corpus: it searches, **looks at the images**, explores the groups,
-writes to your research notebook and exports Research Packs. Everything stays on your PC:
-the server reads your local files and only passes to the LLM what its tools return (text,
-thumbnails, details).
+`pixplot mcp` starts an [MCP](https://modelcontextprotocol.io) server to connect an assistant
+directly to your local corpus: it can run searches, inspect images, browse groups, add notes
+to your notebook and export *Research Packs*. Files stay on your machine; the server only
+returns tool outputs (text, thumbnails, crops).
 
-> Roles: PixPlot computes, observes and organises. The LLM asks and suggests.
-> The art historian checks, interprets and builds knowledge.
+In practice, PixPlot computes neighbourhoods, the assistant helps query and compare, and
+verification stays with the historian.
 
 ## Tools
 
@@ -25,6 +24,8 @@ thumbnails, details).
 | `view_detail` | **a cropped detail** from the original |
 | `compare_artworks` | **numbered contact sheet** of 2 to 12 works + one similarity matrix per space |
 | `why_similar` | **plate of the two works** where the zones that answer each other (4×4 cells, form regard) carry the same number, + their cosines |
+| `probe_concepts` | compares **two textual concepts** across the corpus (SigLIP 2, after Impett & Offert's *2D CLIP*): correlation, poles and off-diagonal deviations |
+| `measure_artwork` | **neural-free visual measures** (Stork): lightness/saturation barycentre, local spread, left–right symmetry, chromatic entropy and primary compositional split |
 | `get_group` | a group of the map, most central works first |
 | `find_atypical` | the most isolated works (exceptions, cataloguing errors…) |
 | `check_labels` | labels contradicted by all the neighbours (possible errors or singular works) |

@@ -59,6 +59,24 @@ select { background: var(--panel-2); color: var(--text); border: 1px solid var(-
 .menu select { width: 100%; }
 .menu-note { margin: -4px 0 0; color: var(--muted); font-size: 12px; }
 .menu-note:empty { display: none; }
+.concept-controls { display: grid; gap: 8px; padding-top: 6px; border-top: 1px solid var(--line); }
+.concept-controls input { background: var(--bg); color: var(--text); border: 1px solid var(--line); border-radius: 6px;
+  padding: 5px 8px; font: 13px var(--font); width: 100%; }
+.concept-presets { display: flex; flex-wrap: wrap; gap: 4px; }
+.measures-box { margin: 12px 0 6px; border: 1px solid var(--line); border-radius: var(--radius); background: var(--panel-2); }
+.measures-box summary { padding: 8px 10px; cursor: pointer; font-weight: 600; font-size: 13px; color: var(--text); }
+.measures-box summary small { font-weight: 400; color: var(--muted); margin-left: 4px; }
+.measures-body { padding: 0 10px 10px; }
+.measures-grid { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; align-items: start; margin-top: 6px; }
+.measures-svg { display: block; width: auto; height: auto; stroke: none; border-radius: 4px; }
+.measures-dl { margin: 0; font-size: 12px; }
+.measures-dl dt { color: var(--muted); margin-top: 4px; }
+.measures-dl dt:first-child { margin-top: 0; }
+.measures-dl dd { margin: 0; color: var(--text); }
+.measures-dl small { color: var(--muted); }
+.corpus-principles { margin: 6px 0 12px; padding-left: 18px; font-size: 13px; line-height: 1.45; }
+.corpus-principles li { margin: 6px 0; }
+.corpus-principles small { color: var(--muted); }
 
 /* ---------------------------------------------------------------- mise en page */
 .layout { display: grid; grid-template-columns: var(--groups-w) minmax(0, 1fr) auto; height: calc(100% - var(--top)); }

@@ -681,3 +681,73 @@ def test_neighbors_small_corpus():
         real = rows[i][rows[i] >= 0]
         assert i not in real and len(real) == 4
         assert (scores[i][rows[i] < 0] == 0).all() and np.isfinite(scores[i]).all()
+
+
+def test_connoisseur_measures():
+    """Mesures visuelles d'après D. G. Stork (Pixels & Paintings, 2024) : équilibre, symétrie, entropie."""
+    from PIL import Image
+
+    from pixplot.analysis.connoisseur import measure_image
+
+    # 1. Monochrome uniforme : entropie nulle, barycentre au centre, symétrie parfaite
+    mono = Image.new("RGB", (100, 100), (80, 120, 200))
+    m_mono = measure_image(mono)
+    assert m_mono["chromatic"]["entropy_bits"] == 0.0
+    assert m_mono["balance"]["lightness"] == [0.5, 0.5]
+    assert m_mono["symmetry_lr"] == 1.0
+
+    # 2. Paysage schématique (ciel bleu sur 40 % en haut, terre verte en bas) : coupe horizontale à 0,4
+    arr = np.zeros((100, 120, 3), dtype=np.uint8)
+    arr[:40] = (70, 130, 220)
+    arr[40:] = (40, 110, 50)
+    m_land = measure_image(Image.fromarray(arr))
+    assert m_land["chromatic"]["split_orientation"] == "horizontale"
+    assert abs(m_land["chromatic"]["split_position"] - 0.4) <= 0.04
+    assert m_land["chromatic"]["split_gain_bits"] > 0.85
+
+    # 3. Composition asymétrique (clair à gauche, sombre à droite) : barycentre à gauche, symétrie négative
+    asym = np.zeros((80, 80, 3), dtype=np.uint8)
+    asym[:, :40] = (230, 220, 200)
+    asym[:, 40:] = (20, 20, 25)
+    m_asym = measure_image(Image.fromarray(asym))
+    assert m_asym["balance"]["lightness"][0] < 0.35
+    assert m_asym["symmetry_lr"] < -0.5
+
+
+def test_concept_axes(env):
+    """Axes conceptuels 2D (d'après 2D CLIP, Impett & Offert, 2024) : coordonnées, corrélation et écarts."""
+    from types import SimpleNamespace
+
+    from pixplot.api.search import SearchEngines
+    from pixplot.features.extract import OK
+
+    _, data, _ = env
+    n = len(data.ids)
+    # Vecteurs synthétiques 2D : première moitié orientée vers X, seconde moitié vers Y
+    vecs = np.zeros((n, 2), dtype=np.float16)
+    for i in range(n):
+        a = (i / max(n - 1, 1)) * (np.pi / 2)
+        vecs[i] = [np.cos(a), np.sin(a)]
+
+    class FakeTextEncoder:
+        def encode_text(self, texts):
+            return np.array([[1.0, 0.0], [0.0, 1.0]], dtype=np.float32)
+
+    eng = SearchEngines(data)
+    eng._text_encoder = FakeTextEncoder()
+    eng._text_store = SimpleNamespace(
+        run=SimpleNamespace(id="siglip2_test"),
+        ids=data.ids.copy(),
+        global_vectors=vecs,
+        status=np.full(n, OK, dtype=np.int8),
+    )
+    res = eng.concept_axes("sacré", "profane", k=3, include_coords=True)
+    assert res["count"] == n and len(res["x"]) == n and len(res["y"]) == n
+    assert res["correlation"] < -0.8
+    assert res["extremes"]["top_x"][0]["id"] == int(data.ids[0])
+    assert res["extremes"]["top_y"][0]["id"] == int(data.ids[-1])
+    assert res["extremes"]["more_x"][0]["id"] == int(data.ids[0])
+    assert res["extremes"]["more_y"][0]["id"] == int(data.ids[-1])
+    # Sans coordonnées (mode MCP)
+    res_mcp = eng.concept_axes("sacré", "profane", k=3, include_coords=False)
+    assert "x" not in res_mcp and "y" not in res_mcp and len(res_mcp["extremes"]["more_x"]) == 3

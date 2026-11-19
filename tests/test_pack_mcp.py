@@ -75,11 +75,16 @@ def test_mcp_tools(data):
         tools = {t.name for t in await srv.list_tools()}
         assert tools == {"corpus_overview", "search_by_text", "similar_artworks", "search_detail", "search_zones", "get_artwork",
                          "view_artwork", "view_detail", "compare_artworks", "get_group", "find_atypical",
-                         "export_research_pack", "check_labels", "notebook_add", "notebook_list", "why_similar"}
+                         "export_research_pack", "check_labels", "notebook_add", "notebook_list", "why_similar",
+                         "probe_concepts", "measure_artwork"}
         why = await call("why_similar", {"artwork_a": first, "artwork_b": int(data.ids[1])})
         assert "zone" in why.content[0].text and why.content[1].type == "image"
+        meas = json.loads((await call("measure_artwork", {"artwork_id": first})).content[0].text)
+        assert meas["id"] == first and "balance" in meas and "chromatic" in meas
+        probe = json.loads((await call("probe_concepts", {"x": "sacré", "y": "profane"})).content[0].text)
+        assert "error" in probe  # pas de vecteurs SigLIP dans ce corpus de test
         overview = json.loads((await call("corpus_overview", {})).content[0].text)
-        assert overview["count"] == len(data.ids) and len(overview["groups"]) == 3
+        assert overview["count"] == len(data.ids) and len(overview["groups"]) == 3 and overview["principles"]
         art = json.loads((await call("get_artwork", {"artwork_id": first})).content[0].text)
         assert art["id"] == first and len(art["neighbors"]) == 5
         img = await call("view_artwork", {"artwork_id": first, "size": 256})

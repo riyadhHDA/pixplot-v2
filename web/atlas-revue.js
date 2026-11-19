@@ -37,6 +37,8 @@ async function renderCorpus() {
     return `<tr><th>${esc(LABELS[k] || pretty(k))}</th><td>${Math.round(c.share * 100)} %</td><td>${c.distinct}</td></tr>
       <tr class="src"><td colspan="3">source : ${esc(src.source || "—")}${src.note ? `<small>${esc(src.note)}</small>` : ""}</td></tr>`;
   }).join("");
+  const principles = (res.principles || []).map((p) =>
+    `<li><b>${esc(p.title)}.</b> ${esc(p.text)} <small>(${esc(p.source)})</small></li>`).join("");
   $("fiche-body").innerHTML = `<div class="corpus-panel">
     <p class="sub">${r.n.toLocaleString("fr-FR")} œuvres. Ce bilan dit de quoi le corpus est fait — et donc ce qu'aucun
       résultat ne peut dire au-delà.</p>
@@ -45,12 +47,15 @@ async function renderCorpus() {
     <h3>Étiquettes : couverture et source</h3>
     <table class="corpus-table"><thead><tr><th></th><th>connues</th><th>valeurs différentes</th></tr></thead>
       <tbody>${rows}</tbody></table>
+    ${principles ? `<h3>Principes de lecture</h3><ul class="corpus-principles">${principles}</ul>` : ""}
     <h3>Les regards</h3>
     <p class="sub">Chaque regard est une manière de voir, construite par un modèle et ses données. Ils regardent des traits
       que l'historien ne regarde pas (grain, contours, qualité de la reproduction) : une proximité est une piste.</p>
     ${res.spaces.map(regardCard).join("")}
     <p class="prov">Sources : A. Wasielewski, <i>Computational Formalism</i> (MIT Press, 2023) ; T. Arnold et L. Tilton,
-      <i>Distant Viewing</i> (MIT Press, 2023). Résultats détaillés : ARCHITECTURE § 11 à 19.</p></div>`;
+      <i>Distant Viewing</i> (MIT Press, 2023) ; L. Impett et F. Offert, <i>Visual Resources</i> (2024) ; D. G. Stork,
+      <i>Pixels &amp; Paintings</i> (Wiley, 2024) ; J.-L. Giavitto et P. Saint-Germier (dir.), <i>L'art au temps de l'IA</i>
+      (Centre Pompidou, 2025). Résultats détaillés : ARCHITECTURE § 11 à 26.</p></div>`;
 }
 
 // ------------------------------------------------------------------ relecture rapide (façon Anki)

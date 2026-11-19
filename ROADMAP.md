@@ -1,16 +1,15 @@
 # Roadmap
 
-**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-16 · Current version: **0.16.3**
+**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-19 · Current version: **0.16.3**
 
-What is done is in the [changelog](CHANGELOG.md). This document says what comes next, in
-which order, and what makes a step a success.
+Completed work is listed in [CHANGELOG.md](CHANGELOG.md). This file tracks upcoming steps,
+dropped experiments and leads worth testing.
 
-## The rule: measure before adding
+## Principle: benchmark before keeping
 
-PixPlot does not stack models. A new model or method only enters the project if it **wins
-on a benchmark** (annotated pairs, labels, RichArt…) and brings a signal the existing ways
-of seeing lack. Otherwise the negative result is documented and dropped. Each successful
-step becomes a minor version.
+We avoid piling up models without evidence. A new method only stays if it beats the baseline
+on a benchmark (annotated pairs, labels, RichArt…) while adding a signal the existing spaces
+miss. Failed attempts are documented with their numbers and dropped.
 
 ## Next steps
 
@@ -89,8 +88,22 @@ step becomes a minor version.
   of seeing computed without a GPU, and a possible axis for the timeline.
 - **ArtEmis** (CVPR 2021): 455,000 emotion annotations on WikiArt works; do the ways of seeing
   capture the felt effect or only the subject?
-- **"Why do these two works look alike?"**: show, in the comparator, which regions of one answer
-  which regions of the other (an answer to the perceptual bias described by Wasielewski).
+- **"Why do these two works look alike?"** *(done in 0.16.0, ARCHITECTURE § 25)*: show, in the
+  comparator, which regions of one answer which regions of the other (an answer to the perceptual
+  bias described by Wasielewski).
+- **2D conceptual axes (Impett & Offert, 2024) and visual measures (Stork, 2024)** *(done,
+  ARCHITECTURE § 26)*: 2D projection on two SigLIP 2 concepts, neural-free visual balance and
+  chromatic entropy.
+- **Leads from recent readings** (to benchmark locally on this PC):
+  - **LocalMAP** (AAAI 2025, `pacmap`, 100 % CPU): an alternative to UMAP that adjusts local links on
+    dense continuums.
+  - **CSD** (ECCV 2024) for pure style vs "touch", **SSCD** (CVPR 2022) for copies, prints and
+    mirror inversions, and **Depth Anything V2** (NeurIPS 2024) as a depth-based composition lead
+    after PE-Spatial's negative result (§ 24).
+  - **Poses and gaze** (Stork § 8.3 & § 9.3.1; *Human-Art* CVPR 2023; Madhu et al.): skeleton
+    detection for *Pathosformeln* and figure symmetry.
+  - **Sparse autoencoders** (*PatchSAE* ICLR 2025, *Matryoshka SAE* ICML 2025) on already-computed
+    vectors, and enriched Iconclass hierarchy (*Visual Narratives*, WACV 2024).
 - **Collection Space Navigator** (Ohm et al., 2023): multidimensional filters and selection
   export for the Atlas.
 

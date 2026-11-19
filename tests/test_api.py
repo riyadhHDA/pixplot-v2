@@ -79,6 +79,16 @@ def test_images_and_search(client):
     assert c.get("/api/correspond", params={"a": ids[0], "b": ids[1], "space": "inconnu"}).status_code == 400
     assert c.get("/api/correspond", params={"a": ids[0], "b": 999999}).status_code == 404
     assert c.get(f"/api/image/{first}").status_code == 200
+    # mesures visuelles (Stork) et principes critiques
+    meas = c.get(f"/api/artwork/{first}/measures")
+    assert meas.status_code == 200
+    mj = meas.json()
+    assert mj["id"] == first and "balance" in mj and "chromatic" in mj and -1 <= mj["symmetry_lr"] <= 1
+    assert c.get("/api/artwork/999999/measures").status_code == 404
+    corp = c.get("/api/corpus").json()
+    assert len(corp["principles"]) >= 3
+    # axes conceptuels : 503 sans vecteurs SigLIP 2
+    assert c.get("/api/layout/concepts", params={"x": "sacré", "y": "profane"}).status_code == 503
     res = c.get("/api/search", params={"q": "rouge"}).json()
     assert res["count"] == 6
     assert c.get("/api/search", params={"q": str(first)}).json()["ids"] == [first]

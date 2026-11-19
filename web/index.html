@@ -43,6 +43,21 @@
               <input type="range" id="place-year" step="1">
             </label>
           </div>
+          <form id="concept-controls" class="concept-controls" hidden>
+            <label>Axe horizontal (→)
+              <input id="concept-x" type="text" value="sacré" placeholder="ex. sacré, linéaire, nu…" maxlength="200">
+            </label>
+            <label>Axe vertical (↑)
+              <input id="concept-y" type="text" value="profane" placeholder="ex. profane, pictural, dénudé…" maxlength="200">
+            </label>
+            <div class="concept-presets">
+              <button type="button" class="chip concept-preset" data-x="sacré" data-y="profane">sacré / profane</button>
+              <button type="button" class="chip concept-preset" data-x="linéaire" data-y="pictural">linéaire / pictural</button>
+              <button type="button" class="chip concept-preset" data-x="lumière" data-y="obscurité">lumière / obscurité</button>
+              <button type="button" class="chip concept-preset" data-x="naked" data-y="nude">naked / nude</button>
+            </div>
+            <button type="submit" class="chip" id="concept-go">Tracer ces axes</button>
+          </form>
           <label>Affichage
             <select id="display">
               <option value="sprites">Vignettes</option>

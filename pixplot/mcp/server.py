@@ -16,6 +16,7 @@ from pathlib import Path
 import numpy as np
 from PIL import Image as PILImage, ImageDraw, ImageFont
 
+from ..analysis import connoisseur, critique
 from ..api.data import AtlasData
 from ..api.search import SearchEngines, SearchUnavailable
 from ..catalog.ingest import thumb_path
@@ -37,18 +38,23 @@ Méthode conseillée :
 1. corpus_overview pour connaître le corpus, ses groupes et ce qui est disponible.
 2. Chercher : search_by_text (description, en français ou en anglais), similar_artworks,
    search_detail (un cadre sur une œuvre : main, drapé, objet…), search_zones (un détail
-   décrit par des mots : « une auréole », « un crâne »), get_group, find_atypical.
+   décrit par des mots : « une auréole », « un crâne »), probe_concepts (comparer deux concepts
+   textuels sur tout le corpus, façon 2D CLIP d'Impett & Offert), get_group, find_atypical.
 3. Regarder : view_artwork, view_detail, compare_artworks (planche numérotée), why_similar
-   (les zones de deux œuvres qui se répondent, dessinées sur une planche). Ne conclus jamais sur
-   une œuvre sans l'avoir regardée.
+   (les zones de deux œuvres qui se répondent, dessinées sur une planche), measure_artwork
+   (équilibre visuel, symétrie, entropie chromatique et première coupe, d'après Stork). Ne conclus
+   jamais sur une œuvre sans l'avoir regardée.
 4. Documenter : notebook_add pour garder une piste dans le carnet de l'historien (il le voit
    dans l'Atlas), export_research_pack pour un dossier traçable.
 5. Critiquer le catalogue : check_labels liste les étiquettes que toutes les voisines
    contredisent — erreurs possibles OU œuvres réellement singulières, à regarder.
 
 Règles : une proximité calculée est une piste, pas une preuve d'influence ni d'attribution.
-Les scores sont des similarités cosinus, pas des probabilités. Distingue toujours ce qui se
-voit, ce que disent les métadonnées (avec leur source), ce que calcule PixPlot, et ton
+Les scores sont des similarités cosinus relatives au corpus, pas des probabilités ni des décisions
+binaires (Bureau et Doras, 2025). En lisant un corpus à travers SigLIP 2, on lit toujours aussi
+l'imaginaire vectoriel du modèle (Impett et Offert, 2024). Les mesures visuelles (Stork, 2024)
+portent sur la reproduction numérique et ne font aucun jugement normatif. Distingue toujours ce qui
+se voit, ce que disent les métadonnées (avec leur source), ce que calcule PixPlot, et ton
 interprétation. Cherche activement les contre-exemples.
 
 Chaque espace a une fiche (corpus_overview → spaces → card) : ce qu'il voit, sur quelles
@@ -107,6 +113,7 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
         return {**data.info(), "search": engines.status(), "spaces": data.spaces.list(), "groups": groups,
                 "group_names": "proposés par SigLIP 2 d'après un vocabulaire d'histoire de l'art — à vérifier",
                 "corpus_report": data.corpus_report(),
+                "principles": critique.PRINCIPLES,
                 "reading": "Chaque espace (« regard ») a une fiche : ce qu'il voit, ses données d'entraînement, "
                            "ses biais. Lis-la avant d'interpréter une proximité. Les étiquettes (artiste, style…) "
                            "viennent de la source indiquée et peuvent être fausses."}
@@ -327,6 +334,32 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
     def notebook_list(query: str = "", limit: int = 30) -> dict:
         """Les entrées du carnet de recherche (les plus récentes d'abord), filtrables par texte."""
         return {"entries": notebook.list(query, limit=min(max(limit, 1), 200))}
+
+    # ------------------------------------------------------------------ axes conceptuels et mesures visuelles
+    @server.tool()
+    def probe_concepts(x: str, y: str, k: int = 8) -> dict:
+        """Compare deux concepts textuels sur tout le corpus dans SigLIP 2 (d'après 2D CLIP,
+        Impett et Offert, 2024 ; ex. « sacré » vs « profane », « nu » vs « dénudé »).
+        Renvoie leur corrélation, les œuvres les plus proches de chaque pôle et celles qui
+        s'écartent le plus de la diagonale : éclaire à la fois le corpus et les biais du modèle."""
+        try:
+            return engines.concept_axes(x, y, k=min(max(k, 1), 30), include_coords=False)
+        except SearchUnavailable as exc:
+            return {"error": str(exc)}
+
+    @server.tool()
+    def measure_artwork(artwork_id: int) -> dict:
+        """Mesures visuelles explicites sans modèle de neurones (D. G. Stork, Pixels & Paintings, 2024) :
+        équilibre visuel (barycentre de luminance/saturation, dispersion locale), symétrie gauche-droite,
+        dynamique tonale, entropie chromatique et première coupe compositionnelle (ex. ligne d'horizon).
+        Sans jugement normatif ; porte sur la reproduction numérique."""
+        aid = check(artwork_id)
+        path = thumb_path(data.settings.thumbs_dir, aid, 256)
+        if not path.exists():
+            path = data.original_path(aid)
+        if path is None or not path.exists():
+            return {"error": f"Image introuvable pour l'œuvre {aid}"}
+        return {"id": aid, "label": data.label(aid), **connoisseur.measure_path(path)}
 
     # ------------------------------------------------------------------ export
     @server.tool()

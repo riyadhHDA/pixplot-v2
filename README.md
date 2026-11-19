@@ -1,79 +1,75 @@
 <p align="center">
-  <img src="docs/images/banner.png" alt="PixPlot v2 — a map of 80,716 artworks from WikiArt, grouped by visual similarity" width="100%">
+  <img src="docs/images/banner.png" alt="PixPlot v2 — map of 80,716 WikiArt artworks, grouped by visual similarity" width="100%">
 </p>
 
 <p align="center">
-  <b>English</b> · <a href="https://riyadhhda.github.io/pixplot-v2/"><b>Website</b></a> · <a href="README.fr.md">Français</a>
+  <b>English</b> · <a href="README.fr.md">Français</a> · <a href="https://riyadhhda.github.io/pixplot-v2/"><b>Project website</b></a>
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-e0b040"></a>
+  <a href="LICENSE"><img alt="Licence: GPL-3.0" src="https://img.shields.io/badge/licence-GPL--3.0-e0b040"></a>
   <a href="https://github.com/riyadhHDA/pixplot-v2/releases"><img alt="Version" src="https://img.shields.io/github/v/release/riyadhHDA/pixplot-v2?label=version&color=e0b040"></a>
   <a href="https://doi.org/10.5281/zenodo.24363789"><img alt="DOI" src="https://zenodo.org/badge/DOI/10.5281/zenodo.24363789.svg"></a>
   <a href="https://github.com/riyadhHDA/pixplot-v2/actions/workflows/tests.yml"><img alt="Tests" src="https://github.com/riyadhHDA/pixplot-v2/actions/workflows/tests.yml/badge.svg"></a>
   <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776ab">
-  <img alt="Runs locally" src="https://img.shields.io/badge/runs-100%25%20local-2c2c31">
+  <img alt="100% local" src="https://img.shields.io/badge/100%25-local-2c2c31">
   <img alt="GPU: AMD ROCm or CPU" src="https://img.shields.io/badge/GPU-AMD%20ROCm%20%7C%20CPU-9b978e">
-  <img alt="MCP server" src="https://img.shields.io/badge/MCP-16%20tools-e0b040">
+  <img alt="MCP server" src="https://img.shields.io/badge/MCP-18%20tools-e0b040">
 </p>
 
 # PixPlot v2
 
-**A visual exploration lab for art history.** PixPlot v2 maps tens or hundreds of thousands
-of artworks by resemblance, finds formal kinships and recurring details, and hands its
-findings to a language model (through MCP or exportable *Research Packs*) without ever
-losing track of where each result comes from.
+PixPlot v2 is a local tool for exploring large art-history image collections by visual similarity. It rewrites the
+idea behind the Yale DHLab's [PixPlot](https://github.com/YaleDHLab/pix-plot) (2018) from scratch around current
+vision models (DINOv3, SigLIP 2) so the whole workflow runs on a single desktop PC.
 
-> **Roles.** PixPlot computes, observes and organises. The language model asks questions
-> and makes suggestions. The art historian checks, interprets and builds knowledge.
+Because the models only see pixels, a high similarity score never proves influence or attribution. The tool keeps
+roles separate: PixPlot computes and indexes, an MCP assistant can help search and compare, and verification stays
+with the historian.
 
-It is a ground-up rewrite inspired by Yale DHLab's [PixPlot](https://github.com/YaleDHLab/pix-plot)
-(2018), built on current vision models and designed to run on a single consumer PC.
+## Full WikiArt on one PC
 
-## The full WikiArt corpus, on one PC
+![The Atlas: 80,716 works, a Claude Monet record and its nearest neighbours](docs/images/atlas-artwork.jpg)
 
-![The Atlas: 80,716 artworks, a Claude Monet record and its nearest neighbours](docs/images/atlas-artwork.jpg)
-
-**80,716 artworks** from WikiArt (81,444 images, 33.7 GB) processed end to end in
-**about 1 h 21** on an AMD Radeon RX 7900 GRE under Windows 11 with 16 GB of RAM: ingestion,
-DINOv3 and SigLIP 2 embeddings, indexes for 1.58 million image regions, clustering, map,
-blind audit and benchmark. In the Atlas, every thumbnail is on screen at once, the map loads
-in about 3 seconds and a text or detail search answers in 0.25 s.
+All of WikiArt (**80,716 artworks**, 81,444 images, 33.7 GB) runs end to end in **≈ 1 h 21** on a Windows 11 PC
+with an AMD Radeon RX 7900 GRE and 16 GB of RAM: ingestion, DINOv3 and SigLIP 2 embeddings, an index of
+1.58 million image regions, clustering, map layout, blind audit and benchmark. The Atlas opens in roughly 3 seconds
+with all thumbnails rendered, and a text or detail query returns in 0.25 s.
 
 <details>
-<summary>The map as a whole: 142 groups, coloured</summary>
+<summary>The full map: 142 coloured groups</summary>
 
 ![Overview of the 80,716 artworks coloured by group](docs/images/atlas-overview.jpg)
 </details>
 
-## What it does
+## Main features
 
 | | |
 |---|---|
-| **Four ways of seeing** | Neighbours by **form** (DINOv3: shapes, composition), **subject** (SigLIP 2: what you would describe in words), **colour** (CIELAB palette) and **touch** (brushwork and line, from DINOv3's middle layers). Comparing them says *why* two works look alike. |
-| **Search** | By metadata, by **free-text description** in French or English (SigLIP 2), or by **detail**: draw a box around a hand, a drapery or an object and find similar regions across the corpus. |
-| **Groups that name themselves** | Spherical e-means clusters, named from an art-history vocabulary, e.g. « Scènes religieuses · icône » (Fra Angelico), « Batailles · gravure » (Doré). These are suggestions, to be checked. |
-| **Atlas** | Interactive deck.gl map with every thumbnail visible, artwork records with sourced metadata, **comparator** (up to six works side by side, similarity in each space), **research notebook**, **one map per way of seeing**, **timeline** and **geography** (offline world base map) layouts when dates or coordinates exist. Welcome screen, help and keyboard shortcuts; adapts to laptop screens. |
-| **A critical eye on the catalogue** | A blind audit (models see only pixels) and a list of **labels to check**: works whose neighbours all disagree with their label, either a cataloguing error or a genuinely singular work. |
-| **Museum collections** | `pixplot import-iiif` loads any IIIF v2/v3 manifest or collection (images at the requested size, normalised metadata, rights). |
-| **Working with Claude** | An MCP server with 16 tools: Claude searches, **looks at the images and details**, compares, reads the groups and writes to your notebook, following prudent-interpretation guidelines. |
-| **Traceability** | Every result is a versioned *run* (model, parameters, parent run). Research Packs (.zip) bundle images, sourced metadata, explicit relations and provenance for a colleague or another LLM. |
+| **Four separate spaces** | **Form** (DINOv3: silhouettes, layout), **subject** (SigLIP 2: theme, genre, school), **colour** (CIELAB palette) and **touch** (brushwork and grain from DINOv3 layer 6). Comparing spaces helps see why two works match or diverge. |
+| **Search** | By metadata, by **free text** in French or English (SigLIP 2), by **described zone** ("a halo", "a skull" across 1.6M regions) or by **detail** by drawing a box directly on a painting. |
+| **Groups** | Spherical clustering (e-means) and nested Leiden communities, with tentative names proposed from an art-history vocabulary. |
+| **Web Atlas** | Interactive offline deck.gl map, records with sourced metadata and neural-free **visual measures** (balance, symmetry, chromatic entropy, after Stork), a **comparator** (up to six works with a "Pourquoi ?" zone matcher), a **research notebook**, one map per space, **2D conceptual axes** on two words (after *2D CLIP*), plus **timeline** and **geographic** views (typed/dated places, offline world map). |
+| **Catalogue audit** | Blind audit (pixels only) and a **To check** list of works whose label is contradicted by all their neighbours (either a cataloguing error or an unusual work). |
+| **IIIF museum imports** | `pixplot import-iiif` ingests IIIF v2/v3 manifests and collections with normalised metadata and rights fields. |
+| **MCP server (18 tools)** | Connects Claude or any compatible assistant to search, inspect images and crops, compare works, run visual measures, probe conceptual axes and add notes to the notebook. |
+| **Traceability** | Every computation is saved in a dated *run* (`manifest.json` with model, parameters and parent run). Exporting a *Research Pack* (.zip) bundles images, sourced metadata and scores. |
 
-## What the experiments showed
+## Some measurements on WikiArt
 
-Measured on the 80,716 WikiArt works ([ARCHITECTURE.md § 11–12](ARCHITECTURE.md#11-scaling-up-the-full-wikiart-corpus-16112026)),
-share of the 10 nearest neighbours that share a work's label:
+Across all 80,716 works ([ARCHITECTURE.md § 11–12](ARCHITECTURE.md#11-scaling-up-the-full-wikiart-corpus-16112026)),
+share of the 10 nearest neighbours carrying the same label as the query work:
 
 | Space | artist | style | genre | Pointillism | Fauvism |
 |---|---|---|---|---|---|
-| form (DINOv3) | 50.8 % | 52.4 % | 76.8 % | 21 % | 20 % |
-| subject (SigLIP 2) | **61.6 %** | **62.0 %** | **79.5 %** | 44 % | 26 % |
-| touch | 53.0 % | 49.6 % | 62.8 % | **62 %** | **30 %** |
+| form (DINOv3) | 50.8% | 52.4% | 76.8% | 21% | 20% |
+| subject (SigLIP 2) | **61.6%** | **62.0%** | **79.5%** | 44% | 26% |
+| touch | 53.0% | 49.6% | 62.8% | **62%** | **30%** |
 
-- **Subject outweighs manner** for a purely visual model; the text–image space retrieves art-history categories best.
-- **Touch** recovers styles defined by brushwork (Pointillism: 21 % → 62 %) and recognises the artist's hand better than form.
-- **The labels themselves are sometimes wrong**: the audit surfaces real cataloguing errors (religious scenes filed as genre paintings).
-- **HDBSCAN does not scale** on such a dense continuum; the atypicality score is the reliable signal for isolated works.
+- For a purely visual model, subject tends to dominate manner; SigLIP 2 recovers standard art-history categories best.
+- **Touch** catches styles defined by brushwork (Pointillism jumps from 21% to 62%) and recognises the artist's hand better than global form.
+- WikiArt labels are noisy: the audit surfaces real cataloguing errors (such as religious scenes filed under genre painting).
+- HDBSCAN breaks down on such a dense continuum; the atypicality score is a much more reliable signal for outliers.
 
 ## Quick start
 
@@ -84,41 +80,41 @@ pip install -e ".[dev,ml]"             # install PyTorch first (AMD ROCm wheels)
 pytest
 
 pixplot ingest "D:/MyImages"           # catalogue, thumbnails, duplicates
-pixplot import-metadata meta.csv       # artist, date, style… (needs a "path" column)
-pixplot embed                          # DINOv3 embeddings (GPU), resumable
-pixplot analyze                        # groups, UMAP map, neighbours
-pixplot serve --open                   # the Atlas on http://127.0.0.1:8765
+pixplot import-metadata meta.csv       # artist, date, style… ("path" column required)
+pixplot embed                          # DINOv3 vectors (GPU), resumable
+pixplot analyze                        # groups, UMAP map, neighbourhoods
+pixplot serve --open                   # opens the Atlas at http://127.0.0.1:8765
 ```
 
-Or the whole pipeline in one go, with a timed log: `bash scripts/full_pipeline.sh data/my_corpus "My source"`.
+To run the whole pipeline at once with a timed log: `bash scripts/full_pipeline.sh data/my_corpus "My source"`.
 
 <details>
 <summary>All commands</summary>
 
 ```bash
 pixplot doctor                          # Python, PyTorch, GPU
-pixplot import-iiif URL --out D:/Museum # museum collection (IIIF manifest or collection, v2/v3)
+pixplot import-iiif URL --out D:/Museum # museum collection (IIIF v2/v3 manifest or collection)
 pixplot embed --encoder siglip2_so400m  # text↔image space ("subject")
 pixplot embed --encoder dinov3_vitb16_texture   # "touch" space
-pixplot embed --encoder color_lab       # "colour" space (no GPU needed)
-pixplot embed --encoder colorhist       # whole pipeline without a GPU, for testing
+pixplot embed --encoder color_lab       # "colour" space (no GPU)
+pixplot embed --encoder colorhist       # whole pipeline without GPU, for testing
 pixplot index [--encoder NAME]          # FAISS index of the latest run
 pixplot index --regions                 # region index → "Search a detail" in the Atlas
-pixplot maps                            # one UMAP map per way of seeing (subject, colour, touch)
-pixplot communities                     # nested Leiden groups (families ⊃ groups) for each way of seeing
-pixplot disagreements                   # pairs one way of seeing brings together and another pulls apart
+pixplot maps                            # one UMAP map per space (subject, colour, touch)
+pixplot communities                     # nested Leiden communities (families ⊃ groups) per space
+pixplot disagreements                   # pairs close in one space and far in another
 pixplot zonebench                       # searching a region with words: RichArt benchmark
 pixplot zones                           # region index (20 per work, SigLIP 2): "a halo", "a skull"
-pixplot corpus                          # critical report: what the corpus lacks, what each way of seeing sees
-pixplot places --derive                 # typed, dated places inferred from metadata (museum, birth…)
-pixplot import-places places.csv        # typed, dated places from a file (creation, exhibition, holding…)
-pixplot name-groups                     # name the groups (SigLIP 2 + art-history vocabulary)
+pixplot corpus                          # corpus report: missing metadata, model bias cards
+pixplot places --derive                 # typed and dated places derived from metadata
+pixplot import-places places.csv        # typed and dated places from CSV
+pixplot name-groups                     # name groups (SigLIP 2 + art-history vocabulary)
 pixplot suspects                        # labels contradicted by all neighbours
 pixplot search-text "Annunciation in a garden"
-pixplot similar 42 --html sheet.html    # nearest works as an HTML contact sheet
-pixplot audit                           # blind audit against the labels
+pixplot similar 42 --html sheet.html    # nearest neighbours as an HTML sheet
+pixplot audit                           # blind audit against labels
 pixplot bench                           # compare runs (labels, known pairs)
-pixplot pairs generate | bench          # pair benchmark: which way of seeing finds which resemblance
+pixplot pairs generate | bench          # pair benchmark: which space finds which kind of kinship
 pixplot pack --text "Annunciation" -k 20 --question "…"   # Research Pack (.zip)
 pixplot mcp                             # MCP server: see docs/MCP.md
 pixplot status
@@ -127,44 +123,44 @@ pixplot status
 
 ## Documentation
 
-- [**The art historian's guide**](https://riyadhhda.github.io/pixplot-v2/guide/): reading a proximity, three research paths (filiation, label, motif), working with an assistant, citing ([Français](https://riyadhhda.github.io/pixplot-v2/fr/guide/))
-- [ARCHITECTURE.md](ARCHITECTURE.md): design, layers, roadmap, benchmarks and the findings above ([français](ARCHITECTURE.fr.md))
-- [docs/INSTALL_GPU.md](docs/INSTALL_GPU.md): GPU setup on Windows 11 (AMD ROCm), WSL2 fallback, models ([français](docs/INSTALL_GPU.fr.md))
-- [docs/MCP.md](docs/MCP.md): connecting Claude or another LLM ([français](docs/MCP.fr.md))
-- [ROADMAP.md](ROADMAP.md): what comes next, in order, and what makes each step a success ([français](ROADMAP.fr.md))
-- [CHANGELOG.md](CHANGELOG.md): version history. "v2" is the project's name; software versions run from 0.1 to 0.10 and follow semantic versioning ([français](CHANGELOG.fr.md))
+- [**Practical guide**](https://riyadhhda.github.io/pixplot-v2/guide/): reading scores, three workflows (filiation, label, motif), working with an assistant, citing ([Français](https://riyadhhda.github.io/pixplot-v2/fr/guide/))
+- [ARCHITECTURE.md](ARCHITECTURE.md): design, benchmarks and detailed measurements ([Français](ARCHITECTURE.fr.md))
+- [docs/INSTALL_GPU.md](docs/INSTALL_GPU.md): GPU setup on Windows 11 (AMD ROCm), WSL2 fallback, model weights ([Français](docs/INSTALL_GPU.fr.md))
+- [docs/MCP.md](docs/MCP.md): connecting Claude or another assistant ([Français](docs/MCP.fr.md))
+- [ROADMAP.md](ROADMAP.md): planned work, success criteria and dropped experiments ([Français](ROADMAP.fr.md))
+- [CHANGELOG.md](CHANGELOG.md): release history ([Français](CHANGELOG.fr.md))
 
-The code comments and the interface are in French; the documentation is in both languages.
+Code comments and the Atlas UI are in French; documentation is maintained in both French and English.
 
-## Principles
+## Design choices
 
-**Local first:** no image leaves your computer, no telemetry. **Whole images:** never cropped
-before analysis (letterboxing preserves the composition). **Traceable and reproducible:**
-every result records its model, version and parameters. **Uncertainty is explicit:** a
-similarity score is a lead, not proof of influence or attribution.
+- **Local first:** no image leaves the computer and there is no telemetry.
+- **Whole images:** no centre-cropping before encoding (letterboxing preserves aspect ratio and composition).
+- **Traceable runs:** every output stores its model, version and parameters.
+- **Benchmark before keeping:** models that fail to beat the baseline (TIPSv2, PE-Spatial) are documented and dropped.
 
 ## Author
 
 **Riyadh HADJBA**, art history student at the [University of Strasbourg](https://www.unistra.fr).
-PixPlot v2 was designed and directed by Riyadh HADJBA and written with the help of Claude (Anthropic).
+Conceived and directed by Riyadh HADJBA, built with the help of coding assistants (Claude and Gemini).
 
 ## Citing PixPlot v2
 
 > Riyadh HADJBA, *PixPlot v2 : un laboratoire d'exploration visuelle pour l'histoire de l'art*,
 > software, Université de Strasbourg, 2026. DOI: [10.5281/zenodo.24363789](https://doi.org/10.5281/zenodo.24363789).
 
-This DOI covers all versions; each release also has its own, on [Zenodo](https://doi.org/10.5281/zenodo.24363789).
-GitHub's "Cite this repository" button gives the reference in APA and BibTeX
-([`CITATION.cff`](CITATION.cff)).
+This DOI covers all versions; each release also gets its own DOI on
+[Zenodo](https://doi.org/10.5281/zenodo.24363789). APA and BibTeX formats are available from GitHub's "Cite this
+repository" button ([`CITATION.cff`](CITATION.cff)).
 
 ## Licence and credits
 
-PixPlot v2 is released under the **GPL-3.0** licence (see [LICENSE](LICENSE)).
+Released under the **GPL-3.0** licence ([LICENSE](LICENSE)).
 
-- Inspired by [PixPlot](https://github.com/YaleDHLab/pix-plot) (Yale DHLab, MIT); rewritten from scratch, the original code is not included.
-- Models: [DINOv3](https://github.com/facebookresearch/dinov3) (Meta, DINOv3 licence, weights on request and never redistributed here), [SigLIP 2](https://huggingface.co/google/siglip2-so400m-patch16-384) (Google, Apache 2.0).
-- Libraries: FAISS and e-means (Meta, MIT), UMAP, scikit-learn, deck.gl, FastAPI, the MCP Python SDK. World base map: [world-atlas](https://github.com/topojson/world-atlas) (ISC), from [Natural Earth](https://www.naturalearthdata.com) (public domain).
-- Group-naming vocabulary extended from the glossary of H. Honour and J. Fleming, *The Visual Arts: A History* (revised 7th ed., 2023): only the terms are used.
-- Readings that shape the project: A. Wasielewski, *Computational Formalism* (MIT Press, 2023); B. Joyeux-Prunel, "ARTL@S" (*Artl@s Bulletin*, 2012); T. Arnold and L. Tilton, *Distant Viewing* (MIT Press, 2023); H. Honour and J. Fleming, *The Visual Arts: A History* (2023).
-- Region benchmark: [RichArt](https://huggingface.co/datasets/MihaiBogdanBindila/RichArt) (ICMR 2026, CC BY-NC 4.0, local use, never redistributed); [TIPSv2](https://huggingface.co/google/tipsv2-b14) (Google DeepMind, Apache 2.0), evaluated and not adopted.
-- Test corpora: [WikiArt via huggan/wikiart](https://huggingface.co/datasets/huggan/wikiart) and the [Yale Center for British Art](https://britishart.yale.edu/) (public domain, IIIF). No corpus images are stored in this repository; the screenshots show the Atlas interface.
+- Inspired by [PixPlot](https://github.com/YaleDHLab/pix-plot) (Yale DHLab, MIT), rewritten from scratch with no code reused.
+- Models: [DINOv3](https://github.com/facebookresearch/dinov3) (Meta, DINOv3 licence, weights never redistributed here), [SigLIP 2](https://huggingface.co/google/siglip2-so400m-patch16-384) (Google, Apache 2.0).
+- Libraries: FAISS and e-means (Meta, MIT), UMAP, scikit-learn, deck.gl, FastAPI, MCP Python SDK. World base map: [world-atlas](https://github.com/topojson/world-atlas) (ISC), from [Natural Earth](https://www.naturalearthdata.com) (public domain).
+- Group-naming vocabulary extended from the glossary of H. Honour and J. Fleming, *The Visual Arts: A History* (revised 7th ed., 2023) — only the terms are used.
+- Readings that shaped the design: A. Wasielewski, *Computational Formalism* (MIT Press, 2023); B. Joyeux-Prunel, "ARTL@S" (*Artl@s Bulletin*, 2012); T. Arnold and L. Tilton, *Distant Viewing* (MIT Press, 2023); H. Honour and J. Fleming, *The Visual Arts: A History* (2023); L. Impett and F. Offert, "There Is a Digital Art History" (*Visual Resources*, 2024); D. G. Stork, *Pixels & Paintings: Foundations of Computer-assisted Connoisseurship* (Wiley, 2024); J.-L. Giavitto and P. Saint-Germier (eds.), *L'art au temps de l'IA* (Centre Pompidou, 2025).
+- Region benchmark: [RichArt](https://huggingface.co/datasets/MihaiBogdanBindila/RichArt) (ICMR 2026, CC BY-NC 4.0, local use only); [TIPSv2](https://huggingface.co/google/tipsv2-b14) (Google DeepMind, Apache 2.0), tested and dropped.
+- Test corpora: [WikiArt via huggan/wikiart](https://huggingface.co/datasets/huggan/wikiart) and the [Yale Center for British Art](https://britishart.yale.edu/) (public domain, IIIF). No corpus images are stored in this repository.

@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>PixPlot v2 — a visual exploration lab for art history</title>
-<meta name="description" content="PixPlot v2 maps tens of thousands of artworks by visual resemblance, finds formal kinships and recurring details, and hands its findings to a language model — locally, on a single PC.">
+<title>PixPlot v2 — exploring large art collections by visual similarity</title>
+<meta name="description" content="Open-source local tool to map tens of thousands of artworks by visual similarity, search by text or detail, and compare several vision models on a single PC.">
 <meta property="og:title" content="PixPlot v2">
-<meta property="og:description" content="A visual exploration lab for art history: 80,716 WikiArt works mapped on a single PC.">
+<meta property="og:description" content="Mapping and comparing 80,716 WikiArt artworks on a single PC with DINOv3, SigLIP 2 and an MCP server.">
 <meta property="og:image" content="https://riyadhhda.github.io/pixplot-v2/images/banner.png">
 <meta name="theme-color" content="#0f0f10">
 <link rel="canonical" href="https://riyadhhda.github.io/pixplot-v2/">
@@ -37,16 +37,16 @@
 
 <main id="top">
   <div class="hero wrap">
-    <p class="eyebrow">Open-source · 100% local · GPL-3.0</p>
-    <h1>A visual exploration lab for <em>art history</em></h1>
-    <p class="lead">PixPlot v2 maps tens or hundreds of thousands of artworks by resemblance, finds formal
-      kinships and recurring details, and hands its findings to a language model — without ever losing
-      track of where each result comes from.</p>
+    <p class="eyebrow">Open-source · local · GPL-3.0</p>
+    <h1>Exploring large <em>art history</em> collections on one PC</h1>
+    <p class="lead">PixPlot v2 rewrites the idea behind Yale's PixPlot with current vision models. It arranges tens
+      of thousands of artworks on an interactive map, searches for shared compositions or recurring details, and
+      keeps track of which model and metadata source produced every result.</p>
     <div class="cta">
       <a class="btn primary" href="https://github.com/riyadhHDA/pixplot-v2">View on GitHub</a>
-      <a class="btn" href="#start">Get started</a>
+      <a class="btn" href="#start">Install</a>
     </div>
-    <p class="version">Latest version: <a href="https://github.com/riyadhHDA/pixplot-v2/releases" data-version>v0.16.3</a>
+    <p class="version">Current release: <a href="https://github.com/riyadhHDA/pixplot-v2/releases" data-version>v0.16.3</a>
       · <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/CHANGELOG.md">changelog</a></p>
     <div class="banner"><img src="images/banner.png" width="1280" height="640"
       alt="PixPlot v2 — a map of 80,716 WikiArt works, grouped by visual resemblance"></div>
@@ -54,13 +54,13 @@
 
   <section>
     <div class="wrap">
-      <h2>Who does what</h2>
-      <p class="section-lead">A computed resemblance is a lead, not proof of influence or attribution.
-        PixPlot keeps the roles apart.</p>
+      <h2>Division of work</h2>
+      <p class="section-lead">A vision model groups images from their pixels. It knows nothing about patronage,
+        workshops or actual influence, so the workflow keeps each role separate.</p>
       <div class="roles">
-        <div class="role"><span class="who">PixPlot</span><p>computes, observes and organises.</p></div>
-        <div class="role"><span class="who">The language model</span><p>questions and suggests.</p></div>
-        <div class="role"><span class="who">The art historian</span><p>checks, interprets and builds knowledge.</p></div>
+        <div class="role"><span class="who">PixPlot</span><p>Computes neighbourhoods, indexes image regions and builds the maps.</p></div>
+        <div class="role"><span class="who">Assistant (MCP)</span><p>Queries the corpus, assembles comparison plates and suggests leads.</p></div>
+        <div class="role"><span class="who">Art historian</span><p>Looks at the works, checks the sources and decides what holds up.</p></div>
       </div>
     </div>
   </section>
@@ -70,15 +70,15 @@
       <div class="shot"><img src="images/atlas-artwork.jpg" loading="lazy" width="1600" height="900"
         alt="The Atlas: 80,716 works, a Claude Monet record and its nearest neighbours"></div>
       <div>
-        <h2>All of WikiArt, on one PC</h2>
-        <p class="section-lead" style="margin-bottom:0">Ingestion, DINOv3 and SigLIP 2 vectors, an index of 1.58 million
-          image regions, groups, map, blind audit and benchmark — end to end, on an AMD Radeon RX 7900 GRE
-          under Windows 11 with 16 GB of RAM.</p>
+        <h2>All of WikiArt on a single machine</h2>
+        <p class="section-lead" style="margin-bottom:0">The full dataset (80,716 works, 33.7 GB) was processed end to
+          end on a Windows 11 desktop with an AMD Radeon RX 7900 GRE and 16 GB of RAM: ingestion, DINOv3 and SigLIP 2
+          vectors, an index of 1.58 million regions, clustering, maps and a blind audit.</p>
         <div class="stats">
           <div class="stat"><b>80,716</b><span>works (33.7 GB of images)</span></div>
           <div class="stat"><b>≈ 1 h 21</b><span>for the whole pipeline</span></div>
-          <div class="stat"><b>≈ 3 s</b><span>to load the map, every thumbnail on screen</span></div>
-          <div class="stat"><b>0.25 s</b><span>per text or detail search</span></div>
+          <div class="stat"><b>≈ 3 s</b><span>to open the map in the browser</span></div>
+          <div class="stat"><b>0.25 s</b><span>for a text or detail query</span></div>
         </div>
       </div>
     </div>
@@ -86,53 +86,56 @@
 
   <section id="seeing">
     <div class="wrap">
-      <h2>Four ways of seeing</h2>
-      <p class="section-lead">Each way of seeing answers a different question. Comparing them tells you
-        <em>why</em> two works look alike — and their disagreements are information in themselves.</p>
+      <h2>Four ways of comparing</h2>
+      <p class="section-lead">Instead of merging everything into a single score, PixPlot keeps four separate spaces.
+        When two paintings sit close together in one space and far apart in another, that gap is often more revealing
+        than the score itself.</p>
       <div class="grid4">
         <div class="card"><span class="tag">DINOv3</span><h3>Form</h3>
-          <p>Shapes, composition, motifs.</p><p class="q">What is the layout?</p></div>
+          <p>Silhouettes, framing, layout and visual motifs.</p><p class="q">Same composition?</p></div>
         <div class="card"><span class="tag">SigLIP 2</span><h3>Subject</h3>
-          <p>What one would describe in words: subject, genre, school.</p><p class="q">What is depicted?</p></div>
+          <p>What can be put into words: theme, genre, school, iconography.</p><p class="q">Same subject?</p></div>
         <div class="card"><span class="tag">CIELAB</span><h3>Colour</h3>
-          <p>Proportions of hues, lightness and saturation.</p><p class="q">What palette?</p></div>
-        <div class="card"><span class="tag">DINOv3, middle layers</span><h3>Touch</h3>
-          <p>Handling and stroke, regardless of the subject.</p><p class="q">What brushwork?</p></div>
+          <p>Proportions of hues, lightness and saturation.</p><p class="q">Same palette?</p></div>
+        <div class="card"><span class="tag">DINOv3, layer 6</span><h3>Touch</h3>
+          <p>Grain, hatching and brushwork, regardless of the subject.</p><p class="q">Same handling?</p></div>
       </div>
     </div>
   </section>
 
   <section id="features" class="alt">
     <div class="wrap">
-      <h2>What it does</h2>
-      <p class="section-lead">An interactive Atlas, built for research rather than for show.</p>
+      <h2>What the Atlas does</h2>
+      <p class="section-lead">A local web interface in plain JavaScript (deck.gl) that works offline.</p>
       <div class="grid3">
-        <div class="card"><h3>Search three ways</h3><p>By metadata, by free description in French or English,
-          or by detail: draw a box around a hand, a drapery, an object, and find similar regions across the corpus.</p></div>
-        <div class="card"><h3>Groups that name themselves</h3><p>Groups named from an art-historical vocabulary —
-          “Religious scenes · tempera on panel” (Fra Angelico). Proposals, to be checked.</p></div>
-        <div class="card"><h3>One map per way of seeing</h3><p>Plus timeline and geographic layouts (offline world
-          base map), a comparator for up to six works, and a research notebook.</p></div>
-        <div class="card"><h3>A critical eye on the catalogue</h3><p>A blind audit and a list of labels to check:
-          works that all their neighbours contradict — a cataloguing error, or a truly singular work.</p></div>
-        <div class="card"><h3>Museum collections</h3><p>Any IIIF v2/v3 manifest or collection, with normalised
-          metadata and rights. Validated on the Yale Center for British Art.</p></div>
-        <div class="card"><h3>With Claude</h3><p>An MCP server with 16 tools: Claude searches, looks at images and
-          details, compares, and writes in your notebook — under cautious-interpretation rules.</p></div>
+        <div class="card"><h3>Search by text, region or detail</h3><p>Filter by metadata, search with free text in
+          French or English, look up described details ("a halo", "a skull") or draw a box directly on a painting.</p></div>
+        <div class="card"><h3>Compare and inspect why</h3><p>Put up to six works side by side with scores across all
+          spaces, highlight matching zones with the "Pourquoi ?" button, and inspect neural-free visual measures
+          (balance, symmetry, chromatic entropy).</p></div>
+        <div class="card"><h3>Maps, dates, places and concepts</h3><p>One map per space, a timeline, a geographic view
+          with typed places (after ARTL@S) and 2D conceptual axes from any two words (after 2D CLIP).</p></div>
+        <div class="card"><h3>Flag doubtful labels</h3><p>Works contradicted by all their neighbours are collected in
+          a separate list. Some turn out to be cataloguing mistakes, others genuinely unusual paintings.</p></div>
+        <div class="card"><h3>Import museum collections (IIIF)</h3><p>Reads IIIF v2/v3 manifests and collections with
+          normalised metadata and rights. Tested on the Yale Center for British Art.</p></div>
+        <div class="card"><h3>MCP server (18 tools)</h3><p>Connects Claude or another MCP-compatible assistant so it
+          can search, view images and crops, run visual measures and save notes in the shared notebook.</p></div>
       </div>
-      <p class="fine" style="margin-top:22px">Every result is a versioned run (model, parameters, parent run).
-        Research Packs (.zip) bundle images, sourced metadata, explicit relations and provenance for a colleague or another LLM.</p>
+      <p class="fine" style="margin-top:22px">Every computation is saved in a dated run folder with its model and
+        parameters. Exporting creates a <i>Research Pack</i> (.zip) with the images, sourced metadata and scores so a
+        search can be archived or shared.</p>
     </div>
   </section>
 
   <section id="findings">
     <div class="wrap">
-      <h2>What the experiments showed</h2>
-      <p class="section-lead">Measured on the 80,716 WikiArt works: share of the 10 nearest neighbours that share
-        the work's label.</p>
+      <h2>Some measurements on WikiArt</h2>
+      <p class="section-lead">Across 80,716 works, share of the 10 nearest neighbours that carry the same label as
+        the query work.</p>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Way of seeing</th><th>artist</th><th>style</th><th>genre</th><th>Pointillism</th><th>Fauvism</th></tr></thead>
+          <thead><tr><th>Space</th><th>artist</th><th>style</th><th>genre</th><th>Pointillism</th><th>Fauvism</th></tr></thead>
           <tbody>
             <tr><td>Form (DINOv3)</td><td class="num">50.8%</td><td class="num">52.4%</td><td class="num">76.8%</td><td class="num">21%</td><td class="num">20%</td></tr>
             <tr><td>Subject (SigLIP 2)</td><td class="num best">61.6%</td><td class="num best">62.0%</td><td class="num best">79.5%</td><td class="num">44%</td><td class="num">26%</td></tr>
@@ -141,15 +144,15 @@
         </table>
       </div>
       <div class="findings">
-        <div class="finding"><p><b>Subject beats manner</b> for a purely visual model: the text-image space best
-          recovers art-historical categories — partly because it has learnt their names from the web.</p></div>
-        <div class="finding"><p><b>Touch recovers styles defined by handling</b> (Pointillism: 21% → 62%) and
-          recognises the artist's hand better than form.</p></div>
-        <div class="finding"><p><b>Copies are found at rank 1</b> among 80,716 works (Raphael after Perugino, Van Gogh
-          after Millet, Manet after Goya) — but as soon as the artist transforms the model (Picasso after El Greco),
-          no way of seeing follows.</p></div>
-        <div class="finding"><p><b>The labels themselves are sometimes wrong</b>: the audit surfaces real cataloguing
-          errors. And HDBSCAN does not scale on such a dense continuum.</p></div>
+        <div class="finding"><p><b>SigLIP 2 recovers standard categories best</b> (artist, style, genre), largely
+          because it has learnt art-historical vocabulary from web captions.</p></div>
+        <div class="finding"><p><b>DINOv3's middle layer catches brushwork styles</b>: Pointillism jumps from 21% to
+          62%, and the artist's hand comes through better than with the global vector.</p></div>
+        <div class="finding"><p><b>Close copies show up at rank 1</b> (Raphael after Perugino, Van Gogh after Millet,
+          Manet after Goya), but once an artist heavily transforms a model (Picasso after El Greco), none of the
+          current spaces follows.</p></div>
+        <div class="finding"><p><b>WikiArt labels are noisy</b>: the blind audit turns up genuine cataloguing errors
+          (religious scenes tagged as genre paintings). HDBSCAN also fails to scale on such a dense continuum.</p></div>
       </div>
     </div>
   </section>
@@ -157,9 +160,9 @@
   <section class="alt">
     <div class="wrap split">
       <div>
-        <h2>The whole map</h2>
-        <p class="section-lead" style="margin-bottom:0">142 groups, in colour. Zoom in and every thumbnail is a real
-          image you can open, compare and annotate.</p>
+        <h2>All 80,716 works in one view</h2>
+        <p class="section-lead" style="margin-bottom:0">The full map shows 142 coloured groups. Zooming in streams
+          higher-resolution thumbnails on the fly, and clicking any painting opens its record.</p>
       </div>
       <div class="shot"><img src="images/atlas-overview.jpg" loading="lazy" width="1600" height="900"
         alt="Overview of the 80,716 works coloured by group"></div>
@@ -168,42 +171,47 @@
 
   <section id="roadmap">
     <div class="wrap">
-      <h2>Roadmap</h2>
-      <p class="rule"><b>The rule: measure before adding.</b> A new model only enters the project if it wins on a
-        benchmark and brings a signal the existing ways of seeing lack.</p>
+      <h2>Progress</h2>
+      <p class="rule"><b>Working rule: test before keeping.</b> A new model only stays if it beats what is already
+        there on a benchmark; failed attempts (TIPSv2, PE-Spatial, HDBSCAN) are documented and dropped.</p>
       <ol class="road">
-        <li class="done"><span class="v">0.1–0.11</span><div><h3>Done</h3><p>Ingestion, four ways of seeing, Atlas,
-          detail and text search, MCP server, IIIF, one map per way of seeing, pair benchmark, nested Leiden groups.</p></div></li>
-        <li><span class="v">0.12</span><div><h3>Disagreements, and pair review <small style="color:var(--muted);font-family:var(--font);font-size:13px">· tools done, review in progress</small></h3><p>Works that one way of seeing brings together and another pulls apart; a panel to validate reference pairs.</p>
-          <p class="ok">Success if: about 100 validated pairs covering every kind of resemblance.</p></div></li>
-        <li><span class="v">0.13</span><div><h3>Searching a region with words</h3><p>“halo”, “blessing hand”, “skull” — a sentence matched against image regions.
-          TIPSv2 measured on RichArt and not adopted: SigLIP 2 on cropped regions does better.</p>
-          <p class="ok">Done with a SigLIP 2 region index: 1.6 million regions, searchable in the Atlas.</p></div></li>
-        <li><span class="v">0.14</span><div><h3>Naming groups with Iconclass</h3><p>The museums' reference iconographic classification, with its notation as a verifiable source.</p></div></li>
-        <li><span class="v">0.15</span><div><h3>Composition</h3><p>STELLAR (what is depicted <em>and</em> where), tested on validated filiations.</p></div></li>
+        <li class="done"><span class="v">0.1–0.12</span><div><h3>Core pipeline, spaces, disagreements and pair benchmark</h3><p>Ingestion,
+          four spaces, Atlas, text and detail search, MCP server, IIIF, nested Leiden communities, Disagreements panel
+          and 104 hand-reviewed reference pairs.</p></div></li>
+        <li class="done"><span class="v">0.13</span><div><h3>Described zones, critical layer and ARTL@S places</h3><p>TIPSv2
+          tested on RichArt and dropped in favour of a 1.6M SigLIP 2 region index; model bias cards, corpus audit and
+          typed/dated places.</p></div></li>
+        <li><span class="v">0.14</span><div><h3>Iconclass group naming <small style="color:var(--muted);font-family:var(--font);font-size:13px">· under review</small></h3><p>Replacing
+          the small hand-written lexicon with CC0 Iconclass terms and verifiable codes.</p></div></li>
+        <li class="done"><span class="v">0.15–0.16</span><div><h3>Composition, "Why?", conceptual axes and visual measures</h3><p>PE-Spatial
+          benchmarked on composition pairs and dropped (DINOv3 stays ahead); zone matching in the comparator, 2D
+          conceptual axes and neural-free visual measures (Stork).</p></div></li>
       </ol>
-      <p class="fine" style="margin-top:18px">Full roadmap, with what is ruled out: <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/ROADMAP.md">ROADMAP.md</a>.</p>
+      <p class="fine" style="margin-top:18px">Full roadmap and open leads:
+        <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/ROADMAP.md">ROADMAP.md</a>.</p>
     </div>
   </section>
 
   <section id="start" class="alt">
     <div class="wrap">
-      <h2>Get started</h2>
-      <p class="section-lead">Python 3.12. A GPU helps (AMD ROCm on Windows, or CUDA), but the whole pipeline also
-        runs on CPU for testing. See the <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/docs/INSTALL_GPU.md">GPU guide</a>.</p>
+      <h2>Install and try it</h2>
+      <p class="section-lead">Requires Python 3.12. A GPU speeds up extraction considerably (AMD ROCm on Windows, or
+        CUDA), though everything also runs on CPU for testing a small folder. See
+        <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/docs/INSTALL_GPU.md">INSTALL_GPU.md</a>.</p>
 <pre><span class="c"># install</span>
 python -m venv .venv
 .venv\Scripts\activate                 <span class="c"># Linux / macOS: source .venv/bin/activate</span>
 pip install -e ".[dev,ml]"
 
-<span class="c"># a corpus, end to end</span>
+<span class="c"># process a folder of images</span>
 pixplot ingest "D:/MyImages"           <span class="c"># catalogue, thumbnails, duplicates</span>
 pixplot import-metadata meta.csv       <span class="c"># artist, date, style… ("path" column required)</span>
 pixplot embed                          <span class="c"># DINOv3 vectors (GPU), resumable</span>
 pixplot analyze                        <span class="c"># groups, UMAP map, neighbourhoods</span>
-pixplot serve --open                   <span class="c"># the Atlas at http://127.0.0.1:8765</span></pre>
-      <p class="fine" style="margin-top:16px">Or the whole pipeline at once, with a timed log:
-        <code>bash scripts/full_pipeline.sh data/my_corpus "My source"</code>. No image ever leaves your computer.</p>
+pixplot serve --open                   <span class="c"># opens the Atlas at http://127.0.0.1:8765</span></pre>
+      <p class="fine" style="margin-top:16px">To run the full pipeline in one command:
+        <code>bash scripts/full_pipeline.sh data/my_corpus "My source"</code>. Everything stays local; nothing is
+        uploaded anywhere.</p>
     </div>
   </section>
 
@@ -212,19 +220,19 @@ pixplot serve --open                   <span class="c"># the Atlas at http://127
       <div>
         <h2>Author</h2>
         <p><b>Riyadh HADJBA</b>, art history student at the <a href="https://www.unistra.fr">University of Strasbourg</a>.
-          PixPlot v2 was designed and directed by Riyadh HADJBA, and written with the help of Claude (Anthropic).</p>
-        <p class="fine">Inspired by <a href="https://github.com/YaleDHLab/pix-plot">PixPlot</a> (Yale DHLab, 2018);
+          Conceived and directed by Riyadh HADJBA, built with the help of coding assistants (Claude and Gemini).</p>
+        <p class="fine">Inspired by <a href="https://github.com/YaleDHLab/pix-plot">PixPlot</a> (Yale DHLab, 2018),
           rewritten from scratch.</p>
       </div>
       <div>
         <h2>Credits</h2>
         <ul>
-          <li>Models: <a href="https://github.com/facebookresearch/dinov3">DINOv3</a> (Meta, DINOv3 licence, weights never redistributed),
+          <li>Models: <a href="https://github.com/facebookresearch/dinov3">DINOv3</a> (Meta, DINOv3 licence, weights not redistributed),
             <a href="https://huggingface.co/google/siglip2-so400m-patch16-384">SigLIP 2</a> (Google, Apache 2.0).</li>
-          <li>Libraries: FAISS, e-means, UMAP, scikit-learn, deck.gl, FastAPI, the MCP Python SDK.</li>
-          <li>Base map: <a href="https://github.com/topojson/world-atlas">world-atlas</a>, after Natural Earth.</li>
-          <li>Group-name vocabulary partly from H. Honour and J. Fleming, <em>The Visual Arts: A History</em> (2023).</li>
-          <li>Test corpora: WikiArt via huggan/wikiart and the Yale Center for British Art (IIIF). No corpus image is stored in the repository.</li>
+          <li>Libraries: FAISS, e-means, UMAP, scikit-learn, deck.gl, FastAPI, MCP Python SDK.</li>
+          <li>Base map: <a href="https://github.com/topojson/world-atlas">world-atlas</a> (Natural Earth).</li>
+          <li>Readings used: Wasielewski (2023), Arnold &amp; Tilton (2023), Joyeux-Prunel (2012), Honour &amp; Fleming (2023), Impett &amp; Offert (2024), Stork (2024), Giavitto &amp; Saint-Germier (2025).</li>
+          <li>Test corpora: WikiArt via huggan/wikiart and the Yale Center for British Art (IIIF). No corpus image is included in the repository.</li>
         </ul>
       </div>
     </div>
