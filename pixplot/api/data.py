@@ -17,6 +17,7 @@ import numpy as np
 from ..catalog import db
 from ..catalog.metadata import get_metadata
 from ..analysis import communities, critique, disagreements
+from ..analysis import iconclass
 from ..analysis.naming import load_names
 from ..analysis.spacemaps import available_maps, load_space_map
 from ..analysis.suspects import load_suspects
@@ -64,6 +65,7 @@ class AtlasData:
     names: dict[int, dict]
     suspects: dict | None
     meta: dict[int, dict[str, str]]
+    iconclass: dict[int, dict] = field(default_factory=dict)
     row_of: dict[int, int] = field(default_factory=dict)
     suspect_of: dict[int, list] = field(default_factory=dict)
     _spaces: object = None
@@ -98,6 +100,7 @@ class AtlasData:
             hdbscan=np.load(h) if h.exists() else None,
             cluster_summary=json.loads((p / "clusters.json").read_text(encoding="utf-8")),
             names=load_names(analysis),
+            iconclass=iconclass.load_names(analysis),
             suspects=load_suspects(analysis),
             meta=meta,
         )
@@ -166,6 +169,7 @@ class AtlasData:
             "hdbscan": self.hdbscan is not None,
             "metadata_keys": self.category_keys(),
             "named_groups": bool(self.names),
+            "iconclass": bool(self.iconclass),
             "space_maps": available_maps(self.analysis),
             "communities": communities.available(self.analysis),
             "places": self.place_counts(),
@@ -320,6 +324,7 @@ class AtlasData:
             out.append({**entry, "number": entry["cluster"] + 1,
                         "name": named.get("name") or "", "terms": named.get("terms", []),
                         "metadata_name": named.get("metadata_name", ""),
+                        "iconclass": iconclass.shown_terms(self.iconclass.get(entry["cluster"], {})),
                         "center": np.median(self.coords[rows], axis=0).round(5).tolist(),
                         "dominant": dominant})
         return out

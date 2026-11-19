@@ -71,6 +71,9 @@ chiffres et on passe à autre chose.
   200 requêtes en français.
 - **Réussi si** : les noms sont jugés plus justes que les actuels, sur un échantillon relu.
 
+> **Fait le 19/11/2026 : critère rempli.** Sur 83 groupes relus, Iconclass est jugé plus juste 39 fois,
+> le nom actuel 24 fois (17 équivalents, 3 tous deux faux) : ARCHITECTURE § 23.
+
 ### 0.15 — La composition : STELLAR et PE-Spatial
 
 - **Pourquoi** : le banc d'essai montre qu'aucun regard ne suit une filiation dès que

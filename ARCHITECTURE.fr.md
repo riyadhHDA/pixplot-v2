@@ -737,6 +737,54 @@ mains tenant une lettre ; « a sailing ship » → des voiliers. Une location de
 ramené le calcul à 30–45 min, mais avec l'envoi des images et la mise en route, le gain réel
 aurait été de l'ordre de 2 à 3 h de bout en bout, au prix d'images sorties de la machine.
 
+## 23. Nommer les groupes avec Iconclass (17/11/2026)
+
+[Iconclass](https://iconclass.org) (H. van de Waal, 1972-1985) est la classification
+iconographique des musées : environ 40 000 notions codées, de « 25H paysage » à « 73A5
+l'Annonciation », avec des libellés français. Les données sont sous licence CC0
+(`pixplot iconclass --fetch`, dans `data/iconclass/`, non versionné).
+
+- **Méthode** (comme le § 12, Iconclass à la place de notre lexique) : chaque notion est
+  décrite à SigLIP 2 par son libellé anglais nettoyé (« a painting of the Annunciation ») ;
+  le centre de chaque groupe est comparé aux notions ; parmi les 10 plus proches, on garde
+  les 3 qui distinguent le plus ce groupe des autres (écart à la moyenne des groupes, en
+  écarts-types : z).
+- **Notions retenues** (17 126 sur 40 712) : pas de « clés » (lettres doublées, « 31AA »
+  = version féminine), pas plus de 7 caractères, noms propres seulement pour les saints et
+  les espèces, pas de littérature (81-83), Bible et mythologie limitées à 4 caractères
+  (« 73A5 » oui, l'épisode de détail non), pas d'allégories de Ripa, pas d'entrée sans nom
+  français.
+- **Confiance** : z ≥ 4 « sûr », 3 à 4 « possible », en dessous rien n'est affiché. Seuils
+  relus sur WikiArt 81k : au-dessus de 4, le nom est presque toujours juste ; en dessous de
+  3, Iconclass n'a pas de mot pour le groupe (portraits, abstractions) et en force un
+  (« journaliste », « test graphologique »).
+- **Atlas** : sous le nom du groupe, la ou les notions Iconclass avec leur code, en lien
+  vers iconclass.org (bordure pleine : sûr ; pointillée : possible). API : champ
+  `iconclass` des groupes ; MCP : `corpus_overview` et `get_group`.
+
+**Sur WikiArt 81k** : 142 groupes, 37 « sûr », 47 « possible », 58 sans notion affichée ;
+encodage des notions et nommage en 76 s. Iconclass est **complémentaire** du lexique : plus
+précis sur le sujet (« 47D31 moulin à vent », « 25G41 nénuphar », « 25H154 clairière »,
+« 26C32 tempête sur mer », « 42B742 mère et enfant », « 11D356 le Christ crucifié »),
+muet sur la manière, le genre du portrait et l'abstraction, que le lexique nomme mieux.
+Erreurs typiques restantes : lutteurs de Hokusai → « 43C393 jiu-jitsu, judo », saints
+précis sur des retables (« Philippe Neri »).
+
+**Relecture par l'historien** (19/11/2026, `bench/wikiart81k_iconclass_review.csv`) : les 84 groupes qui ont
+un nom Iconclass ont été jugés, nom actuel (A) contre proposition
+Iconclass (B), sur six œuvres typiques de chaque groupe ; 83 réponses.
+
+| | B Iconclass plus juste | équivalents | A actuel plus juste | les deux faux |
+|---|---|---|---|---|
+| tous (83) | **39 (47 %)** | 17 | 24 (29 %) | 3 |
+| « sûr » (37) | **21 (57 %)** | 4 | 12 (32 %) | 0 |
+| « possible » (46) | **18 (39 %)** | 13 | 12 (26 %) | 3 |
+
+Sur les avis tranchés, Iconclass l'emporte 39 contre 24 (test du signe unilatéral : p = 0,04).
+**Critère de la feuille de route rempli** : les noms Iconclass sont jugés plus justes. Ils s'ajoutent au
+nom actuel sans le remplacer : le lexique reste meilleur dans un groupe sur trois (souvent la manière,
+le portrait, l'abstraction), et le seuil « sûr » se confirme comme le plus fiable.
+
 ## 24. La composition : PE-Spatial évalué, non retenu (18/11/2026)
 
 Étape 0.15. Question : un modèle « spatial » ou une comparaison case à case retrouve-t-il mieux

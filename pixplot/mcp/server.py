@@ -106,12 +106,14 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
     def corpus_overview() -> dict:
         """Le corpus : taille, modèles, groupes (avec artiste/style/genre dominants), recherches disponibles."""
         groups = [{"group": g["number"], "name": g.get("name", ""), "size": g["size"],
+                   "iconclass": [f"{t['notation']} {t['fr']} ({t['confidence']})" for t in g.get("iconclass", [])],
                    "representative": g["representative"],
                    "dominant": {k: [f"{v['value']} ({round(v['share'] * 100)} %)" for v in vs]
                                 for k, vs in g["dominant"].items()}}
                   for g in data.clusters_payload()]
         return {**data.info(), "search": engines.status(), "spaces": data.spaces.list(), "groups": groups,
-                "group_names": "proposés par SigLIP 2 d'après un vocabulaire d'histoire de l'art — à vérifier",
+                "group_names": "proposés par SigLIP 2 d'après un vocabulaire d'histoire de l'art — à vérifier ; "
+                               "« iconclass » : notions Iconclass (iconclass.org) proposées de même, avec un degré de confiance",
                 "corpus_report": data.corpus_report(),
                 "principles": critique.PRINCIPLES,
                 "reading": "Chaque espace (« regard ») a une fiche : ce qu'il voit, ses données d'entraînement, "
@@ -283,6 +285,7 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
             raise ValueError(f"Groupe {group_number} inexistant")
         chosen = sel.by_cluster(data, int(group_number), k=min(max(k, 1), 200))
         return {"group": info["number"], "name": info.get("name", ""), "name_terms": info.get("terms", []),
+                "iconclass": info.get("iconclass", []),
                 "size": info["size"], "dominant": info["dominant"],
                 "representative": info["representative"],
                 "artworks": [data.brief(i) | {"atypicality": round(float(data.atypicality[data.row_of[i]]), 3)}

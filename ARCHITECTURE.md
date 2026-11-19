@@ -667,6 +667,51 @@ weighs 818 MB (original vectors 3.5 GB). A search answers in 0.5 s. Trials: "a h
 saint's head" → six halos, including radiant ones; "a skull" → six skulls, painted or engraved;
 "a hand holding a letter" → six hands holding a letter; "a sailing ship" → sailing ships.
 
+## 23. Naming groups with Iconclass (17/11/2026)
+
+[Iconclass](https://iconclass.org) (H. van de Waal, 1972-1985) is the iconographic
+classification used by museums: about 40,000 coded concepts, from "25H landscape" to "73A5
+the Annunciation", with French labels. The data is CC0 (`pixplot iconclass --fetch`, into
+`data/iconclass/`, not versioned).
+
+- **Method** (as in § 12, with Iconclass instead of our lexicon): each concept is described
+  to SigLIP 2 by its cleaned English label ("a painting of the Annunciation"); each group
+  centre is compared with the concepts; among the 10 closest, the 3 that most distinguish
+  the group from the others are kept (deviation from the mean over groups, in standard
+  deviations: z).
+- **Concepts kept** (17,126 of 40,712): no "keys" (doubled letters, "31AA" = female
+  version), at most 7 characters, proper names only for saints and species, no literature
+  (81-83), Bible and mythology limited to 4 characters ("73A5" yes, the detailed episode
+  no), no Ripa allegories, no entry without a French name.
+- **Confidence**: z ≥ 4 "sure", 3 to 4 "possible", nothing shown below. Thresholds checked
+  on WikiArt 81k: above 4 the name is almost always right; below 3 Iconclass has no word for
+  the group (portraits, abstraction) and forces one ("journalist", "graphology test").
+- **Atlas**: under the group name, the Iconclass concept(s) with their code, linked to
+  iconclass.org (solid border: sure; dotted: possible). API: `iconclass` field of groups;
+  MCP: `corpus_overview` and `get_group`.
+
+**On WikiArt 81k**: 142 groups, 37 "sure", 47 "possible", 58 with no concept shown;
+encoding and naming in 76 s. Iconclass **complements** the lexicon: more precise on subject
+("47D31 windmill", "25G41 water-lily", "25H154 clearing", "26C32 storm at sea", "42B742
+mother and child", "11D356 Christ crucified"), silent on manner, portraiture and
+abstraction, which the lexicon names better. Typical remaining errors: Hokusai's wrestlers →
+"43C393 jiu-jitsu, judo", specific saints on altarpieces ("Philip Neri").
+
+**Review by the historian** (2026-11-19, `bench/wikiart81k_iconclass_review.csv`): the 84 groups with an
+Iconclass name were judged, current name (A) against the Iconclass proposal (B), on
+six typical works per group; 83 answers.
+
+| | B Iconclass better | equivalent | A current better | both wrong |
+|---|---|---|---|---|
+| all (83) | **39 (47 %)** | 17 | 24 (29 %) | 3 |
+| "sure" (37) | **21 (57 %)** | 4 | 12 (32 %) | 0 |
+| "possible" (46) | **18 (39 %)** | 13 | 12 (26 %) | 3 |
+
+On decided answers, Iconclass wins 39 to 24 (one-sided sign test: p = 0.04). **Roadmap criterion met**:
+Iconclass names are judged more accurate. They are added to the current name without replacing it: the
+lexicon is still better in one group in three (often handling, portraiture, abstraction), and the "sure"
+threshold is confirmed as the most reliable.
+
 ## 24. Composition: PE-Spatial evaluated, not adopted (18/11/2026)
 
 Step 0.15. Question: does a "spatial" model, or a cell-by-cell comparison, find a work that reuses

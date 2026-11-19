@@ -751,3 +751,37 @@ def test_concept_axes(env):
     # Sans coordonnées (mode MCP)
     res_mcp = eng.concept_axes("sacré", "profane", k=3, include_coords=False)
     assert "x" not in res_mcp and "y" not in res_mcp and len(res_mcp["extremes"]["more_x"]) == 3
+
+
+def test_iconclass_vocabulary_and_pick(tmp_path):
+    from pixplot.analysis import iconclass as ic
+
+    # quels codes peuvent nommer un groupe
+    assert ic.usable("11F4") and ic.usable("73A5") and ic.usable("11H(JEROME)") and ic.usable("25G41(WATER-LILY)")
+    assert ic.usable("41A6711") and ic.usable("48C84")
+    assert not ic.usable("31AA221")          # « clé » (version féminine) : lettres doublées
+    assert not ic.usable("82A(OSCAR)")       # personnage littéraire
+    assert not ic.usable("94N61")            # épisode mythologique trop précis
+    assert not ic.usable("41A671111")        # trop profond
+    assert not ic.usable("46C(BOAT)")        # nom propre hors saints et espèces
+    assert ic.clean("the Annunciation (Luke 1:26-38) ~ Mary") == "the Annunciation, Mary"
+    assert ic.link("25G41(WATER-LILY)") == "https://iconclass.org/25G41%28WATER-LILY%29"
+    assert [ic.confidence(z) for z in (5, 3.5, 1)] == ["sûr", "possible", "faible"]
+
+    # petits fichiers au format Iconclass « notation|libellé »
+    rows = {"73A5": ("the Annunciation", "l'Annonciation"), "31AA2": ("female", "féminin"),
+            "25H": ("landscape", "paysage"), "47D31": ("windmill", "moulin à vent"),
+            "41E1": ("still life", "nature morte"), "83(OVID)": ("Ovid", "Ovide"), "11H(...)": ("saint", "saint")}
+    (tmp_path / "txt_en_0_1.txt").write_text("".join(f"{n}|{e}\n" for n, (e, _) in rows.items()), encoding="utf-8")
+    (tmp_path / "txt_fr_0_1.txt").write_text("".join(f"{n}|{f}\n" for n, (_, f) in rows.items() if n != "41E1"), encoding="utf-8")
+    vocab = ic.load_vocabulary(tmp_path)
+    assert [v["notation"] for v in vocab] == ["73A5", "25H", "47D31"]   # 41E1 sans français
+    assert vocab[0]["prompt"] == "a painting of the Annunciation"
+
+    # chaque groupe reçoit la notion qui le distingue, pas la plus banale
+    V = np.eye(4, dtype=np.float32)[:3]
+    C = np.array([[0.9, 0.3, 0.1, 0], [0.1, 0.3, 0.9, 0], [0.2, 0.9, 0.2, 0]], dtype=np.float32)
+    picks = ic.pick(C, V, top_raw=2, keep=1)
+    assert [p[0][0] for p in picks] == [0, 2, 1]
+    assert ic.shown_terms({"terms": [{"notation": "73A5", "z": 4.5}, {"notation": "25H", "z": 1.0}]}) == \
+        [{"notation": "73A5", "z": 4.5, "url": "https://iconclass.org/73A5"}]
