@@ -14,6 +14,28 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.19.0 — 2026-11-19 · Combined filters, duplicates, three models put to the test
+
+- **Combined filters** in the Atlas ("Filtrer" button, key F), after *Collection Space Navigator*
+  (Ohm et al., 2023): artist, style, genre, group, atypicality (and dates when the corpus has them).
+  Each value shows how many works it would give with the other criteria; the selection can go to the
+  notebook or a Research Pack.
+- **Duplicates and variants**: `pixplot doublons`, "Doublons" tab under "À vérifier", MCP tool
+  `find_duplicates` (19 tools). On WikiArt 81k: 839 "same image" pairs, 702 of them filed under two
+  different styles, and 785 variants (replicas, series, states, copies). ARCHITECTURE § 29.
+- **Three models evaluated and not kept**, results published anyway:
+  - SSCD, copy detection (§ 27, by Gemini 4 Neon): behind Form and Subject on lineages, but useful to
+    find duplicates;
+  - Depth Anything V2, composition through depth (§ 28, by Gemini 4 Neon): median rank 13,754 versus 8
+    for Form;
+  - LocalMAP versus UMAP (§ 29): +1.5 points on neighbours' labels, but a map split into islands and
+    more crowded. Offered as a trial map (`pixplot maps --localmap`, "not better").
+- **End of the Gemini 4 Argon audit**: late responses ignored in panels, readable errors, unsaved
+  notebook notes flagged, safer quick review and HD thumbnails; `pixplot zones` resume, small Leiden
+  groups merged whole, zone boxes aligned with patches, float16 vectors renormalised, memory bounded
+  beyond 100,000 works. Published Leiden groups unchanged (measured). Still to decide: how P@1 is
+  computed in `pixplot bench`.
+
 ## 0.18.0 — 2026-11-19 · Naming groups with Iconclass
 
 Roadmap step 0.14.

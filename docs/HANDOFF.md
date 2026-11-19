@@ -4,10 +4,13 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 19/11/2026 (profondeur fusionnée, ARCHITECTURE § 29).*
+*Dernière mise à jour : 19/11/2026 (publication de la 0.19.0).*
 
 ## Version publiée
 
+**0.19.0** (19/11/2026) : filtres combinés, doublons (SSCD, 19 outils MCP), fin de l'audit d'Argon,
+SSCD / Depth Anything V2 / LocalMAP évalués et non retenus (ARCHITECTURE §§ 27 à 29). Détail dans
+« Fait depuis 0.18.0 » plus bas.
 **0.18.0** (19/11/2026) : noms Iconclass (étape 0.14), relus par l'utilisateur sur 83 groupes :
 Iconclass plus juste 39 fois, nom actuel 24 fois (ARCHITECTURE § 23, `bench/wikiart81k_iconclass_review.csv`).
 **0.17.0** : travail de Gemini 4 Neon, relu par Claude (65 tests, Atlas vérifié ;
@@ -75,7 +78,7 @@ corrigé ; 63 tests passent, Atlas vérifié.
     `pixplot bench` mesuré sur la première voisine étiquetée** (9 : changerait les chiffres publiés,
     à décider avec l'utilisateur).
 
-## Fait depuis 0.18.0 (sur `main`, non publié)
+## Fait depuis 0.18.0 (publié en 0.19.0)
 
 - Corrections de l'audit d'Argon (commit `4d7998a`, voir plus bas).
 - **SSCD évalué par Gemini 4 Neon, non retenu** (fusionné, ARCHITECTURE § 27,

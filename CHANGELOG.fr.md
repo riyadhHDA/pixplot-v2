@@ -14,6 +14,28 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.19.0 — 19/11/2026 · Filtres combinés, doublons, trois modèles mis à l'épreuve
+
+- **Filtres combinés** dans l'Atlas (bouton « Filtrer », touche F), d'après *Collection Space
+  Navigator* (Ohm et al., 2023) : artiste, style, genre, groupe, atypicité (et dates si le corpus en
+  a). Chaque valeur affiche le nombre d'œuvres qu'elle donnerait avec les autres critères ; la
+  sélection part au carnet ou dans un Research Pack.
+- **Doublons et variantes** : `pixplot doublons`, onglet « Doublons » dans « À vérifier », outil MCP
+  `find_duplicates` (19 outils). Sur WikiArt 81k : 839 paires « même image », dont 702 rangées sous
+  deux styles différents, et 785 variantes (répliques, séries, états, copies). ARCHITECTURE § 29.
+- **Trois modèles évalués et non retenus**, résultats publiés quand même :
+  - SSCD, détection de copies (§ 27, par Gemini 4 Neon) : derrière Forme et Sujet sur les filiations,
+    mais il sert à trouver les doublons ;
+  - Depth Anything V2, composition par la profondeur (§ 28, par Gemini 4 Neon) : rang médian 13 754
+    contre 8 pour Forme ;
+  - LocalMAP contre UMAP (§ 29) : +1,5 point sur les étiquettes des voisines, mais une carte coupée en
+    îlots et plus entassée. Proposée comme carte d'essai (`pixplot maps --localmap`, « pas mieux »).
+- **Fin de l'audit de Gemini 4 Argon** : réponses en retard ignorées dans les panneaux, erreurs
+  lisibles, notes du carnet non enregistrées signalées, relecture rapide et vignettes HD plus sûres ;
+  reprise de `pixplot zones`, petits groupes Leiden rattachés entiers, cadres des zones alignés sur
+  les patchs, vecteurs float16 renormalisés, mémoire bornée au-delà de 100 000 œuvres. Groupes Leiden
+  publiés inchangés (mesuré). Reste à décider : le calcul de P@1 dans `pixplot bench`.
+
 ## 0.18.0 — 19/11/2026 · Nommer les groupes avec Iconclass
 
 Étape 0.14 de la feuille de route.
