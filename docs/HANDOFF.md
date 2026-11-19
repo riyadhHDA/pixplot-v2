@@ -8,7 +8,8 @@ avec n'importe quel modèle.
 
 ## Version publiée
 
-**0.15.0** (18/11/2026) : la composition, PE-Spatial évalué et non retenu (ARCHITECTURE § 24). Historique
+**0.15.1** (19/11/2026) : tests sur GitHub (Linux et Windows), Atlas découpé en 8 scripts, projet
+citable (CITATION.cff, DOI Zenodo à chaque release). Avant : 0.15.0, la composition (ARCHITECTURE § 24). Historique
 complet dans le [CHANGELOG](../CHANGELOG.fr.md), étapes suivantes dans la [ROADMAP](../ROADMAP.fr.md).
 
 ## Travail en cours, sur une branche

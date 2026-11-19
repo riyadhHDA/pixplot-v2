@@ -14,6 +14,16 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.15.1 — 19/11/2026 · Tests sur GitHub, Atlas en modules, projet citable
+
+- Tests automatiques sur GitHub à chaque push (toutes les branches) et sur les pull requests, sous
+  Linux et Windows, sans GPU (`.github/workflows/tests.yml`).
+- L'Atlas (`web/atlas.js`, 1 950 lignes) découpé en 8 scripts chargés dans l'ordre (`atlas-base.js`
+  … `atlas-ui.js`, voir `web/README.md`), sans changement de comportement : plusieurs assistants
+  peuvent y travailler sans se gêner.
+- Projet citable : `CITATION.cff` (bouton « Cite this repository ») et archivage Zenodo avec DOI à
+  chaque release (`.zenodo.json`).
+
 ## 0.15.0 — 18/11/2026 · La composition : PE-Spatial évalué, non retenu
 
 - `pixplot composition` : banc d'essai sur les paires validées (regards existants, PE-Spatial,

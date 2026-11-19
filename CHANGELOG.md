@@ -14,6 +14,16 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.15.1 — 2026-11-19 · GitHub tests, modular Atlas, citable project
+
+- Automatic tests on GitHub at every push (all branches) and on pull requests, on Linux and Windows,
+  without GPU (`.github/workflows/tests.yml`).
+- The Atlas (`web/atlas.js`, 1,950 lines) split into 8 scripts loaded in order (`atlas-base.js` …
+  `atlas-ui.js`, see `web/README.md`), with no change in behaviour: several assistants can work on it
+  without getting in each other's way.
+- Citable project: `CITATION.cff` ("Cite this repository" button) and Zenodo archiving with a DOI at
+  every release (`.zenodo.json`).
+
 ## 0.15.0 — 2026-11-18 · Composition: PE-Spatial evaluated, not adopted
 
 - `pixplot composition`: benchmark on validated pairs (existing regards, PE-Spatial, cell-by-cell
