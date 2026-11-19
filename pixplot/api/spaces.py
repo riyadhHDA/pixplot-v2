@@ -34,12 +34,14 @@ KINDS = [
      "ressemblance visuelle : formes, composition, motifs"),
     ("pe_spatial", "composition", "Composition (PE-Spatial)",
      "ce qui est représenté et où : la disposition des formes dans l'œuvre (en essai)"),
+    ("sscd", "copie", "Copie (SSCD)",
+     "empreinte de détection de copies : répliques, gravures d'après, reprises proches (en essai)"),
     ("dinov2", "forme_v2", "Forme (DINOv2)", "ancien modèle, pour comparaison"),
 ]
 # Modèles évalués mais non retenus comme regards : leurs vecteurs restent sur le disque pour
 # les bancs d'essai, mais l'Atlas et le serveur MCP ne les proposent pas (ARCHITECTURE § 24).
-NOT_KEPT = ("pe_spatial",)
-ORDER = ["forme", "sujet", "couleur", "touche", "composition", "forme_v2", "couleur_rvb"]
+NOT_KEPT = ("pe_spatial", "sscd")
+ORDER = ["forme", "sujet", "couleur", "touche", "composition", "copie", "forme_v2", "couleur_rvb"]
 
 
 def describe_encoder(encoder: str) -> tuple[str, str, str]:

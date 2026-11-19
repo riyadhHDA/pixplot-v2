@@ -99,6 +99,9 @@ def cmd_embed(args) -> int:
     if args.encoder.startswith(("dinov3_", "dinov2_", "siglip2_")):
         kwargs = {"weights": args.weights, "repo": args.repo, "hf_model": args.hf_model,
                   "input_size": args.input_size}
+    elif args.encoder.startswith("sscd_"):
+        kwargs = {"weights": args.weights, "cache_dir": s.data_dir / "models",
+                  "input_size": args.input_size}
     encoder = get_encoder(args.encoder, **kwargs)
     print(f"Encodeur : {encoder.describe()}")
     run = extract(encoder, s.catalog_path, s.runs_dir, limit=args.limit, batch_size=args.batch_size,
@@ -804,8 +807,16 @@ def cmd_pairs(args) -> int:
         return 0
 
     from .api.data import AtlasData
+    from .api.spaces import Spaces
 
     data = AtlasData.load(s, _analysis_arg(s, args.analysis))
+    if args.action == "bench" and args.spaces:
+        prev_not_kept = Spaces.include_not_kept
+        Spaces.include_not_kept = True
+        try:
+            _ = data.spaces
+        finally:
+            Spaces.include_not_kept = prev_not_kept
     ids = [int(i) for i in data.ids]
     if args.action == "generate":
         from .catalog import db

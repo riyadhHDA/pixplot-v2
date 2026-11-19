@@ -100,6 +100,20 @@ CARDS: dict[str, dict] = {
         "biases": ["ancien modèle, gardé pour comparaison"],
         "measured": "remplacé par DINOv3 (ARCHITECTURE § 9)",
     },
+    "copie": {
+        "model": "SSCD disc_large (Meta, CVPR 2022, ResNeXt-101 32×4d, licence MIT)",
+        "trained_on": "DISC : 1 million d'images du web avec fortes transformations synthétiques "
+                      "(recadrages, filtres, collages, mixup)",
+        "sees": "empreinte de copie quasi-identique : répliques fidèles, quasi-doublons numériques",
+        "blind_to": "réinterprétations libres, fragments inversés, changements de style ou de technique",
+        "biases": [
+            "conçu pour la détection de copies numériques sur le web, pas pour la filiation artistique",
+            "sa régularisation d'entropie sépare fortement tout ce qui s'écarte d'une copie littérale",
+        ],
+        "measured": "évalué, non retenu par défaut : sur « filiation » (9 paires), R@10 33,3 %, "
+                    "rang médian 216 (108 centré), derrière Forme (38,9 %, 26) et Sujet (38,9 %, 25) "
+                    "(ARCHITECTURE § 27)",
+    },
 }
 
 
