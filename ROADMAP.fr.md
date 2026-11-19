@@ -1,6 +1,6 @@
 # Feuille de route
 
-[English](ROADMAP.md) · **Français** · Mise à jour : 19/11/2026 · Version actuelle : **0.19.0**
+[English](ROADMAP.md) · **Français** · Mise à jour : 19/11/2026 · Version actuelle : **0.20.0**
 
 Ce qui est déjà sorti figure dans [CHANGELOG.fr.md](CHANGELOG.fr.md). Ici sont rassemblées
 les prochaines étapes, les essais écartés et les pistes à tester.
@@ -89,9 +89,9 @@ chiffres et on passe à autre chose.
 
 ## Plus tard, ou à surveiller
 
-- **Entropie et complexité** (Sigaki, Perc et Ribeiro, PNAS 2018) *(fait, pas encore publié : `pixplot ordre`, couleur de la carte et fiche d'œuvre)* : un regard « ordre et
+- **Entropie et complexité** (Sigaki, Perc et Ribeiro, PNAS 2018) *(fait en 0.20.0 : `pixplot ordre`, couleur de la carte et fiche d'œuvre)* : un regard « ordre et
   complexité » calculé sans GPU, et un axe possible pour la chronologie.
-- **ArtEmis** (CVPR 2021) : 455 000 annotations d'émotion sur les œuvres de WikiArt ; les
+- **ArtEmis** (CVPR 2021) *(fait en 0.20.0, ARCHITECTURE § 34 : les regards captent un peu l'émotion, surtout par le sujet)* : 455 000 annotations d'émotion sur les œuvres de WikiArt ; les
   regards captent-ils l'effet ressenti ou seulement le sujet ?
 - **« Pourquoi ces deux œuvres se ressemblent ? »** *(fait en 0.16.0, ARCHITECTURE § 25)* : montrer,
   dans le comparateur, quelles zones de l'une répondent à quelles zones de l'autre (réponse au biais
@@ -118,7 +118,7 @@ chiffres et on passe à autre chose.
 
 - **SAM 3** : découper précisément un motif, à la demande sur une sélection. Licence Meta à
   accepter par l'utilisateur ; compatibilité ROCm à vérifier.
-- **MMArt** : apporterait titres et dates à notre WikiArt (rapprochement des images par
+- **MMArt** *(fait en 0.20.0, § 34 : titres, dates et artistes pour 70 902 œuvres)* : apporterait titres et dates à notre WikiArt (rapprochement des images par
   empreinte visuelle). Ses descriptions sont générées par un modèle de langage : banc
   d'essai pour la recherche par texte, jamais source de noms.
 - **Corpus hors d'Europe** par IIIF (Asie, Islam, Afrique), et des corpus avec lieux pour

@@ -14,6 +14,27 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.20.0 — 2026-11-19 · Titles, dates, artists and emotions for WikiArt; order of the surface
+
+- **WikiArt gets its titles, dates and artists back**: `pixplot wikiart-noms` matches our works to
+  their original file names by comparing **MMArt**'s images (CC BY 4.0) with our fingerprints.
+  70,902 works matched (checked by eye, no disagreement with existing labels): titles, **dates for
+  56,794 works (1401–2012): the timeline view switches on**, and the artist of 35,185 "Unknown Artist"
+  works (129 → 1,090 artists). ARCHITECTURE § 34.
+- **ArtEmis emotions** (non-commercial research use, kept locally): dominant emotion of 55,120 works,
+  in the record, map colours and filters. The regards capture a little emotion (1.7 times chance),
+  mostly through subject, hardly through colour.
+- **Order and disorder of the surface** (Sigaki, Perc and Ribeiro, PNAS 2018): `pixplot ordre`, map
+  colours "Désordre" and "Complexité", a line in the visual measures. From Minimalism (most ordered) to
+  Pointillism (most disordered); over time, smooth surfaces around 1600–1850, most disorder around
+  1900, back to order after 1940. ARCHITECTURE § 33.
+- **Two models evaluated and not kept**, by Gemini 4 Neon: PE-Core vs SigLIP 2 (weaker for French text
+  search, 81/100 vs 97/100) and CSD vs touch (better on style, but trained on data that probably
+  contains WikiArt). ARCHITECTURE §§ 31–32.
+- **Recomputed** after adding artists: artist labels to check (506 → 1,206), groups' "metadata"
+  mentions (reviewed names unchanged), "artist" benchmark over 1,090 artists.
+- Documentation: use cases at the top of the README, P@1 rule written down (§ 30), roadmap updated.
+
 ## 0.19.0 — 2026-11-19 · Combined filters, duplicates, three models put to the test
 
 - **Combined filters** in the Atlas ("Filtrer" button, key F), after *Collection Space Navigator*

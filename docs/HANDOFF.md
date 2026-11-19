@@ -4,10 +4,13 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 19/11/2026 (PE-Core et CSD fusionnés ; MMArt et ArtEmis importés ; §§ 33-34).*
+*Dernière mise à jour : 19/11/2026 (publication de la 0.20.0).*
 
 ## Version publiée
 
+**0.20.0** (19/11/2026) : titres, dates, artistes (MMArt) et émotions (ArtEmis) pour WikiArt, vue
+chronologique ; ordre de la matière ; PE-Core et CSD évalués, non retenus (ARCHITECTURE §§ 30 à 34).
+Détail dans « Fait depuis 0.19.0 » plus bas.
 **0.19.0** (19/11/2026) : filtres combinés, doublons (SSCD, 19 outils MCP), fin de l'audit d'Argon,
 SSCD / Depth Anything V2 / LocalMAP évalués et non retenus (ARCHITECTURE §§ 27 à 29). Détail dans
 « Fait depuis 0.18.0 » plus bas.
@@ -147,7 +150,7 @@ corrigé ; 63 tests passent, Atlas vérifié.
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
   19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.
 
-## Fait depuis 0.19.0 (sur `main`, non publié)
+## Fait depuis 0.19.0 (publié en 0.20.0)
 
 - **PE-Core L/14 et CSD ViT-L/14 évalués par Gemini 4 Neon, non retenus** (fusionné, ARCHITECTURE
   §§ 31–32, `docs/handoff/gemini-pecore-csd.md`). PE-Core (Apache 2.0) contre SigLIP 2 : un peu

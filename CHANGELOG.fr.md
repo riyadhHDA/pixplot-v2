@@ -14,6 +14,27 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.20.0 — 19/11/2026 · Titres, dates, artistes et émotions pour WikiArt ; ordre de la matière
+
+- **WikiArt retrouve ses titres, ses dates et ses artistes** : `pixplot wikiart-noms` rattache nos
+  œuvres à leur nom de fichier d'origine en comparant les images de **MMArt** (CC BY 4.0) à nos
+  empreintes. 70 902 œuvres rattachées (vérifiées à l'œil, aucun désaccord avec les étiquettes
+  existantes) : titres, **dates pour 56 794 œuvres (1401–2012) : la vue chronologique s'allume**, et
+  l'artiste de 35 185 œuvres « Unknown Artist » (129 → 1 090 artistes). ARCHITECTURE § 34.
+- **Émotions d'ArtEmis** (usage de recherche non commercial, gardé en local) : émotion dominante de
+  55 120 œuvres, dans la fiche, les couleurs et les filtres. Les regards captent un peu l'émotion
+  (1,7 fois le hasard), surtout par le sujet, à peine par la couleur.
+- **Ordre et désordre de la matière** (Sigaki, Perc et Ribeiro, PNAS 2018) : `pixplot ordre`,
+  couleurs « Désordre » et « Complexité » de la carte, ligne dans les mesures visuelles. Du
+  Minimalism (le plus ordonné) au Pointillism (le plus désordonné) ; dans le temps, surfaces lisses
+  vers 1600–1850, désordre maximal vers 1900, retour à l'ordre après 1940. ARCHITECTURE § 33.
+- **Deux modèles évalués et non retenus**, par Gemini 4 Neon : PE-Core contre SigLIP 2 (moins bon en
+  recherche par phrase en français, 81/100 contre 97/100) et CSD contre la touche (meilleur sur le
+  style, mais entraîné sur des données qui contiennent probablement WikiArt). ARCHITECTURE §§ 31–32.
+- **Recalculs** après l'ajout des artistes : étiquettes d'artiste à vérifier (506 → 1 206), mentions
+  « métadonnées » des groupes (noms relus inchangés), banc d'essai « artiste » sur 1 090 artistes.
+- Documentation : cas d'usage en tête du README, règle de P@1 écrite (§ 30), feuille de route à jour.
+
 ## 0.19.0 — 19/11/2026 · Filtres combinés, doublons, trois modèles mis à l'épreuve
 
 - **Filtres combinés** dans l'Atlas (bouton « Filtrer », touche F), d'après *Collection Space
