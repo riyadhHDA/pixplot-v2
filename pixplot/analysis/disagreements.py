@@ -66,22 +66,27 @@ def compute(vectors: dict[str, tuple[np.ndarray, dict[int, int]]], ids: list[int
     for a_key, XA in mats.items():
         say(f"  proches selon « {a_key} »…")
         nn, _ = _knn(XA, k)
-        rows_a = np.repeat(np.arange(len(common)), max_rank)
-        rows_b = nn[:, :max_rank].ravel()
-        rank = np.tile(np.arange(1, max_rank + 1), len(common))
+        m = min(max_rank, nn.shape[1])                # -k plus petit que --rank
+        rows_a = np.repeat(np.arange(len(common)), m)
+        rows_b = nn[:, :m].ravel()
+        rank = np.tile(np.arange(1, m + 1), len(common))
         ok = rows_b >= 0
         rows_a, rows_b, rank = rows_a[ok], rows_b[ok], rank[ok]
         # une paire n'est comptée qu'une fois (A–B et B–A) : on garde le meilleur rang
         lo, hi = np.minimum(rows_a, rows_b), np.maximum(rows_a, rows_b)
         order = np.lexsort((rank, hi, lo))
         lo, hi, rank = lo[order], hi[order], rank[order]
+        ra, rb = rows_a[order], rows_b[order]
         first = np.ones(len(lo), dtype=bool)
         first[1:] = (lo[1:] != lo[:-1]) | (hi[1:] != hi[:-1])
         lo, hi, rank = lo[first], hi[first], rank[first]
+        # sens de la paire qui a donné le meilleur rang : ra a rb parmi ses plus proches dans A,
+        # et c'est depuis ra qu'on mesure leur proximité dans B (le centile n'est pas symétrique)
+        ra, rb = ra[first], rb[first]
         for b_key, XB in mats.items():
             if b_key == a_key:
                 continue
-            c = centiles(XB, lo, hi, sample_ids)
+            c = centiles(XB, ra, rb, sample_ids)
             sel = np.flatnonzero(c < max_centile)
             sel = sel[np.lexsort((rank[sel], c[sel]))]
             # une œuvre « carrefour » (voisine de beaucoup d'autres) ne doit pas remplir la liste

@@ -51,7 +51,7 @@ function toggleDrawing(d) {
     const end = frac(e);
     const q = [Math.min(start[0], end[0]), Math.min(start[1], end[1]), Math.max(start[0], end[0]), Math.max(start[1], end[1])];
     start = null;
-    if (q[2] - q[0] < 0.03 || q[3] - q[1] < 0.03) return; // simple clic : on ignore
+    if (!q.every(Number.isFinite) || q[2] - q[0] < 0.03 || q[3] - q[1] < 0.03) return; // simple clic : on ignore
     state.drawing = false;
     hero.classList.remove("drawing");
     runRegionSearch(d, q);

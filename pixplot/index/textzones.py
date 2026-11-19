@@ -223,7 +223,7 @@ class ZoneIndex:
         self.boxes = zone_boxes(tuple(run.manifest["params"].get("grids", GRIDS)))
         # vecteurs d'origine (float16, sur disque) pour reclasser exactement les candidates
         self.zone_rows = np.load(p / "zone_rows.npy") if (p / "zone_rows.npy").exists() else None
-        parent = Path(run.path).parents[1] / run.manifest.get("parent", "")
+        parent = Path(run.path).parents[1] / (run.manifest.get("parent") or "")
         self.full = np.load(parent / "zones.npy", mmap_mode="r") if (parent / "zones.npy").exists() else None
 
     def search(self, text_vector: np.ndarray, k: int = 60, allowed=None) -> list[dict]:

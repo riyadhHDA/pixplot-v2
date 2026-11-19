@@ -24,6 +24,7 @@ import subprocess
 from pathlib import Path
 
 DEFAULT_TIMEOUT = 330          # secondes (agy s'arrête lui-même à 5 min : --print-timeout 5m)
+MAX_MINUTES = 15               # un audit d'un dossier entier peut demander plus de 5 min
 INSTALL_HELP = (
     "L'outil en ligne de commande d'Antigravity (agy) est introuvable.\n"
     "Sous Windows, dans PowerShell (installateur officiel de Google) :\n"
@@ -47,7 +48,8 @@ def find_agy(env: dict | None = None) -> str | None:
     candidates = []
     if env.get("LOCALAPPDATA"):
         local = Path(env["LOCALAPPDATA"])
-        candidates += [local / "agy" / "bin" / name for name in ("agy.exe", "agy.cmd", "agy")]
+        # pas de « agy.cmd » : Windows l'exécute par cmd.exe, qui réinterpréterait la question
+        candidates += [local / "agy" / "bin" / name for name in ("agy.exe", "agy")]
         # winget install Google.AntigravityCLI : le dossier n'entre dans le PATH qu'aux nouvelles sessions
         candidates += [local / "Microsoft" / "WinGet" / "Links" / "agy.exe"]
         candidates += sorted((local / "Microsoft" / "WinGet" / "Packages").glob("Google.AntigravityCLI_*/agy.exe"))
@@ -57,14 +59,34 @@ def find_agy(env: dict | None = None) -> str | None:
     return next((str(c) for c in candidates if c.exists()), None)
 
 
-def build_args(agy: str, question: str, paths: list[str] | None = None, model: str | None = None) -> list[str]:
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+
+
+def allowed_paths(paths: list[str] | None, root: Path | None = None) -> list[str]:
+    """Chemins qu'on accepte d'envoyer à Antigravity (un service externe) : seulement ceux du
+    projet, sans le dossier des données (images, catalogue) ni les réglages locaux."""
+    root = root or PROJECT_ROOT
+    out = []
+    for p in paths or []:
+        try:
+            r = Path(p).resolve()
+            rel = r.relative_to(root.resolve())
+        except (ValueError, OSError):
+            continue                                   # hors du projet : refusé
+        if r.exists() and not (rel.parts and rel.parts[0] in ("data", ".venv", ".git", ".claude", ".mcp.json")):
+            out.append(str(r))
+    return out
+
+
+def build_args(agy: str, question: str, paths: list[str] | None = None, model: str | None = None,
+               minutes: int = 5) -> list[str]:
     """Ligne de commande de ``agy`` : non interactive, en mode plan (lecture seule), avec les
     dossiers des chemins donnés ajoutés à l'espace de travail."""
-    paths = [p for p in (paths or []) if Path(p).exists()]
+    paths = allowed_paths(paths)
     prompt = READ_ONLY_NOTE + (
         "Fichiers et dossiers à lire en entier avant de répondre :\n" + "\n".join(f"- {p}" for p in paths) + "\n\n"
         if paths else "") + question
-    args = [agy, "-p", prompt, "--mode", "plan", "--sandbox", "--print-timeout", "5m"]
+    args = [agy, "-p", prompt, "--mode", "plan", "--sandbox", "--print-timeout", f"{minutes}m"]
     if model:
         args += ["--model", model]
     for d in dict.fromkeys(str(Path(p) if Path(p).is_dir() else Path(p).parent) for p in paths):
@@ -73,12 +95,12 @@ def build_args(agy: str, question: str, paths: list[str] | None = None, model: s
 
 
 def ask(question: str, paths: list[str] | None = None, model: str | None = None,
-        timeout: int = DEFAULT_TIMEOUT) -> tuple[bool, str]:
+        timeout: int = DEFAULT_TIMEOUT, minutes: int = 5) -> tuple[bool, str]:
     agy = find_agy()
     if agy is None:
         return False, INSTALL_HELP
     try:
-        r = subprocess.run(build_args(agy, question, paths, model), capture_output=True, text=True,
+        r = subprocess.run(build_args(agy, question, paths, model, minutes), capture_output=True, text=True,
                            encoding="utf-8", errors="replace", timeout=timeout, stdin=subprocess.DEVNULL)
     except subprocess.TimeoutExpired:
         return False, f"Antigravity n'a pas répondu en {timeout} s."
@@ -99,14 +121,16 @@ def create_server():
                                     "Ses réponses sont des propositions à vérifier, pas des faits.")
 
     @server.tool()
-    def ask_antigravity(question: str, paths: list[str] | None = None, model: str | None = None) -> str:
+    def ask_antigravity(question: str, paths: list[str] | None = None, model: str | None = None,
+                        minutes: int = 5) -> str:
         """Demande un second avis à Antigravity (Google, modèle Gemini par défaut), une autre famille
         de modèles que Claude. ``paths`` : chemins absolus de fichiers ou dossiers à lui faire lire.
-        Lecture seule : Antigravity ne peut rien modifier. Réponse en quelques dizaines de secondes."""
-        ok, text = ask(question, paths, model)
-        if not ok:
-            raise RuntimeError(text)
-        return text
+        ``minutes`` : temps accordé (5 par défaut, 15 au plus ; un audit de plusieurs dossiers en
+        demande souvent plus de 5). Lecture seule : Antigravity ne peut rien modifier."""
+        m = min(max(int(minutes), 1), MAX_MINUTES)
+        ok, text = ask(question, paths, model, timeout=m * 60 + 30, minutes=m)
+        # en cas d'échec, renvoyer le message tel quel : une exception serait masquée par le client MCP
+        return text if ok else "ÉCHEC d'Antigravity : " + text
 
     return server
 

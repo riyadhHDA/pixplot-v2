@@ -16,7 +16,8 @@ function posOf(id) {
 function timePositions() {
   const m = state.map, n = state.n, cell = state.iconSize * 1.08;
   const years = m.year.filter((y) => y != null);
-  const lo = Math.min(...years), hi = Math.max(...years);
+  if (!years.length) return { pos: state.positions, axis: [], note: "aucune œuvre datée" };
+  const [lo, hi] = minMax(years);
   // pas plus de colonnes que l'écran n'en tient, ni beaucoup plus que d'œuvres (petits corpus)
   const maxCols = Math.max(8, Math.min(Math.floor((2 * WORLD) / cell), Math.round(4 * Math.sqrt(n))));
   const step = [1, 2, 5, 10, 20, 25, 50, 100, 200].find((s) => (hi - lo) / s + 1 <= maxCols) || 500;
@@ -28,7 +29,7 @@ function timePositions() {
   // Chaque période est un bloc de w vignettes de large ; w est choisi pour que l'ensemble
   // ait à peu près les proportions de l'écran (sinon les périodes chargées font des tours).
   const el = $("map"), target = el.clientWidth / Math.max(1, el.clientHeight);
-  const maxCount = Math.max(...counts);
+  const maxCount = minMax(counts)[1];
   let w = 1, best = Infinity;
   for (let k = 1; k <= Math.max(1, Math.ceil(Math.sqrt(maxCount)) * 3); k++) {
     const ratio = (bins * (k + 1)) / Math.max(1, Math.ceil(maxCount / k));
@@ -70,7 +71,7 @@ async function loadPlaces() {
 
 function placeYearRange() {
   const ys = (state.places?.year || []).filter((y) => y != null);
-  return ys.length ? [Math.min(...ys), Math.max(...ys)] : null;
+  return ys.length ? minMax(ys) : null;
 }
 
 function setupPlaceControls() {

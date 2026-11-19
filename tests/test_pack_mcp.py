@@ -130,12 +130,20 @@ def test_antigravity_relay(tmp_path, monkeypatch):
     assert ag.find_agy({"LOCALAPPDATA": str(tmp_path / "w"), "PATH": ""}) == str(wg)
     assert ag.find_agy({"AGY_BIN": str(tmp_path / "absent")}) is None
 
+    monkeypatch.setattr(ag, "PROJECT_ROOT", tmp_path)          # le « projet » du test
     f = tmp_path / "a.py"
     f.write_text("x = 1")
-    args = ag.build_args("agy", "Relis ce code", [str(f), str(tmp_path), str(tmp_path / "absent")], model="m")
+    (tmp_path / "data").mkdir()
+    (tmp_path / "data" / "catalog.sqlite").write_text("")
+    outside = tmp_path.parent / "ailleurs.txt"
+    outside.write_text("secret")
+    # seuls les fichiers du projet partent vers Antigravity : ni le dossier data, ni le reste du PC
+    assert ag.allowed_paths([str(f), str(tmp_path / "data" / "catalog.sqlite"), str(outside)]) == [str(f.resolve())]
+    args = ag.build_args("agy", "Relis ce code", [str(f), str(tmp_path), str(tmp_path / "absent"), str(outside)], model="m")
     assert args[:2] == ["agy", "-p"] and "--dangerously-skip-permissions" not in args
     assert args[args.index("--mode") + 1] == "plan" and "--sandbox" in args and args[args.index("--model") + 1] == "m"
-    assert args.count("--add-dir") == 1 and args[args.index("--add-dir") + 1] == str(tmp_path)  # dossiers dédoublonnés
+    assert args.count("--add-dir") == 1 and args[args.index("--add-dir") + 1] == str(tmp_path.resolve())  # dédoublonnés
+    assert "ailleurs" not in args[2]
     assert "ne modifie aucun fichier" in args[2] and "absent" not in args[2] and args[2].endswith("Relis ce code")
 
     calls = []

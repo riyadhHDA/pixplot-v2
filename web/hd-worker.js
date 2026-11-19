@@ -14,7 +14,7 @@ self.onmessage = async (e) => {
     const images = await Promise.all(lengths.map((n, k) => {
       const part = buf.slice(at, at + n);
       at += n;
-      if (!n) return null;
+      if (!n || !dims[k]) return null;
       const [w, h] = dims[k];
       return createImageBitmap(new Blob([part], { type: "image/webp" }),
         { resizeWidth: w, resizeHeight: h, resizeQuality: "high" }).catch(() => null);

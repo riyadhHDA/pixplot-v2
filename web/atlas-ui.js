@@ -50,9 +50,12 @@ function wireUI() {
     const q = e.target.value.trim();
     $("search-clear").hidden = !q;
     if ($("search-mode").value !== "meta") return; // recherche lancée par Entrée seulement
-    t = setTimeout(async () => {
+    const seq = ++state.searchSeq;
+    state.searchTimer = t = setTimeout(async () => {
       if (!q) { clearHighlight(); return; }
-      const res = await getJSON(`/api/search?q=${encodeURIComponent(q)}`);
+      let res;
+      try { res = await getJSON(`/api/search?q=${encodeURIComponent(q)}`); } catch (err) { toast(`Recherche impossible : ${err.message}`); return; }
+      if (seq !== state.searchSeq) return;          // effacée ou remplacée entre-temps
       const set = new Set(res.ids.map((id) => state.rowOf.get(id)).filter((i) => i !== undefined));
       document.querySelectorAll(".group.active").forEach((x) => x.classList.remove("active"));
       setHighlight(set, `Recherche « ${q} »`);

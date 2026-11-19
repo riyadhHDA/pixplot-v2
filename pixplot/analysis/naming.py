@@ -207,7 +207,7 @@ def name_groups(analysis, settings, encoder=None, say=print) -> Path:
 
     runs = [r for r in list_runs("features", runs_dir=settings.runs_dir)
             if str(r.manifest["params"].get("encoder", "")).startswith("siglip2")
-            and r.manifest.get("status") == "complete"]
+            and r.manifest.get("status") == "complete" and not r.manifest["params"].get("limit")]
     named: list[dict] | None = None
     source = None
     if runs:
@@ -225,14 +225,18 @@ def name_groups(analysis, settings, encoder=None, say=print) -> Path:
             encoder = get_encoder(runs[-1].manifest["params"]["encoder"])
         subject_vecs = encoder.encode_text([e for _, e in SUBJECTS])
         manner_vecs = encoder.encode_text([e for _, e in MANNERS])
-        named = name_from_vectors(centroids, subject_vecs, manner_vecs)
+        valid = np.linalg.norm(centroids, axis=1) > 0
+        named = [None] * k
+        if valid.any():                              # un groupe sans vecteur fausserait les z de tous
+            for c, n in zip(np.flatnonzero(valid), name_from_vectors(centroids[valid], subject_vecs, manner_vecs)):
+                named[int(c)] = n
         source = runs[-1].id
 
     out = []
     for c in range(k):
         members = [meta.get(int(i), {}) for i in ids[clusters == c]]
         entry = {"cluster": c, "metadata_name": metadata_name(members) if members else ""}
-        if named:
+        if named and named[c]:
             entry.update(named[c])
         else:
             entry["name"] = entry["metadata_name"]

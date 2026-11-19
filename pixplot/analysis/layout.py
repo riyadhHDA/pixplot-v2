@@ -76,6 +76,7 @@ def run_umap(Z: np.ndarray, n_components: int = 2, n_neighbors: int = 15, min_di
         # umap-learn ≥ 0.6 annonce un changement d'algorithme par défaut : on fige l'actuel
         # pour que la même analyse redonne la même carte (reproductibilité).
         kwargs["compatibility_layout"] = True
+    n_neighbors = max(2, min(n_neighbors, len(Z) - 1))   # petit corpus : UMAP exige moins de voisines que d'œuvres
     reducer = umap.UMAP(n_neighbors=n_neighbors, min_dist=min_dist, metric="euclidean",
                         random_state=SEED, n_components=n_components, **kwargs)
     if len(Z) <= fit_sample:
@@ -116,7 +117,7 @@ def neighbors(X: np.ndarray, k: int = 20) -> tuple[np.ndarray, np.ndarray]:
     out_rows = np.empty((len(X), k), dtype=np.int64)
     out_scores = np.empty((len(X), k), dtype=np.float32)
     for i in range(len(X)):
-        keep = rows[i] != i
+        keep = (rows[i] != i) & (rows[i] >= 0)
         r, s = rows[i][keep][:k], scores[i][keep][:k]
         out_rows[i, :len(r)], out_scores[i, :len(s)] = r, s
         out_rows[i, len(r):], out_scores[i, len(s):] = -1, 0

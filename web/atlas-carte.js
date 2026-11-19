@@ -106,9 +106,19 @@ const HD_TIERS = [
   { cell: 1024, src: 1024, from: 520 },
 ].map((t) => ({ ...t, tex: null, slots: [], cap: 0, cache: new Map(), pending: new Set(), mapping: {}, shown: [], version: 0 }));
 state.hdTiers = HD_TIERS; state.flyTo = (...a) => flyTo(...a); // pour mesurer depuis la console
+const COLLISION_EXT = deck.CollisionFilterExtension ? [new deck.CollisionFilterExtension()] : [];
 const HD_PARALLEL = 6;          // lots en cours à la fois
 const hdQueue = [];
 let hdActive = 0, hdFlush = null, hdClock = 0;
+
+function hdCapacity(t) {
+  // nombre de cases d'un niveau, sans créer sa texture (marge de 10 % pour recycler)
+  if (t.cap) return t.cap;
+  const device = deckgl && deckgl.device;
+  const side = Math.min(8192, (device && device.limits && device.limits.maxTextureDimension2D) || 4096);
+  const per = side / t.cell;
+  return Math.floor(per * per * 0.9);
+}
 
 function hdTexture(t) {
   if (t.tex) return t.tex;
@@ -187,6 +197,7 @@ function hdReceive({ job, images }) {
   hdActive--;
   if (!t) return;
   batch.forEach((b) => t.pending.delete(b.id));
+  if (images && !hdTexture(t)) images.forEach((img) => img && img.close());
   if (images && hdTexture(t)) {
     const now = performance.now();
     batch.forEach((b, k) => {
@@ -250,21 +261,25 @@ function computeHD() {
   visible.sort((a, b) => a[1] - b[1]); // le centre de l'écran d'abord
   let total = 0;
   const byRow = visible.map(([r]) => r).sort((a, b) => a - b); // l'ordre des planches
+  // Un seul niveau se charge : le plus fin qui couvre tout l'écran. Les niveaux plus grossiers
+  // déjà en mémoire restent affichés dessous le temps qu'il arrive, sans rien télécharger de plus
+  // (avant : les trois niveaux téléchargeaient les mêmes vignettes, et 768 Mo de textures).
+  let finest = null;
+  for (const t of HD_TIERS) if (dpx >= t.from && visible.length <= hdCapacity(t)) finest = t;
   HD_TIERS.forEach((t) => {
-    const on = dpx >= t.from && hdTexture(t) && visible.length <= t.cap;
-    t.order = on ? byRow.map((r) => ({ r, id: state.map.ids[r] })) : [];
+    const active = t === finest && hdTexture(t);
+    const fallback = !active && finest && t.tex && HD_TIERS.indexOf(t) < HD_TIERS.indexOf(finest);
+    t.order = active || fallback ? byRow.map((r) => ({ r, id: state.map.ids[r] })) : [];
     t.wanted = new Set(t.order.map((d) => d.id));
-    if (on) total = visible.length;
+    if (active) total = visible.length;
   });
-  // file d'attente : du centre vers les bords ; le niveau le plus fin d'abord (peu d'images,
-  // celles qu'on regarde), puis le niveau moyen
-  [...HD_TIERS].reverse().forEach((t) => {
-    if (!t.order.length) return;
+  // file d'attente : du centre vers les bords, pour le seul niveau actif
+  if (finest && finest.tex) {
     for (const [r] of visible) {
       const id = state.map.ids[r];
-      if (!t.cache.has(id)) hdQueue.push({ t, id, gen: hdClock });
+      if (!finest.cache.has(id)) hdQueue.push({ t: finest, id, gen: hdClock });
     }
-  });
+  }
   HD_TIERS.forEach(hdShown);
   hdPump();
   $("hint").textContent = total
@@ -382,7 +397,7 @@ function redraw() {
       getTextAnchor: "middle", getAlignmentBaseline: "center",
       // Avec des centaines de groupes, les étiquettes se chevauchent : celles des plus
       // grands groupes passent devant, les autres apparaissent en zoomant.
-      extensions: deck.CollisionFilterExtension ? [new deck.CollisionFilterExtension()] : [],
+      extensions: COLLISION_EXT,
       collisionEnabled: true, getCollisionPriority: (d) => d.size || 0,
       collisionTestProps: { sizeScale: 1.6 },
     }));

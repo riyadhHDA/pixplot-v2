@@ -32,7 +32,7 @@ function showTooltip(info) {
 // ------------------------------------------------------------------ groupes
 function renderGroups() {
   $("groups").innerHTML = state.clusters.map((g) => {
-    const dom = Object.entries(g.dominant).slice(0, 3).map(([k, vs]) =>
+    const dom = Object.entries(g.dominant).filter(([, vs]) => vs && vs.length).slice(0, 3).map(([k, vs]) =>
       `${esc(LABELS[k] || k)} : ${esc(SLUG_KEYS.has(k) && /^[\w-]+$/.test(vs[0].value) ? pretty(vs[0].value) : vs[0].value)} (${Math.round(vs[0].share * 100)} %)`).join("<br>");
     const col = PALETTE[g.cluster % PALETTE.length].join(",");
     return `<li class="group" data-cluster="${g.cluster}">
@@ -64,6 +64,7 @@ function setHighlight(set, label) {
   updateStats();
 }
 function clearHighlight() {
+  clearTimeout(state.searchTimer); state.searchSeq++;   // annule une recherche instantanée en cours
   document.querySelectorAll(".group.active").forEach((x) => x.classList.remove("active"));
   $("search").value = "";
   $("search-clear").hidden = true;
@@ -101,7 +102,7 @@ function spaceAbout(key) {
 function spaceTabs(current) {
   if (state.spaces.length < 2) return "";
   return `<div class="spaces" role="tablist" aria-label="Voisines selon">${state.spaces.map((s) =>
-    `<button class="space ${s.key === current ? "on" : ""}" data-space="${s.key}" title="${esc(s.about)}" role="tab"
+    `<button class="space ${s.key === current ? "on" : ""}" data-space="${esc(s.key)}" title="${esc(s.about)}" role="tab"
       aria-selected="${s.key === current}">${esc(SPACE_SHORT[s.key] || s.label)}</button>`).join("")}</div>`;
 }
 
@@ -224,7 +225,9 @@ async function openCompare() {
 // forme), dessinées sur les deux images avec le même numéro et la même couleur.
 const WHY_COLORS = ["#e0b040", "#56b4e9", "#cc79a7", "#00b079", "#f0e442", "#d55e00", "#0072b2", "#ffffff"];
 
+let whySeq = 0;
 function clearWhy() {
+  whySeq++;
   document.querySelectorAll("#compare-body .why-box").forEach((el) => el.remove());
   document.querySelectorAll("#compare-body [data-why]").forEach((el) => el.classList.remove("on"));
   const box = $("cmp-why"); if (box) { box.hidden = true; box.innerHTML = ""; }
@@ -234,14 +237,17 @@ async function showWhy(idA, idB, nA, nB, btn) {
   const wasOn = btn.classList.contains("on");
   clearWhy();
   if (wasOn) return;                                       // second clic : on efface
+  const seq = whySeq;
   let r;
   try { r = await getJSON(`/api/correspond?a=${idA}&b=${idB}`); } catch (err) { toast(`Échec : ${err.message}`); return; }
+  if (seq !== whySeq) return;                              // un autre clic est passé entre-temps
   btn.classList.add("on");
   const draw = (id, key) => {
     const fig = document.querySelector(`#compare-body .cmp[data-id="${id}"] .cmp-img`);
     const img = fig && fig.querySelector("img");
     if (!img) return;
     const place = () => {
+      if (seq !== whySeq) return;
       fig.querySelectorAll(".why-box").forEach((el) => el.remove());
       const rect = imageRect(img);
       r.pairs.forEach((p, k) => {

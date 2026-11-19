@@ -16,6 +16,7 @@ garde sa ligne (marquée 2), elle ne décale jamais les autres (bug du PixPlot v
 from __future__ import annotations
 
 import json
+import os
 import time
 from collections import deque
 from concurrent.futures import ThreadPoolExecutor
@@ -98,6 +99,7 @@ def extract(
             return row, None, None, f"{type(exc).__name__}: {exc}"
 
     processed, start = 0, time.perf_counter()
+    done_rows: list[int] = []
     try:
         with ThreadPoolExecutor(max_workers=workers) as pool, \
                 open(run.path / "failures.jsonl", "a", encoding="utf-8") as failures:
@@ -129,25 +131,26 @@ def extract(
                     if r_vec is not None and out.patch_grid is not None:
                         masks = np.stack([letterbox_mask(it[2], size, encoder.patch_size) for it in good])
                         r_vec[rows] = pool_regions(out.patch_grid, grids, masks).astype(np.float16)
-                    status[rows] = OK
+                    done_rows.extend(rows.tolist())   # marqué « fait » au prochain enregistrement
 
                 processed += len(items)
                 n_batches += 1
                 if n_batches % flush_every == 0:
-                    _flush(g_vec, r_vec, status)
+                    _commit(g_vec, r_vec, status, done_rows)
                     failures.flush()
                 if progress:
                     progress(done_before + processed, total)
     except BaseException as exc:
-        _flush(g_vec, r_vec, status)
+        _commit(g_vec, r_vec, status, done_rows)
         run.fail("interrompu par l'utilisateur" if isinstance(exc, KeyboardInterrupt) else exc)
         raise
 
-    _flush(g_vec, r_vec, status)
+    _commit(g_vec, r_vec, status, done_rows)
     elapsed = time.perf_counter() - start
     extra = {}
     if getattr(encoder, "center_after", False):
-        extra["centered"] = center_vectors(run.path, g_vec, status)
+        del g_vec                                   # libère global.npy (remplacé par sa version centrée)
+        extra["centered"] = center_vectors(run.path, status)
     run.complete(
         **extra,
         count=total,
@@ -160,24 +163,49 @@ def extract(
     return run
 
 
-def center_vectors(path: Path, g_vec, status, block: int = 65536) -> bool:
+def center_vectors(path: Path, status, block: int = 65536) -> bool:
     """Retire la moyenne du corpus puis renormalise. Pour les espaces faits de statistiques
     (couleur, touche), une composante commune domine sinon toutes les similarités. La
-    moyenne est gardée dans ``center.npy`` (traçabilité)."""
+    moyenne est gardée dans ``center.npy`` (traçabilité).
+
+    Sans risque de double centrage : la version centrée est écrite à part puis remplace
+    ``global.npy`` d'un coup ; ``center.npy`` n'existe qu'une fois ce remplacement fait, et sa
+    présence signale à une reprise que le centrage est déjà fait."""
+    path = Path(path)
+    if (path / "center.npy").exists():
+        return True                                  # déjà centré (reprise après le remplacement)
     rows = np.flatnonzero(status == OK)
     if not len(rows):
         return False
+    g_vec = np.load(path / "global.npy", mmap_mode="r")
     total = np.zeros(g_vec.shape[1], dtype=np.float64)
     for s in range(0, len(rows), block):
         total += g_vec[rows[s:s + block]].astype(np.float64).sum(axis=0)
     mean = (total / len(rows)).astype(np.float32)
-    np.save(Path(path) / "center.npy", mean)
+    tmp = path / "global.centering.npy"
+    out = open_memmap(tmp, "w+", np.float16, g_vec.shape)
+    out[:] = g_vec[:]                                # lignes en échec recopiées telles quelles
     for s in range(0, len(rows), block):
         r = rows[s:s + block]
         v = g_vec[r].astype(np.float32) - mean
-        g_vec[r] = (v / np.maximum(np.linalg.norm(v, axis=1, keepdims=True), 1e-12)).astype(np.float16)
-    g_vec.flush()
+        out[r] = (v / np.maximum(np.linalg.norm(v, axis=1, keepdims=True), 1e-12)).astype(np.float16)
+    out.flush()
+    del out, g_vec                                   # Windows : fermer avant de remplacer
+    import gc
+    gc.collect()
+    os.replace(tmp, path / "global.npy")
+    np.save(path / "center.npy", mean)
     return True
+
+
+def _commit(g_vec, r_vec, status, done_rows: list[int]) -> None:
+    """Écrit d'abord les vecteurs sur le disque, ensuite seulement les marques « fait » : après une
+    coupure, une œuvre marquée faite a toujours ses vecteurs (sinon elle resterait à zéro)."""
+    _flush(g_vec, r_vec)
+    if done_rows:
+        status[np.asarray(done_rows)] = OK
+        done_rows.clear()
+    _flush(status)
 
 
 def _flush(*arrays) -> None:

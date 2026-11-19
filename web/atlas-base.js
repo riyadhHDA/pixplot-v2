@@ -26,10 +26,13 @@ const LABELS = { artist: "Artiste", style: "Style", genre: "Genre", date: "Date"
 // Les autres (titres, dates, sources, cotes) sont affichées telles quelles.
 const SLUG_KEYS = new Set(["artist", "style", "genre"]);
 const $ = (id) => document.getElementById(id);
+// minimum et maximum sans « ...tableau » (qui dépasse la pile au-delà de ~65 000 valeurs)
+const minMax = (xs) => { let lo = Infinity, hi = -Infinity; for (const x of xs) { if (x < lo) lo = x; if (x > hi) hi = x; } return [lo, hi]; };
 const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const pretty = (v) => String(v ?? "").replace(/_/g, " ").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const state = {
+  searchSeq: 0, searchTimer: null,
   info: null, map: null, clusters: [], n: 0, comm: {},
   positions: null, rowOf: new Map(),
   colorMode: "cluster", highlight: null, highlightLabel: "",
@@ -113,7 +116,7 @@ async function init() {
   if (m.lat || Object.keys(state.info.places || {}).length) other.push(["geo", "Géographie (lieux)"]);
   if (other.length) groups.push(["Dates et lieux", other]);
   $("layout").innerHTML = groups.map(([g, opts]) => `<optgroup label="${esc(g)}">${opts.map(([v, l]) =>
-    `<option value="${v}">${esc(l)}</option>`).join("")}</optgroup>`).join("");
+    `<option value="${esc(v)}">${esc(l)}</option>`).join("")}</optgroup>`).join("");
   $("groups-count").textContent = `· ${state.clusters.length}`;
   $("open-suspects").hidden = !Object.keys(state.info.suspects || {}).length && !Object.keys(state.info.annotated_pairs || {}).length;
   $("open-disagreements").hidden = !Object.keys(state.info.disagreements || {}).length;

@@ -17,7 +17,7 @@ function buildColorOptions() {
   }
   opts.push(["atypicality", "Atypicité"]);
   for (const key of Object.keys(state.map.categories)) opts.push([`meta:${key}`, LABELS[key] || pretty(key)]);
-  sel.innerHTML = opts.map(([v, l]) => `<option value="${v}">${esc(l)}</option>`).join("");
+  sel.innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join("");
 }
 
 function categoryInfo(key) {
@@ -50,7 +50,12 @@ function baseColor(i, ctx) {
   return ctx.colorOf.get(ctx.cat.codes[i]) || GREY;
 }
 
+// Le tableau n'est recalculé que si le mode de couleur, la surbrillance ou les groupes chargés
+// changent : même référence → deck.gl ne le renvoie pas à la carte graphique.
+let colorCache = { key: null, hl: null, out: null };
 function colorArray() {
+  const key = `${state.colorMode}|${state.highlightLabel}|${Object.keys(state.comm || {}).length}`;
+  if (colorCache.out && colorCache.key === key && colorCache.hl === state.highlight) return colorCache.out;
   const out = new Uint8Array(state.n * 4);
   const ctx = state.colorMode.startsWith("meta:") ? categoryInfo(state.colorMode.slice(5)) : null;
   for (let i = 0; i < state.n; i++) {
@@ -59,6 +64,7 @@ function colorArray() {
     out[4 * i] = c[0]; out[4 * i + 1] = c[1]; out[4 * i + 2] = c[2];
     out[4 * i + 3] = on ? 230 : 28;
   }
+  colorCache = { key, hl: state.highlight, out };
   return out;
 }
 

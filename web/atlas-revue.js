@@ -179,6 +179,7 @@ async function reviewUndo() {
 
 function reviewKeys(e) {
   if ($("review").hidden) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;       // Ctrl+R = recharger, pas « rejeter »
   const k = e.key;
   let handled = true;
   if (k === "Escape") closeReviewSession();
@@ -277,7 +278,7 @@ async function renderDisagreements(near, far, offset = 0) {
     $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`; return;
   }
   const spaces = [...new Set(combos.flatMap((c) => c.split(">")))];
-  const opt = (sel) => spaces.map((s) => `<option value="${s}" ${s === sel ? "selected" : ""}>${esc(SPACE_SHORT[s] || s)}</option>`).join("");
+  const opt = (sel) => spaces.map((s) => `<option value="${esc(s)}" ${s === sel ? "selected" : ""}>${esc(SPACE_SHORT[s] || s)}</option>`).join("");
   const rows = res.items.map((d) => `<li class="pair-item">
       <div class="pair-thumbs">
         <button data-id="${d.a}" title="${esc(prettyLabel(d.label_a))}"><img src="/api/thumb/256/${d.a}" alt="" loading="lazy"></button>
@@ -324,7 +325,7 @@ async function renderSuspects(key, offset) {
     $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`; return;
   }
   const space = state.spaces.find((s) => s.key === res.space);
-  const tabs = res.keys.map((k) => `<button class="space ${k === res.key ? "on" : ""}" data-key="${k}">${esc(LABELS[k] || pretty(k))}
+  const tabs = res.keys.map((k) => `<button class="space ${k === res.key ? "on" : ""}" data-key="${esc(k)}">${esc(LABELS[k] || pretty(k))}
     <small>${state.info.suspects[k] ?? ""}</small></button>`).join("");
   const rows = res.items.map((d) => `<li class="suspect">
       <button class="s-main" data-id="${d.id}"><img src="/api/thumb/256/${d.id}" alt="" loading="lazy"></button>

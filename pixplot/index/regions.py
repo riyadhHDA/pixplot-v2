@@ -89,8 +89,10 @@ def build_region_index(features: Run, pca_dim: int = 256, runs_dir: Path | None 
         region_ids.append(ids[rows[s:s + 4096]][r_idx])
         region_cells.append(keep_cells[c_idx])
         if len(r_idx):
-            take = rng.choice(len(r_idx), min(len(r_idx), max(1, 200_000 * 4096 // max(len(rows), 1))), replace=False)
+            take = rng.choice(len(r_idx), min(len(r_idx), max(1, 200_000 * len(rows[s:s + 4096]) // max(len(rows), 1))), replace=False)
             sample.append(chunk[r_idx[take], c_idx[take]])
+    if not region_ids or not sample:
+        raise RuntimeError("Aucune zone à indexer (aucune œuvre traitée dans ce run)")
     region_ids = np.concatenate(region_ids).astype(np.int64)
     region_cells = np.concatenate(region_cells).astype(np.int16)
     sample = np.concatenate(sample)

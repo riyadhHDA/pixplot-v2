@@ -642,3 +642,42 @@ def test_correspondences_mutual_and_masked():
     col = np.mean([S[r, j] for r in valid if r != i])
     assert np.isclose(x["lift"], round(S[i, j] - max(row, col), 4), atol=1e-4)
     assert match(cells_of(Ra), cells_of(Rb), boxes, boxes, k=0) == []
+
+
+def test_center_vectors_once(tmp_path):
+    """Centrage (couleur, touche) : remplacé d'un coup, jamais refait à la reprise (audit Argon)."""
+    from numpy.lib.format import open_memmap
+
+    from pixplot.features.extract import FAILED, OK, center_vectors
+
+    rng = np.random.default_rng(4)
+    V = (rng.normal(size=(50, 8)) + 3).astype(np.float16)            # une forte composante commune
+    g = open_memmap(tmp_path / "global.npy", "w+", np.float16, V.shape)
+    g[:] = V
+    g.flush()
+    del g
+    status = np.full(50, OK, dtype=np.int8)
+    status[7] = FAILED
+    assert center_vectors(tmp_path, status)
+    once = np.load(tmp_path / "global.npy").astype(np.float32)
+    ok = status == OK
+    assert abs(once[ok].mean(axis=0)).max() < 0.2                    # moyenne retirée
+    assert np.allclose(np.linalg.norm(once[ok], axis=1), 1, atol=1e-2)
+    assert np.array_equal(once[7], V[7].astype(np.float32))          # ligne en échec intacte
+    assert not (tmp_path / "global.centering.npy").exists()
+    assert center_vectors(tmp_path, status)                          # reprise : rien ne change
+    assert np.array_equal(np.load(tmp_path / "global.npy").astype(np.float32), once)
+
+
+def test_neighbors_small_corpus():
+    """Corpus plus petit que k : pas de -1 ni de -3,4e38 de FAISS gardés comme voisines."""
+    pytest.importorskip("faiss")
+    from pixplot.analysis.layout import neighbors
+
+    X = np.eye(5, dtype=np.float32)
+    rows, scores = neighbors(X, k=8)
+    assert rows.shape == (5, 8)
+    for i in range(5):
+        real = rows[i][rows[i] >= 0]
+        assert i not in real and len(real) == 4
+        assert (scores[i][rows[i] < 0] == 0).all() and np.isfinite(scores[i]).all()

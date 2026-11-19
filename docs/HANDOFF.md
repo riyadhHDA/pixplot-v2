@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 19/11/2026.*
+*Dernière mise à jour : 19/11/2026, soir.*
 
 ## Version publiée
 
@@ -14,6 +14,35 @@ lecture seule ; PixPlot dans Antigravity par `.agents/mcp_config.json`), compét
 le site. **0.16.0** : « Pourquoi ces deux œuvres se ressemblent ? » dans le comparateur (ARCHITECTURE § 25). Avant : **0.15.1**, tests sur GitHub (Linux et Windows), Atlas découpé en 8 scripts, projet
 citable (CITATION.cff, DOI Zenodo à chaque release). Avant : 0.15.0, la composition (ARCHITECTURE § 24). Historique
 complet dans le [CHANGELOG](../CHANGELOG.fr.md), étapes suivantes dans la [ROADMAP](../ROADMAP.fr.md).
+
+## Fait dans main, pas encore commité (19/11/2026, audits de Gemini 4 Argon)
+
+Trois audits par Antigravity (modèle Gemini 4 Argon High, en lecture seule) ; textes complets dans
+`data/audit_argon_{1,2,3}.md` (non versionnés). Chaque point a été vérifié dans le code avant d'être
+corrigé ; 63 tests passent, Atlas vérifié.
+
+- **Corrigé, interface** : chronologie au-delà de ~65 000 dates (Math.min(...)), couleurs recalculées
+  à chaque dessin, trois niveaux HD chargés à la fois (768 Mo), clés HTML non échappées, **Ctrl+R en
+  relecture rapide qui rejetait la paire**, réponses de recherche périmées, « Pourquoi ? » superposé,
+  ImageBitmap non fermés, cadre de détail tracé avant le chargement, petites fautes.
+- **Corrigé, sécurité** : l'API refuse les noms d'hôte autres que cette machine (DNS rebinding) et les
+  écritures venues d'autres sites ; le relais Antigravity n'envoie que des fichiers du projet (pas
+  `data/`), plus d'`agy.cmd` ; le relais accepte jusqu'à 15 min et renvoie ses erreurs en clair.
+- **Corrigé, calculs** : marques « fait » écrites après les vecteurs ; centrage (couleur, touche) jamais
+  refait à une reprise ; **désaccords jugés depuis la bonne œuvre** (le centile n'est pas symétrique) ;
+  noms de groupes jamais tirés d'un calcul SigLIP 2 partiel ; voisines -1 de FAISS sur petit corpus ;
+  UMAP sur petit corpus ; `-k` < `--rank` ; échantillon de la PCA des zones ; `parent` à None.
+- **À refaire** : `pixplot --data data/wikiart81k disagreements` (les désaccords enregistrés datent
+  d'avant la correction de sens).
+- **Pas encore corrigé** (à faire ou à décider) :
+  - interface : panneau de droite et dispositions sans protection contre les réponses en retard
+    (I-2, I-4) ; erreurs du carnet silencieuses (M-1) ; réponses d'erreur non JSON (M-2) ; double
+    rechargement de la file de relecture (M-3) ; lots HD échoués non relancés (M-5) ;
+  - calculs : reprise de `pixplot zones` fragile, images en échec marquées faites (4) ; `merge_small`
+    de Leiden sommet par sommet (7) ; normalisation de la variante « cases communes » (8, méthode
+    non retenue) ; **P@1 de `pixplot bench` mesuré sur la première voisine étiquetée** (9 : changerait
+    les chiffres publiés, à décider avec l'utilisateur) ; cadres 4 × 4 si la grille de patchs n'est
+    pas multiple de 4 (12) ; renormalisation après float16 (13) ; mémoire au-delà de 100 000 œuvres (14).
 
 ## Travail en cours, sur une branche
 

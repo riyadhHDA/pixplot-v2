@@ -72,9 +72,37 @@ class RegionQuery(BaseModel):
     k: int = Field(30, ge=1, le=200)
 
 
-def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines | None = None) -> FastAPI:
+LOCAL_HOSTS = frozenset({"127.0.0.1", "localhost", "::1", "testserver"})
+
+
+def _hostname(value: str) -> str:
+    """« 127.0.0.1:8766 », « [::1]:8766 », « http://localhost:8766 » → nom d'hôte seul."""
+    from urllib.parse import urlsplit
+    v = value if "//" in value else "//" + value
+    return (urlsplit(v).hostname or "").lower()
+
+
+def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines | None = None,
+               local_only: bool = True) -> FastAPI:
     app = FastAPI(title="PixPlot v2", docs_url="/api/docs", redoc_url=None)
     app.add_middleware(GZipMiddleware, minimum_size=2048)
+
+    @app.middleware("http")
+    async def same_machine_only(request, call_next):
+        # Protège un serveur local contre les autres sites ouverts dans le navigateur :
+        # - « DNS rebinding » : un site dont le nom pointe vers 127.0.0.1 parlerait à l'Atlas
+        #   comme s'il était chez lui ; on refuse tout nom d'hôte qui n'est pas cette machine ;
+        # - écritures venues d'une autre page (formulaire ou fetch d'un autre site) : une requête
+        #   qui modifie (carnet, paires, relecture) doit venir de l'Atlas lui-même.
+        host = _hostname(request.headers.get("host", ""))
+        if local_only and host not in LOCAL_HOSTS:
+            return JSONResponse({"detail": "Hôte refusé : l'Atlas n'accepte que cette machine"}, status_code=403)
+        origin = request.headers.get("origin")
+        if request.method in ("POST", "PUT", "PATCH", "DELETE") and origin and origin != "null":
+            same = _hostname(origin) == host and origin.rstrip("/").endswith(request.headers.get("host", ""))
+            if not same:
+                return JSONResponse({"detail": "Requête refusée : elle ne vient pas de l'Atlas"}, status_code=403)
+        return await call_next(request)
     map_cache: dict = {}
 
     @app.middleware("http")

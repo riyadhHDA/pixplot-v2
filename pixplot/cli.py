@@ -378,7 +378,8 @@ def cmd_serve(args) -> int:
         print("Attention : le serveur est accessible depuis le réseau, images comprises.")
     if args.open:
         webbrowser.open(url)
-    uvicorn.run(create_app(data), host=args.host, port=args.port, log_level="warning")
+    local = args.host in ("127.0.0.1", "localhost", "::1")
+    uvicorn.run(create_app(data, local_only=local), host=args.host, port=args.port, log_level="warning")
     return 0
 
 

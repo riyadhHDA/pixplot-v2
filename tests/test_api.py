@@ -109,3 +109,17 @@ def test_sprites_cover_every_artwork(client):
 def test_sprite_cell_size():
     from pixplot.analysis.sprites import cell_size
     assert cell_size(2_000) == 64 and cell_size(500_000) == 32
+
+
+def test_same_machine_only(client):
+    """Un autre site ouvert dans le navigateur ne peut ni se faire passer pour l'Atlas (DNS
+    rebinding), ni écrire dans le carnet ou les paires."""
+    c, _ = client
+    assert c.get("/api/info").status_code == 200
+    assert c.get("/api/info", headers={"host": "evil.example:8766"}).status_code == 403
+    assert c.get("/api/info", headers={"host": "127.0.0.1:8766"}).status_code == 200
+    assert c.get("/api/info", headers={"host": "[::1]:8766"}).status_code == 200
+    bad = c.post("/api/notebook", json={"kind": "note", "title": "x"}, headers={"origin": "https://evil.example"})
+    assert bad.status_code == 403 and "Atlas" in bad.json()["detail"]
+    ok = c.post("/api/notebook", json={"kind": "note", "title": "x"}, headers={"origin": "http://testserver"})
+    assert ok.status_code != 403
