@@ -16,7 +16,7 @@ import numpy as np
 
 from ..catalog import db
 from ..catalog.metadata import get_metadata
-from ..analysis import communities, critique, disagreements, duplicates
+from ..analysis import communities, critique, disagreements, duplicates, order
 from ..analysis import iconclass
 from ..analysis.naming import load_names
 from ..analysis.spacemaps import available_maps, load_space_map
@@ -312,6 +312,10 @@ class AtlasData:
         }
         if self.hdbscan is not None:
             payload["hdbscan"] = self.hdbscan.tolist()
+        hc = order.load(self.analysis)
+        if hc is not None and len(hc) == len(self.ids):     # entropie et complexité (pixplot ordre)
+            payload["entropy"] = [None if np.isnan(v) else round(float(v), 3) for v in hc[:, 0]]
+            payload["complexity"] = [None if np.isnan(v) else round(float(v), 3) for v in hc[:, 1]]
         years = self.years()
         if sum(y is not None for y in years) >= max(2, len(years) // 20):
             payload["year"] = years

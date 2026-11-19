@@ -130,6 +130,38 @@ def _chromatic_split(im: Image.Image, levels: int = 4, max_side: int = 96) -> di
     }
 
 
+_N_PATTERNS = 24                                   # 4 ! ordres possibles des 4 pixels d'une fenêtre 2 × 2
+
+
+def entropy_complexity(lum: np.ndarray) -> tuple[float, float]:
+    """Entropie de permutation H et complexité statistique C d'une image en niveaux de gris
+    (Sigaki, Perc et Ribeiro, *PNAS* 2018, d'après Bandt et Pompe).
+
+    Chaque fenêtre 2 × 2 de pixels est réduite à l'**ordre** de ses quatre valeurs (24 ordres
+    possibles, égalités départagées par la position). H (0 à 1) dit si ces ordres sont répartis au
+    hasard (1 : bruit, matière désordonnée) ou concentrés sur quelques-uns (près de 0 : aplats,
+    dégradés réguliers). C (0 à ~0,5) est forte entre les deux extrêmes : un ordre structuré mais
+    non trivial. Dans l'article, les œuvres récentes vont vers plus de H et moins de C."""
+    lum = np.asarray(lum, dtype=np.float64)
+    if lum.ndim != 2 or min(lum.shape) < 2:
+        return 0.0, 0.0
+    win = np.stack([lum[:-1, :-1], lum[:-1, 1:], lum[1:, :-1], lum[1:, 1:]], axis=-1).reshape(-1, 4)
+    ranks = np.argsort(win, axis=1, kind="stable")
+    codes = ranks[:, 0] * 64 + ranks[:, 1] * 16 + ranks[:, 2] * 4 + ranks[:, 3]
+    counts = np.bincount(codes, minlength=256).astype(np.float64)
+    p = counts[counts > 0] / counts.sum()
+    n = _N_PATTERNS
+    s_p = float(-(p * np.log(p)).sum())
+    h = s_p / np.log(n)
+    full = np.zeros(n)
+    full[:len(p)] = p                                   # l'ordre des cases n'importe pas ici
+    mix = (full + 1.0 / n) / 2
+    s_mix = float(-(mix[mix > 0] * np.log(mix[mix > 0])).sum())
+    js = s_mix - s_p / 2 - np.log(n) / 2                # divergence de Jensen-Shannon avec l'uniforme
+    q0 = -2.0 / (((n + 1) / n) * np.log(n + 1) - 2 * np.log(2 * n) + np.log(n))
+    return float(abs(h)), float(abs(q0 * js * h))
+
+
 def measure_image(im: Image.Image, max_side: int = 256) -> dict:
     """Calcule les mesures visuelles de Stork (2024) sur une image PIL."""
     rgb = im.convert("RGB")
@@ -163,6 +195,9 @@ def measure_image(im: Image.Image, max_side: int = 256) -> dict:
     # Entropie chromatique et première coupe compositionnelle
     chroma = _chromatic_split(rgb)
 
+    # Ordre et désordre de la matière (Sigaki, Perc et Ribeiro, 2018)
+    h_perm, c_perm = entropy_complexity(lum)
+
     return {
         "aspect_ratio": round(orig_w / max(orig_h, 1), 3),
         "balance": {
@@ -179,6 +214,7 @@ def measure_image(im: Image.Image, max_side: int = 256) -> dict:
             "dark_share": round(dark_share, 3),
         },
         "chromatic": chroma,
+        "order": {"permutation_entropy": round(h_perm, 3), "complexity": round(c_perm, 3)},
         "note": NOTE,
     }
 

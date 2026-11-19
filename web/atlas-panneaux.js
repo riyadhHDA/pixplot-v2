@@ -380,6 +380,7 @@ function renderMeasuresBody(m) {
         <dt>Barycentre (clarté)</dt><dd>${Math.round(lx * 100)} % → · ${Math.round(ly * 100)} % ↓ <small>(écart centre ${(m.balance.center_offset * 100).toFixed(1)} %, dispersion ${(m.balance.local_spread * 100).toFixed(1)} %)</small></dd>
         <dt>Symétrie gauche-droite</dt><dd>${m.symmetry_lr.toFixed(2)} <small>(−1 à +1)</small></dd>
         <dt>Entropie chromatique</dt><dd>${sp.entropy_bits.toFixed(2)} / ${sp.max_bits.toFixed(1)} bits · coupe ${esc(sp.split_orientation)} à ${Math.round(sp.split_position * 100)} % <small>(gain ${sp.split_gain_bits.toFixed(2)} bits)</small></dd>
+        ${m.order ? `<dt>Ordre de la matière</dt><dd>désordre ${m.order.permutation_entropy.toFixed(2)} <small>(0 aplat → 1 bruit)</small> · complexité ${m.order.complexity.toFixed(2)} <small>(Sigaki et al., 2018)</small></dd>` : ""}
         <dt>Clarté et part sombre</dt><dd>moy. ${Math.round(m.tone.mean_lightness * 100)} % · contraste ${Math.round(m.tone.contrast_p5_p95 * 100)} % · tons sombres ${Math.round(m.tone.dark_share * 100)} %</dd>
       </dl>
     </div>

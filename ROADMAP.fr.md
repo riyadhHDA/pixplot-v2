@@ -89,7 +89,7 @@ chiffres et on passe à autre chose.
 
 ## Plus tard, ou à surveiller
 
-- **Entropie et complexité** (Sigaki, Perc et Ribeiro, PNAS 2018) : un regard « ordre et
+- **Entropie et complexité** (Sigaki, Perc et Ribeiro, PNAS 2018) *(fait, pas encore publié : `pixplot ordre`, couleur de la carte et fiche d'œuvre)* : un regard « ordre et
   complexité » calculé sans GPU, et un axe possible pour la chronologie.
 - **ArtEmis** (CVPR 2021) : 455 000 annotations d'émotion sur les œuvres de WikiArt ; les
   regards captent-ils l'effet ressenti ou seulement le sujet ?
@@ -100,17 +100,19 @@ chiffres et on passe à autre chose.
   ARCHITECTURE § 26)* : projection 2D sur deux concepts SigLIP 2, équilibre visuel et entropie
   chromatique sans GPU.
 - **Pistes issues des lectures récentes** (à passer aux bancs d'essai sur ce PC) :
-  - **LocalMAP** (AAAI 2025, `pacmap`, 100 % CPU) *(évalué, pas encore publié)* : à peine meilleur
+  - **LocalMAP** (AAAI 2025, `pacmap`, 100 % CPU) *(évalué en 0.19.0, ARCHITECTURE § 29)* : à peine meilleur
     qu'UMAP sur les étiquettes des voisines (+1,5 point), mais carte coupée en îlots et plus entassée.
     Non retenu pour la carte principale ; proposé comme carte d'essai (`pixplot maps --localmap`).
-  - **CSD** (ECCV 2024) pour le style pur face à la « touche », **SSCD** (CVPR 2022) pour les copies,
-    gravures et inversions miroir, et **Depth Anything V2** (NeurIPS 2024) comme piste de composition
-    par la profondeur après le résultat négatif de PE-Spatial (§ 24).
+  - **SSCD** (CVPR 2022) pour les copies *(évalué en 0.19.0, § 27 : non retenu comme regard, mais
+    sert à repérer les doublons)* et **Depth Anything V2** (NeurIPS 2024) pour la composition par la
+    profondeur *(évalué en 0.19.0, § 28 : non retenu)*.
+  - **CSD** (ECCV 2024) pour le style pur face à la « touche », et **PE-Core** face à SigLIP 2 pour le
+    « sujet » *(en cours d'évaluation)*.
   - **Postures et regards** (Stork § 8.3 & § 9.3.1 ; *Human-Art* CVPR 2023 ; Madhu et al.) :
     détection de squelettes pour les *Pathosformeln* et la symétrie des figures.
   - **Auto-encodeurs parcimonieux** (*PatchSAE* ICLR 2025, *Matryoshka SAE* ICML 2025) sur les
     vecteurs déjà calculés, et hiérarchie Iconclass enrichie (*Visual Narratives*, WACV 2024).
-- **Collection Space Navigator** (Ohm et al., 2023) *(fait, pas encore publié)* : filtres combinés
+- **Collection Space Navigator** (Ohm et al., 2023) *(fait en 0.19.0)* : filtres combinés
   dans l'Atlas (étiquettes, groupes, atypicité, dates) avec comptes croisés, sélection envoyée au
   carnet ou dans un Research Pack (`web/atlas-filtres.js`, touche F).
 

@@ -16,6 +16,7 @@ function buildColorOptions() {
     opts.push([`leiden:${sp}:family`, `Familles Leiden · ${name}`], [`leiden:${sp}:group`, `Groupes Leiden · ${name}`]);
   }
   opts.push(["atypicality", "Atypicité"]);
+  if (state.map.entropy) opts.push(["entropy", "Désordre de la matière (entropie)"], ["complexity", "Complexité de la matière"]);
   for (const key of Object.keys(state.map.categories)) opts.push([`meta:${key}`, LABELS[key] || pretty(key)]);
   sel.innerHTML = opts.map(([v, l]) => `<option value="${esc(v)}">${esc(l)}</option>`).join("");
 }
@@ -29,6 +30,17 @@ function categoryInfo(key) {
     .sort((a, b) => b[1] - a[1]);
   const colorOf = new Map(ranked.slice(0, 12).map(([code], k) => [code, PALETTE[k]]));
   return { cat, counts, ranked, colorOf };
+}
+
+const orderRanks = {};
+function orderRank(mode) {
+  if (orderRanks[mode]) return orderRanks[mode];
+  const v = state.map[mode], idx = [];
+  for (let i = 0; i < v.length; i++) if (v[i] != null) idx.push(i);
+  idx.sort((x, y) => v[x] - v[y]);
+  const r = new Float32Array(v.length).fill(NaN);
+  idx.forEach((i, k) => { r[i] = k / Math.max(1, idx.length - 1); });
+  return (orderRanks[mode] = r);
 }
 
 function baseColor(i, ctx) {
@@ -45,6 +57,13 @@ function baseColor(i, ctx) {
   }
   if (mode === "atypicality") {
     const t = state.map.atypicality[i];
+    return [40 + 215 * t, 70 + 110 * t, 140 - 100 * t];
+  }
+  if (mode === "entropy" || mode === "complexity") {
+    // couleur selon le RANG (0 = la plus basse du corpus, 1 = la plus haute) : les valeurs se
+    // tassent entre 0,90 et 0,98, une échelle brute serait presque uniforme
+    const t = orderRank(mode)[i];
+    if (Number.isNaN(t)) return [70, 70, 74];
     return [40 + 215 * t, 70 + 110 * t, 140 - 100 * t];
   }
   return ctx.colorOf.get(ctx.cat.codes[i]) || GREY;
@@ -74,6 +93,16 @@ function renderLegend() {
   if (mode === "atypicality") {
     el.innerHTML = `<div>Atypicité</div><div class="ramp" style="background:linear-gradient(90deg,rgb(40,70,140),rgb(255,180,40))"></div>
       <div class="ends"><span>bien entourée</span><span>isolée</span></div>`;
+    return;
+  }
+  if (mode === "entropy" || mode === "complexity") {
+    const ent = mode === "entropy";
+    el.innerHTML = `<div>${ent ? "Désordre de la matière (entropie de permutation)" : "Complexité de la matière"}</div>
+      <div class="ramp" style="background:linear-gradient(90deg,rgb(40,70,140),rgb(255,180,40))"></div>
+      <div class="ends"><span>${ent ? "les plus ordonnées" : "les moins complexes"}</span><span>${ent ? "les plus désordonnées" : "les plus complexes"}</span></div>
+      <div style="color:var(--muted);max-width:240px">Couleur selon le rang dans le corpus. ${ent ? "Ordonné : aplats, dégradés ; désordonné : touches, points, grain." : "Complexe : un ordre structuré, ni aplat ni bruit."}</div>
+      <div style="color:var(--muted);max-width:240px">D'après Sigaki, Perc et Ribeiro (PNAS 2018), sur la reproduction : la
+      compression et la photographie comptent aussi. Aucun jugement de valeur.</div>`;
     return;
   }
   if (mode === "cluster" || mode === "hdbscan") { el.innerHTML = ""; return; }

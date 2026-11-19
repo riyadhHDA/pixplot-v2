@@ -87,7 +87,7 @@ miss. Failed attempts are documented with their numbers and dropped.
 
 ## Later, or to watch
 
-- **Entropy and complexity** (Sigaki, Perc and Ribeiro, PNAS 2018): an "order and complexity" way
+- **Entropy and complexity** (Sigaki, Perc and Ribeiro, PNAS 2018) *(done, not yet released: `pixplot ordre`, map colour and artwork record)*: an "order and complexity" way
   of seeing computed without a GPU, and a possible axis for the timeline.
 - **ArtEmis** (CVPR 2021): 455,000 emotion annotations on WikiArt works; do the ways of seeing
   capture the felt effect or only the subject?
@@ -98,17 +98,19 @@ miss. Failed attempts are documented with their numbers and dropped.
   ARCHITECTURE § 26)*: 2D projection on two SigLIP 2 concepts, neural-free visual balance and
   chromatic entropy.
 - **Leads from recent readings** (to benchmark locally on this PC):
-  - **LocalMAP** (AAAI 2025, `pacmap`, 100 % CPU) *(evaluated, not yet released)*: barely better than
+  - **LocalMAP** (AAAI 2025, `pacmap`, 100 % CPU) *(evaluated in 0.19.0, ARCHITECTURE § 29)*: barely better than
     UMAP on neighbours' labels (+1.5 points), but the map splits into islands and is more crowded. Not
     kept for the main map; offered as a trial map (`pixplot maps --localmap`).
-  - **CSD** (ECCV 2024) for pure style vs "touch", **SSCD** (CVPR 2022) for copies, prints and
-    mirror inversions, and **Depth Anything V2** (NeurIPS 2024) as a depth-based composition lead
-    after PE-Spatial's negative result (§ 24).
+  - **SSCD** (CVPR 2022) for copies *(evaluated in 0.19.0, § 27: not kept as a regard, but used to
+    find duplicates)* and **Depth Anything V2** (NeurIPS 2024) for composition through depth
+    *(evaluated in 0.19.0, § 28: not kept)*.
+  - **CSD** (ECCV 2024) for pure style vs "touch", and **PE-Core** vs SigLIP 2 for "subject"
+    *(being evaluated)*.
   - **Poses and gaze** (Stork § 8.3 & § 9.3.1; *Human-Art* CVPR 2023; Madhu et al.): skeleton
     detection for *Pathosformeln* and figure symmetry.
   - **Sparse autoencoders** (*PatchSAE* ICLR 2025, *Matryoshka SAE* ICML 2025) on already-computed
     vectors, and enriched Iconclass hierarchy (*Visual Narratives*, WACV 2024).
-- **Collection Space Navigator** (Ohm et al., 2023) *(done, not yet released)*: combined filters in
+- **Collection Space Navigator** (Ohm et al., 2023) *(done in 0.19.0)*: combined filters in
   the Atlas (labels, groups, atypicality, dates) with cross counts, selection sent to the notebook or a
   Research Pack (`web/atlas-filtres.js`, key F).
 

@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 19/11/2026 (publication de la 0.19.0).*
+*Dernière mise à jour : 19/11/2026 (après la 0.19.0 : PE-Core et CSD confiés à Neon, entropie et test d'installation par Claude).*
 
 ## Version publiée
 
@@ -60,11 +60,11 @@ corrigé ; 63 tests passent, Atlas vérifié.
   sujet » passe de 287 à 77 paires, « proche en sujet, loin en forme » de 85 à 39 (beaucoup d'anciennes
   paires étaient jugées depuis la mauvaise œuvre) ; les autres couples gardent 300 paires, dont 41 à
   77 % en commun avec l'ancien calcul.
-- **Pas encore corrigé** (à faire ou à décider) :
-  - interface : **corrigé le 19/11/2026, non commité** (I-2, I-4, M-1, M-2, M-3, M-5 : numéro par
+- **Points restants, traités ensuite** :
+  - interface : **corrigé le 19/11/2026, publié en 0.19.0** (I-2, I-4, M-1, M-2, M-3, M-5 : numéro par
     chargement du panneau et des vues, `httpError`/`sendJSON` dans `atlas-base.js`, carnet qui signale
     une note non enregistrée, file de relecture rechargée une seule fois, lots HD relancés 2 fois) ;
-  - calculs : **corrigé le 19/11/2026, non commité** (4, 7, 12, 13, 14 ; tests dans
+  - calculs : **corrigé le 19/11/2026, publié en 0.19.0** (4, 7, 12, 13, 14 ; tests dans
     `tests/test_audit_calc.py`) : reprise de `pixplot zones` (dernier run inachevé compatible, images
     illisibles laissées hors de l'index et retentées) ; `merge_small` rattache chaque petite communauté
     entière, dichotomie de Leiden qui reconnaît un graphe émietté ; cadres alignés sur le découpage
@@ -115,6 +115,29 @@ corrigé ; 63 tests passent, Atlas vérifié.
   reproduction rangée dans deux styles), 785 variantes (68 en désaccord). Résultats dans
   ARCHITECTURE § 29.
   Outil MCP `find_duplicates` (19 outils ; README, MCP et site FR + EN mis à jour).
+
+## En cours
+
+- **PE-Core et CSD confiés à Gemini 4 Neon** (19/11/2026) : PE-Core contre SigLIP 2 (regard sujet,
+  § 31) et CSD contre la touche (§ 32). Copie de travail `..\pixplot-pecore-csd`, branche
+  `gemini/pecore-csd`, consigne dans `PROMPT-gemini-pecore-csd.md` (non versionné). À relire puis
+  fusionner avec `.\scripts\nouvelle-tache.ps1 pecore-csd -Agent gemini -Terminer`.
+- **Claude** : mesure « entropie et complexité » (Sigaki et al., PNAS 2018, processeur seul ; § 33
+  après la fusion de Neon) et test d'installation dans un environnement vierge (condition de la 1.0).
+
+## Fait depuis 0.19.0 (sur `main`, non publié)
+
+- Docs remises à jour (feuille de route, AGENTS, passation) ; README : cas d'usage ; P@1 écrit (§ 30).
+- **Ordre et désordre de la matière** (Sigaki, Perc et Ribeiro, PNAS 2018) : entropie de permutation H
+  et complexité C sur la luminance des vignettes 256 px (fenêtres 2 × 2, 24 ordres possibles).
+  `connoisseur.entropy_complexity`, `pixplot/analysis/order.py`, commande `pixplot ordre` (quelques
+  minutes sur 81k, processeur seul) → `ordre.npy` dans l'analyse ; ligne « Ordre de la matière » dans
+  les mesures visuelles (fiche et outil MCP `measure_artwork`) ; couleurs « Désordre » et
+  « Complexité » de la carte (par rang dans le corpus, les valeurs brutes se tassant entre 0,90 et
+  0,98). Médianes par style sur WikiArt 81k : du plus ordonné, Minimalism (H 0,622, C 0,229) et
+  Color Field (0,712, 0,221), au plus désordonné, Post-Impressionism (0,956, 0,057) et Pointillism
+  (0,978, 0,028) ; par genre, abstract_painting (0,835) à illustration (0,950). Section ARCHITECTURE
+  § 33 à écrire après la fusion des §§ 31-32 de Neon.
 
 ## En attente de l'utilisateur
 

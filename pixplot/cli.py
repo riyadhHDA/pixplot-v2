@@ -480,6 +480,27 @@ def cmd_doublons(args) -> int:
     return 0
 
 
+def cmd_ordre(args) -> int:
+    from .analysis import order as O
+    from .api.data import AtlasData
+
+    s = get_settings(args.data)
+    analysis = _analysis_arg(s, args.analysis)
+    print(f"Analyse : {analysis.id} — ordre et désordre (entropie et complexité, Sigaki et al. 2018)", flush=True)
+    path = O.compute(analysis, s, workers=args.workers, say=lambda m: print(m, flush=True))
+    hc = O.load(analysis)
+    data = AtlasData.load(s, analysis)
+    for key in ("style", "genre"):
+        if key not in data.category_keys():
+            continue
+        rows = O.by_label([data.meta.get(int(i), {}).get(key) or "" for i in data.ids], hc)
+        print(f"\n{key} (médianes, du plus ordonné au plus désordonné) :")
+        for r in rows:
+            print(f"  {r['value'][:30]:<30} H {r['H']:.3f}  C {r['C']:.3f}  ({r['n']} œuvres)")
+    print(f"\nOrdre : {path}")
+    return 0
+
+
 def cmd_import_places(args) -> int:
     from .catalog import db
     from .catalog.places import import_places_csv
@@ -1037,6 +1058,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--localmap", action="store_true",
                    help="carte d'essai LocalMAP du regard principal (paquet pacmap ; pas mieux qu'UMAP, ARCHITECTURE)")
     p.set_defaults(func=cmd_maps)
+
+    p = sub.add_parser("ordre", help="entropie et complexité de la matière (Sigaki et al., PNAS 2018), sans GPU")
+    p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
+    p.add_argument("--workers", type=int, default=8, help="fils de lecture des vignettes")
+    p.set_defaults(func=cmd_ordre)
 
     p = sub.add_parser("doublons", help="œuvres entrées deux fois, répliques et variantes (vecteurs SSCD)")
     p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
