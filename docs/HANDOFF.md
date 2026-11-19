@@ -104,6 +104,7 @@ corrigé ; 63 tests passent, Atlas vérifié.
   copies. WikiArt 81k : 839 paires « même image » (702 avec deux styles différents : la même
   reproduction rangée dans deux styles), 785 variantes (68 en désaccord). Section ARCHITECTURE à
   écrire avec celle de LocalMAP.
+  Outil MCP `find_duplicates` (19 outils ; README, MCP et site FR + EN mis à jour).
 
 ## En attente de l'utilisateur
 

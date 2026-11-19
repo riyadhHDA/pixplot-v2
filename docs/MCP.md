@@ -29,6 +29,7 @@ verification stays with the historian.
 | `get_group` | a group of the map, most central works first |
 | `find_atypical` | the most isolated works (exceptions, cataloguing errors…) |
 | `check_labels` | labels contradicted by all the neighbours (possible errors or singular works) |
+| `find_duplicates` | works entered twice (same image) and close variants (replicas, series, copies), with the labels that contradict each other (`pixplot doublons`) |
 | `notebook_add` | adds a lead to the historian's **research notebook** (visible in the Atlas) |
 | `notebook_list` | reads the notebook back (most recent first) |
 | `export_research_pack` | traceable .zip dossier (see the README) |

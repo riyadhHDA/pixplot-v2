@@ -48,6 +48,8 @@ Méthode conseillée :
    dans l'Atlas), export_research_pack pour un dossier traçable.
 5. Critiquer le catalogue : check_labels liste les étiquettes que toutes les voisines
    contredisent — erreurs possibles OU œuvres réellement singulières, à regarder.
+   find_duplicates liste les œuvres entrées deux fois (même image) et les variantes proches
+   (répliques, séries, états, copies), avec les étiquettes qui se contredisent.
 
 Règles : une proximité calculée est une piste, pas une preuve d'influence ni d'attribution.
 Les scores sont des similarités cosinus relatives au corpus, pas des probabilités ni des décisions
@@ -320,6 +322,20 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
         items = [d for d in groups[key] if d["id"] in data.row_of]
         return {"key": key, "total": len(items), "rule": data.suspects["rule"], "space": data.suspects["space"],
                 "items": [{**d, "label": data.label(d["id"])} for d in items[offset:offset + min(max(k, 1), 100)]]}
+
+    @server.tool()
+    def find_duplicates(level: str = "same", conflicts_only: bool = True, k: int = 20, offset: int = 0) -> dict:
+        """Œuvres que SSCD (détection de copies) juge quasi identiques. level « same » : la même image
+        entrée deux fois au catalogue (cosinus ≥ 0,85) ; « variant » : répliques, séries, états d'une
+        gravure, copies (0,65 à 0,85). conflicts_only : seulement les paires dont les étiquettes
+        (artiste, style, genre, date) se contredisent. Une paire est une piste : regarder les deux
+        images (compare_artworks) avant de conclure ; deux tableaux d'une série restent deux œuvres."""
+        if level not in ("same", "variant"):
+            raise ValueError("level : « same » (même image) ou « variant » (variante)")
+        out = data.duplicates_payload(level, conflicts_only, offset, min(max(k, 1), 100))
+        if out is None:
+            return {"error": "Pas encore calculé : lancer « pixplot doublons » (vecteurs SSCD nécessaires)."}
+        return out
 
     # ------------------------------------------------------------------ carnet de recherche
     from ..notebook import Notebook

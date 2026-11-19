@@ -52,7 +52,7 @@ with all thumbnails rendered, and a text or detail query returns in 0.25 s.
 | **Web Atlas** | Interactive offline deck.gl map, records with sourced metadata and neural-free **visual measures** (balance, symmetry, chromatic entropy, after Stork), a **comparator** (up to six works with a "Pourquoi ?" zone matcher), a **research notebook**, one map per space, **2D conceptual axes** on two words (after *2D CLIP*), plus **timeline** and **geographic** views (typed/dated places, offline world map). |
 | **Catalogue audit** | Blind audit (pixels only) and a **To check** list of works whose label is contradicted by all their neighbours (either a cataloguing error or an unusual work). |
 | **IIIF museum imports** | `pixplot import-iiif` ingests IIIF v2/v3 manifests and collections with normalised metadata and rights fields. |
-| **MCP server (18 tools)** | Connects Claude or any compatible assistant to search, inspect images and crops, compare works, run visual measures, probe conceptual axes and add notes to the notebook. |
+| **MCP server (19 tools)** | Connects Claude or any compatible assistant to search, inspect images and crops, compare works, run visual measures, probe conceptual axes and add notes to the notebook. |
 | **Traceability** | Every computation is saved in a dated *run* (`manifest.json` with model, parameters and parent run). Exporting a *Research Pack* (.zip) bundles images, sourced metadata and scores. |
 
 ## Some measurements on WikiArt

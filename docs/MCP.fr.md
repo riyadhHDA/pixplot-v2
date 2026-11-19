@@ -30,6 +30,7 @@ comparer, et la vérification reste côté historien.
 | `get_group` | un groupe de la carte, œuvres les plus centrales d'abord |
 | `find_atypical` | œuvres les plus isolées (exceptions, erreurs de catalogue…) |
 | `check_labels` | étiquettes que toutes les voisines contredisent (erreurs possibles ou œuvres singulières) |
+| `find_duplicates` | œuvres entrées deux fois (même image) et variantes proches (répliques, séries, copies), avec les étiquettes qui se contredisent (`pixplot doublons`) |
 | `notebook_add` | ajoute une piste au **carnet de recherche** de l'historien (visible dans l'Atlas) |
 | `notebook_list` | relit le carnet (les plus récentes d'abord) |
 | `export_research_pack` | dossier .zip traçable (voir README) |
