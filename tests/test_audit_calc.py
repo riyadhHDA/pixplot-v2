@@ -76,3 +76,26 @@ def test_neighbors_blocks_match_single_search():
     S = X[:50] @ X.T
     S[np.arange(50), np.arange(50)] = -np.inf
     assert np.array_equal(rows[:50], np.argsort(-S, axis=1)[:, :5])
+
+
+def test_maps_index_keeps_other_entries(tmp_path):
+    """La carte d'essai LocalMAP s'ajoute à maps.json sans effacer les cartes des regards."""
+    import json
+
+    from pixplot.analysis.spacemaps import _write_index
+
+    _write_index(tmp_path, {"sujet": {"file": "sujet.npy"}})
+    _write_index(tmp_path, {"forme_localmap": {"file": "forme_localmap.npy"}})
+    assert set(json.loads((tmp_path / "maps.json").read_text(encoding="utf-8"))) == {"sujet", "forme_localmap"}
+
+
+def test_localmap_small_corpus():
+    """LocalMAP (facultatif) donne une carte normalisée dans [-1, 1]."""
+    import pytest
+
+    pacmap = pytest.importorskip("pacmap")
+    from pixplot.analysis.layout import normalize_coords
+
+    Z = np.random.default_rng(0).normal(size=(300, 16)).astype(np.float32)
+    xy = normalize_coords(pacmap.LocalMAP(n_neighbors=10, random_state=42, apply_pca=False).fit_transform(Z, init="pca"))
+    assert xy.shape == (300, 2) and np.abs(xy).max() <= 1.0

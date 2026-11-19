@@ -204,13 +204,16 @@ function reviewKeys(e) {
 function reviewTabs(active) {
   const nLabels = Object.values(state.info.suspects || {}).reduce((a, b) => a + b, 0);
   const nPairs = (state.info.annotated_pairs || {})["proposée"] || 0;
+  const nDup = ((state.info.duplicates || {}).same || 0) + ((state.info.duplicates || {}).variant || 0);
   return `<div class="spaces">
     ${nLabels ? `<button class="space ${active === "labels" ? "on" : ""}" data-review="labels">Étiquettes <small>${nLabels}</small></button>` : ""}
-    <button class="space ${active === "pairs" ? "on" : ""}" data-review="pairs">Paires de référence <small>${nPairs} à relire</small></button></div>`;
+    <button class="space ${active === "pairs" ? "on" : ""}" data-review="pairs">Paires de référence <small>${nPairs} à relire</small></button>
+    ${nDup ? `<button class="space ${active === "duplicates" ? "on" : ""}" data-review="duplicates">Doublons <small>${nDup}</small></button>` : ""}</div>`;
 }
 function wireReviewTabs(body) {
   body.querySelectorAll("[data-review]").forEach((b) => b.addEventListener("click", () =>
-    b.dataset.review === "labels" ? renderSuspects(null, 0) : renderPairs("proposée")));
+    b.dataset.review === "labels" ? renderSuspects(null, 0)
+      : b.dataset.review === "duplicates" ? renderDuplicates("same", true, 0) : renderPairs("proposée")));
 }
 function openReview() {
   if (Object.keys(state.info.suspects || {}).length) renderSuspects(null, 0); else renderPairs("proposée");
@@ -371,4 +374,59 @@ async function renderSuspects(key, offset) {
   state.selected = state.selectedData = null;
   setHighlight(set, `À vérifier (${LABELS[res.key] || res.key})`);
   if (isMapLayout()) flyTo(0, 0, state.fitZoom); else fitToPositions();
+}
+
+
+// ------------------------------------------------------------------ doublons et variantes (SSCD)
+const DUP_KEYS = { artist: "artiste", style: "style", genre: "genre", date: "date" };
+async function renderDuplicates(level = "same", conflicts = true, offset = 0) {
+  const seq = panelTurn();
+  showPanel("duplicates", "À vérifier");
+  state.lastList = () => renderDuplicates(level, conflicts, offset);
+  $("fiche-body").innerHTML = `<div class="loading">Chargement…</div>`;
+  let res;
+  try { res = await getJSON(`/api/duplicates?level=${level}&conflicts=${conflicts}&offset=${offset}&limit=40`); } catch (err) {
+    if (!panelStale(seq)) $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`;
+    return;
+  }
+  if (panelStale(seq)) return;
+  const c = res.counts || {};
+  const show = (k, v) => (SLUG_KEYS.has(k) ? pretty(v) : v) || "—";
+  const rows = res.items.map((d) => {
+    const diff = d.conflicts.map((k) => `<div class="dup-diff"><b>${esc(DUP_KEYS[k] || k)}</b> : « ${esc(show(k, d.meta_a[k]))} »
+      ≠ « ${esc(show(k, d.meta_b[k]))} »</div>`).join("");
+    return `<li class="pair-item">
+      <div class="pair-thumbs">
+        <button data-id="${d.a}" title="${esc(prettyLabel(d.label_a))}"><img src="/api/thumb/256/${d.a}" alt="" loading="lazy"></button>
+        <button data-id="${d.b}" title="${esc(prettyLabel(d.label_b))}"><img src="/api/thumb/256/${d.b}" alt="" loading="lazy"></button>
+      </div>
+      <div class="pair-info"><div><b>${d.level === "same" ? "Même image" : "Variante"}</b> · cosinus SSCD ${d.cos.toFixed(3)}</div>
+        ${diff || `<div class="pair-src">étiquettes compatibles</div>`}
+        <div class="pair-note">n° ${d.a} · ${esc(prettyLabel(d.label_a))}<br>n° ${d.b} · ${esc(prettyLabel(d.label_b))}</div>
+        <div class="pair-actions"><button class="chip" data-compare="${d.a},${d.b}">Comparer</button></div></div></li>`;
+  }).join("");
+  const more = offset + res.items.length < res.total;
+  const body = $("fiche-body");
+  body.innerHTML = `<div class="results-head">${reviewTabs("duplicates")}
+      <div class="chips" style="margin-top:10px">
+        <button class="chip ${level === "same" ? "on" : ""}" data-level="same">Même image <small>${c.same || 0}</small></button>
+        <button class="chip ${level === "variant" ? "on" : ""}" data-level="variant">Variantes <small>${c.variant || 0}</small></button>
+        <label class="check" style="margin-left:6px"><input type="checkbox" id="dup-conf" ${conflicts ? "checked" : ""}> étiquettes contradictoires seulement</label></div>
+      <div class="sub" style="margin-top:8px">${res.total} paires · ${esc(res.rule)}</div></div>
+    ${rows ? `<ol class="pairs-review">${rows}</ol>` : `<p class="empty-note">Aucune paire ici.</p>`}
+    <div class="pager">${offset > 0 ? `<button class="chip" id="dup-prev">← Précédentes</button>` : ""}
+      ${more ? `<button class="chip" id="dup-next">Suivantes →</button>` : ""}</div>
+    <p class="prov" style="margin:0 16px 20px">Même image : deux reproductions d'une seule œuvre, entrées deux fois au catalogue
+      (souvent sous deux styles différents). Variante : répliques, séries, états d'une gravure, copies… ou la même image mal
+      reproduite. Regard SSCD (détection de copies, Meta 2022) : il juge la ressemblance des images, pas l'histoire des œuvres.
+      Deux tableaux d'une série restent deux œuvres.</p>`;
+  wireReviewTabs(body);
+  body.querySelectorAll("[data-level]").forEach((b) => b.addEventListener("click", () => renderDuplicates(b.dataset.level, conflicts, 0)));
+  $("dup-conf").addEventListener("change", (e) => renderDuplicates(level, e.target.checked, 0));
+  body.querySelectorAll(".pair-thumbs [data-id]").forEach((b) => b.addEventListener("click", () => select(Number(b.dataset.id), true)));
+  body.querySelectorAll("[data-compare]").forEach((b) => b.addEventListener("click", () => {
+    state.compare = b.dataset.compare.split(",").map(Number); saveCompare(); openCompare();
+  }));
+  if ($("dup-prev")) $("dup-prev").addEventListener("click", () => renderDuplicates(level, conflicts, Math.max(0, offset - 40)));
+  if ($("dup-next")) $("dup-next").addEventListener("click", () => renderDuplicates(level, conflicts, offset + 40));
 }

@@ -254,7 +254,11 @@ async function setLayout(layout) {
     }
     state.positions = pos; state.axis = [];
     const s = state.spaces.find((x) => x.key === key);
-    note = s ? `Voisines selon ${s.label} : ${s.about}. Les couleurs restent celles des groupes de la carte principale.` : "";
+    note = key === "forme_localmap"
+      ? "Carte d'essai : mêmes vecteurs que la carte principale, placés par LocalMAP (2025) au lieu d'UMAP. "
+        + "Pas meilleure : à peine plus juste sur les voisines (+1,5 point pour le style et l'artiste), mais coupée "
+        + "en îlots et plus entassée, et les paires validées y sont plus éloignées. À regarder comme un second avis."
+      : s ? `Voisines selon ${s.label} : ${s.about}. Les couleurs restent celles des groupes de la carte principale.` : "";
   } else if (layout === "concepts") {
     const xq = ($("concept-x")?.value || state.conceptAxes.x || "sacré").trim();
     const yq = ($("concept-y")?.value || state.conceptAxes.y || "profane").trim();

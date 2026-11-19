@@ -54,7 +54,8 @@ const ICON = {
   note: svg("M5 2h10v16H5z M8 6h5 M8 9h5 M8 12h3"),
   export: svg("M10 3v10 M6 9l4 4 4-4 M4 17h12"),
 };
-const SPACE_SHORT = { forme: "Forme", sujet: "Sujet et style", couleur: "Couleur", touche: "Touche", forme_v2: "DINOv2" };
+const SPACE_SHORT = { forme: "Forme", sujet: "Sujet et style", couleur: "Couleur", touche: "Touche", forme_v2: "DINOv2",
+  forme_localmap: "Forme · LocalMAP (essai, pas mieux)" };
 const store = {   // préférences de ce navigateur seulement (peuvent être indisponibles)
   get(k, d) { try { return JSON.parse(localStorage.getItem(`pixplot:${k}`)) ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem(`pixplot:${k}`, JSON.stringify(v)); } catch { /* navigation privée */ } },
@@ -135,7 +136,8 @@ async function init() {
   // Cartes proposées : la carte de l'analyse, une par autre regard, puis dates et lieux.
   const mainLabel = SPACE_SHORT[state.info.main_space] || "forme";
   const groups = [[`Ressemblance`, [["map", `${mainLabel} (carte principale)`],
-    ...(state.info.space_maps || []).map((k) => [`map:${k}`, SPACE_SHORT[k] || k])]]];
+    ...(state.info.space_maps || []).slice().sort((a, b) => a.endsWith("_localmap") - b.endsWith("_localmap"))  // les essais à la fin
+      .map((k) => [`map:${k}`, SPACE_SHORT[k] || k])]]];
   const other = [];
   if (m.year) other.push(["time", "Chronologie"]);
   if (m.lat || Object.keys(state.info.places || {}).length) other.push(["geo", "Géographie (lieux)"]);

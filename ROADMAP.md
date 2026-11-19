@@ -98,8 +98,9 @@ miss. Failed attempts are documented with their numbers and dropped.
   ARCHITECTURE § 26)*: 2D projection on two SigLIP 2 concepts, neural-free visual balance and
   chromatic entropy.
 - **Leads from recent readings** (to benchmark locally on this PC):
-  - **LocalMAP** (AAAI 2025, `pacmap`, 100 % CPU): an alternative to UMAP that adjusts local links on
-    dense continuums.
+  - **LocalMAP** (AAAI 2025, `pacmap`, 100 % CPU) *(evaluated, not yet released)*: barely better than
+    UMAP on neighbours' labels (+1.5 points), but the map splits into islands and is more crowded. Not
+    kept for the main map; offered as a trial map (`pixplot maps --localmap`).
   - **CSD** (ECCV 2024) for pure style vs "touch", **SSCD** (CVPR 2022) for copies, prints and
     mirror inversions, and **Depth Anything V2** (NeurIPS 2024) as a depth-based composition lead
     after PE-Spatial's negative result (§ 24).

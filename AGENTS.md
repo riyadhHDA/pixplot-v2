@@ -41,7 +41,7 @@ bash scripts/build_site.sh                                     # site → _site/
 
 Commandes `pixplot` : `doctor ingest import-metadata import-iiif embed similar index search-text
 analyze pack mcp serve maps communities disagreements zones import-places places corpus zonebench
-composition antigravity-mcp iconclass name-groups suspects audit bench pairs status runs` (`pixplot <commande> -h`).
+composition antigravity-mcp iconclass doublons name-groups suspects audit bench pairs status runs` (`pixplot <commande> -h`).
 
 ## Carte du code
 

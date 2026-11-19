@@ -16,7 +16,7 @@ import numpy as np
 
 from ..catalog import db
 from ..catalog.metadata import get_metadata
-from ..analysis import communities, critique, disagreements
+from ..analysis import communities, critique, disagreements, duplicates
 from ..analysis import iconclass
 from ..analysis.naming import load_names
 from ..analysis.spacemaps import available_maps, load_space_map
@@ -174,6 +174,7 @@ class AtlasData:
             "communities": communities.available(self.analysis),
             "places": self.place_counts(),
             "disagreements": self.disagreement_counts(),
+            "duplicates": (self._duplicates() or {}).get("counts", {}),
             "main_space": self.spaces.main,
             "suspects": (self.suspects or {}).get("counts", {}),
             "annotated_pairs": self.annotated_pair_counts(),
@@ -255,6 +256,26 @@ class AtlasData:
         return {"near": near, "far": far, "total": len(items), "offset": offset, "items": page,
                 "rule": f"rang ≤ {d['max_rank']} selon « {near} », centile < {d['max_centile']} selon « {far} »",
                 "combos": list(d["pairs"]), "n": d["n"]}
+
+    def _duplicates(self) -> dict | None:
+        if not hasattr(self, "_dup_cache"):
+            self._dup_cache = duplicates.load(self.analysis)
+        return self._dup_cache
+
+    def duplicates_payload(self, level: str = "same", conflicts: bool = False, offset: int = 0,
+                           limit: int = 40) -> dict | None:
+        """Paires de doublons ou de variantes (SSCD), avec les étiquettes de chaque œuvre."""
+        d = self._duplicates()
+        if not d:
+            return None
+        items = [p for p in d["pairs"] if p["level"] == level and (p["conflicts"] or not conflicts)]
+        page = [{**p, "label_a": self.label(p["a"]), "label_b": self.label(p["b"]),
+                 "meta_a": {k: self.meta.get(p["a"], {}).get(k) for k in duplicates.KEYS},
+                 "meta_b": {k: self.meta.get(p["b"], {}).get(k) for k in duplicates.KEYS}}
+                for p in items[offset:offset + limit]]
+        return {"level": level, "conflicts": conflicts, "total": len(items), "offset": offset, "items": page,
+                "counts": d["counts"], "rule": f"SSCD centré : même image dès {d['same']}, variante dès {d['variant']}",
+                "sscd": d["sscd"]}
 
     def communities_payload(self, space: str) -> dict | None:
         """Groupes et familles Leiden d'un regard, alignés sur ``ids`` (-1 : œuvre absente)."""

@@ -17,9 +17,10 @@ from typing import Callable
 
 import numpy as np
 
-from .layout import layout_umap, reduce_pca
+from .layout import SEED, layout_umap, load_valid, normalize_coords, reduce_pca
 
 MAPS_DIR = "maps"
+LOCALMAP_KEY = "forme_localmap"
 
 
 def compute_space_maps(analysis, settings, spaces: list[str] | None = None, force: bool = False,
@@ -67,10 +68,46 @@ def compute_space_maps(analysis, settings, spaces: list[str] | None = None, forc
                                       params.get("umap_neighbors", 15), params.get("umap_min_dist", 0.1))
         np.save(path, coords)
         done[key] = path
-    (out_dir / "maps.json").write_text(json.dumps(
-        {k: {"features": runs[k].id, "file": f"{k}.npy"} for k in done}, ensure_ascii=False, indent=1),
-        encoding="utf-8")
+    _write_index(out_dir, {k: {"features": runs[k].id, "file": f"{k}.npy"} for k in done})
     return done
+
+
+def _write_index(out_dir: Path, entries: dict) -> None:
+    """Complète ``maps.json`` sans effacer les cartes déjà décrites."""
+    path = out_dir / "maps.json"
+    old = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
+    path.write_text(json.dumps({**old, **entries}, ensure_ascii=False, indent=1), encoding="utf-8")
+
+
+def compute_localmap(analysis, settings, n_neighbors: int = 10, force: bool = False,
+                     say: Callable[[str], None] = print) -> Path:
+    """Carte d'essai : les mêmes vecteurs que la carte principale (même PCA), placés par LocalMAP
+    (Wang et al., AAAI 2025, paquet ``pacmap``) au lieu d'UMAP. Mesurée le 19/11/2026 sur WikiArt
+    81k : à peine meilleure sur les étiquettes des voisines (+1,5 point), mais coupée en îlots et
+    plus entassée ; elle reste une carte secondaire, pas la carte principale."""
+    import pacmap
+
+    from ..runs import Run
+
+    p = Path(analysis.path)
+    out_dir = p / MAPS_DIR
+    out_dir.mkdir(exist_ok=True)
+    path = out_dir / f"{LOCALMAP_KEY}.npy"
+    if path.exists() and not force:
+        say(f"  {LOCALMAP_KEY} : déjà calculée")
+        return path
+    ids = np.load(p / "ids.npy")
+    parent = analysis.manifest["parent"]
+    fids, X = load_valid(Run.load(settings.runs_dir / parent))
+    row = {int(i): r for r, i in enumerate(fids)}
+    Z = reduce_pca(X[[row[int(i)] for i in ids]], analysis.manifest.get("params", {}).get("pca_dims", 64))
+    say(f"  LocalMAP ({n_neighbors} voisines) sur {len(ids)} œuvres…")
+    reducer = pacmap.LocalMAP(n_components=2, n_neighbors=n_neighbors, random_state=SEED, apply_pca=False)
+    coords = normalize_coords(np.asarray(reducer.fit_transform(Z, init="pca"), dtype=np.float32))
+    np.save(path, coords)
+    _write_index(out_dir, {LOCALMAP_KEY: {"features": parent, "file": path.name,
+                                          "method": f"LocalMAP (pacmap), {n_neighbors} voisines, en essai"}})
+    return path
 
 
 def load_space_map(analysis, key: str) -> np.ndarray | None:

@@ -95,6 +95,15 @@ corrigé ; 63 tests passent, Atlas vérifié.
   coupe en ~6 îlots : surface occupée 20 % contre 41 %, vignettes superposées 95 % contre 83 %, et
   les paires validées plus loin (rang médian 8 879 contre 6 994). Avec 20 voisines : moins bien
   partout. Section ARCHITECTURE à écrire après la fusion de la § 28 de Neon (éviter un conflit).
+  À la demande de l'utilisateur, proposée comme **carte d'essai** dans le menu de l'Atlas (« Forme ·
+  LocalMAP (essai, pas mieux) », avec une note qui dit qu'elle n'est pas meilleure) :
+  `pixplot maps --localmap`, dépendance facultative `pip install -e .[localmap]`. Calculée pour 81k.
+- **Doublons et variantes** (`pixplot doublons`, `pixplot/analysis/duplicates.py`, onglet « Doublons »
+  dans « À vérifier ») : vecteurs SSCD centrés, 5 voisines par œuvre. Seuils choisis en regardant des
+  paires par tranche de cosinus : ≥ 0,85 même image, 0,65–0,85 répliques, séries, états de gravure,
+  copies. WikiArt 81k : 839 paires « même image » (702 avec deux styles différents : la même
+  reproduction rangée dans deux styles), 785 variantes (68 en désaccord). Section ARCHITECTURE à
+  écrire avec celle de LocalMAP.
 
 ## En attente de l'utilisateur
 

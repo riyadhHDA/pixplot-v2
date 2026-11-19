@@ -401,6 +401,12 @@ def cmd_maps(args) -> int:
 
     s = get_settings(args.data)
     analysis = _analysis_arg(s, args.analysis)
+    if args.localmap:
+        from .analysis.spacemaps import compute_localmap
+
+        print(f"Analyse : {analysis.id} — carte d'essai LocalMAP (regard de l'analyse)")
+        print(f"Carte : {compute_localmap(analysis, s, force=args.force, say=lambda m: print(m, flush=True))}")
+        return 0
     print(f"Analyse : {analysis.id} — une carte UMAP par regard")
     done = compute_space_maps(analysis, s, spaces=args.spaces.split(",") if args.spaces else None,
                               force=args.force, say=lambda m: print(m, flush=True))
@@ -454,6 +460,23 @@ def cmd_disagreements(args) -> int:
     res = D.compute(vectors, ids, k=args.k, max_rank=args.rank, max_centile=args.centile,
                     keep=args.keep, say=lambda m: print(m, flush=True))
     print(f"Désaccords : {D.save(analysis, res)}")
+    return 0
+
+
+def cmd_doublons(args) -> int:
+    from .analysis import duplicates as DU
+    from .api.data import AtlasData
+
+    s = get_settings(args.data)
+    analysis = _analysis_arg(s, args.analysis)
+    run = DU.find_sscd_run(s.runs_dir)
+    if run is None:
+        raise SystemExit("Pas de vecteurs SSCD : lancez d'abord `pixplot embed --encoder sscd_disc_large`.")
+    data = AtlasData.load(s, analysis)
+    print(f"Analyse : {analysis.id} — doublons et variantes selon {run.id}", flush=True)
+    res = DU.compute(data.ids, run, data.meta, k=args.k, same=args.same, variant=args.variant,
+                     say=lambda m: print(m, flush=True))
+    print(f"Doublons : {DU.save(analysis, res)}")
     return 0
 
 
@@ -1006,7 +1029,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
     p.add_argument("--spaces", help="espaces à calculer, séparés par des virgules (défaut : tous)")
     p.add_argument("--force", action="store_true", help="recalculer les cartes existantes")
+    p.add_argument("--localmap", action="store_true",
+                   help="carte d'essai LocalMAP du regard principal (paquet pacmap ; pas mieux qu'UMAP, ARCHITECTURE)")
     p.set_defaults(func=cmd_maps)
+
+    p = sub.add_parser("doublons", help="œuvres entrées deux fois, répliques et variantes (vecteurs SSCD)")
+    p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
+    p.add_argument("-k", type=int, default=5, help="voisines examinées par œuvre")
+    p.add_argument("--same", type=float, default=0.85, help="cosinus à partir duquel c'est la même image")
+    p.add_argument("--variant", type=float, default=0.65, help="cosinus à partir duquel c'est une variante")
+    p.set_defaults(func=cmd_doublons)
 
     p = sub.add_parser("communities", help="groupes Leiden emboîtés (familles ⊃ groupes), un jeu par regard")
     p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")

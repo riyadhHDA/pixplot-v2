@@ -178,6 +178,14 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
     def corpus():
         return {"report": data.corpus_report(), "spaces": data.spaces.list(), "principles": critique.PRINCIPLES}
 
+    @app.get("/api/duplicates")
+    def duplicates_list(level: str = Query("same", pattern="^(same|variant)$"), conflicts: bool = False,
+                        offset: int = Query(0, ge=0), limit: int = Query(40, ge=1, le=200)):
+        out = data.duplicates_payload(level, conflicts, offset, limit)
+        if out is None:
+            raise HTTPException(404, "Pas de doublons calculés : lancez `pixplot doublons`.")
+        return out
+
     @app.get("/api/disagreements")
     def disagreements_list(near: str, far: str, offset: int = Query(0, ge=0), limit: int = Query(40, ge=1, le=200)):
         out = data.disagreements_payload(near, far, offset, limit)

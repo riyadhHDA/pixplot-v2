@@ -100,8 +100,9 @@ chiffres et on passe à autre chose.
   ARCHITECTURE § 26)* : projection 2D sur deux concepts SigLIP 2, équilibre visuel et entropie
   chromatique sans GPU.
 - **Pistes issues des lectures récentes** (à passer aux bancs d'essai sur ce PC) :
-  - **LocalMAP** (AAAI 2025, `pacmap`, 100 % CPU) : alternative à UMAP qui réajuste les liens locaux
-    sur les continuums denses.
+  - **LocalMAP** (AAAI 2025, `pacmap`, 100 % CPU) *(évalué, pas encore publié)* : à peine meilleur
+    qu'UMAP sur les étiquettes des voisines (+1,5 point), mais carte coupée en îlots et plus entassée.
+    Non retenu pour la carte principale ; proposé comme carte d'essai (`pixplot maps --localmap`).
   - **CSD** (ECCV 2024) pour le style pur face à la « touche », **SSCD** (CVPR 2022) pour les copies,
     gravures et inversions miroir, et **Depth Anything V2** (NeurIPS 2024) comme piste de composition
     par la profondeur après le résultat négatif de PE-Spatial (§ 24).
