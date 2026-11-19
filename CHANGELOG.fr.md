@@ -14,6 +14,21 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.16.3 — 19/11/2026 · Corrections d'après trois audits de Gemini 4 Argon
+
+Trois audits du code par Antigravity (Gemini 4 Argon, en lecture seule) ; chaque point vérifié avant
+correction.
+
+- **Interface** : Ctrl+R en relecture rapide ne rejette plus la paire affichée ; un seul niveau de
+  vignettes HD chargé à la fois (256 Mo de mémoire graphique au lieu de 768) ; couleurs calculées une
+  fois ; chronologie possible au-delà de ~65 000 dates ; clés HTML échappées ; recherches périmées
+  ignorées ; « Pourquoi ? » sans superposition ; images libérées.
+- **Sécurité** : l'Atlas refuse les autres noms d'hôte (DNS rebinding) et les écritures venues d'autres
+  sites ; le relais Antigravity n'envoie que des fichiers du projet.
+- **Calculs** : reprise d'un calcul de vecteurs sûre (marques écrites après les vecteurs, centrage jamais
+  refait) ; **désaccords jugés depuis la bonne œuvre** (recalculés sur WikiArt 81k) ; noms de groupes
+  jamais tirés d'un calcul partiel ; petits corpus.
+
 ## 0.16.2 — 19/11/2026 · Antigravity sous Windows, en lecture seule
 
 - `pixplot antigravity-mcp` : un second avis d'Antigravity (Google, Gemini) depuis Claude, par l'outil MCP

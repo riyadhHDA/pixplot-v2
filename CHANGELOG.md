@@ -14,6 +14,19 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.16.3 — 2026-11-19 · Fixes after three Gemini 4 Argon audits
+
+Three code audits by Antigravity (Gemini 4 Argon, read-only); each point checked before fixing.
+
+- **Interface**: Ctrl+R in quick review no longer rejects the displayed pair; one HD thumbnail level
+  loaded at a time (256 MB of GPU memory instead of 768); colours computed once; timeline works beyond
+  ~65,000 dates; HTML keys escaped; stale searches ignored; "why?" no longer overlaps; images released.
+- **Security**: the Atlas rejects other host names (DNS rebinding) and writes coming from other sites;
+  the Antigravity relay only sends project files.
+- **Computations**: safe resume of a vector computation (marks written after vectors, centring never
+  redone); **disagreements judged from the right work** (recomputed on WikiArt 81k); group names never
+  taken from a partial run; small corpora.
+
 ## 0.16.2 — 2026-11-19 · Antigravity on Windows, read-only
 
 - `pixplot antigravity-mcp`: a second opinion from Antigravity (Google, Gemini) from Claude, through the

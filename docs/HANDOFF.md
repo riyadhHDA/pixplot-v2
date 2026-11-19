@@ -8,14 +8,15 @@ avec n'importe quel modèle.
 
 ## Version publiée
 
-**0.16.2** (19/11/2026) : Antigravity sous Windows (`pixplot antigravity-mcp`, second avis en
+**0.16.3** (19/11/2026) : corrections d'après trois audits de Gemini 4 Argon (voir plus bas).
+**0.16.2** : Antigravity sous Windows (`pixplot antigravity-mcp`, second avis en
 lecture seule ; PixPlot dans Antigravity par `.agents/mcp_config.json`), compétence d'accessibilité,
 « Pourquoi ? » corrigé. **0.16.1** : outil MCP `why_similar` (16 outils) et guide de l'historien de l'art sur
 le site. **0.16.0** : « Pourquoi ces deux œuvres se ressemblent ? » dans le comparateur (ARCHITECTURE § 25). Avant : **0.15.1**, tests sur GitHub (Linux et Windows), Atlas découpé en 8 scripts, projet
 citable (CITATION.cff, DOI Zenodo à chaque release). Avant : 0.15.0, la composition (ARCHITECTURE § 24). Historique
 complet dans le [CHANGELOG](../CHANGELOG.fr.md), étapes suivantes dans la [ROADMAP](../ROADMAP.fr.md).
 
-## Fait dans main, pas encore commité (19/11/2026, audits de Gemini 4 Argon)
+## Audits de Gemini 4 Argon (19/11/2026, publiés en 0.16.3)
 
 Trois audits par Antigravity (modèle Gemini 4 Argon High, en lecture seule) ; textes complets dans
 `data/audit_argon_{1,2,3}.md` (non versionnés). Chaque point a été vérifié dans le code avant d'être
@@ -32,8 +33,10 @@ corrigé ; 63 tests passent, Atlas vérifié.
   refait à une reprise ; **désaccords jugés depuis la bonne œuvre** (le centile n'est pas symétrique) ;
   noms de groupes jamais tirés d'un calcul SigLIP 2 partiel ; voisines -1 de FAISS sur petit corpus ;
   UMAP sur petit corpus ; `-k` < `--rank` ; échantillon de la PCA des zones ; `parent` à None.
-- **À refaire** : `pixplot --data data/wikiart81k disagreements` (les désaccords enregistrés datent
-  d'avant la correction de sens).
+- **Désaccords recalculés** sur WikiArt 81k après la correction de sens : « proche en forme, loin en
+  sujet » passe de 287 à 77 paires, « proche en sujet, loin en forme » de 85 à 39 (beaucoup d'anciennes
+  paires étaient jugées depuis la mauvaise œuvre) ; les autres couples gardent 300 paires, dont 41 à
+  77 % en commun avec l'ancien calcul.
 - **Pas encore corrigé** (à faire ou à décider) :
   - interface : panneau de droite et dispositions sans protection contre les réponses en retard
     (I-2, I-4) ; erreurs du carnet silencieuses (M-1) ; réponses d'erreur non JSON (M-2) ; double
