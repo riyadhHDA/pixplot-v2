@@ -171,8 +171,12 @@ corrigé ; 63 tests passent, Atlas vérifié.
 
 ## À faire avant la prochaine version
 
-- Recalculer ce qui dépend des étiquettes d'artiste (35 185 artistes ajoutés) : `pixplot suspects`,
-  `pixplot bench` (chiffres « artiste »), noms de groupes, puis mettre à jour les chiffres publiés.
+- **Fait le 19/11/2026** : recalculs après l'ajout de 35 185 artistes. `pixplot suspects` : étiquettes
+  d'artiste à vérifier 506 → 1 206 (style 2 771 et genre 1 607 inchangés ; ancien fichier gardé en
+  `suspects.avant-artistes.json`). Mentions « métadonnées » des groupes mises à jour pour 27 groupes
+  sur 142, **aucun nom relu par l'utilisateur modifié** (ancien fichier `names.avant-artistes.json`).
+  `pixplot bench`, artiste P@10 sur 1 090 artistes : forme 33,9 %, sujet 42,9 %, touche 35,0 %,
+  couleur 7,3 % (avant, 129 artistes : 50,8 / 61,6 / 53,0 %) ; même classement ; README FR + EN à jour.
 
 ## En attente de l'utilisateur
 

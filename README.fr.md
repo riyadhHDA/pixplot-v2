@@ -79,9 +79,13 @@ part des 10 plus proches voisines qui portent la même étiquette que l'œuvre d
 
 | Regard | artiste | style | genre | Pointillisme | Fauvisme |
 |---|---|---|---|---|---|
-| forme (DINOv3) | 50,8 % | 52,4 % | 76,8 % | 21 % | 20 % |
-| sujet (SigLIP 2) | **61,6 %** | **62,0 %** | **79,5 %** | 44 % | 26 % |
-| touche | 53,0 % | 49,6 % | 62,8 % | **62 %** | **30 %** |
+| forme (DINOv3) | 33,9 % | 52,4 % | 76,8 % | 21 % | 20 % |
+| sujet (SigLIP 2) | **42,9 %** | **62,0 %** | **79,5 %** | 44 % | 26 % |
+| touche | 35,0 % | 49,6 % | 62,8 % | **62 %** | **30 %** |
+
+Colonne « artiste » recalculée le 19/11/2026 sur 1 090 artistes, après avoir retrouvé l'artiste de
+35 185 œuvres « Unknown Artist » grâce à MMArt ([§ 34](ARCHITECTURE.fr.md)) : la tâche est plus dure
+qu'avec 129 artistes (avant : 50,8 / 61,6 / 53,0 %), le classement des regards ne change pas.
 
 - Sur un modèle purement visuel, le sujet prend vite le dessus sur la manière ; SigLIP 2 retrouve le mieux les catégories usuelles de la discipline.
 - La **touche** rattrape bien les styles définis par la facture (Pointillisme : 21 % → 62 %) et reconnaît mieux la main de l'artiste que la forme globale.

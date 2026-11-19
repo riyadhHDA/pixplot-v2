@@ -79,9 +79,13 @@ share of the 10 nearest neighbours carrying the same label as the query work:
 
 | Space | artist | style | genre | Pointillism | Fauvism |
 |---|---|---|---|---|---|
-| form (DINOv3) | 50.8% | 52.4% | 76.8% | 21% | 20% |
-| subject (SigLIP 2) | **61.6%** | **62.0%** | **79.5%** | 44% | 26% |
-| touch | 53.0% | 49.6% | 62.8% | **62%** | **30%** |
+| form (DINOv3) | 33.9% | 52.4% | 76.8% | 21% | 20% |
+| subject (SigLIP 2) | **42.9%** | **62.0%** | **79.5%** | 44% | 26% |
+| touch | 35.0% | 49.6% | 62.8% | **62%** | **30%** |
+
+"Artist" column recomputed on 2026-11-19 over 1,090 artists, after recovering the artist of 35,185
+"Unknown Artist" works through MMArt ([§ 34](ARCHITECTURE.md)): the task is harder than with 129
+artists (before: 50.8 / 61.6 / 53.0%); the ranking of the regards does not change.
 
 - For a purely visual model, subject tends to dominate manner; SigLIP 2 recovers standard art-history categories best.
 - **Touch** catches styles defined by brushwork (Pointillism jumps from 21% to 62%) and recognises the artist's hand better than global form.
