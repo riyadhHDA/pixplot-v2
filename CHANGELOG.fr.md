@@ -14,6 +14,14 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.16.1 — 19/11/2026 · Outil MCP « pourquoi ? » et guide de l'historien
+
+- Serveur MCP : outil `why_similar`, une planche des deux œuvres où les zones qui se répondent portent le
+  même numéro, avec leurs cosinus (16 outils).
+- Site : [Guide de l'historien de l'art](https://riyadhhda.github.io/pixplot-v2/fr/guide/), en français et en
+  anglais : lire une proximité, trois parcours (filiation, étiquette, motif), travailler avec un
+  assistant, citer, limites connues.
+
 ## 0.16.0 — 19/11/2026 · Pourquoi ces deux œuvres se ressemblent ?
 
 - Comparateur : bouton « Pourquoi ? » sur chaque paire. Les zones qui se répondent le plus (cases

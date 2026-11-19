@@ -8,16 +8,10 @@ avec n'importe quel modèle.
 
 ## Version publiée
 
-**0.16.0** (19/11/2026) : « Pourquoi ces deux œuvres se ressemblent ? » dans le comparateur
-(ARCHITECTURE § 25 ; suite possible : un outil MCP équivalent). Avant : **0.15.1**, tests sur GitHub (Linux et Windows), Atlas découpé en 8 scripts, projet
+**0.16.1** (19/11/2026) : outil MCP `why_similar` (16 outils) et guide de l'historien de l'art sur
+le site. **0.16.0** : « Pourquoi ces deux œuvres se ressemblent ? » dans le comparateur (ARCHITECTURE § 25). Avant : **0.15.1**, tests sur GitHub (Linux et Windows), Atlas découpé en 8 scripts, projet
 citable (CITATION.cff, DOI Zenodo à chaque release). Avant : 0.15.0, la composition (ARCHITECTURE § 24). Historique
 complet dans le [CHANGELOG](../CHANGELOG.fr.md), étapes suivantes dans la [ROADMAP](../ROADMAP.fr.md).
-
-## Fait, commité dans main, pas encore publié
-
-- Outil MCP `why_similar` (16 outils) : planche des deux œuvres avec les zones qui se répondent.
-- Guide de l'historien de l'art sur le site (`site/fr/guide/`, `site/guide/`), lié depuis le menu, le
-  README et le plan du site. À publier (0.16.1 proposé) avec l'accord de l'utilisateur.
 
 ## Travail en cours, sur une branche
 

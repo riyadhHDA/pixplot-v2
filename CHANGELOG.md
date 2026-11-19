@@ -14,6 +14,14 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.16.1 — 2026-11-19 · "Why?" MCP tool and the art historian's guide
+
+- MCP server: `why_similar` tool, a plate of the two works where the zones that answer each other carry
+  the same number, with their cosines (16 tools).
+- Site: [The art historian's guide](https://riyadhhda.github.io/pixplot-v2/guide/), in French and English:
+  reading a proximity, three paths (filiation, label, motif), working with an assistant, citing, known
+  limits.
+
 ## 0.16.0 — 2026-11-19 · Why do these two works look alike?
 
 - Comparator: a "Pourquoi ?" button on each pair. The zones that answer each other most (4×4 cells,
