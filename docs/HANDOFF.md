@@ -88,8 +88,13 @@ corrigé ; 63 tests passent, Atlas vérifié.
   81k, sélection vers le carnet (5 000 au plus) ou un Research Pack (500 plus typiques). « Vue
   d'ensemble » efface aussi les filtres. Vérifié dans l'Atlas 81k (Baroque + portrait = 980, compté
   à part).
-- **LocalMAP** : l'installation de `pacmap` 0.9.1 a été refusée par le garde-fou d'auto mode ;
-  l'utilisateur doit la lancer lui-même (`.venv\Scripts\python -m pip install pacmap==0.9.1`).
+- **LocalMAP évalué (19/11/2026), non retenu pour la carte principale** (`pacmap` 0.9.1, Apache 2.0,
+  installé avec l'accord de l'utilisateur). Regard forme, PCA 64 comme la carte actuelle, 28 s sur
+  CPU. Contre UMAP : voisines gardées 7,8 % contre 7,4 % ; voisines de même style 47,3 % contre
+  45,8 %, même artiste 33,5 % contre 32,0 %, même genre 75,5 % contre 75,9 % ; mais la carte se
+  coupe en ~6 îlots : surface occupée 20 % contre 41 %, vignettes superposées 95 % contre 83 %, et
+  les paires validées plus loin (rang médian 8 879 contre 6 994). Avec 20 voisines : moins bien
+  partout. Section ARCHITECTURE à écrire après la fusion de la § 28 de Neon (éviter un conflit).
 
 ## En attente de l'utilisateur
 
