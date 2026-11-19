@@ -8,7 +8,9 @@ avec n'importe quel modèle.
 
 ## Version publiée
 
-**0.17.0** (19/11/2026) : travail de Gemini 4 Neon, relu par Claude (65 tests, Atlas vérifié ;
+**0.18.0** (19/11/2026) : noms Iconclass (étape 0.14), relus par l'utilisateur sur 83 groupes :
+Iconclass plus juste 39 fois, nom actuel 24 fois (ARCHITECTURE § 23, `bench/wikiart81k_iconclass_review.csv`).
+**0.17.0** : travail de Gemini 4 Neon, relu par Claude (65 tests, Atlas vérifié ;
 axes conceptuels : 42 s au premier appel, le temps de charger SigLIP 2, puis ~1,2 s dans le navigateur) —
 intégration de trois lectures (`C:\Users\Riyadh\Downloads\Livre`, restées hors dépôt) — voir
 `ARCHITECTURE.fr.md` § 26 :
@@ -65,28 +67,8 @@ corrigé ; 63 tests passent, Atlas vérifié.
     les chiffres publiés, à décider avec l'utilisateur) ; cadres 4 × 4 si la grille de patchs n'est
     pas multiple de 4 (12) ; renormalisation après float16 (13) ; mémoire au-delà de 100 000 œuvres (14).
 
-## Travail en cours, sur une branche
-
-**0.14 : nommer les groupes avec Iconclass** — branche `claude/iconclass` (commit `598b83c`, non
-fusionnée). Le code est écrit et testé, mais attend que l'utilisateur juge les noms (critère de la feuille de route : « jugés plus justes que les actuels, sur
-un échantillon relu »).
-
-- Fichiers : `pixplot/analysis/iconclass.py` (nouveau), commande `pixplot iconclass [--fetch]` dans
-  `pixplot/cli.py`, champ `iconclass` des groupes (`pixplot/api/data.py`), MCP (`corpus_overview`,
-  `get_group`), affichage dans le panneau Groupes (`web/atlas.js` sur la branche : à reporter dans
-  `web/atlas-panneaux.js`, fonction `renderGroups`, depuis le découpage du 19/11/2026 ; `web/atlas.css`), tests
-  (`tests/test_research.py::test_iconclass_vocabulary_and_pick`), ARCHITECTURE § 23 (FR et EN).
-- Données : `data/iconclass/` (CC0, non versionné) ; résultat dans
-  `data/wikiart81k/runs/analysis/dinov3_vitb16_20261116-111508/names_iconclass.json`.
-- Résultat sur WikiArt 81k : 37 groupes « sûr », 47 « possible », 58 sans notion affichée.
-- Reste à faire quand l'utilisateur aura relu : rebaser la branche sur `main`, entrée de CHANGELOG
-  (FR + EN), version 0.15.1 ou 0.16.0 (la 0.15.0 est sortie avant ; à voir avec l'utilisateur)
-  (voir la liste des fichiers dans AGENTS.md), commit, étiquette, release.
-
 ## En attente de l'utilisateur
 
-- **Relire les noms Iconclass** dans l'Atlas (panneau Groupes ; bordure pleine = sûr, pointillée =
-  possible).
 - **Une paire proposée** à valider ou rejeter dans la relecture rapide (touche R) : copie de Rubens
   d'après l'*Enlèvement d'Europe* de Titien (n° 64269 ↔ 67405, Honour et Fleming p. 573).
 - **Profil GitHub** : la page de présentation (dépôt `riyadhHDA/riyadhHDA`) est en ligne ; le nom, la

@@ -14,6 +14,18 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.18.0 — 19/11/2026 · Nommer les groupes avec Iconclass
+
+Étape 0.14 de la feuille de route.
+
+- Chaque groupe reçoit aussi des notions d'**Iconclass**, la classification iconographique des musées
+  (CC0), avec leur code (« 47D31 moulin à vent ») en lien vers iconclass.org et un degré de confiance
+  (sûr / possible). Commande `pixplot iconclass [--fetch]`, panneau Groupes de l'Atlas, champ `iconclass`
+  de l'API, outils MCP `corpus_overview` et `get_group`.
+- **Relu par l'historien** sur 83 groupes : Iconclass jugé plus juste 39 fois, le nom actuel 24 fois
+  (17 équivalents, 3 tous deux faux). Les deux noms restent affichés ensemble. ARCHITECTURE § 23 ; la
+  relecture est versionnée dans `bench/wikiart81k_iconclass_review.csv`.
+
 ## 0.17.0 — 19/11/2026 · Axes conceptuels, mesures visuelles, principes de lecture
 
 Travail de Gemini 4 Neon (Antigravity), relu et vérifié par Claude ; trois lectures intégrées

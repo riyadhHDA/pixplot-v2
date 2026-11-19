@@ -14,6 +14,18 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.18.0 — 2026-11-19 · Naming groups with Iconclass
+
+Roadmap step 0.14.
+
+- Each group also gets concepts from **Iconclass**, the museums' iconographic classification (CC0), with
+  their code ("47D31 windmill") linked to iconclass.org and a confidence level (sure / possible).
+  `pixplot iconclass [--fetch]` command, Atlas Groups panel, `iconclass` API field, MCP tools
+  `corpus_overview` and `get_group`.
+- **Reviewed by the historian** on 83 groups: Iconclass judged more accurate 39 times, the current name
+  24 times (17 equivalent, 3 both wrong). Both names stay displayed together. ARCHITECTURE § 23; the
+  review is versioned in `bench/wikiart81k_iconclass_review.csv`.
+
 ## 0.17.0 — 2026-11-19 · Concept axes, visual measures, reading principles
 
 Work by Gemini 4 Neon (Antigravity), reviewed and checked by Claude; three readings integrated
