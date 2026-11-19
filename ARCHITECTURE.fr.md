@@ -181,7 +181,7 @@ Pixplot V2/
 │   ├── notebook.py        carnet de recherche (SQLite)
 │   ├── api/               ⑤ FastAPI, espaces de ressemblance
 │   └── mcp/               ⑤ serveur MCP
-├── web/                   ⑥ Atlas : index.html, atlas.js, atlas.css, vendor/deck.gl
+├── web/                   ⑥ Atlas : index.html, atlas-*.js, atlas.css, vendor/deck.gl
 ├── tests/
 ├── data/                  (hors git) catalog.sqlite, thumbs/, runs/
 ├── scripts/               full_pipeline.sh, extraction Parquet, variantes synthétiques

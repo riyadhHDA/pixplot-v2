@@ -268,6 +268,9 @@ def test_version_is_consistent():
     assert project["version"] == pixplot.__version__
     assert f"## {pixplot.__version__} " in (root / "CHANGELOG.md").read_text(encoding="utf-8")
     assert f"## {pixplot.__version__} " in (root / "CHANGELOG.fr.md").read_text(encoding="utf-8")
+    # le fichier de citation (bouton « Cite this repository », Zenodo) suit la version
+    cff = (root / "CITATION.cff").read_text(encoding="utf-8").splitlines()
+    assert f"version: {pixplot.__version__}" in cff
 
 
 def test_leiden_communities_are_nested_and_recover_blobs(tmp_path):

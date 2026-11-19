@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 18/11/2026, après-midi.*
+*Dernière mise à jour : 19/11/2026.*
 
 ## Version publiée
 
@@ -19,7 +19,8 @@ un échantillon relu »).
 
 - Fichiers : `pixplot/analysis/iconclass.py` (nouveau), commande `pixplot iconclass [--fetch]` dans
   `pixplot/cli.py`, champ `iconclass` des groupes (`pixplot/api/data.py`), MCP (`corpus_overview`,
-  `get_group`), affichage dans le panneau Groupes (`web/atlas.js`, `web/atlas.css`), tests
+  `get_group`), affichage dans le panneau Groupes (`web/atlas.js` sur la branche : à reporter dans
+  `web/atlas-panneaux.js`, fonction `renderGroups`, depuis le découpage du 19/11/2026 ; `web/atlas.css`), tests
   (`tests/test_research.py::test_iconclass_vocabulary_and_pick`), ARCHITECTURE § 23 (FR et EN).
 - Données : `data/iconclass/` (CC0, non versionné) ; résultat dans
   `data/wikiart81k/runs/analysis/dinov3_vitb16_20261116-111508/names_iconclass.json`.
@@ -45,9 +46,9 @@ un échantillon relu »).
   `ClaudeBot`, `Google-Extended`, `CCBot`…) et ses pages de recherche aux robots : **ne pas parcourir
   les notices**. Voie correcte : l'API GraphQL officielle, avec un jeton que l'utilisateur crée
   lui-même. Les manifestes IIIF sont au format Présentation 2 (lisible par `pixplot import-iiif`) ; le
-  champ des droits figure sur la notice (« CC0 Paris Musées / … »). Copie de travail de Codex :
-  `..\pixplot-paris-musees` (branche `codex/paris-musees`, son compte rendu non commité dans
-  `docs/handoff/`), bloqué par son bac à sable.
+  champ des droits figure sur la notice (« CC0 Paris Musées / … »). Un premier essai avec
+  Codex (18/11/2026) a été bloqué par son bac à sable (pas de réseau) ; sa copie de travail est
+  supprimée. L'utilisateur a quitté ChatGPT le 19/11/2026 : assistants actuels, Claude et Gemini.
 - **Affichage de l'Atlas** : étape suivante possible, une pyramide de tuiles précalculées (comme les
   cartes en ligne, `TileLayer` de deck.gl) pour la carte principale. Les mipmaps ont été essayés en
   0.13.5 et retirés (erreurs WebGL).

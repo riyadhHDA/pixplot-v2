@@ -176,7 +176,7 @@ pixplot-v2/
 │   ├── notebook.py        research notebook (SQLite)
 │   ├── api/               ⑤ FastAPI, similarity spaces
 │   └── mcp/               ⑤ MCP server
-├── web/                   ⑥ Atlas: index.html, atlas.js, atlas.css, vendor/deck.gl
+├── web/                   ⑥ Atlas: index.html, atlas-*.js, atlas.css, vendor/deck.gl
 ├── scripts/               full_pipeline.sh, Parquet extraction, synthetic variants
 ├── tests/
 └── data/                  (not in git) catalog.sqlite, thumbs/, runs/, notebook.sqlite

@@ -1,0 +1,37 @@
+# Lance les tests à chaque push (toutes les branches, y compris celles des assistants) et sur
+# chaque pull request : une branche qui casse quelque chose est repérée avant la fusion.
+# Sans GPU ni torch : les tests tournent sur un petit corpus synthétique (tests/conftest.py).
+name: Tests
+
+on:
+  push:
+    paths-ignore: ["site/**", "docs/**", "*.md"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  pytest:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - name: Dépendances (sans torch)
+        run: >
+          python -m pip install -e ".[dev]"
+          faiss-cpu umap-learn scikit-learn leidenalg igraph pandas pyarrow
+      - name: Tests
+        run: python -m pytest -q

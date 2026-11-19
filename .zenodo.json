@@ -1,0 +1,14 @@
+{
+  "title": "PixPlot v2 : un laboratoire d'exploration visuelle pour l'histoire de l'art",
+  "upload_type": "software",
+  "creators": [
+    { "name": "HADJBA, Riyadh", "affiliation": "Université de Strasbourg" }
+  ],
+  "description": "<p>PixPlot v2 cartographie de grands corpus d'œuvres d'art (80 716 œuvres de WikiArt) sur un seul ordinateur, selon plusieurs regards (forme, sujet, couleur, touche) calculés par des modèles de vision (DINOv3, SigLIP 2). Il propose une recherche par description ou par détail, des groupes nommés avec le vocabulaire de la discipline, des bancs d'essai relus par un historien de l'art, une couche critique sur ce que voit chaque modèle, et un serveur MCP pour travailler avec un assistant. Une proximité calculée y est donnée pour ce qu'elle est : une piste, pas une preuve.</p><p>Site : <a href=\"https://riyadhhda.github.io/pixplot-v2/\">riyadhhda.github.io/pixplot-v2</a>.</p>",
+  "license": "GPL-3.0-or-later",
+  "language": "fra",
+  "keywords": ["histoire de l'art", "art history", "humanités numériques", "digital humanities", "vision par ordinateur", "computer vision", "WikiArt", "DINOv3", "SigLIP 2", "IIIF"],
+  "related_identifiers": [
+    { "identifier": "https://riyadhhda.github.io/pixplot-v2/", "relation": "isDocumentedBy", "resource_type": "publication-other" }
+  ]
+}

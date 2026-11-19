@@ -177,6 +177,14 @@
   <div class="toast" id="toast" hidden role="status"></div>
 
   <script src="vendor/deck.gl-9.4.1.min.js"></script>
-  <script src="atlas.js"></script>
+  <!-- l'Atlas, en scripts classiques chargés dans cet ordre (voir web/README.md) -->
+  <script src="atlas-base.js"></script>
+  <script src="atlas-couleurs.js"></script>
+  <script src="atlas-carte.js"></script>
+  <script src="atlas-dispositions.js"></script>
+  <script src="atlas-panneaux.js"></script>
+  <script src="atlas-revue.js"></script>
+  <script src="atlas-recherche.js"></script>
+  <script src="atlas-ui.js"></script>
 </body>
 </html>

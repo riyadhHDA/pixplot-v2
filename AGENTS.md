@@ -55,7 +55,7 @@ composition name-groups suspects audit bench pairs status runs` (`pixplot <comma
 | `pixplot/api/` | FastAPI (`app.py`), données de l'Atlas (`data.py`), recherche, regards |
 | `pixplot/mcp/server.py` | serveur MCP (15 outils) |
 | `pixplot/runs.py` | chaque calcul est un *run* daté, avec `manifest.json` |
-| `web/` | Atlas : `atlas.js` (deck.gl 9.4, embarqué dans `web/vendor/`), `hd-worker.js`, `atlas.css` |
+| `web/` | Atlas : scripts `atlas-*.js` chargés dans l'ordre (voir `web/README.md`), `hd-worker.js`, `atlas.css`, deck.gl 9.4 dans `web/vendor/` |
 | `site/` | site de présentation (FR + EN) |
 | `tests/` | pytest, sur un petit corpus synthétique (`conftest.py`) |
 | `bench/` | paires d'œuvres validées par l'utilisateur (versionnées) |
@@ -87,8 +87,8 @@ composition name-groups suspects audit bench pairs status runs` (`pixplot <comma
     correctif (0.12.1), pour ne pas décaler les numéros de la feuille de route.
   - À chaque version, changer le numéro dans : `pyproject.toml`, `pixplot/__init__.py`,
     `CHANGELOG.md` + `CHANGELOG.fr.md` (nouvelle entrée), `ROADMAP.md` + `ROADMAP.fr.md` (« version
-    actuelle »), `site/index.html` + `site/fr/index.html` (`data-version`). Un test vérifie la
-    cohérence.
+    actuelle »), `site/index.html` + `site/fr/index.html` (`data-version`), `CITATION.cff` (`version` et
+    `date-released`). Un test vérifie la cohérence.
   - Puis : commit « `0.x.y : description` », étiquette `git tag -a v0.x.y`, push du commit et de
     l'étiquette, `gh release create` avec des notes **bilingues** (Français puis English).
 - **Commits** : message en français ; terminer par la ligne de co-auteur de l'outil utilisé
@@ -118,7 +118,7 @@ Si tu travailles dans une copie de travail (il y a un fichier `.pixplot-tache` �
    `data/`) : `& '<python>' -m pytest -q tests`, `& '<python>' -m pixplot.cli --data '<données>' …`.
    Avec `pixplot.exe`, c'est le code de `main` qui tournerait, pas le tien.
 3. **Reste dans ton périmètre** : ne modifie que les fichiers de ta tâche ; si tu dois toucher un
-   fichier commun (`web/atlas.js`, `pixplot/cli.py`), fais-le en ajouts courts et localisés.
+   fichier commun (`web/atlas-ui.js`, `pixplot/cli.py`), fais-le en ajouts courts et localisés.
 4. **Ne change pas de version** et ne touche ni aux CHANGELOG, ni à `docs/HANDOFF.md`, ni aux
    étiquettes ou releases : l'intégrateur le fait au moment de fusionner.
 5. **Compte rendu** : écris `docs/handoff/<agent>-<tache>.md` (ce qui est fait, mesures, ce qui reste,
