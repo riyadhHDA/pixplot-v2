@@ -501,6 +501,43 @@ def cmd_ordre(args) -> int:
     return 0
 
 
+def cmd_wikiart_noms(args) -> int:
+    """Rattache nos œuvres WikiArt à leur nom de fichier d'origine (images de MMArt), puis importe
+    titres, dates (MMArt) et émotions (ArtEmis)."""
+    import time
+
+    from .catalog import db
+    from .catalog import wikiart_names as W
+
+    s = get_settings(args.data)
+    conn = db.connect(s.catalog_path)
+    out_csv = s.data_dir / "wikiart_files.csv"
+    if args.mmart and (args.force or not out_csv.exists()):
+        t = time.time()
+        ours = W.load_ours(conn)
+        print(f"Nos œuvres : {len(ours.ids)} empreintes. Lecture des images de MMArt…", flush=True)
+        matches = W.match_rows(ours, W.mmart_hashes(Path(args.mmart) / "data", workers=args.workers,
+                                                    say=lambda m: print(m, flush=True)),
+                               say=lambda m: print(m, flush=True))
+        W.write_csv(matches, out_csv)
+        print(f"Correspondances : {out_csv} ({time.time() - t:.0f} s)")
+    if args.mmart and out_csv.exists():
+        import csv
+
+        matches = [{**r, "id": int(r["id"])} for r in csv.DictReader(out_csv.open(encoding="utf-8"))]
+        r = W.import_mmart(conn, matches, Path(args.mmart) / "data" / "data.parquet")
+        print(f"MMArt : titres et noms de fichier pour {r['artworks']} œuvres, dates pour {r['dated']}")
+    if args.artistes:
+        r = W.import_artists(conn)
+        print(f"Artistes : {r['filled']} œuvres « Unknown Artist » complétées par le nom de fichier ; "
+              f"{r['disagree']} étiquettes connues différentes du nom de fichier (laissées telles quelles)")
+    if args.artemis:
+        r = W.import_artemis(conn, s.data_dir, W.artemis_by_file(Path(args.artemis)))
+        print(f"ArtEmis : réactions pour {r['artworks']} œuvres, émotion dominante nette pour {r['labelled']}")
+    conn.close()
+    return 0
+
+
 def cmd_import_places(args) -> int:
     from .catalog import db
     from .catalog.places import import_places_csv
@@ -1058,6 +1095,15 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--localmap", action="store_true",
                    help="carte d'essai LocalMAP du regard principal (paquet pacmap ; pas mieux qu'UMAP, ARCHITECTURE)")
     p.set_defaults(func=cmd_maps)
+
+    p = sub.add_parser("wikiart-noms", help="titres, dates (MMArt) et émotions (ArtEmis) pour WikiArt, par empreinte d'image")
+    p.add_argument("--mmart", help="dossier du jeu MMArt téléchargé (huggingface.co/datasets/Shuaimyself/MMArt)")
+    p.add_argument("--artemis", help="fichier artemis_dataset_release_v0.csv")
+    p.add_argument("--artistes", action="store_true",
+                   help="compléter les « Unknown Artist » par l'artiste lu dans le nom de fichier retrouvé")
+    p.add_argument("--workers", type=int, default=6)
+    p.add_argument("--force", action="store_true", help="refaire le rattachement des images")
+    p.set_defaults(func=cmd_wikiart_noms)
 
     p = sub.add_parser("ordre", help="entropie et complexité de la matière (Sigaki et al., PNAS 2018), sans GPU")
     p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")

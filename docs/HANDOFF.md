@@ -122,8 +122,35 @@ corrigé ; 63 tests passent, Atlas vérifié.
   § 31) et CSD contre la touche (§ 32). Copie de travail `..\pixplot-pecore-csd`, branche
   `gemini/pecore-csd`, consigne dans `PROMPT-gemini-pecore-csd.md` (non versionné). À relire puis
   fusionner avec `.\scripts\nouvelle-tache.ps1 pecore-csd -Agent gemini -Terminer`.
-- **Claude** : mesure « entropie et complexité » (Sigaki et al., PNAS 2018, processeur seul ; § 33
-  après la fusion de Neon) et test d'installation dans un environnement vierge (condition de la 1.0).
+- **Claude** : section ARCHITECTURE § 33 (entropie et complexité) après la fusion de Neon.
+- **Titres, dates et émotions pour WikiArt** (Claude, 19/11/2026) : notre WikiArt 81k (`huggan/wikiart`)
+  n'a ni titres ni noms de fichier, et son ordre est mélangé. On rattache chaque œuvre à son nom de
+  fichier d'origine en comparant les images de **MMArt** (CC BY 4.0, `Shuaimyself/MMArt`, 25,3 Go
+  téléchargés avec l'accord de l'utilisateur dans `data/sources/mmart/`, hors git) à nos empreintes
+  dHash (même style, même artiste, mêmes dimensions). Puis import des titres et dates (MMArt) et de
+  l'émotion dominante (**ArtEmis**, obtenu par l'utilisateur via le formulaire des auteurs, usage
+  non commercial, dans `data/sources/artemis/`, hors git ; détail des réactions dans
+  `<données>/artemis.json`). Commande `pixplot wikiart-noms --mmart … --artemis …`,
+  `pixplot/catalog/wikiart_names.py`, test `tests/test_wikiart_names.py`.
+  **Fait** : MMArt téléchargé en 14 min ; rattachement en 3 min 38 s : **70 902 œuvres** retrouvent
+  leur nom de fichier (3 281 images de MMArt laissées de côté faute de rattachement sûr ; 32 paires
+  vérifiées à l'œil, cas limites compris, toutes justes ; dimensions inutiles car notre copie est
+  redimensionnée). Titres pour 70 902 œuvres, **dates pour 56 794** (1401–2012) : la vue chronologique
+  s'allume. ArtEmis : réactions pour 70 324 œuvres, émotion dominante (≥ 40 % des réactions, hors
+  « autre chose ») pour 55 120. Copie du catalogue avant import : `catalog.avant-wikiart-noms.sqlite`.
+  Mesures : (1) ordre de la matière dans le temps, Spearman année/H −0,03 mais une courbe : H médian
+  0,941 (1400–1599), 0,912 (1750–1849), 0,948 (1880–1909), 0,895 (1970–2012) ; (2) l'émotion
+  dominante, P@1 (première voisine étiquetée) : forme 41,8 %, sujet 41,7 %, touche 37,5 %, couleur
+  30,1 %, hasard 24,7 % (genre, pour comparer : 80,9 / 83,4 / 69,4 / 33,1 % contre 14,6 %). Les
+  regards captent un peu l'émotion, surtout par le sujet ; la couleur presque pas. Section ARCHITECTURE
+  § 34 à écrire après la fusion de Neon. **Artistes** (accord de l'utilisateur) :
+  `pixplot wikiart-noms --artistes` complète les « Unknown Artist » par l'artiste du nom de fichier :
+  35 185 œuvres complétées, il en reste 6 729 inconnues ; 129 → 1 090 artistes distincts. Sur les
+  35 717 œuvres rattachées qui avaient déjà un artiste, **0** désaccord avec le nom de fichier.
+  Conséquence : les bancs d'essai par artiste, `suspects` et les noms de groupes calculés avant
+  portent sur les anciennes étiquettes ; à recalculer avant la prochaine publication de chiffres.
+- **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
+  19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.
 
 ## Fait depuis 0.19.0 (sur `main`, non publié)
 

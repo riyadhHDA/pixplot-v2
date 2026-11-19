@@ -21,7 +21,8 @@ const PALETTE = [
   [255, 217, 47], [229, 196, 148], [179, 179, 179], [27, 158, 119], [217, 95, 2], [117, 112, 179],
 ];
 const GREY = [110, 110, 110];
-const LABELS = { artist: "Artiste", style: "Style", genre: "Genre", date: "Date", source: "Source" };
+const LABELS = { artist: "Artiste", style: "Style", genre: "Genre", date: "Date", source: "Source", title: "Titre",
+  emotion: "Émotion (ArtEmis)", wikiart_file: "Fichier WikiArt" };
 // Valeurs écrites en « identifiant » (claude-monet, Early_Renaissance) : on les rend lisibles.
 // Les autres (titres, dates, sources, cotes) sont affichées telles quelles.
 const SLUG_KEYS = new Set(["artist", "style", "genre"]);
