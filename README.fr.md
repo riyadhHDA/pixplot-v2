@@ -14,7 +14,7 @@
   <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776ab">
   <img alt="100 % local" src="https://img.shields.io/badge/100%25-local-2c2c31">
   <img alt="GPU : AMD ROCm ou CPU" src="https://img.shields.io/badge/GPU-AMD%20ROCm%20%7C%20CPU-9b978e">
-  <img alt="Serveur MCP" src="https://img.shields.io/badge/MCP-18%20outils-e0b040">
+  <img alt="Serveur MCP" src="https://img.shields.io/badge/MCP-19%20outils-e0b040">
 </p>
 
 # PixPlot v2
@@ -26,6 +26,23 @@ de vision récents (DINOv3, SigLIP 2) pour tourner sur un simple PC de bureau.
 Le logiciel calcule des voisinages sur des pixels : il ne prouve ni influence ni attribution. L'idée est de séparer
 les rôles : PixPlot calcule et organise, un assistant branché par MCP peut aider à chercher et comparer, et la
 vérification reste côté historien.
+
+## Ce que vous pouvez faire avec votre corpus
+
+Partez d'un dossier d'images, d'une collection IIIF de musée ou d'un jeu de données comme WikiArt, avec ou sans
+métadonnées. PixPlot répond alors à des questions d'historien de l'art. Les exemples viennent de WikiArt 81k ;
+chaque résultat est une piste à vérifier, pas une conclusion.
+
+| Votre question | Ce que fait PixPlot | Exemple sur WikiArt |
+|---|---|---|
+| **Qui a copié, cité ou repris qui ?** | Plus proches voisines selon quatre regards, comparateur et bouton « Pourquoi ? » qui montre les zones qui se répondent. | *Le Semeur* de Van Gogh retrouve celui de Millet au 1ᵉʳ rang ; la copie de Rubens d'après l'*Enlèvement d'Europe* de Titien aussi. |
+| **Où revient ce motif ?** | Recherche d'un **détail** tracé sur une image, ou d'une **zone décrite** par des mots, dans 1,6 million de zones. | « Une auréole », « un crâne », « une main qui bénit » : la zone exacte est encadrée dans chaque œuvre trouvée. |
+| **Quelles œuvres traitent ce thème ?** | Recherche en **phrase libre** (français ou anglais) et **axes conceptuels** : tout le corpus placé entre deux mots. | « Annonciation dans un jardin » ; le corpus rangé entre « sacré » et « profane ». |
+| **Mon catalogue est-il fiable ?** | Liste **À vérifier** des étiquettes contredites par toutes les voisines, et repérage des **doublons**. | 4 884 étiquettes à vérifier ; 839 œuvres entrées deux fois, dont 702 sous deux styles différents (un même Corot « romantique » et « réaliste »). |
+| **Qu'est-ce qui rapproche ces deux œuvres ?** | Le même couple vu par la forme, le sujet, la couleur et la touche ; les **désaccords** entre regards (même composition, sujet différent…). | Une mise en page reprise pour un autre thème ; un même sujet traité par deux mains. |
+| **De quoi mon corpus est-il fait ?** | Carte de groupes nommés (vocabulaire d'histoire de l'art et **Iconclass**), **filtres combinés**, vues chronologique et géographique, bilan de ce qui manque. | « Baroque » + « portrait » = 980 œuvres, allumées sur la carte en 14 ms. |
+| **Comment garder la trace de ma recherche ?** | **Carnet de recherche**, export en **Research Pack** (.zip : images, métadonnées sourcées, scores, méthode) et assistant branché par **MCP** qui cherche et compare avec vous. | Un dossier prêt pour un séminaire, un mémoire ou une relecture par un collègue. |
+| **Quel modèle voit quoi ?** | Bancs d'essai sur des paires validées par l'historien ; chaque modèle a une fiche (données d'entraînement, biais). | Quatre modèles écartés après mesure (TIPSv2, PE-Spatial, SSCD, Depth Anything), chiffres publiés (ARCHITECTURE § 19, 24, 27, 28). |
 
 ## WikiArt complet sur un seul PC
 
@@ -49,8 +66,8 @@ avec toutes les vignettes affichées, et une recherche par texte ou par détail 
 | **Quatre regards séparés** | **Forme** (DINOv3 : silhouettes, composition), **sujet** (SigLIP 2 : thème, genre, école), **couleur** (palette CIELAB) et **touche** (facture et trait via la couche 6 de DINOv3). Croiser les regards aide à comprendre ce qui rapproche ou sépare deux œuvres. |
 | **Recherche** | Par métadonnées, par **phrase libre** en français ou en anglais (SigLIP 2), par **zone décrite** (« une auréole », « un crâne » sur 1,6 M de zones) ou par **détail** en traçant un cadre directement sur une image. |
 | **Groupes** | Regroupement sphérique (e-means) et communautés Leiden emboîtées, avec noms proposés à partir d'un vocabulaire d'histoire de l'art (à relire). |
-| **Atlas web** | Carte interactive (deck.gl, hors ligne), fiches aux métadonnées sourcées et **mesures visuelles** sans GPU (équilibre, symétrie, entropie chromatique, d'après Stork), **comparateur** jusqu'à six œuvres avec bouton « Pourquoi ? », **carnet de recherche**, une carte par regard, **axes conceptuels 2D** sur deux mots (façon *2D CLIP*), vues **chronologique** et **géographique** (lieux typés et datés, fond de carte embarqué). |
-| **Audit du catalogue** | Audit à l'aveugle (pixels seuls) et liste **À vérifier** des œuvres dont l'étiquette est contredite par toutes leurs voisines (erreur de catalogue ou œuvre singulière). |
+| **Atlas web** | Carte interactive (deck.gl, hors ligne), fiches aux métadonnées sourcées et **mesures visuelles** sans GPU (équilibre, symétrie, entropie chromatique, d'après Stork), **comparateur** jusqu'à six œuvres avec bouton « Pourquoi ? », **filtres combinés** (artiste, style, genre, groupe…), **carnet de recherche**, une carte par regard, **axes conceptuels 2D** sur deux mots (façon *2D CLIP*), vues **chronologique** et **géographique** (lieux typés et datés, fond de carte embarqué). |
+| **Audit du catalogue** | Audit à l'aveugle (pixels seuls), liste **À vérifier** des œuvres dont l'étiquette est contredite par toutes leurs voisines (erreur de catalogue ou œuvre singulière) et **doublons** : les œuvres entrées deux fois et leurs variantes (`pixplot doublons`). |
 | **Collections IIIF** | `pixplot import-iiif` importe n'importe quel manifeste ou collection IIIF v2/v3 avec métadonnées normalisées et mention des droits. |
 | **Serveur MCP (19 outils)** | Branche Claude ou un autre assistant compatible : recherche, affichage des images et des recadrages, comparaisons, mesures visuelles, axes conceptuels et ajout de notes dans le carnet. |
 | **Traçabilité** | Chaque calcul est rangé dans un *run* daté (`manifest.json` avec modèle, paramètres et run parent). L'export en *Research Pack* (.zip) rassemble images, métadonnées sourcées et scores. |
