@@ -75,6 +75,17 @@ corrigé ; 63 tests passent, Atlas vérifié.
     `pixplot bench` mesuré sur la première voisine étiquetée** (9 : changerait les chiffres publiés,
     à décider avec l'utilisateur).
 
+## Fait depuis 0.18.0 (sur `main`, non publié)
+
+- Corrections de l'audit d'Argon (commit `4d7998a`, voir plus bas).
+- **Filtres combinés** (Collection Space Navigator) : bouton « Filtrer » / touche F, `web/atlas-filtres.js`.
+  Comptes croisés (ce que donnerait chaque valeur avec les autres critères), 14 ms par changement sur
+  81k, sélection vers le carnet (5 000 au plus) ou un Research Pack (500 plus typiques). « Vue
+  d'ensemble » efface aussi les filtres. Vérifié dans l'Atlas 81k (Baroque + portrait = 980, compté
+  à part).
+- **LocalMAP** : l'installation de `pacmap` 0.9.1 a été refusée par le garde-fou d'auto mode ;
+  l'utilisateur doit la lancer lui-même (`.venv\Scripts\python -m pip install pacmap==0.9.1`).
+
 ## En attente de l'utilisateur
 
 - **SSCD confié à Gemini** (19/11/2026) : copie de travail `..\pixplot-sscd`, branche `gemini/sscd`,

@@ -69,6 +69,7 @@ function setHighlight(set, label) {
 }
 function clearHighlight() {
   clearTimeout(state.searchTimer); state.searchSeq++;   // annule une recherche instantanée en cours
+  if (typeof filtersActive === "function" && filtersActive()) resetFilters();   // « Vue d'ensemble » efface aussi les filtres
   document.querySelectorAll(".group.active").forEach((x) => x.classList.remove("active"));
   $("search").value = "";
   $("search-clear").hidden = true;

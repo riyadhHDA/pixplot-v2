@@ -107,8 +107,9 @@ miss. Failed attempts are documented with their numbers and dropped.
     detection for *Pathosformeln* and figure symmetry.
   - **Sparse autoencoders** (*PatchSAE* ICLR 2025, *Matryoshka SAE* ICML 2025) on already-computed
     vectors, and enriched Iconclass hierarchy (*Visual Narratives*, WACV 2024).
-- **Collection Space Navigator** (Ohm et al., 2023): multidimensional filters and selection
-  export for the Atlas.
+- **Collection Space Navigator** (Ohm et al., 2023) *(done, not yet released)*: combined filters in
+  the Atlas (labels, groups, atypicality, dates) with cross counts, selection sent to the notebook or a
+  Research Pack (`web/atlas-filtres.js`, key F).
 
 - **SAM 3**: precise segmentation of a motif, on demand on a selection. Meta licence to be
   accepted by the user; ROCm compatibility to check.

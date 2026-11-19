@@ -109,8 +109,9 @@ chiffres et on passe à autre chose.
     détection de squelettes pour les *Pathosformeln* et la symétrie des figures.
   - **Auto-encodeurs parcimonieux** (*PatchSAE* ICLR 2025, *Matryoshka SAE* ICML 2025) sur les
     vecteurs déjà calculés, et hiérarchie Iconclass enrichie (*Visual Narratives*, WACV 2024).
-- **Collection Space Navigator** (Ohm et al., 2023) : filtres multidimensionnels et export de
-  sélection pour l'Atlas.
+- **Collection Space Navigator** (Ohm et al., 2023) *(fait, pas encore publié)* : filtres combinés
+  dans l'Atlas (étiquettes, groupes, atypicité, dates) avec comptes croisés, sélection envoyée au
+  carnet ou dans un Research Pack (`web/atlas-filtres.js`, touche F).
 
 - **SAM 3** : découper précisément un motif, à la demande sur une sélection. Licence Meta à
   accepter par l'utilisateur ; compatibilité ROCm à vérifier.

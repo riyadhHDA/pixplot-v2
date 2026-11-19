@@ -107,6 +107,7 @@ function wireUI() {
     context: { espaces: state.spaces.map((s) => s.key).join(", ") },
   }));
   $("open-notebook").addEventListener("click", renderNotebook);
+  $("open-filters").addEventListener("click", renderFilters);
   $("open-suspects").addEventListener("click", openReview);
   $("open-disagreements").addEventListener("click", () => renderDisagreements());
   $("open-corpus").addEventListener("click", renderCorpus);
@@ -164,6 +165,7 @@ function wireUI() {
     else if (k === "g") setGroups($("toggle-groups").getAttribute("aria-expanded") !== "true");
     else if (k === "c") openCompare();
     else if (k === "n") renderNotebook();
+    else if (k === "f") renderFilters();
     else if (k === "v" && !$("open-suspects").hidden) openReview();
     else if (k === "d" && !$("open-disagreements").hidden) renderDisagreements();
     else if (k === "r") openReviewSession();
