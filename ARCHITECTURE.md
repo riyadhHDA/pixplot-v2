@@ -697,6 +697,21 @@ mother and child", "11D356 Christ crucified"), silent on manner, portraiture and
 abstraction, which the lexicon names better. Typical remaining errors: Hokusai's wrestlers →
 "43C393 jiu-jitsu, judo", specific saints on altarpieces ("Philip Neri").
 
+**Review by the historian** (2026-11-19, `bench/wikiart81k_iconclass_review.csv`): the 84 groups with an
+Iconclass name were judged, current name (A) against the Iconclass proposal (B), on
+six typical works per group; 83 answers.
+
+| | B Iconclass better | equivalent | A current better | both wrong |
+|---|---|---|---|---|
+| all (83) | **39 (47 %)** | 17 | 24 (29 %) | 3 |
+| "sure" (37) | **21 (57 %)** | 4 | 12 (32 %) | 0 |
+| "possible" (46) | **18 (39 %)** | 13 | 12 (26 %) | 3 |
+
+On decided answers, Iconclass wins 39 to 24 (one-sided sign test: p = 0.04). **Roadmap criterion met**:
+Iconclass names are judged more accurate. They are added to the current name without replacing it: the
+lexicon is still better in one group in three (often handling, portraiture, abstraction), and the "sure"
+threshold is confirmed as the most reliable.
+
 ## 24. Composition: PE-Spatial evaluated, not adopted (18/11/2026)
 
 Step 0.15. Question: does a "spatial" model, or a cell-by-cell comparison, find a work that reuses

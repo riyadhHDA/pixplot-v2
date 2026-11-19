@@ -69,6 +69,9 @@ miss. Failed attempts are documented with their numbers and dropped.
 - **Success if**: the names are judged more accurate than the current ones, on a reviewed
   sample.
 
+> **Done on 2026-11-19: criterion met.** Over 83 reviewed groups, Iconclass is judged more accurate 39
+> times, the current name 24 times (17 equivalent, 3 both wrong): ARCHITECTURE § 23.
+
 ### 0.15 — Composition: STELLAR and PE-Spatial
 
 - **Why**: the benchmark shows that no way of seeing follows a filiation once the artist

@@ -770,6 +770,21 @@ muet sur la manière, le genre du portrait et l'abstraction, que le lexique nomm
 Erreurs typiques restantes : lutteurs de Hokusai → « 43C393 jiu-jitsu, judo », saints
 précis sur des retables (« Philippe Neri »).
 
+**Relecture par l'historien** (19/11/2026, `bench/wikiart81k_iconclass_review.csv`) : les 84 groupes qui ont
+un nom Iconclass ont été jugés, nom actuel (A) contre proposition
+Iconclass (B), sur six œuvres typiques de chaque groupe ; 83 réponses.
+
+| | B Iconclass plus juste | équivalents | A actuel plus juste | les deux faux |
+|---|---|---|---|---|
+| tous (83) | **39 (47 %)** | 17 | 24 (29 %) | 3 |
+| « sûr » (37) | **21 (57 %)** | 4 | 12 (32 %) | 0 |
+| « possible » (46) | **18 (39 %)** | 13 | 12 (26 %) | 3 |
+
+Sur les avis tranchés, Iconclass l'emporte 39 contre 24 (test du signe unilatéral : p = 0,04).
+**Critère de la feuille de route rempli** : les noms Iconclass sont jugés plus justes. Ils s'ajoutent au
+nom actuel sans le remplacer : le lexique reste meilleur dans un groupe sur trois (souvent la manière,
+le portrait, l'abstraction), et le seuil « sûr » se confirme comme le plus fiable.
+
 ## 24. La composition : PE-Spatial évalué, non retenu (18/11/2026)
 
 Étape 0.15. Question : un modèle « spatial » ou une comparaison case à case retrouve-t-il mieux
