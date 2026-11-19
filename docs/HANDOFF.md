@@ -78,6 +78,11 @@ corrigé ; 63 tests passent, Atlas vérifié.
 ## Fait depuis 0.18.0 (sur `main`, non publié)
 
 - Corrections de l'audit d'Argon (commit `4d7998a`, voir plus bas).
+- **SSCD évalué par Gemini 4 Neon, non retenu** (fusionné, ARCHITECTURE § 27,
+  `docs/handoff/gemini-sscd.md`) : licence MIT, 80 716 œuvres en 4 min 41 s. Sur les 9 paires
+  « filiation », R@10 33 % et rang médian 216, derrière Forme et Sujet (39 %, 26 et 25). Il retrouve
+  les copies fidèles au rang 1 et repère 2,6 % de quasi-doublons (piste : dédoublonnage). Reste dans
+  `NOT_KEPT`.
 - **Filtres combinés** (Collection Space Navigator) : bouton « Filtrer » / touche F, `web/atlas-filtres.js`.
   Comptes croisés (ce que donnerait chaque valeur avec les autres critères), 14 ms par changement sur
   81k, sélection vers le carnet (5 000 au plus) ou un Research Pack (500 plus typiques). « Vue
@@ -88,10 +93,10 @@ corrigé ; 63 tests passent, Atlas vérifié.
 
 ## En attente de l'utilisateur
 
-- **SSCD confié à Gemini** (19/11/2026) : copie de travail `..\pixplot-sscd`, branche `gemini/sscd`,
-  consigne dans `PROMPT-gemini-sscd.md` (non versionné). À relire puis fusionner avec
-  `.\scripts\nouvelle-tache.ps1 sscd -Agent gemini -Terminer`.
-
+- **Profondeur confiée à Gemini 4 Neon** (19/11/2026) : Depth Anything V2 Small (Apache 2.0) comme
+  piste de composition (§ 28 à venir). Copie de travail `..\pixplot-profondeur`, branche
+  `gemini/profondeur`, consigne dans `PROMPT-gemini-profondeur.md` (non versionné). À relire puis
+  fusionner avec `.\scripts\nouvelle-tache.ps1 profondeur -Agent gemini -Terminer`.
 - **Une paire proposée** à valider ou rejeter dans la relecture rapide (touche R) : copie de Rubens
   d'après l'*Enlèvement d'Europe* de Titien (n° 64269 ↔ 67405, Honour et Fleming p. 573).
 - **Profil GitHub** : la page de présentation (dépôt `riyadhHDA/riyadhHDA`) est en ligne ; le nom, la
