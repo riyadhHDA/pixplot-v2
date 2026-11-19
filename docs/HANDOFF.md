@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 19/11/2026 (audit : points d'interface corrigés ; SSCD confié à Gemini).*
+*Dernière mise à jour : 19/11/2026 (profondeur fusionnée, ARCHITECTURE § 29).*
 
 ## Version publiée
 
@@ -83,6 +83,13 @@ corrigé ; 63 tests passent, Atlas vérifié.
   « filiation », R@10 33 % et rang médian 216, derrière Forme et Sujet (39 %, 26 et 25). Il retrouve
   les copies fidèles au rang 1 et repère 2,6 % de quasi-doublons (piste : dédoublonnage). Reste dans
   `NOT_KEPT`.
+- **Depth Anything V2 Small évalué par Gemini 4 Neon, non retenu** (fusionné, ARCHITECTURE § 28,
+  `docs/handoff/gemini-profondeur.md`) : Apache 2.0, grille de profondeur 8 × 8 sur l'œuvre seule,
+  80 716 œuvres en 14 min. Sur « même composition, sujet différent », R@10 3,6 % et rang médian
+  13 754 contre 53,6 % et 8 pour Forme ; combinée à Forme, elle dégrade le haut du classement.
+  Bonne sur les scènes à plans nets (*Le Semeur*, Rubens / Titien), perdue sur l'art non perspectif.
+  Reste dans `NOT_KEPT`. `extract.py` passe désormais les cadres du letterbox aux encodeurs qui
+  déclarent `needs_boxes`.
 - **Filtres combinés** (Collection Space Navigator) : bouton « Filtrer » / touche F, `web/atlas-filtres.js`.
   Comptes croisés (ce que donnerait chaque valeur avec les autres critères), 14 ms par changement sur
   81k, sélection vers le carnet (5 000 au plus) ou un Research Pack (500 plus typiques). « Vue
@@ -94,7 +101,7 @@ corrigé ; 63 tests passent, Atlas vérifié.
   45,8 %, même artiste 33,5 % contre 32,0 %, même genre 75,5 % contre 75,9 % ; mais la carte se
   coupe en ~6 îlots : surface occupée 20 % contre 41 %, vignettes superposées 95 % contre 83 %, et
   les paires validées plus loin (rang médian 8 879 contre 6 994). Avec 20 voisines : moins bien
-  partout. Section ARCHITECTURE à écrire après la fusion de la § 28 de Neon (éviter un conflit).
+  partout. Résultats dans ARCHITECTURE § 29.
   À la demande de l'utilisateur, proposée comme **carte d'essai** dans le menu de l'Atlas (« Forme ·
   LocalMAP (essai, pas mieux) », avec une note qui dit qu'elle n'est pas meilleure) :
   `pixplot maps --localmap`, dépendance facultative `pip install -e .[localmap]`. Calculée pour 81k.
@@ -102,16 +109,12 @@ corrigé ; 63 tests passent, Atlas vérifié.
   dans « À vérifier ») : vecteurs SSCD centrés, 5 voisines par œuvre. Seuils choisis en regardant des
   paires par tranche de cosinus : ≥ 0,85 même image, 0,65–0,85 répliques, séries, états de gravure,
   copies. WikiArt 81k : 839 paires « même image » (702 avec deux styles différents : la même
-  reproduction rangée dans deux styles), 785 variantes (68 en désaccord). Section ARCHITECTURE à
-  écrire avec celle de LocalMAP.
+  reproduction rangée dans deux styles), 785 variantes (68 en désaccord). Résultats dans
+  ARCHITECTURE § 29.
   Outil MCP `find_duplicates` (19 outils ; README, MCP et site FR + EN mis à jour).
 
 ## En attente de l'utilisateur
 
-- **Profondeur confiée à Gemini 4 Neon** (19/11/2026) : Depth Anything V2 Small (Apache 2.0) comme
-  piste de composition (§ 28 à venir). Copie de travail `..\pixplot-profondeur`, branche
-  `gemini/profondeur`, consigne dans `PROMPT-gemini-profondeur.md` (non versionné). À relire puis
-  fusionner avec `.\scripts\nouvelle-tache.ps1 profondeur -Agent gemini -Terminer`.
 - **Une paire proposée** à valider ou rejeter dans la relecture rapide (touche R) : copie de Rubens
   d'après l'*Enlèvement d'Europe* de Titien (n° 64269 ↔ 67405, Honour et Fleming p. 573).
 - **Profil GitHub** : la page de présentation (dépôt `riyadhHDA/riyadhHDA`) est en ligne ; le nom, la

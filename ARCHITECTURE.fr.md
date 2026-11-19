@@ -1077,3 +1077,78 @@ la variante Small (Apache 2.0) et une grille fixe 8 × 8 ont été mesurées : u
 est surtout pertinente sur un corpus strictement figuratif et perspectif (paysages, scènes
 d'intérieur, peinture d'histoire), plutôt que sur un corpus généraliste mêlant gravures, aplats et
 art moderne.
+
+## 29. LocalMAP contre UMAP, et doublons repérés par SSCD (19/11/2026)
+
+### LocalMAP : évalué, gardé comme carte d'essai
+
+Question : [LocalMAP](https://github.com/YingfanWang/PaCMAP) (Wang et al., AAAI 2025, paquet `pacmap`,
+Apache 2.0, processeur seul) dessine-t-il une meilleure carte qu'UMAP, en particulier dans les zones
+denses où les œuvres se chevauchent ?
+
+- **Méthode.** Mêmes vecteurs que la carte principale (forme, DINOv3, PCA 64), mêmes 80 716 œuvres,
+  graine fixe. Cinq mesures, sur la carte normalisée dans [-1, 1] : part des 10 vraies voisines
+  (cosinus des vecteurs complets) restées parmi les 10 plus proches sur la carte (5 000 œuvres tirées
+  au sort) ; part des œuvres dont les voisines sur la carte portent majoritairement la même étiquette
+  (style, artiste, genre) ; part des vignettes qui chevauchent leur voisine à la vue d'ensemble ;
+  surface occupée (grille 128 × 128) ; rang, sur la carte, de l'œuvre jumelle des paires validées
+  (§ 18).
+
+| Regard forme, 80 716 œuvres | UMAP (carte actuelle) | LocalMAP, 10 voisines | LocalMAP, 20 voisines |
+|---|---|---|---|
+| Temps de calcul (processeur) | — | 28 s | 44 s |
+| 10 vraies voisines gardées | 7,4 % | **7,8 %** | 5,8 % |
+| Voisines de même style | 45,8 % | **47,3 %** | 45,0 % |
+| Voisines du même artiste | 32,0 % | **33,5 %** | 30,1 % |
+| Voisines du même genre | 75,9 % | 75,5 % | 76,1 % |
+| Surface occupée | **41 %** | 20 % | 20 % |
+| Vignettes superposées | **83 %** | 95 % | 95 % |
+| Paires validées : rang médian sur la carte | **6 994** | 8 879 | 9 851 |
+| Paires validées : dans les 100 plus proches | 9,6 % | 10,6 % | **12,0 %** |
+
+- **Lecture.** LocalMAP coupe le corpus en six îlots séparés par du vide : les grandes familles se
+  lisent mieux, mais les œuvres s'entassent dans chaque îlot (deux fois moins de surface) et les
+  paires validées s'éloignent. Le gain sur les étiquettes (+1,5 point) est trop faible pour
+  compenser ce que l'on perd à l'écran, dans un atlas de vignettes.
+- **Décision.** UMAP reste la carte principale. À la demande de l'utilisateur, LocalMAP est proposé
+  comme **carte d'essai** (`pixplot maps --localmap`, dépendance facultative `[localmap]`), dans le
+  menu « Forme · LocalMAP (essai, pas mieux) », avec une note qui rappelle ces chiffres.
+- **Limites.** Un seul regard (forme) et deux réglages ; mesures sur l'ensemble de la carte, pas
+  zone par zone. Le chevauchement est mesuré à la vue d'ensemble : en zoomant, l'Atlas espace les
+  vignettes de la même façon pour les deux cartes.
+
+### Doublons et variantes : SSCD là où il est bon
+
+SSCD n'a pas été retenu comme regard (§ 27) : il retrouve moins bien les filiations que Forme et
+Sujet. Mais il est fait pour reconnaître **la même image** malgré un recadrage, un autre éclairage ou
+une autre numérisation. `pixplot doublons` s'en sert pour signaler les œuvres entrées deux fois au
+catalogue, que le hachage de `pixplot ingest` ne voit pas (il ne repère que les fichiers identiques
+octet pour octet).
+
+- **Méthode.** Vecteurs SSCD centrés (conseil des auteurs), 5 plus proches voisines par œuvre, FAISS
+  exact. Les seuils ont été choisis **en regardant** huit paires tirées au sort par tranche de
+  cosinus : à partir de 0,95, la même image ; de 0,85 à 0,95, la même œuvre autrement reproduite
+  (couleur et noir et blanc, autre cadrage) ; de 0,65 à 0,85, des répliques, des séries (les
+  cathédrales de Rouen de Monet), des états d'une eau-forte de Rembrandt, la copie d'un portrait
+  rococo, et encore quelques reproductions médiocres d'une même œuvre ; de 0,55 à 0,65, surtout des
+  œuvres d'une même série.
+- **Niveaux retenus.** « Même image » dès 0,85 ; « variante » de 0,65 à 0,85. Pour chaque paire, les
+  étiquettes du catalogue qui se contredisent (artiste, style, genre, date ; « Unknown » ne compte
+  pas).
+
+| WikiArt 81k | paires | étiquettes contradictoires | dont style | dont genre | dont artiste |
+|---|---|---|---|---|---|
+| Même image (≥ 0,85) | 839 | **702** | 689 | 12 | 8 |
+| Variante (0,65–0,85) | 785 | 68 | 29 | 33 | 9 |
+
+- **Lecture.** WikiArt range souvent la même reproduction sous **deux styles** (un Corot à la fois
+  « Romanticism » et « Realism »), et 598 paires « même image » ont un artiste connu d'un côté
+  seulement (« Unknown Artist » de l'autre). C'est une limite du corpus à garder en tête : elle
+  touche aussi les bancs d'essai par étiquette (§ 9), où une œuvre peut retrouver son propre doublon
+  sous une autre étiquette.
+- **Dans l'Atlas et le serveur MCP.** Onglet « Doublons » de « À vérifier » (même image ou variantes,
+  étiquettes contradictoires seulement ou toutes, bouton Comparer) ; outil MCP `find_duplicates`.
+  Une paire est une piste : deux tableaux d'une série restent deux œuvres.
+- **Limites.** Seuils choisis à l'œil sur 40 paires, pas sur un jeu annoté ; 5 voisines par œuvre
+  (un groupe de plus de six reproductions n'est vu que par morceaux) ; SSCD juge la ressemblance des
+  images, pas l'histoire des œuvres.

@@ -990,3 +990,73 @@ does not explain depth's collapse on non-perspectival works). Only the Small var
 and a fixed 8 × 8 grid were tested: monocular depth estimation is primarily meaningful on strictly
 figurative, perspectival corpora (landscapes, interiors, history painting) rather than a broad
 corpus mixing prints, flat modern compositions and decorative works.
+
+## 29. LocalMAP versus UMAP, and duplicates found by SSCD (19/11/2026)
+
+### LocalMAP: evaluated, kept as a trial map
+
+Question: does [LocalMAP](https://github.com/YingfanWang/PaCMAP) (Wang et al., AAAI 2025, `pacmap`
+package, Apache 2.0, CPU only) draw a better map than UMAP, especially in the dense areas where works
+overlap?
+
+- **Method.** Same vectors as the main map (form, DINOv3, PCA 64), same 80,716 works, fixed seed.
+  Five measures on the map normalised to [-1, 1]: share of the 10 true neighbours (cosine of the full
+  vectors) still among the 10 closest on the map (5,000 random works); share of works whose map
+  neighbours mostly carry the same label (style, artist, genre); share of thumbnails overlapping their
+  neighbour in the overview; occupied area (128 × 128 grid); map rank of the twin work in validated
+  pairs (§ 18).
+
+| Form regard, 80,716 works | UMAP (current map) | LocalMAP, 10 neighbours | LocalMAP, 20 neighbours |
+|---|---|---|---|
+| Computing time (CPU) | — | 28 s | 44 s |
+| 10 true neighbours kept | 7.4 % | **7.8 %** | 5.8 % |
+| Neighbours with the same style | 45.8 % | **47.3 %** | 45.0 % |
+| Neighbours by the same artist | 32.0 % | **33.5 %** | 30.1 % |
+| Neighbours with the same genre | 75.9 % | 75.5 % | 76.1 % |
+| Occupied area | **41 %** | 20 % | 20 % |
+| Overlapping thumbnails | **83 %** | 95 % | 95 % |
+| Validated pairs: median rank on the map | **6,994** | 8,879 | 9,851 |
+| Validated pairs: within the 100 closest | 9.6 % | 10.6 % | **12.0 %** |
+
+- **Reading.** LocalMAP splits the corpus into six islands separated by empty space: the large
+  families read better, but works pile up inside each island (half the area) and validated pairs
+  drift apart. The gain on labels (+1.5 points) is too small to make up for what is lost on screen in
+  an atlas of thumbnails.
+- **Decision.** UMAP remains the main map. At the user's request, LocalMAP is offered as a **trial
+  map** (`pixplot maps --localmap`, optional dependency `[localmap]`), in the menu as "Forme ·
+  LocalMAP (essai, pas mieux)", with a note recalling these figures.
+- **Limits.** One regard (form) and two settings; measures over the whole map, not area by area.
+  Overlap is measured in the overview: when zooming, the Atlas spaces thumbnails the same way for
+  both maps.
+
+### Duplicates and variants: SSCD where it is good
+
+SSCD was not kept as a regard (§ 27): it finds lineages less well than Form and Subject. But it is
+built to recognise **the same image** despite cropping, different lighting or another scan.
+`pixplot doublons` uses it to flag works entered twice in the catalogue, which the hash in
+`pixplot ingest` misses (it only catches byte-identical files).
+
+- **Method.** Centred SSCD vectors (the authors' advice), 5 nearest neighbours per work, exact FAISS.
+  Thresholds were chosen **by looking** at eight random pairs per cosine band: from 0.95, the same
+  image; 0.85 to 0.95, the same work reproduced differently (colour and black and white, another
+  crop); 0.65 to 0.85, replicas, series (Monet's Rouen cathedrals), states of a Rembrandt etching, the
+  copy of a Rococo portrait, and still a few poor reproductions of one work; 0.55 to 0.65, mostly
+  works from the same series.
+- **Levels kept.** "Same image" from 0.85; "variant" from 0.65 to 0.85. For each pair, the catalogue
+  labels that contradict each other (artist, style, genre, date; "Unknown" does not count).
+
+| WikiArt 81k | pairs | contradicting labels | of which style | genre | artist |
+|---|---|---|---|---|---|
+| Same image (≥ 0.85) | 839 | **702** | 689 | 12 | 8 |
+| Variant (0.65–0.85) | 785 | 68 | 29 | 33 | 9 |
+
+- **Reading.** WikiArt often files the same reproduction under **two styles** (a Corot as both
+  "Romanticism" and "Realism"), and 598 "same image" pairs have a known artist on one side only
+  ("Unknown Artist" on the other). This is a limit of the corpus to keep in mind: it also affects
+  label benchmarks (§ 9), where a work can find its own duplicate under another label.
+- **In the Atlas and the MCP server.** "Doublons" tab under "À vérifier" (same image or variants,
+  contradicting labels only or all, Compare button); MCP tool `find_duplicates`. A pair is a lead:
+  two paintings from a series remain two works.
+- **Limits.** Thresholds chosen by eye on 40 pairs, not on an annotated set; 5 neighbours per work (a
+  group of more than six reproductions is only seen piecewise); SSCD judges the likeness of images,
+  not the history of works.
