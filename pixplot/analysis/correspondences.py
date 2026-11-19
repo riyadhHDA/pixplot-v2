@@ -37,14 +37,17 @@ def match(cells_a: np.ndarray, cells_b: np.ndarray, boxes_a: list, boxes_b: list
     A = cells_a / np.maximum(np.linalg.norm(cells_a, axis=1, keepdims=True), 1e-6)
     B = cells_b / np.maximum(np.linalg.norm(cells_b, axis=1, keepdims=True), 1e-6)
     S = A @ B.T
-    va = np.array([b is not None for b in boxes_a]) & (np.linalg.norm(cells_a, axis=1) > 1e-6)
-    vb = np.array([b is not None for b in boxes_b]) & (np.linalg.norm(cells_b, axis=1) > 1e-6)
+    va = np.array([b is not None for b in boxes_a], dtype=bool) & (np.linalg.norm(cells_a, axis=1) > 1e-6)
+    vb = np.array([b is not None for b in boxes_b], dtype=bool) & (np.linalg.norm(cells_b, axis=1) > 1e-6)
+    if k <= 0 or not va.any() or not vb.any():
+        return []
+    # Sommes et effectifs sur les seules cases valides (sans nanmean : pas d'avertissement quand
+    # une œuvre non carrée laisse des rangées entières hors de l'œuvre).
+    V = np.where(va[:, None] & vb[None, :], S, 0.0)
+    row_sum, col_sum = V.sum(axis=1), V.sum(axis=0)
+    n_b, n_a = int(vb.sum()), int(va.sum())
     S[~va, :] = -np.inf
     S[:, ~vb] = -np.inf
-    if not va.any() or not vb.any():
-        return []
-    finite = np.where(np.isfinite(S), S, np.nan)
-    row_mean, col_mean = np.nanmean(finite, axis=1), np.nanmean(finite, axis=0)
     best_b, best_a = S.argmax(axis=1), S.argmax(axis=0)
     out = []
     for i in np.flatnonzero(va):
@@ -52,10 +55,14 @@ def match(cells_a: np.ndarray, cells_b: np.ndarray, boxes_a: list, boxes_b: list
         if best_a[j] != i:
             continue                                   # pas mutuelle
         sim = float(S[i, j])
-        lift = sim - float(np.nanmax([row_mean[i], col_mean[j]]))
+        # ressemblance moyenne de chaque case avec TOUTES LES AUTRES cases de l'autre œuvre
+        # (la paire elle-même exclue, comme le dit la documentation) ; sans autre case : 0
+        others = [(row_sum[i] - sim) / (n_b - 1)] if n_b > 1 else []
+        others += [(col_sum[j] - sim) / (n_a - 1)] if n_a > 1 else []
+        lift = float(sim - max(others)) if others else 0.0
         out.append({"cell_a": int(i), "cell_b": j, "box_a": boxes_a[i], "box_b": boxes_b[j],
                     "sim": round(sim, 4), "lift": round(lift, 4)})
-    out.sort(key=lambda m: -m["lift"])
+    out.sort(key=lambda m: (-m["lift"], -m["sim"]))
     return out[:k]
 
 

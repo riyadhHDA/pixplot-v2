@@ -111,3 +111,49 @@ def test_mcp_tools(data):
         assert "inconnue" in str(err.value.__cause__)
 
     asyncio.run(scenario())
+
+
+def test_antigravity_relay(tmp_path, monkeypatch):
+    """Relais vers Antigravity : agy trouvé à l'emplacement Windows, lancé en lecture seule."""
+    from pixplot.mcp import antigravity as ag
+
+    # emplacement de l'installateur Windows : %LOCALAPPDATA%\agy\bin\agy.exe
+    exe = tmp_path / "agy" / "bin" / "agy.exe"
+    exe.parent.mkdir(parents=True)
+    exe.write_bytes(b"")
+    assert ag.find_agy({"LOCALAPPDATA": str(tmp_path), "PATH": ""}) == str(exe)
+    assert ag.find_agy({"PATH": ""}) is None
+    # installé par winget : dossier des paquets, pas encore dans le PATH de la session
+    wg = tmp_path / "w" / "Microsoft" / "WinGet" / "Packages" / "Google.AntigravityCLI_x" / "agy.exe"
+    wg.parent.mkdir(parents=True)
+    wg.write_bytes(b"")
+    assert ag.find_agy({"LOCALAPPDATA": str(tmp_path / "w"), "PATH": ""}) == str(wg)
+    assert ag.find_agy({"AGY_BIN": str(tmp_path / "absent")}) is None
+
+    f = tmp_path / "a.py"
+    f.write_text("x = 1")
+    args = ag.build_args("agy", "Relis ce code", [str(f), str(tmp_path), str(tmp_path / "absent")], model="m")
+    assert args[:2] == ["agy", "-p"] and "--dangerously-skip-permissions" not in args
+    assert args[args.index("--mode") + 1] == "plan" and "--sandbox" in args and args[args.index("--model") + 1] == "m"
+    assert args.count("--add-dir") == 1 and args[args.index("--add-dir") + 1] == str(tmp_path)  # dossiers dédoublonnés
+    assert "ne modifie aucun fichier" in args[2] and "absent" not in args[2] and args[2].endswith("Relis ce code")
+
+    calls = []
+
+    class R:
+        returncode, stdout, stderr = 0, "Deux remarques…", ""
+
+    monkeypatch.setenv("AGY_BIN", str(exe))
+    monkeypatch.setattr(ag.subprocess, "run", lambda a, **kw: calls.append(a) or R())
+    assert ag.ask("Avis ?") == (True, "Deux remarques…") and calls[0][0] == str(exe)
+    monkeypatch.setenv("AGY_BIN", str(tmp_path / "absent"))
+    ok, text = ag.ask("Avis ?")
+    assert not ok and "install.ps1" in text
+
+
+def test_antigravity_server_tools():
+    pytest.importorskip("mcp")
+    from pixplot.mcp.antigravity import create_server
+
+    tools = asyncio.run(create_server().list_tools())
+    assert [t.name for t in tools] == ["ask_antigravity"]

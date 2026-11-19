@@ -627,3 +627,18 @@ def test_correspondences_mutual_and_masked():
     m = match(cells_of(Ra), cells_of(Ra), boxes, boxes, k=16)
     assert m and all(x["cell_a"] >= 4 and x["cell_b"] >= 4 for x in m)
     assert match(cells_of(Ra), cells_of(Rb), [None] * 16, boxes) == []
+
+    # relecture par Antigravity : pas d'avertissement quand des rangées entières sont hors de l'œuvre,
+    # et la moyenne de référence exclut la paire elle-même
+    import warnings
+    with warnings.catch_warnings():
+        warnings.simplefilter("error")
+        m = match(cells_of(Ra), cells_of(Rb), boxes, boxes, k=16)
+    A, B = cells_of(Ra), cells_of(Rb)
+    S = (A / np.linalg.norm(A, axis=1, keepdims=True)) @ (B / np.linalg.norm(B, axis=1, keepdims=True)).T
+    x = m[0]
+    i, j, valid = x["cell_a"], x["cell_b"], list(range(4, 16))
+    row = np.mean([S[i, c] for c in valid if c != j])
+    col = np.mean([S[r, j] for r in valid if r != i])
+    assert np.isclose(x["lift"], round(S[i, j] - max(row, col), 4), atol=1e-4)
+    assert match(cells_of(Ra), cells_of(Rb), boxes, boxes, k=0) == []

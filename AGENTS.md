@@ -41,7 +41,7 @@ bash scripts/build_site.sh                                     # site → _site/
 
 Commandes `pixplot` : `doctor ingest import-metadata import-iiif embed similar index search-text
 analyze pack mcp serve maps communities disagreements zones import-places places corpus zonebench
-composition name-groups suspects audit bench pairs status runs` (`pixplot <commande> -h`).
+composition antigravity-mcp name-groups suspects audit bench pairs status runs` (`pixplot <commande> -h`).
 
 ## Carte du code
 
@@ -127,7 +127,10 @@ Si tu travailles dans une copie de travail (il y a un fichier `.pixplot-tache` �
    l'écriture hors de la copie de travail ; c'est à l'utilisateur de les ouvrir dans ses réglages s'il
    le souhaite. Claude peut lui confier une relecture ou une tâche avec le plugin Codex (`/codex:review`,
    `/codex:rescue`).
-7. **Ressources partagées** : le dossier de données est commun. Un seul calcul GPU long à la fois et
+7. **Antigravity** : il lit `AGENTS.md`, les compétences de `.agents/skills/` et le serveur MCP
+   PixPlot déclaré dans `.agents/mcp_config.json`. Claude peut lui demander un second avis, en lecture
+   seule, avec l'outil `ask_antigravity` (`pixplot antigravity-mcp`, voir `docs/MCP.fr.md`).
+8. **Ressources partagées** : le dossier de données est commun. Un seul calcul GPU long à la fois et
    un seul import dans `catalog.sqlite` à la fois : demande à l'utilisateur avant d'en lancer un.
    Les *runs* sont datés et ne s'écrasent pas. Ton Atlas utilise ton port (8770 et suivants).
 

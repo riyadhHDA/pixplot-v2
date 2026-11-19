@@ -79,6 +79,43 @@ command = 'C:\chemin\vers\pixplot-v2\.venv\Scripts\pixplot.exe'
 args = ["--data", 'C:\chemin\vers\pixplot-v2\data', "mcp"]
 ```
 
+## Antigravity (Google), sous Windows
+
+**Antigravity → PixPlot.** L'éditeur Antigravity et son outil en ligne de commande (`agy`) lisent la
+configuration MCP de l'espace de travail dans `.agents/mcp_config.json` (local, non versionné ; le
+script `scripts/nouvelle-tache.ps1 … -Agent gemini` l'écrit dans chaque copie de travail) :
+
+```json
+{
+  "mcpServers": {
+    "pixplot": {
+      "command": "C:\chemin\vers\pixplot-v2\.venv\Scripts\pixplot.exe",
+      "args": ["--data", "C:\chemin\vers\pixplot-v2\data\wikiart81k", "mcp"]
+    }
+  }
+}
+```
+
+Redémarrer Antigravity après l'avoir créée. Les compétences communes (`.agents/skills/`, par exemple
+l'accessibilité) sont lues par Antigravity, Codex et Gemini, et par Claude Code par un lien.
+
+**Claude → Antigravity (second avis).** `pixplot antigravity-mcp` est un petit serveur MCP avec un
+seul outil, `ask_antigravity` : Claude envoie une question (et des fichiers à lire) à Antigravity et
+reçoit sa réponse. Antigravity y est lancé **en lecture seule** (mode `plan`, sans autorisation
+automatique) : il ne peut rien modifier. Dans `.mcp.json` (Claude Code) :
+
+```json
+"antigravity": {
+  "command": "C:\chemin\vers\pixplot-v2\.venv\Scripts\pixplot.exe",
+  "args": ["antigravity-mcp"]
+}
+```
+
+Il faut l'outil `agy` (installateur officiel de Google, dans PowerShell :
+`irm https://antigravity.google/cli/install.ps1 | iex`, ou `winget install Google.AntigravityCLI`),
+puis lancer une fois `agy` dans un terminal pour se connecter à son compte Google. `agy.exe` est cherché
+dans le PATH puis dans `%LOCALAPPDATA%\agy\bin` ; sinon, indiquer son chemin dans `AGY_BIN`.
+
 ## Gemini (Gemini CLI, Antigravity)
 
 Dans `.gemini/settings.json` à la racine du projet (local, non versionné), chemins absolus :

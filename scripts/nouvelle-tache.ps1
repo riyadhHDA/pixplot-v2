@@ -101,6 +101,9 @@ args = ["--data", '$Data', "mcp"]
 $json = @{ mcpServers = @{ pixplot = @{ command = $exe; args = @("--data", $Data, "mcp") } } } | ConvertTo-Json -Depth 5
 Utf8 (Join-Path $Dir ".mcp.json") $json
 Utf8 (Join-Path $Dir ".gemini\settings.json") $json
+# Antigravity (éditeur et agy) : configuration MCP de l'espace de travail
+New-Item -ItemType Directory -Force (Join-Path $Dir ".agents") | Out-Null
+Utf8 (Join-Path $Dir ".agents\mcp_config.json") $json
 
 # fiche de la tâche, lue par l'agent (non versionnée : .pixplot-tache est dans .gitignore)
 Utf8 (Join-Path $Dir ".pixplot-tache") @"

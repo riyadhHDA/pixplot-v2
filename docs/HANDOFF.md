@@ -13,6 +13,15 @@ le site. **0.16.0** : « Pourquoi ces deux œuvres se ressemblent ? » dans le c
 citable (CITATION.cff, DOI Zenodo à chaque release). Avant : 0.15.0, la composition (ARCHITECTURE § 24). Historique
 complet dans le [CHANGELOG](../CHANGELOG.fr.md), étapes suivantes dans la [ROADMAP](../ROADMAP.fr.md).
 
+## Fait, commité dans main, pas encore publié
+
+- Antigravity sous Windows : `pixplot antigravity-mcp` (outil `ask_antigravity`, second avis en lecture
+  seule : `--mode plan --sandbox`), testé le 19/11/2026 avec agy 1.5.12 installé par winget (relecture
+  réelle en 65 s, aucun fichier modifié). PixPlot déclaré pour Antigravity dans `.agents/mcp_config.json`
+  (local). Compétence d'accessibilité dans `.agents/skills/`.
+- « Pourquoi ? » corrigé d'après la relecture d'Antigravity : ressemblance moyenne sans la paire
+  elle-même, plus d'avertissement Python pour les œuvres non carrées.
+
 ## Travail en cours, sur une branche
 
 **0.14 : nommer les groupes avec Iconclass** — branche `claude/iconclass` (commit `598b83c`, non

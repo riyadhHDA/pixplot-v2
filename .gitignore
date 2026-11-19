@@ -22,6 +22,7 @@ web/dist/
 /.codex/
 /.gemini/
 /.pixplot-tache
+/.agents/mcp_config.json
 
 # Configuration MCP locale (chemins propres à ce PC) — modèle dans docs/MCP.md
 /.mcp.json

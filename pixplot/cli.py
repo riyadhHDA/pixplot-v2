@@ -352,6 +352,13 @@ def cmd_mcp(args) -> int:
     return 0
 
 
+def cmd_antigravity_mcp(args) -> int:
+    from .mcp.antigravity import run
+
+    run()
+    return 0
+
+
 # --------------------------------------------------------------------------- serve
 def cmd_serve(args) -> int:
     import webbrowser
@@ -940,6 +947,9 @@ def build_parser() -> argparse.ArgumentParser:
     p = sub.add_parser("mcp", help="serveur MCP (stdio) : donne accès au corpus à Claude ou un autre LLM")
     p.add_argument("--analysis", help="dossier d'analyse (défaut : la plus récente)")
     p.set_defaults(func=cmd_mcp)
+
+    p = sub.add_parser("antigravity-mcp", help="serveur MCP : second avis d'Antigravity (Google), en lecture seule")
+    p.set_defaults(func=cmd_antigravity_mcp)
 
     p = sub.add_parser("serve", help="ouvrir l'Atlas (carte interactive) dans le navigateur")
     p.add_argument("--analysis", help="dossier d'analyse (défaut : la plus récente)")
