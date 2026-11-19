@@ -14,6 +14,15 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.16.0 — 19/11/2026 · Pourquoi ces deux œuvres se ressemblent ?
+
+- Comparateur : bouton « Pourquoi ? » sur chaque paire. Les zones qui se répondent le plus (cases
+  4 × 4, regard forme) sont dessinées sur les deux images, avec le même numéro et une légende chiffrée.
+- Correspondances mutuelles, classées par ce qui les distingue de la ressemblance moyenne ; cases
+  hors de l'œuvre exclues. Calcul à la demande, en quelques millisecondes. API `/api/correspond`.
+- Exemple : Raphaël, *Mariage de la Vierge*, et Pérugin, *Remise des clés* : le temple et les groupes
+  de personnages se répondent. ARCHITECTURE § 25.
+
 ## 0.15.1 — 19/11/2026 · Tests sur GitHub, Atlas en modules, projet citable
 
 - Tests automatiques sur GitHub à chaque push (toutes les branches) et sur les pull requests, sous

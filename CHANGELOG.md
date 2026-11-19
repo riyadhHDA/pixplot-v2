@@ -14,6 +14,15 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.16.0 — 2026-11-19 · Why do these two works look alike?
+
+- Comparator: a "Pourquoi ?" button on each pair. The zones that answer each other most (4×4 cells,
+  form regard) are drawn on both images, with the same number and a legend with figures.
+- Mutual matches, ranked by what sets them apart from the mean similarity; cells outside the work
+  excluded. Computed on demand in a few milliseconds. API `/api/correspond`.
+- Example: Raphael, *Marriage of the Virgin*, and Perugino, *Delivery of the Keys*: the temple and the
+  groups of figures answer each other. ARCHITECTURE § 25.
+
 ## 0.15.1 — 2026-11-19 · GitHub tests, modular Atlas, citable project
 
 - Automatic tests on GitHub at every push (all branches) and on pull requests, on Linux and Windows,

@@ -7,7 +7,7 @@ authors:
   - family-names: HADJBA
     given-names: Riyadh
     affiliation: "Université de Strasbourg"
-version: 0.15.1
+version: 0.16.0
 date-released: 2026-11-19
 license: GPL-3.0-or-later
 doi: 10.5281/zenodo.24363789
