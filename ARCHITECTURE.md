@@ -880,3 +880,113 @@ random sample of 2,000 WikiArt 81k works shows **2.6 %** (52/2,000) have another
 ≥ 0.75 (including re-encoded JPEG near-duplicates carrying conflicting metadata that slip past
 `ingest`'s SHA-256 check): SSCD could therefore serve later as a **perceptual deduplication** tool
 at ingest time rather than as an art-historical regard.
+
+## 28. Depth-based composition: Depth Anything V2 evaluated, not kept (19/11/2026)
+
+Question (follow-up to § 24): after PE-Spatial and 4 × 4 spatial layouts failed to beat Form
+(DINOv3) on "same composition, different subject", does the arrangement of **depth planes**
+(foreground, midground, background) add a signal that Form misses?
+
+- **Candidate and licence.** [Depth Anything V2 Small](https://huggingface.co/depth-anything/Depth-Anything-V2-Small-hf)
+  (Yang et al., NeurIPS 2024, DINOv2 ViT-S/14 backbone + DPT head, loaded via `transformers`,
+  **Apache 2.0 licence** verified on the Hugging Face model card). Base and Large are released under
+  CC BY-NC 4.0 and were excluded. Weights stay in the local Hugging Face cache, never in git.
+- **Descriptor (`pixplot/encoders/depth.py`).** Each full artwork is letterboxed (ImageNet
+  normalisation) at the model's native 518 px resolution (37 × 14). The predicted relative depth map
+  (affine-invariant disparity: higher = closer) is **cropped to the artwork's content box alone** —
+  letterbox padding bands are completely discarded, which also addresses § 24's limitation of a grid
+  aligned on the padded square rather than the artwork. It is then average-pooled onto an **8 × 8
+  grid** (64 values), mean-centred and L2-normalised per artwork (unit-norm z-score): the vector is
+  strictly invariant to any positive affine transform $a \cdot d + b$ ($a > 0$), and cosine
+  similarity between two artworks equals the exact Pearson correlation between their 8 × 8 depth
+  grids. Z-scores were chosen over ranks for simplicity and alignment with the model's training
+  loss; both variants (and corpus centring) were measured.
+- **Extraction.** Computed on all 80,716 WikiArt 81k works
+  (`features/depth_anything_v2_small_20261119-191351`, log `data/wikiart81k/depth.log`):
+  **14 min 3 s**, **95.7 images/s**, **3,082 MiB** GPU memory (RX 7900 GRE, FP16, batch size 32),
+  **0 failures** and 0 degenerate flat maps.
+- **Measure.** `pixplot composition` and `pixplot pairs bench --spaces forme,sujet,couleur,touche,profondeur`
+  on the **104 historian-validated pairs** (208 queries, exact ranks across 80,716 works). Three
+  in-memory variants were also evaluated: **corpus-centred** (corpus mean grid subtracted then
+  L2-renormalised), **rank-normalised** (Spearman correlation across the 64 cells) and
+  **corpus-centred ranks**.
+
+| "Same composition, different subject" (14 pairs, 28 queries) | R@10 | R@100 | median rank | centile |
+|---|---|---|---|---|
+| **Form (DINOv3), current regard** | **53.6 %** | **71.4 %** | **8** | **0.928** |
+| Form, 4 × 4 layout (shared cells, § 24) | 0.0 % | 32.1 % | 332 | 0.958 |
+| PE-Spatial, 4 × 4 layout (shared cells, § 24) | 7.1 % | 28.6 % | 286 | 0.878 |
+| Subject (SigLIP 2) | 21.4 % | 28.6 % | 814 | 0.738 |
+| Touch (DINOv3, layer 6) | 10.7 % | 32.1 % | 1,017 | 0.857 |
+| **Depth (Depth Anything V2 Small, raw 8 × 8)** | **3.6 %** | **7.1 %** | **13,754** | **0.677** |
+| *Depth corpus-centred (in-memory test)* | *3.6 %* | *7.1 %* | *6,874* | *0.682* |
+| *Depth ranks / Spearman (in-memory test)* | *3.6 %* | *3.6 %* | *13,424* | *0.640* |
+
+Across all other validated categories, Depth likewise trails the dedicated regards by a wide margin
+(and stays close to chance on metadata pairs: centile 0.544–0.552, control 0.479):
+
+| Validated category (n queries) | Depth R@10 | Depth median rank (centred) | Best current regard (R@10 · median rank) |
+|---|---|---|---|
+| Attested filiation (18) | 11.1 % | 14,889 (11,784) | Subject (38.9 % · 25) / Form (38.9 % · 26) |
+| Same subject, different composition (72) | 2.8 % | 32,444 (32,471) | Subject (37.5 % · 30) |
+| Different artists, comparable handling (32) | 0.0 % | 28,682 (28,509) | Touch (31.2 % · 136) |
+| Same palette, different traditions (52) | 0.0 % | 51,211 (43,698) | Colour (50.0 % · 10) |
+| Same motif, different period (4) | 0.0 % | 41,282 (—) | Subject (50.0 % · 26) |
+| Same artist, different handling (2) | 0.0 % | 30,958 (—) | Colour (100.0 % · 2) |
+
+**Why standalone depth fails: two measured effects.**
+1. *A universal vertical gradient dominates the corpus.* Across all 80,716 works, the corpus-mean
+   8 × 8 grid rises strictly from top (−0.108: sky, wall, background) to bottom (+0.181: ground,
+   foreground). Two random paintings already share an average raw cosine of **0.539** (vs 0.175 in
+   Form). Subtracting this corpus mean brings random cosine down to **0.016** and halves median rank
+   on "same composition" (13,754 → 6,874; filiation 14,889 → 11,784, centile 0.809), yet still
+   fails to bring pairs into the top 100. Rank normalisation (Spearman) performs slightly worse than
+   z-scores (centile 0.640 vs 0.677).
+2. *A photography-trained 3D model breaks on non-perspectival art.* Pair-by-pair inspection shows
+   that depth works on figurative compositions with crisp spatial planes: Van Gogh / Millet (*The
+   Sower*, filiation: ranks **3 and 1**, cosine 0.948), the proposed Rubens / Titian pair (*Rape of
+   Europa*: ranks **1 and 1**, cosine 0.987), Perugino (*Delivery of the Keys* ↔ *Marriage of the
+   Virgin*: ranks 1,285 and **85**; centred 433 and 86), or Michelangelo / High Renaissance
+   (`24374 ↔ 54823`: ranks **7** and 6,183; centred 9 and 950). On flat, decorative or modern works,
+   however (Pop Art `65822 ↔ 71779`: ranks 68,987 and 80,552; Chagall / Expressionism
+   `22435 ↔ 60995`: 79,814 and 79,803; Expressionism / Pop Art `48392 ↔ 76646`: 75,807 and 64,679),
+   the model hallucinates arbitrary depth planes from tonal contrast and pushes the pair to the very
+   bottom of the corpus. Even between two perspectival works of differing aspect ratio — Raphael
+   (*Marriage of the Virgin*, tall arched altarpiece) and Perugino (*Delivery of the Keys*, wide
+   frieze) — the vertical shift of the horizon on the 8 × 8 grid drops the pair to ranks 2,256 and
+   25,374 (Form: 3 and 7).
+
+**Combining Form + Depth (honest split-half cross-validation).** A weighted similarity sum
+$S = (1 - \alpha)\, S_{\text{form}} + \alpha\, S_{\text{depth}}$ (raw cosines, corpus-centred depth,
+and per-query z-scored similarities) was tested by selecting $\alpha \in \{0, 0.05, \dots, 0.5, 1\}$
+on one half of the 14 "same composition" pairs and evaluating on the held-out half:
+
+| Combination (14 "same composition" pairs, 28 queries) | R@10 | R@100 | median rank | centile |
+|---|---|---|---|---|
+| **Form alone ($\alpha = 0$)** | **53.6 %** | **71.4 %** | **8** | **0.9275** |
+| 2-fold alternating CV (raw cosine, $\alpha = 0.05 / 0.10$) | 42.9 % | 75.0 % | 26 | 0.9314 |
+| 2-fold contiguous CV (raw cosine, $\alpha = 0.10 / 0.10$) | 42.9 % | 71.4 % | 26 | 0.9334 |
+| 2-fold alternating CV (z-scored sim, centred depth, $\alpha = 0.05 / 0.40$) | 50.0 % | 64.3 % | 15 | 0.9283 |
+| 200 random 7/7 splits (raw cosine, median $\alpha = 0.10$, centile-tuned) | 42.1 % | — | 691 (mean) | 0.9037 |
+| 200 random 7/7 splits (R@10 / median-tuned: $\alpha = 0$ in 74 % of splits) | — | — | — | — |
+
+A small depth weight ($\alpha \approx 0.05\text{–}0.10$) slightly pulls up the two pairs where Form
+fails badly (`20355 ↔ 50955` Hokusai / Art Nouveau and `16620 ↔ 65443` Bilibin / Realism), adding
++0.004 centile on fixed splits, **but markedly degrades top ranks** (R@10 drops from 53.6 % to
+42.9 % and median rank worsens from 8 to 26) and **underperforms Form alone on average across 200
+random 7/7 splits** (centile 0.9037 vs 0.9275; when tuning for R@10/median, CV picks $\alpha = 0$ in
+74 % of splits). The same degradation holds on `filiation` (at $\alpha = 0.10$, R@10 drops from
+38.9 % to 33.3 %).
+
+**Conclusion: Depth Anything V2 is not kept, neither standalone nor combined with Form.** Form
+(DINOv3) remains by far the best regard for shared composition. The vectors remain on disk
+(`features/depth_anything_v2_small_*`, 10 MB) for benchmarks (`pixplot composition`, `pixplot pairs
+bench --spaces …,profondeur`), while `"profondeur"` stays hidden from the Atlas and MCP server
+(`NOT_KEPT` in `pixplot/api/spaces.py`).
+
+**Limits.** The "same composition" sample is small (14 pairs) and largely drawn from reviewing
+disagreements where Form already ranked the pair high (giving Form a built-in advantage, though this
+does not explain depth's collapse on non-perspectival works). Only the Small variant (Apache 2.0)
+and a fixed 8 × 8 grid were tested: monocular depth estimation is primarily meaningful on strictly
+figurative, perspectival corpora (landscapes, interiors, history painting) rather than a broad
+corpus mixing prints, flat modern compositions and decorative works.

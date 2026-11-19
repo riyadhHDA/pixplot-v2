@@ -96,7 +96,7 @@ def cmd_embed(args) -> int:
 
     s = get_settings(args.data)
     kwargs = {}
-    if args.encoder.startswith(("dinov3_", "dinov2_", "siglip2_")):
+    if args.encoder.startswith(("dinov3_", "dinov2_", "siglip2_", "depth_anything_")):
         kwargs = {"weights": args.weights, "repo": args.repo, "hf_model": args.hf_model,
                   "input_size": args.input_size}
     elif args.encoder.startswith("sscd_"):
@@ -648,8 +648,13 @@ def cmd_composition(args) -> int:
         raise SystemExit("Aucune paire annotée : voir `pixplot pairs`.")
     from .api.spaces import Spaces
 
+    prev_not_kept = Spaces.include_not_kept
     Spaces.include_not_kept = True        # le banc d'essai mesure aussi les modèles non retenus
-    data = AtlasData.load(s, _analysis_arg(s, args.analysis))
+    try:
+        data = AtlasData.load(s, _analysis_arg(s, args.analysis))
+        _ = data.spaces
+    finally:
+        Spaces.include_not_kept = prev_not_kept
     ids = [int(i) for i in data.ids]
     results = []
     for key in data.spaces.runs:
@@ -664,7 +669,7 @@ def cmd_composition(args) -> int:
                 print(f"Variante « {name} »…", flush=True)
                 results += score_layout(name, Path(run.path), pairs, ids, kind)
     order = ["forme", "forme_masq", "forme_4x4", "forme_4x4c", "composition", "composition_masq",
-             "composition_4x4", "composition_4x4c", "sujet", "couleur", "touche"]
+             "composition_4x4", "composition_4x4c", "profondeur", "sujet", "couleur", "touche", "copie"]
     print(f"\nBanc d'essai « composition » · {len(ids)} œuvres · paires validées par l'utilisateur")
     print("centile : part du corpus plus éloignée que l'œuvre jumelle (0,5 = hasard, 1 = la plus proche)")
     print(f"{'type':<44} {'regard':<16} {'n':>4} {'R@10':>6} {'R@100':>6} {'rang méd.':>9} {'centile':>8}")
