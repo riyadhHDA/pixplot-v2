@@ -3,8 +3,12 @@
 Deux mesures, à partir des métadonnées du catalogue :
 
 1. **Étiquettes** (artiste, style, genre...) : pour chaque œuvre étiquetée, part de ses
-   voisines qui partagent l'étiquette. P@1 = la plus proche ; P@k = les k plus proches.
-   Les valeurs « Unknown ... » sont ignorées. « hasard » = ce qu'on obtiendrait au hasard.
+   voisines qui partagent l'étiquette, **parmi ses k plus proches voisines qui ont elles-mêmes
+   cette étiquette** (les valeurs vides ou « Unknown ... » sont sautées, des deux côtés).
+   P@1 = la première voisine *étiquetée* (pas forcément la toute première voisine) ; P@k = la
+   part des voisines étiquetées, parmi les k plus proches. Les œuvres sans voisine étiquetée ne
+   comptent pas. « hasard » = ce qu'on obtiendrait au hasard. Autres règles possibles et écarts
+   mesurés : ARCHITECTURE § 30 (aucune conclusion ne change).
 
 2. **Paires connues** : une œuvre qui porte ``variant_of`` (chemin de l'original) est une
    copie, une reproduction, une gravure inversée... On mesure si l'original est retrouvé

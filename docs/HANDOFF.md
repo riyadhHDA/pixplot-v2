@@ -74,9 +74,9 @@ corrigé ; 63 tests passent, Atlas vérifié.
     Mesuré sur WikiArt 81k : Leiden redonne exactement les mêmes groupes (forme 142, sujet 141,
     NMI 1,000 : aucune petite communauté à γ ≈ 7–8) ; la renormalisation change la 1ʳᵉ voisine de
     0,033 % des œuvres (forme) et 0,21 % (sujet), la liste des 10 de 0,23 % et 1,5 %.
-  - reste : normalisation de la variante « cases communes » (8, méthode non retenue) ; **P@1 de
-    `pixplot bench` mesuré sur la première voisine étiquetée** (9 : changerait les chiffres publiés,
-    à décider avec l'utilisateur).
+  - reste : normalisation de la variante « cases communes » (8, méthode non retenue). Point 9 (P@1)
+    **décidé le 19/11/2026** : règle gardée (première voisine étiquetée) et écrite, écarts mesurés
+    dans ARCHITECTURE § 30, aucune conclusion ne change.
 
 ## Fait depuis 0.18.0 (publié en 0.19.0)
 
@@ -118,8 +118,6 @@ corrigé ; 63 tests passent, Atlas vérifié.
 
 ## En attente de l'utilisateur
 
-- **Une paire proposée** à valider ou rejeter dans la relecture rapide (touche R) : copie de Rubens
-  d'après l'*Enlèvement d'Europe* de Titien (n° 64269 ↔ 67405, Honour et Fleming p. 573).
 - **Profil GitHub** : la page de présentation (dépôt `riyadhHDA/riyadhHDA`) est en ligne ; le nom, la
   bio, le lien et les dépôts épinglés sont à régler par l'utilisateur (le jeton `gh` n'a pas le droit
   `user`).

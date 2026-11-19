@@ -1060,3 +1060,28 @@ built to recognise **the same image** despite cropping, different lighting or an
 - **Limits.** Thresholds chosen by eye on 40 pairs, not on an annotated set; 5 neighbours per work (a
   group of more than six reproductions is only seen piecewise); SSCD judges the likeness of images,
   not the history of works.
+
+## 30. What P@1 measures: the first labelled neighbour (19/11/2026)
+
+Point 9 of the Gemini 4 Argon audit. In `pixplot bench`, P@1 does not look at a work's very first
+neighbour but at **the first neighbour that carries the label** (artist, style, genre): an unlabelled
+neighbour ("Unknown Artist") is skipped. This is a defensible rule (we only judge what the catalogue
+lets us judge), but it was written nowhere. User's decision: **keep the rule and state it**
+(`bench.py` docstring, command output, this section); no published figure changes.
+
+Gap with the two other possible rules, measured on WikiArt 81k (10 neighbours, full vectors):
+
+| P@1 | current (unlabelled neighbours skipped) | strict (work not counted) | strict (counted as a miss) | 1st neighbour unlabelled |
+|---|---|---|---|---|
+| Form, artist | 65.6 % | 72.1 % | 59.3 % | 17.9 % |
+| Subject, artist | 73.0 % | 77.8 % | 66.6 % | 14.4 % |
+| Form, genre | 80.9 % | 82.1 % | 75.7 % | 7.7 % |
+| Subject, genre | 83.4 % | 84.4 % | 78.2 % | 7.4 % |
+| Form, style | 64.8 % | 64.8 % | 64.8 % | 0 % |
+| Subject, style | 71.4 % | 71.4 % | 71.4 % | 0 % |
+
+- **Style does not move**: every WikiArt work has one. Artist and genre move by a few points, one way
+  or the other depending on the rule.
+- **No conclusion changes**: Subject stays ahead of Form for all three labels, under all three rules.
+- **Duplicates** (§ 29): removing them changes P@1 by less than a point (style: 64.8 % → 65.3 % for
+  Form, 71.4 % → 72.0 % for Subject).

@@ -791,7 +791,7 @@ def cmd_bench(args) -> int:
         pair_rows += [(tag, sc) for sc in pairs]
 
     k = args.k
-    print(f"\nÉtiquettes (k={k})")
+    print(f"\nÉtiquettes (k={k}) — P@1 : même étiquette que la première voisine étiquetée (ARCHITECTURE § 30)")
     print(f"{'configuration':<28} {'étiquette':<8} {'P@1':>6} {f'P@{k}':>6} {'hasard':>7} {'n':>6} {'img/s':>6}")
     for tag, sc, speed in label_rows:
         print(f"{tag:<28} {sc.key:<8} {sc.p1:>6.1%} {sc.pk:>6.1%} {sc.chance:>7.1%} {sc.n:>6} {speed or '':>6}")

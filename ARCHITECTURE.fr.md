@@ -1152,3 +1152,30 @@ octet pour octet).
 - **Limites.** Seuils choisis à l'œil sur 40 paires, pas sur un jeu annoté ; 5 voisines par œuvre
   (un groupe de plus de six reproductions n'est vu que par morceaux) ; SSCD juge la ressemblance des
   images, pas l'histoire des œuvres.
+
+## 30. Ce que mesure P@1 : la première voisine étiquetée (19/11/2026)
+
+Point 9 de l'audit de Gemini 4 Argon. Dans `pixplot bench`, P@1 ne regarde pas la toute première
+voisine d'une œuvre, mais **la première voisine qui porte l'étiquette** (artiste, style, genre) : une
+voisine sans étiquette (« Unknown Artist ») est sautée. C'est une règle défendable (on ne juge que ce
+que le catalogue permet de juger), mais elle n'était écrite nulle part. Décision de l'utilisateur :
+**garder cette règle et la dire** (docstring de `bench.py`, sortie de la commande, cette section) ;
+aucun chiffre publié ne change.
+
+Écart avec les deux autres règles possibles, mesuré sur WikiArt 81k (10 voisines, vecteurs complets) :
+
+| P@1 | actuel (voisines sans étiquette sautées) | strict (œuvre non comptée) | strict (compté comme échec) | 1re voisine sans étiquette |
+|---|---|---|---|---|
+| Forme, artiste | 65,6 % | 72,1 % | 59,3 % | 17,9 % |
+| Sujet, artiste | 73,0 % | 77,8 % | 66,6 % | 14,4 % |
+| Forme, genre | 80,9 % | 82,1 % | 75,7 % | 7,7 % |
+| Sujet, genre | 83,4 % | 84,4 % | 78,2 % | 7,4 % |
+| Forme, style | 64,8 % | 64,8 % | 64,8 % | 0 % |
+| Sujet, style | 71,4 % | 71,4 % | 71,4 % | 0 % |
+
+- **Le style ne bouge pas** : toutes les œuvres de WikiArt en ont un. L'artiste et le genre bougent de
+  quelques points, dans un sens ou dans l'autre selon la règle.
+- **Aucune conclusion ne change** : Sujet reste devant Forme pour les trois étiquettes, avec les trois
+  règles.
+- **Doublons** (§ 29) : les retirer change P@1 de moins d'un point (style : 64,8 % → 65,3 % pour
+  Forme, 71,4 % → 72,0 % pour Sujet).
