@@ -48,7 +48,10 @@ class FeatureStore:
         n = len(self.ids)
         scores = np.empty(n, dtype=np.float32)
         for s in range(0, n, block):
-            scores[s:s + block] = self.global_vectors[s:s + block].astype(np.float32) @ q
+            v = self.global_vectors[s:s + block].astype(np.float32)
+            # float16 → float32 : on renormalise (écart de norme ~5e-4), comme le reste de la chaîne
+            v /= np.maximum(np.linalg.norm(v, axis=1, keepdims=True), 1e-12)
+            scores[s:s + block] = v @ q
         scores[self.status != OK] = -np.inf
         if exclude_row is not None:
             scores[exclude_row] = -np.inf

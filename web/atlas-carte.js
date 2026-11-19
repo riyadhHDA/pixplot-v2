@@ -109,7 +109,8 @@ state.hdTiers = HD_TIERS; state.flyTo = (...a) => flyTo(...a); // pour mesurer d
 const COLLISION_EXT = deck.CollisionFilterExtension ? [new deck.CollisionFilterExtension()] : [];
 const HD_PARALLEL = 6;          // lots en cours à la fois
 const hdQueue = [];
-let hdActive = 0, hdFlush = null, hdClock = 0;
+const HD_RETRIES = 2;           // nouvelles tentatives pour un lot qui a échoué
+let hdActive = 0, hdFlush = null, hdClock = 0, hdFinest = null;
 
 function hdCapacity(t) {
   // nombre de cases d'un niveau, sans créer sa texture (marge de 10 % pour recycler)
@@ -197,6 +198,7 @@ function hdReceive({ job, images }) {
   hdActive--;
   if (!t) return;
   batch.forEach((b) => t.pending.delete(b.id));
+  if (!images) hdRetry(t, batch);
   if (images && !hdTexture(t)) images.forEach((img) => img && img.close());
   if (images && hdTexture(t)) {
     const now = performance.now();
@@ -215,6 +217,19 @@ function hdReceive({ job, images }) {
     hdChanged();
   }
   hdPump();
+}
+
+// Lot échoué (serveur occupé, réseau) : les vignettes encore à l'écran repartent, un peu plus tard,
+// au plus HD_RETRIES fois ; sinon elles restaient en basse définition jusqu'au prochain mouvement.
+function hdRetry(t, batch) {
+  const again = batch.filter((b) => (b.tries || 0) < HD_RETRIES && t === hdFinest
+    && t.wanted && t.wanted.has(b.id) && !t.cache.has(b.id));
+  if (!again.length) return;
+  setTimeout(() => {
+    if (t !== hdFinest) return;
+    for (const b of again) if (t.wanted.has(b.id) && !t.cache.has(b.id)) hdQueue.push({ t, id: b.id, gen: hdClock, tries: (b.tries || 0) + 1 });
+    hdPump();
+  }, 800);
 }
 
 function hdChanged() {
@@ -244,6 +259,7 @@ function computeHD() {
   hdQueue.length = 0;
   if (!showSprites() || dpx < HD_TIERS[0].from) {
     HD_TIERS.forEach((t) => { t.order = []; t.wanted = new Set(); t.shown = []; });
+    hdFinest = null;
     $("hint").textContent = state.display === "sprites"
       ? `${state.n.toLocaleString("fr-FR")} vignettes · zoomez pour la haute définition · clic : fiche`
       : "Molette : zoomer · glisser : se déplacer · clic sur une œuvre : sa fiche";
@@ -266,6 +282,7 @@ function computeHD() {
   // (avant : les trois niveaux téléchargeaient les mêmes vignettes, et 768 Mo de textures).
   let finest = null;
   for (const t of HD_TIERS) if (dpx >= t.from && visible.length <= hdCapacity(t)) finest = t;
+  hdFinest = finest;
   HD_TIERS.forEach((t) => {
     const active = t === finest && hdTexture(t);
     const fallback = !active && finest && t.tex && HD_TIERS.indexOf(t) < HD_TIERS.indexOf(finest);

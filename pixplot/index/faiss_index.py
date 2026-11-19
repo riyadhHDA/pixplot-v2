@@ -58,6 +58,7 @@ def build_global_index(features: Run, kind: str = "flat", runs_dir: Path | None 
     try:
         for s in range(0, len(rows), block):  # par blocs : jamais tout en float32 en RAM d'un coup
             chunk = np.ascontiguousarray(vectors[rows[s:s + block]], dtype=np.float32)
+            chunk /= np.maximum(np.linalg.norm(chunk, axis=1, keepdims=True), 1e-12)  # float16 → norme 1
             index.add(chunk)
         faiss.write_index(index, str(run.path / INDEX_FILE))
         np.save(run.path / "ids.npy", ids[rows].astype(np.int64))

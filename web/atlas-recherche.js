@@ -59,28 +59,30 @@ function toggleDrawing(d) {
 }
 
 async function runRegionSearch(d, box) {
+  const seq = panelTurn();
   $("fiche-body").innerHTML = `<div class="loading">Recherche du détail dans le corpus…<br><small>La toute première recherche charge le modèle (jusqu'à une demi-minute).</small></div>`;
   let res;
   try {
-    const r = await fetch("/api/search/region", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ id: d.id, box, k: 40 }) });
-    if (!r.ok) throw new Error((await r.json()).detail || r.status);
-    res = await r.json();
+    res = await (await sendJSON("/api/search/region", { id: d.id, box, k: 40 })).json();
   } catch (err) {
-    $("fiche-body").innerHTML = `<div class="loading">Échec : ${esc(err.message)}</div>`;
+    if (!panelStale(seq)) $("fiche-body").innerHTML = `<div class="loading">Échec : ${esc(err.message)}</div>`;
     return;
   }
+  if (panelStale(seq)) return;            // une autre action a pris le panneau pendant la recherche
   renderResults({ kind: "region", title: "Détails semblables", sub: `${res.results.length} œuvres · cadre tracé sur « ${pretty(d.label)} »`,
     query: { id: d.id, box }, results: res.results });
 }
 
 async function runZoneSearch(q) {
+  const seq = panelTurn();
   showPanel("results", "Zones décrites");
   $("fiche-body").innerHTML = `<div class="loading">Recherche des zones « ${esc(q)} »…<br><small>La toute première recherche charge SigLIP 2 (jusqu'à une minute).</small></div>`;
   try {
     const res = await getJSON(`/api/search/zones?q=${encodeURIComponent(q)}&k=60`);
+    if (panelStale(seq)) return;
     renderResults({ kind: "zone", title: `« ${q} »`, sub: `${res.results.length} œuvres dont une zone répond à la description`, results: res.results });
   } catch (err) {
-    $("fiche-body").innerHTML = `<div class="loading">Échec : ${esc(err.message)}</div>`;
+    if (!panelStale(seq)) $("fiche-body").innerHTML = `<div class="loading">Échec : ${esc(err.message)}</div>`;
   }
 }
 
@@ -155,9 +157,7 @@ async function exportPack({ ids, title, selection, scores = {}, details = {} }, 
   const label = button ? button.textContent : "";
   if (button) { button.disabled = true; button.textContent = "Export en cours…"; }
   try {
-    const r = await fetch("/api/pack", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ids, title, question, selection, scores, details }) });
-    if (!r.ok) throw new Error((await r.json()).detail || r.status);
+    const r = await sendJSON("/api/pack", { ids, title, question, selection, scores, details });
     const blob = await r.blob();
     const name = (r.headers.get("content-disposition") || "").match(/filename="?([^";]+)"?/)?.[1] || "research-pack.zip";
     const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(blob), download: name });
@@ -173,13 +173,15 @@ async function exportPack({ ids, title, selection, scores = {}, details = {} }, 
 }
 
 async function runTextSearch(q) {
+  const seq = panelTurn();
   $("fiche").hidden = false;
   $("fiche-body").innerHTML = `<div class="loading">Recherche de « ${esc(q)} »…<br><small>La toute première recherche charge SigLIP 2 (jusqu'à une minute).</small></div>`;
   try {
     const res = await getJSON(`/api/search/text?q=${encodeURIComponent(q)}&k=60`);
+    if (panelStale(seq)) return;
     renderResults({ kind: "text", title: `« ${q} »`, sub: `${res.results.length} œuvres les plus proches de la description`, results: res.results });
   } catch (err) {
-    $("fiche-body").innerHTML = `<div class="loading">Échec : ${esc(err.message)}</div>`;
+    if (!panelStale(seq)) $("fiche-body").innerHTML = `<div class="loading">Échec : ${esc(err.message)}</div>`;
   }
 }
 
@@ -194,6 +196,7 @@ function showPanel(kind, title, back) {
 }
 
 function closeFiche() {
+  panelTurn();                                   // un chargement en cours ne rouvrira pas le panneau
   $("fiche").hidden = true;
   state.selected = state.selectedData = null;
   state.lastResults = null;

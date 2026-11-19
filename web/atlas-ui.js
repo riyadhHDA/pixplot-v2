@@ -13,12 +13,17 @@ function wireUI() {
   });
   $("colorby").addEventListener("change", async (e) => {
     const mode = e.target.value;
+    const seq = ++state.colorSeq;                    // un autre choix pendant le chargement l'emporte
     if (mode.startsWith("leiden:")) {
       const sp = mode.split(":")[1];
       if (!state.comm[sp]) {
-        try { state.comm[sp] = await getJSON(`/api/communities/${sp}`); } catch (err) {
+        let comm;
+        try { comm = await getJSON(`/api/communities/${sp}`); } catch (err) {
+          if (seq !== state.colorSeq) return;
           toast(`Groupes Leiden indisponibles : ${err.message}`); e.target.value = state.colorMode; return;
         }
+        state.comm[sp] = comm;
+        if (seq !== state.colorSeq) return;
       }
     }
     state.colorMode = mode;

@@ -48,10 +48,11 @@ def _neighbors(X: np.ndarray, k: int) -> np.ndarray:
         import faiss
         index = faiss.IndexFlatIP(X.shape[1])
         index.add(X)
-        _, nn = index.search(X, k + 1)
+        nn = np.concatenate([index.search(X[s:s + 4096], k + 1)[1] for s in range(0, len(X), 4096)])
     except ImportError:  # pragma: no cover
-        S = X @ X.T
-        nn = np.argsort(-S, axis=1)[:, :k + 1]
+        # sans FAISS : par blocs (X @ X.T en entier ferait 26 Go pour 80 000 œuvres)
+        nn = np.concatenate([np.argsort(-(X[s:s + 1024] @ X.T), axis=1)[:, :k + 1]
+                             for s in range(0, len(X), 1024)])
     out = np.empty((len(X), k), dtype=np.int64)
     for i, row in enumerate(nn):
         row = [j for j in row if j != i and j >= 0][:k]
@@ -65,6 +66,7 @@ def load_vectors(run: Run) -> tuple[np.ndarray, np.ndarray]:
     keep = np.load(p / "status.npy") == OK
     ids = np.load(p / "ids.npy")[keep]
     X = np.ascontiguousarray(np.load(p / "global.npy")[keep], dtype=np.float32)
+    X /= np.maximum(np.linalg.norm(X, axis=1, keepdims=True), 1e-12)   # float16 → norme 1
     return ids, X
 
 

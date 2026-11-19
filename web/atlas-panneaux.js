@@ -88,8 +88,13 @@ function updateStats() {
 // ------------------------------------------------------------------ fiche
 async function select(id, fly) {
   let data;
+  const seq = panelTurn();
   const space = state.space && state.space !== state.mainSpace ? `?space=${state.space}` : "";
-  try { data = await getJSON(`/api/artwork/${id}${space}`); } catch { return; }
+  try { data = await getJSON(`/api/artwork/${id}${space}`); } catch (err) {
+    if (!panelStale(seq)) toast(`Œuvre n° ${id} indisponible : ${err.message}`);
+    return;
+  }
+  if (panelStale(seq)) return;                       // un autre clic est passé entre-temps
   state.selected = id;
   state.selectedData = data;
   history.replaceState(null, "", `#oeuvre-${id}`);
@@ -216,10 +221,8 @@ async function openCompare() {
     e.preventDefault();
     const f = new FormData(form);
     try {
-      const r = await fetch("/api/pairs", { method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ a: current[0], b: current[1], type: f.get("type"), status: f.get("status"),
-                               source: f.get("source") || "", note: f.get("note") || "" }) });
-      if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+      await sendJSON("/api/pairs", { a: current[0], b: current[1], type: f.get("type"), status: f.get("status"),
+                                     source: f.get("source") || "", note: f.get("note") || "" });
       toast("Paire enregistrée pour le banc d'essai");
       openCompare();
     } catch (err) { toast(`Échec : ${err.message}`); }
@@ -284,9 +287,7 @@ async function addToNotebook(entry) {
   const note = prompt(`Note pour « ${entry.title} » (facultatif) :`, entry.note || "");
   if (note === null) return;
   try {
-    const r = await fetch("/api/notebook", { method: "POST", headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...entry, note }) });
-    if (!r.ok) throw new Error((await r.json()).detail || r.status);
+    await sendJSON("/api/notebook", { ...entry, note });
     toast("Ajouté au carnet");
     if (state.panel === "notebook") renderNotebook();
   } catch (err) { alert(`Ajout impossible : ${err.message}`); }
@@ -296,6 +297,7 @@ const KIND_LABEL = { note: "Note", oeuvre: "Œuvre", selection: "Sélection", re
   comparaison: "Comparaison", groupe: "Groupe" };
 
 async function renderNotebook() {
+  const seq = panelTurn();
   showPanel("notebook", "Carnet de recherche");
   state.lastList = renderNotebook;
   state.selected = state.selectedData = null;
@@ -303,8 +305,10 @@ async function renderNotebook() {
   $("fiche").hidden = false;
   let res;
   try { res = await getJSON("/api/notebook"); } catch (err) {
-    $("fiche-body").innerHTML = `<div class="loading">Carnet indisponible : ${esc(err.message)}</div>`; return;
+    if (!panelStale(seq)) $("fiche-body").innerHTML = `<div class="loading">Carnet indisponible : ${esc(err.message)}</div>`;
+    return;
   }
+  if (panelStale(seq)) return;
   const items = res.entries.map((e) => `<li class="entry" data-id="${e.id}">
       <div class="entry-head"><span class="chip">${esc(KIND_LABEL[e.kind] || e.kind)}</span>
         <input class="entry-title" value="${esc(e.title)}" aria-label="Titre"></div>
@@ -323,18 +327,21 @@ async function renderNotebook() {
     ${res.entries.length ? `<ol class="entries">${items}</ol>` : `<div class="empty"><b>Le carnet est vide.</b><br>Depuis la fiche d'une œuvre : « Carnet ».<br>Depuis des résultats ou une comparaison : « Ajouter au carnet ».<br>Ou bien : « Nouvelle note ».</div>`}`;
   const body = $("fiche-body");
   $("nb-new").addEventListener("click", () => addToNotebook({ kind: "note", title: "Note", artwork_ids: [] }));
-  const patch = (id, data) => fetch(`/api/notebook/${id}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) })
-    .then((r) => { if (r.ok) toast("Enregistré"); });
+  // Une note non enregistrée doit se voir : le texte reste dans le champ, l'erreur s'affiche.
+  const patch = (id, data, field) => sendJSON(`/api/notebook/${id}`, data, "PATCH")
+    .then(() => { field.classList.remove("unsaved"); toast("Enregistré"); })
+    .catch((err) => { field.classList.add("unsaved"); alert(`Note non enregistrée (${err.message}). Votre texte est encore dans le champ : copiez-le avant de recharger la page.`); });
   body.querySelectorAll(".entry").forEach((li) => {
     const id = Number(li.dataset.id);
-    li.querySelector(".entry-title").addEventListener("change", (e) => patch(id, { title: e.target.value }));
-    li.querySelector(".entry-note").addEventListener("change", (e) => patch(id, { note: e.target.value }));
+    li.querySelector(".entry-title").addEventListener("change", (e) => patch(id, { title: e.target.value }, e.target));
+    li.querySelector(".entry-note").addEventListener("change", (e) => patch(id, { note: e.target.value }, e.target));
     li.querySelectorAll(".entry-thumbs img").forEach((img) => img.addEventListener("click", () => select(Number(img.dataset.id), true)));
   });
   const entryOf = (id) => res.entries.find((e) => e.id === Number(id));
   body.querySelectorAll("[data-del]").forEach((b) => b.addEventListener("click", async () => {
     if (!confirm("Supprimer cette entrée du carnet ?")) return;
-    await fetch(`/api/notebook/${b.dataset.del}`, { method: "DELETE" });
+    try { await sendJSON(`/api/notebook/${b.dataset.del}`, undefined, "DELETE"); }
+    catch (err) { alert(`Suppression impossible : ${err.message}`); return; }
     renderNotebook();
   }));
   body.querySelectorAll("[data-show]").forEach((b) => b.addEventListener("click", () => {

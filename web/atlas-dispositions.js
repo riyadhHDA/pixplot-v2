@@ -233,13 +233,18 @@ function conceptAxisOverlay(xLabel, yLabel) {
 }
 
 async function setLayout(layout) {
+  // chaque choix de vue prend un numéro : une vue lente (lieux, autre carte, concepts) arrivée
+  // après un autre choix est abandonnée au lieu de l'écraser
   const seq = ++state.conceptSeq;
   let note = "";
   if (layout.startsWith("map:")) {
     const key = layout.slice(4);
     let res;
     try { res = state.layoutCache[key] || (state.layoutCache[key] = await getJSON(`/api/layout/${key}`)); }
-    catch (err) { toast(`Carte indisponible : ${err.message}`); $("layout").value = state.layout; return; }
+    catch (err) {
+      if (seq !== state.conceptSeq) return;          // l'utilisateur a déjà choisi une autre vue
+      toast(`Carte indisponible : ${err.message}`); $("layout").value = state.layout; return;
+    }
     if (seq !== state.conceptSeq) return;
     const pos = new Float32Array(state.n * 2);
     for (let r = 0; r < state.n; r++) {

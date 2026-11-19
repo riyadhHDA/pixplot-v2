@@ -32,13 +32,31 @@ FLAT_LIMIT = 1_500_000
 SEED = 42
 
 
-def cell_boxes(grids: tuple[int, ...] = DEFAULT_GRIDS) -> list[tuple[int, tuple[float, float, float, float]]]:
+def _bounds(g: int, patches: int | None) -> list[tuple[float, float]]:
+    """Bornes des g bandes d'une grille, en fractions du carré. Avec ``patches`` (patchs par côté),
+    ce sont celles du découpage réel des patchs (``np.array_split`` dans ``pool_regions``) : si le
+    nombre de patchs n'est pas multiple de g (14 patchs en 4 → 4 + 4 + 3 + 3), les cadres suivent."""
+    if not patches or patches % g == 0:
+        return [(k / g, (k + 1) / g) for k in range(g)]
+    parts = np.array_split(np.arange(patches), g)
+    return [(int(r[0]) / patches, (int(r[-1]) + 1) / patches) for r in parts]
+
+
+def patches_per_side(params: dict) -> int | None:
+    """Nombre de patchs par côté d'un run de vecteurs (None si inconnu)."""
+    size, patch = params.get("input_size"), params.get("patch_size")
+    return int(size) // int(patch) if size and patch else None
+
+
+def cell_boxes(grids: tuple[int, ...] = DEFAULT_GRIDS,
+               patches: int | None = None) -> list[tuple[int, tuple[float, float, float, float]]]:
     """Pour chaque zone, (taille de grille, cadre [x0, y0, x1, y1] dans le carré letterbox)."""
     out = []
     for g in grids:
+        b = _bounds(g, patches)
         for gy in range(g):
             for gx in range(g):
-                out.append((g, (gx / g, gy / g, (gx + 1) / g, (gy + 1) / g)))
+                out.append((g, (b[gx][0], b[gy][0], b[gx][1], b[gy][1])))
     return out
 
 
@@ -70,7 +88,8 @@ def build_region_index(features: Run, pca_dim: int = 256, runs_dir: Path | None 
     if not (p / "regions.npy").exists():
         raise RuntimeError(f"{features.id} n'a pas de vecteurs régionaux (encodeur sans patchs ?)")
     grids = tuple(features.manifest["params"].get("region_grids", DEFAULT_GRIDS))
-    cells = cell_boxes(grids)
+    patches = patches_per_side(features.manifest["params"])
+    cells = cell_boxes(grids, patches)
     keep_cells = np.array([k for k, (g, _) in enumerate(cells) if g > 1])
     ids = np.load(p / "ids.npy")
     status = np.load(p / "status.npy")
@@ -116,7 +135,8 @@ def build_region_index(features: Run, pca_dim: int = 256, runs_dir: Path | None 
         kind = f"ivfpq(nlist={nlist},m=32)"
 
     run = create_run("index", f"regions_{features.manifest['name']}",
-                     {"kind": kind, "pca_dim": d, "grids": list(grids), "cells_indexed": keep_cells.tolist()},
+                     {"kind": kind, "pca_dim": d, "grids": list(grids), "patches": patches,
+                      "cells_indexed": keep_cells.tolist()},
                      parent=features, runs_dir=runs_dir)
     try:
         # Même ordre de parcours qu'à la collecte : les vecteurs s'alignent sur region_ids.
@@ -198,20 +218,24 @@ class RegionIndex:
         if hasattr(index, "nprobe"):
             index.nprobe = 32
         grids = tuple(run.manifest["params"].get("grids", DEFAULT_GRIDS))
+        patches = run.manifest["params"].get("patches")
         return cls(run, index, np.load(p / "region_ids.npy"), np.load(p / "region_cells.npy"),
-                   np.load(p / "pca_mean.npy"), np.load(p / "pca_components.npy"), cell_boxes(grids))
+                   np.load(p / "pca_mean.npy"), np.load(p / "pca_components.npy"), cell_boxes(grids, patches))
 
-    def search(self, vector: np.ndarray, k: int = 30, exclude: int | None = None) -> list[dict]:
-        """Les k œuvres contenant la zone la plus proche (une seule zone par œuvre)."""
+    def search(self, vector: np.ndarray, k: int = 30, exclude: int | None = None,
+               allowed: set[int] | None = None) -> list[dict]:
+        """Les k œuvres contenant la zone la plus proche (une seule zone par œuvre). ``allowed`` :
+        ne garder que ces œuvres (celles de l'analyse affichée)."""
         z = (np.asarray(vector, dtype=np.float32) - self.mean) @ self.comps.T
         z = (z / max(np.linalg.norm(z), 1e-12)).astype(np.float32)[None]
-        scores, rows = self.index.search(z, k * 6)
+        # 20 zones indexées par œuvre : en demander k × 20 garantit k œuvres distinctes
+        scores, rows = self.index.search(z, min(self.index.ntotal, k * 20))
         out, seen = [], set()
         for score, r in zip(scores[0], rows[0]):
             if r < 0:
                 continue
             aid = int(self.region_ids[r])
-            if aid == exclude or aid in seen:
+            if aid == exclude or aid in seen or (allowed is not None and aid not in allowed):
                 continue
             seen.add(aid)
             g, square = self.cells[int(self.region_cells[r])]

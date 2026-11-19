@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 19/11/2026 (intégration des 3 lectures).*
+*Dernière mise à jour : 19/11/2026 (audit : points d'interface corrigés ; SSCD confié à Gemini).*
 
 ## Version publiée
 
@@ -58,16 +58,28 @@ corrigé ; 63 tests passent, Atlas vérifié.
   paires étaient jugées depuis la mauvaise œuvre) ; les autres couples gardent 300 paires, dont 41 à
   77 % en commun avec l'ancien calcul.
 - **Pas encore corrigé** (à faire ou à décider) :
-  - interface : panneau de droite et dispositions sans protection contre les réponses en retard
-    (I-2, I-4) ; erreurs du carnet silencieuses (M-1) ; réponses d'erreur non JSON (M-2) ; double
-    rechargement de la file de relecture (M-3) ; lots HD échoués non relancés (M-5) ;
-  - calculs : reprise de `pixplot zones` fragile, images en échec marquées faites (4) ; `merge_small`
-    de Leiden sommet par sommet (7) ; normalisation de la variante « cases communes » (8, méthode
-    non retenue) ; **P@1 de `pixplot bench` mesuré sur la première voisine étiquetée** (9 : changerait
-    les chiffres publiés, à décider avec l'utilisateur) ; cadres 4 × 4 si la grille de patchs n'est
-    pas multiple de 4 (12) ; renormalisation après float16 (13) ; mémoire au-delà de 100 000 œuvres (14).
+  - interface : **corrigé le 19/11/2026, non commité** (I-2, I-4, M-1, M-2, M-3, M-5 : numéro par
+    chargement du panneau et des vues, `httpError`/`sendJSON` dans `atlas-base.js`, carnet qui signale
+    une note non enregistrée, file de relecture rechargée une seule fois, lots HD relancés 2 fois) ;
+  - calculs : **corrigé le 19/11/2026, non commité** (4, 7, 12, 13, 14 ; tests dans
+    `tests/test_audit_calc.py`) : reprise de `pixplot zones` (dernier run inachevé compatible, images
+    illisibles laissées hors de l'index et retentées) ; `merge_small` rattache chaque petite communauté
+    entière, dichotomie de Leiden qui reconnaît un graphe émietté ; cadres alignés sur le découpage
+    réel des patchs, recherche de détail sur k × 20 zones filtrée sur l'analyse ; renormalisation
+    après float16 (index FAISS, `FeatureStore.search`, `bench`) ; voisines par blocs de 4 096, UMAP
+    qui garde la place apprise de l'échantillon. Les groupes Leiden publiés ne sont pas recalculés.
+    Mesuré sur WikiArt 81k : Leiden redonne exactement les mêmes groupes (forme 142, sujet 141,
+    NMI 1,000 : aucune petite communauté à γ ≈ 7–8) ; la renormalisation change la 1ʳᵉ voisine de
+    0,033 % des œuvres (forme) et 0,21 % (sujet), la liste des 10 de 0,23 % et 1,5 %.
+  - reste : normalisation de la variante « cases communes » (8, méthode non retenue) ; **P@1 de
+    `pixplot bench` mesuré sur la première voisine étiquetée** (9 : changerait les chiffres publiés,
+    à décider avec l'utilisateur).
 
 ## En attente de l'utilisateur
+
+- **SSCD confié à Gemini** (19/11/2026) : copie de travail `..\pixplot-sscd`, branche `gemini/sscd`,
+  consigne dans `PROMPT-gemini-sscd.md` (non versionné). À relire puis fusionner avec
+  `.\scripts\nouvelle-tache.ps1 sscd -Agent gemini -Terminer`.
 
 - **Une paire proposée** à valider ou rejeter dans la relecture rapide (touche R) : copie de Rubens
   d'après l'*Enlèvement d'Europe* de Titien (n° 64269 ↔ 67405, Honour et Fleming p. 573).

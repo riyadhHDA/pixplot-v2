@@ -60,42 +60,80 @@ def _leiden(G, resolution: float, seed: int, iterations: int = 2) -> np.ndarray:
 
 
 def merge_small(G, labels: np.ndarray, min_size: int = MIN_SIZE) -> np.ndarray:
-    """Rattache chaque membre d'une communauté trop petite à la communauté (assez grande)
-    avec laquelle il partage le plus de poids d'arêtes. Puis renumérote 0..n-1."""
-    labels = labels.copy()
-    for _ in range(3):
-        sizes = np.bincount(labels)
-        small = np.flatnonzero(sizes[labels] < min_size)
-        if len(small) == 0:
-            break
-        for v in small:
-            score: dict[int, float] = {}
-            for e in G.incident(int(v)):
-                edge = G.es[e]
-                u = edge.target if edge.source == v else edge.source
-                if sizes[labels[u]] >= min_size:
-                    score[int(labels[u])] = score.get(int(labels[u]), 0.0) + edge["weight"]
-            if score:
-                labels[v] = max(score, key=score.get)
-    _, labels = np.unique(labels, return_inverse=True)
+    """Rattache chaque communauté trop petite, **entière**, à la communauté voisine avec laquelle
+    elle partage le plus de poids d'arêtes (une grande de préférence), de la plus petite à la plus
+    grande, en tenant les tailles à jour. Une petite communauté n'est donc jamais coupée entre deux
+    groupes. Celles sans aucun lien restent seules. Puis renumérote 0..n-1."""
+    import heapq
+
+    labels = np.asarray(labels).copy()
+    sizes = np.bincount(labels).astype(np.int64)
+    if G.ecount() == 0 or (sizes >= min_size).all():
+        _, labels = np.unique(labels, return_inverse=True)
+        return labels.astype(np.int32)
+    edges = np.asarray(G.get_edgelist(), dtype=np.int64)
+    w = np.asarray(G.es["weight"] if "weight" in G.es.attributes() else np.ones(len(edges)), dtype=np.float64)
+    la, lb = labels[edges[:, 0]], labels[edges[:, 1]]
+    cross = la != lb
+    # poids total entre deux communautés (graphe contracté), dans les deux sens
+    W: dict[int, dict[int, float]] = {}
+    for a, b, x in zip(la[cross].tolist(), lb[cross].tolist(), w[cross].tolist()):
+        W.setdefault(a, {})[b] = W.setdefault(a, {}).get(b, 0.0) + x
+        W.setdefault(b, {})[a] = W.setdefault(b, {}).get(a, 0.0) + x
+    parent = np.arange(len(sizes))
+    heap = [(int(sizes[c]), c) for c in np.flatnonzero((sizes > 0) & (sizes < min_size)).tolist()]
+    heapq.heapify(heap)
+    while heap:
+        size, c = heapq.heappop(heap)
+        if parent[c] != c or sizes[c] != size or sizes[c] >= min_size or not W.get(c):
+            continue
+        nb = W[c]
+        big = {d: x for d, x in nb.items() if sizes[d] >= min_size}
+        d = max(big or nb, key=(big or nb).get)
+        parent[c] = d
+        sizes[d] += sizes[c]
+        sizes[c] = 0
+        for e, x in nb.items():                  # les liens de c deviennent ceux de d
+            del W[e][c]
+            if e != d:
+                W[d][e] = W[d].get(e, 0.0) + x
+                W[e][d] = W[e].get(d, 0.0) + x
+        del W[c]
+        if sizes[d] < min_size:
+            heapq.heappush(heap, (int(sizes[d]), d))
+
+    def root(c: int) -> int:
+        while parent[c] != c:
+            parent[c] = parent[parent[c]]
+            c = parent[c]
+        return c
+
+    roots = np.array([root(c) for c in range(len(sizes))])
+    _, labels = np.unique(roots[labels], return_inverse=True)
     return labels.astype(np.int32)
 
 
 def leiden_for_count(G, target: int, seed: int = 0, min_size: int = MIN_SIZE,
                      lo: float = 1e-3, hi: float = 1e3, steps: int = 14) -> tuple[np.ndarray, float]:
     """Cherche la résolution qui donne ≈ ``target`` groupes (après rattachement des petits).
-    Recherche par dichotomie sur log γ : le nombre de groupes croît avec γ."""
+    Recherche par dichotomie sur log γ : le nombre de groupes croît avec γ, sauf quand γ est si
+    grand que Leiden émiette le graphe (plus de la moitié des œuvres dans des communautés de moins
+    de ``min_size``) : leur rattachement fait alors *baisser* le compte, et l'on sait que γ est trop
+    grand même si le compte paraît trop petit."""
     best, best_gap, best_g = None, None, None
     for _ in range(steps):
         g = float(np.sqrt(lo * hi))
-        labels = merge_small(G, _leiden(G, g, seed), min_size)
+        raw = _leiden(G, g, seed)
+        raw_sizes = np.bincount(raw)
+        crumbs = float(raw_sizes[raw_sizes < min_size].sum()) / max(len(raw), 1)
+        labels = merge_small(G, raw, min_size)
         count = int(labels.max()) + 1
         gap = abs(count - target)
         if best is None or gap < best_gap:
             best, best_gap, best_g = labels, gap, g
         if count == target or gap <= max(1, target // 50):
             break
-        if count < target:
+        if count < target and crumbs <= 0.5:
             lo = g
         else:
             hi = g

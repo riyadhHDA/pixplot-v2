@@ -57,6 +57,27 @@ def find_zone_run(runs_dir: Path | None, complete_only: bool = False) -> Run | N
     return runs[-1] if runs else None
 
 
+RESUME_KEYS = ("encoder", "weights", "input_size", "grids")
+
+
+def find_resumable_zone_run(runs_dir: Path | None, ids: np.ndarray, params: dict) -> Run | None:
+    """Le plus récent run de zones inachevé (en cours ou interrompu) qui porte sur les mêmes œuvres
+    avec le même modèle et les mêmes grilles. Un petit essai terminé entre-temps (``--limit``) ne
+    cache plus un grand run à reprendre."""
+    runs = [r for r in list_runs("features", status=None, runs_dir=runs_dir, include_zones=True)
+            if r.manifest["name"].startswith("zones_") and r.manifest.get("status") in ("running", "failed")]
+    for r in reversed(runs):
+        old = r.manifest.get("params", {})
+        if any(old.get(k) != params.get(k) for k in RESUME_KEYS):
+            continue
+        try:
+            if np.array_equal(np.load(r.path / "ids.npy"), ids):
+                return r
+        except OSError:
+            continue
+    return None
+
+
 def extract_zones(settings, text_run: Run, encoder, batch_images: int = 4, workers: int = 4,
                   limit: int | None = None, say=print, resume: bool = True) -> Run:
     """Encode les 20 zones de chaque œuvre déjà vue par SigLIP 2 (``text_run``). Reprend un
@@ -72,15 +93,12 @@ def extract_zones(settings, text_run: Run, encoder, batch_images: int = 4, worke
     boxes = zone_boxes()
     Z = len(boxes)
 
-    run = find_zone_run(settings.runs_dir) if resume else None
-    if run is not None and (run.manifest.get("status") == "complete"
-                            or not np.array_equal(np.load(run.path / "ids.npy"), ids)):
-        run = None
+    params = {"encoder": encoder.name, "weights": getattr(encoder, "weights", None),
+              "input_size": encoder.input_size, "grids": list(GRIDS), "zones": Z,
+              "image_source": "vignettes 1024 px", "limit": limit}
+    run = find_resumable_zone_run(settings.runs_dir, ids, params) if resume else None
     if run is None:
-        run = create_run("features", f"zones_{encoder.name}",
-                         {"encoder": encoder.name, "weights": getattr(encoder, "weights", None),
-                          "input_size": encoder.input_size, "grids": list(GRIDS), "zones": Z,
-                          "image_source": "vignettes 1024 px", "limit": limit}, parent=text_run,
+        run = create_run("features", f"zones_{encoder.name}", params, parent=text_run,
                          runs_dir=settings.runs_dir)
         np.save(run.path / "ids.npy", ids)
         np.lib.format.open_memmap(run.path / "zones.npy", mode="w+", dtype=np.float16,
@@ -88,6 +106,9 @@ def extract_zones(settings, text_run: Run, encoder, batch_images: int = 4, worke
         np.save(run.path / "done.npy", np.zeros(len(ids), dtype=bool))
         say(f"Nouveau run {run.id} : {len(ids)} œuvres × {Z} zones")
     else:
+        run.manifest.update(status="running", resumed=time.strftime("%Y-%m-%dT%H:%M:%S"))
+        run.manifest.pop("error", None)
+        run.save()
         say(f"Reprise de {run.id}")
     zones = np.load(run.path / "zones.npy", mmap_mode="r+")
     done = np.load(run.path / "done.npy")
@@ -105,11 +126,12 @@ def extract_zones(settings, text_run: Run, encoder, batch_images: int = 4, worke
             p = Path(paths.get(aid, ""))
         try:
             im = open_image(p, target=1024)
-        except Exception:  # image illisible : zones nulles, l'œuvre est marquée faite
+        except Exception:  # image illisible : pas marquée faite, retentée à la prochaine reprise
             return row, None
         return row, np.stack([encoder.preprocess(c)[0] for c in crops(im, boxes)])
 
     t0, last_save, n_done = time.time(), time.time(), 0
+    failed: list[int] = []
     try:
         with ThreadPoolExecutor(workers) as pool:
             for s in range(0, len(todo), 256):
@@ -117,8 +139,8 @@ def extract_zones(settings, text_run: Run, encoder, batch_images: int = 4, worke
                 prepared = pool.map(prepare, chunk)
                 buf_rows, buf = [], []
                 for row, arr in prepared:
-                    if arr is None:
-                        done[row] = True
+                    if arr is None:            # zones laissées à zéro et hors de l'index
+                        failed.append(int(ids[row]))
                         continue
                     buf_rows.append(row)
                     buf.append(arr)
@@ -145,7 +167,10 @@ def extract_zones(settings, text_run: Run, encoder, batch_images: int = 4, worke
         raise
     zones.flush()
     np.save(run.path / "done.npy", done)
-    run.complete(artworks=int(done.sum()), zones=int(done.sum()) * Z,
+    if failed:
+        say(f"{len(failed)} images illisibles, laissées hors de l'index : {failed[:20]}{' …' if len(failed) > 20 else ''}")
+    run.complete(artworks=int(done.sum()), zones=int(done.sum()) * Z, failed=len(failed),
+                 failed_ids=failed[:200],
                  zones_per_second=round(n_done * Z / max(time.time() - t0, 1e-6), 1))
     return run
 

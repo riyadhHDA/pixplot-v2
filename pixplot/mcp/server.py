@@ -247,7 +247,7 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
         if ra is None or rb is None:
             raise ValueError("Œuvre absente de ce regard")
         sizes = data.sizes([a, b])
-        pairs = correspondences(ra[0], rb[0], sizes.get(a, (1, 1)), sizes.get(b, (1, 1)), grids=ra[1],
+        pairs = correspondences(ra[0], rb[0], sizes.get(a, (1, 1)), sizes.get(b, (1, 1)), grids=ra[1], patches=ra[2],
                                 k=min(max(k, 1), 8))
         cell, pad, head = 480, 10, 30
         sheet = PILImage.new("RGB", (2 * cell, cell + head), (20, 20, 20))

@@ -82,10 +82,13 @@ def run_umap(Z: np.ndarray, n_components: int = 2, n_neighbors: int = 15, min_di
     if len(Z) <= fit_sample:
         return np.asarray(reducer.fit_transform(Z), dtype=np.float32)
     rng = np.random.default_rng(SEED)
-    reducer.fit(Z[rng.choice(len(Z), fit_sample, replace=False)])
+    sample = np.sort(rng.choice(len(Z), fit_sample, replace=False))
+    reducer.fit(Z[sample])
     out = np.empty((len(Z), n_components), dtype=np.float32)
-    for s in range(0, len(Z), 50_000):
-        out[s:s + 50_000] = reducer.transform(Z[s:s + 50_000])
+    out[sample] = reducer.embedding_              # l'échantillon garde la place apprise
+    rest = np.setdiff1d(np.arange(len(Z)), sample)
+    for s in range(0, len(rest), 50_000):         # seules les autres œuvres sont placées ensuite
+        out[rest[s:s + 50_000]] = reducer.transform(Z[rest[s:s + 50_000]])
     return out
 
 
@@ -113,7 +116,10 @@ def neighbors(X: np.ndarray, k: int = 20) -> tuple[np.ndarray, np.ndarray]:
 
     index = faiss.IndexFlatIP(X.shape[1])
     index.add(X)
-    scores, rows = index.search(X, k + 1)
+    # par blocs de 4 096 requêtes : la mémoire reste bornée au-delà de 100 000 œuvres
+    parts = [index.search(X[s:s + 4096], k + 1) for s in range(0, len(X), 4096)]
+    scores = np.concatenate([p[0] for p in parts])
+    rows = np.concatenate([p[1] for p in parts])
     out_rows = np.empty((len(X), k), dtype=np.int64)
     out_scores = np.empty((len(X), k), dtype=np.float32)
     for i in range(len(X)):

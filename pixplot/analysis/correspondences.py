@@ -67,9 +67,11 @@ def match(cells_a: np.ndarray, cells_b: np.ndarray, boxes_a: list, boxes_b: list
 
 
 def correspondences(regions_a: np.ndarray, regions_b: np.ndarray, size_a: tuple[int, int],
-                    size_b: tuple[int, int], grids: tuple[int, ...] = DEFAULT_GRIDS, k: int = 4) -> list[dict]:
-    """Zones qui se répondent entre deux œuvres, avec leurs cadres sur chaque image."""
-    squares = [box for g, box in cell_boxes((GRID,))]
+                    size_b: tuple[int, int], grids: tuple[int, ...] = DEFAULT_GRIDS, k: int = 4,
+                    patches: int | None = None) -> list[dict]:
+    """Zones qui se répondent entre deux œuvres, avec leurs cadres sur chaque image. ``patches`` :
+    patchs par côté du modèle, pour que les cadres suivent le découpage réel des patchs."""
+    squares = [box for g, box in cell_boxes((GRID,), patches)]
     boxes_a = [square_to_image(b, *size_a) for b in squares]
     boxes_b = [square_to_image(b, *size_b) for b in squares]
     return match(cells_of(regions_a, grids), cells_of(regions_b, grids), boxes_a, boxes_b, k=k)

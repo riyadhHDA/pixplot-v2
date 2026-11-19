@@ -32,7 +32,7 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const pretty = (v) => String(v ?? "").replace(/_/g, " ").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const state = {
-  searchSeq: 0, searchTimer: null, conceptSeq: 0, measuresSeq: 0,
+  searchSeq: 0, searchTimer: null, conceptSeq: 0, measuresSeq: 0, panelSeq: 0, colorSeq: 0,
   conceptAxes: { x: "sacré", y: "profane", corr: null },
   info: null, map: null, clusters: [], n: 0, comm: {},
   positions: null, rowOf: new Map(),
@@ -73,11 +73,35 @@ let deckgl;
 window.pixplot = state; // pour inspecter l'Atlas depuis la console du navigateur
 
 // ------------------------------------------------------------------ chargement
+// Erreur lisible d'une réponse HTTP : le « detail » de FastAPI s'il y en a un, sinon le texte brut
+// (une erreur 500 d'Uvicorn n'est pas du JSON), toujours avec le code HTTP.
+async function httpError(r) {
+  let text = "";
+  try { text = await r.text(); } catch { /* corps illisible */ }
+  let detail = text;
+  try { const j = JSON.parse(text); if (j && j.detail != null) detail = j.detail; } catch { /* pas du JSON */ }
+  if (typeof detail !== "string") detail = JSON.stringify(detail);
+  return new Error(`${r.status} ${(detail || r.statusText || "").slice(0, 300)}`.trim());
+}
+
 async function getJSON(url) {
   const r = await fetch(url);
-  if (!r.ok) throw new Error(`${url} : ${r.status} ${await r.text()}`);
+  if (!r.ok) throw await httpError(r);
   return r.json();
 }
+
+// Envoie du JSON (POST par défaut) et renvoie la réponse ; lève une erreur lisible si elle échoue.
+async function sendJSON(url, body, method = "POST") {
+  const r = await fetch(url, { method, headers: { "Content-Type": "application/json" },
+    body: body === undefined ? undefined : JSON.stringify(body) });
+  if (!r.ok) throw await httpError(r);
+  return r;
+}
+
+// Panneau de droite : chaque chargement prend un numéro ; une réponse arrivée après un autre
+// clic (ou après la fermeture du panneau) est ignorée au lieu d'écraser ce qu'on regarde.
+const panelTurn = () => ++state.panelSeq;
+const panelStale = (seq) => seq !== state.panelSeq;
 
 async function init() {
   try {

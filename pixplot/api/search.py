@@ -78,7 +78,7 @@ class SearchEngines:
         with self._lock:
             self._load_region()
             vec = encode_box(self._region_encoder, path, box)
-        hits = self._region_index.search(vec, k=k, exclude=artwork_id)
+        hits = self._region_index.search(vec, k=k, exclude=artwork_id, allowed=self.data.row_of)
         sizes = self.data.sizes([h["id"] for h in hits])
         results = []
         for h in hits:

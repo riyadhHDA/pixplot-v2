@@ -213,6 +213,7 @@ a.chip { text-decoration: none; }
 .entry-note { width: 100%; min-height: 54px; resize: vertical; background: var(--panel); color: var(--text); border: 1px solid var(--line);
   border-radius: 6px; padding: 6px 8px; font: 13px/1.4 var(--font); }
 .entry-note:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+.entry-note.unsaved, .entry-title.unsaved { border-color: #d55e00; box-shadow: inset 3px 0 0 #d55e00; }
 .entry-foot { display: flex; justify-content: space-between; gap: 8px; align-items: center; margin-top: 6px; flex-wrap: wrap; }
 .entry-foot small { color: var(--muted); font-size: 11px; }
 

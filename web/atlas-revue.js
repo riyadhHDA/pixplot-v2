@@ -24,13 +24,16 @@ function regardCard(sp) {
 }
 
 async function renderCorpus() {
+  const seq = panelTurn();
   showPanel("corpus", "Le corpus et les regards");
   state.lastList = () => renderCorpus();
   $("fiche-body").innerHTML = `<div class="loading">Chargement…</div>`;
   let res;
   try { res = await getJSON("/api/corpus"); } catch (err) {
-    $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`; return;
+    if (!panelStale(seq)) $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`;
+    return;
   }
+  if (panelStale(seq)) return;                       // un autre clic a pris le panneau entre-temps
   const r = res.report;
   const rows = Object.entries(r.coverage).map(([k, c]) => {
     const src = c.sources[0] || {};
@@ -99,7 +102,9 @@ function renderReviewStats() {
 async function showReviewCard() {
   renderReviewStats();
   if (rv.i >= rv.queue.length) {
-    try { await loadReviewQueue(); } catch (err) { /* garde l'écran de fin */ }
+    // fin du lot : on recharge la file, et rien d'autre ne part pendant ce temps (une seule requête)
+    rv.busy = true;
+    try { await loadReviewQueue(); } catch (err) { /* garde l'écran de fin */ } finally { rv.busy = false; }
     if (!rv.queue.length) {
       $("rv-card").innerHTML = `<div class="rv-end"><h3>Plus rien à relire pour l'instant</h3>
         <p>Toutes les paires proposées et les désaccords disponibles ont été vus. Pour en avoir d'autres :
@@ -149,18 +154,17 @@ async function reviewDecide(decision, n) {
                  source: it.origin === "proposée" ? it.source : `relecture : ${it.source}`, note: it.note || "" };
   rv.busy = true;
   try {
-    const r = await fetch("/api/review", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
-    const out = await r.json();
-    if (!r.ok) throw new Error(out.detail || r.statusText);
+    const out = await (await sendJSON("/api/review", body)).json();
     rv.stats = out.stats;
     rv.history.push({ item: it, body });
     rv.i++;
-    showReviewCard();
-  } catch (err) { toast(`Échec : ${err.message}`); } finally { rv.busy = false; }
+  } catch (err) { toast(`Échec : ${err.message}`); rv.busy = false; return; }
+  rv.busy = false;
+  await showReviewCard();
 }
 
 function reviewSkip() {
-  if (rv.i >= rv.queue.length) return;
+  if (rv.busy || rv.i >= rv.queue.length) return;
   const it = rv.queue[rv.i];
   rv.skipped.add(pairKey(it.a, it.b));
   rv.i++;
@@ -168,18 +172,17 @@ function reviewSkip() {
 }
 
 async function reviewUndo() {
+  if (rv.busy || !rv.history.length) return;
   const last = rv.history.pop();
-  if (!last || rv.busy) return;
   rv.busy = true;
   try {
-    const r = await fetch("/api/review/undo", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(last.body) });
-    const out = await r.json();
-    if (!r.ok) throw new Error(out.detail || r.statusText);
+    const out = await (await sendJSON("/api/review/undo", last.body)).json();
     rv.stats = out.stats;
     rv.queue.splice(rv.i, 0, last.item);
     toast("Décision annulée");
-    showReviewCard();
-  } catch (err) { rv.history.push(last); toast(`Échec : ${err.message}`); } finally { rv.busy = false; }
+  } catch (err) { rv.history.push(last); toast(`Échec : ${err.message}`); rv.busy = false; return; }
+  rv.busy = false;
+  await showReviewCard();
 }
 
 function reviewKeys(e) {
@@ -215,13 +218,16 @@ function openReview() {
 
 // ------------------------------------------------------------------ paires de référence à relire
 async function renderPairs(status) {
+  const seq = panelTurn();
   showPanel("pairs", "À vérifier");
   state.lastList = () => renderPairs(status);
   $("fiche-body").innerHTML = `<div class="loading">Chargement…</div>`;
   let res;
   try { res = await getJSON("/api/pairs"); } catch (err) {
-    $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`; return;
+    if (!panelStale(seq)) $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`;
+    return;
   }
+  if (panelStale(seq)) return;                       // un autre clic a pris le panneau entre-temps
   const typeLabel = Object.fromEntries(res.types.map((t) => [t.key, t.label]));
   const counts = {};
   for (const p of res.pairs) counts[p.status] = (counts[p.status] || 0) + 1;
@@ -258,9 +264,7 @@ async function renderPairs(status) {
     const p = items[Number(li.dataset.n)];
     li.querySelectorAll("[data-set]").forEach((b) => b.addEventListener("click", async () => {
       try {
-        const r = await fetch("/api/pairs", { method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ a: p.a, b: p.b, type: p.type, status: b.dataset.set, source: p.source, note: p.note }) });
-        if (!r.ok) throw new Error((await r.json()).detail || r.statusText);
+        await sendJSON("/api/pairs", { a: p.a, b: p.b, type: p.type, status: b.dataset.set, source: p.source, note: p.note });
         toast(b.dataset.set === "validée" ? "Paire validée" : "Paire rejetée");
         renderPairs(status);
       } catch (err) { toast(`Échec : ${err.message}`); }
@@ -273,6 +277,7 @@ async function renderPairs(status) {
 
 // ------------------------------------------------------------------ désaccords entre regards
 async function renderDisagreements(near, far, offset = 0) {
+  const seq = panelTurn();
   showPanel("disagreements", "Désaccords entre regards");
   const combos = Object.keys(state.info.disagreements || {});
   if (!near || !far) [near, far] = (combos.find((c) => c === "forme>sujet") || combos[0]).split(">");
@@ -280,8 +285,10 @@ async function renderDisagreements(near, far, offset = 0) {
   $("fiche-body").innerHTML = `<div class="loading">Chargement…</div>`;
   let res;
   try { res = await getJSON(`/api/disagreements?near=${near}&far=${far}&offset=${offset}&limit=40`); } catch (err) {
-    $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`; return;
+    if (!panelStale(seq)) $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`;
+    return;
   }
+  if (panelStale(seq)) return;                       // un autre clic a pris le panneau entre-temps
   const spaces = [...new Set(combos.flatMap((c) => c.split(">")))];
   const opt = (sel) => spaces.map((s) => `<option value="${esc(s)}" ${s === sel ? "selected" : ""}>${esc(SPACE_SHORT[s] || s)}</option>`).join("");
   const rows = res.items.map((d) => `<li class="pair-item">
@@ -322,13 +329,16 @@ async function renderDisagreements(near, far, offset = 0) {
 
 
 async function renderSuspects(key, offset) {
+  const seq = panelTurn();
   showPanel("suspects", "À vérifier");
   state.lastList = () => renderSuspects(key, offset);
   $("fiche-body").innerHTML = `<div class="loading">Chargement…</div>`;
   let res;
   try { res = await getJSON(`/api/suspects?limit=40&offset=${offset}${key ? `&key=${encodeURIComponent(key)}` : ""}`); } catch (err) {
-    $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`; return;
+    if (!panelStale(seq)) $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`;
+    return;
   }
+  if (panelStale(seq)) return;                       // un autre clic a pris le panneau entre-temps
   const space = state.spaces.find((s) => s.key === res.space);
   const tabs = res.keys.map((k) => `<button class="space ${k === res.key ? "on" : ""}" data-key="${esc(k)}">${esc(LABELS[k] || pretty(k))}
     <small>${state.info.suspects[k] ?? ""}</small></button>`).join("");

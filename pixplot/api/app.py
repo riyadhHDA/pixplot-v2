@@ -408,7 +408,7 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
         if ra is None or rb is None:
             raise HTTPException(404, "Œuvre absente de ce regard")
         sizes = data.sizes([a, b])
-        pairs = correspondences(ra[0], rb[0], sizes.get(a, (1, 1)), sizes.get(b, (1, 1)), grids=ra[1], k=k)
+        pairs = correspondences(ra[0], rb[0], sizes.get(a, (1, 1)), sizes.get(b, (1, 1)), grids=ra[1], patches=ra[2], k=k)
         return {"a": a, "b": b, "space": space, "spaces": available, "grid": "4 × 4", "pairs": pairs,
                 "note": "Zones qui se répondent le plus (correspondances mutuelles, classées par ce qui les "
                         "distingue de la ressemblance moyenne). Une piste pour regarder, pas une explication."}
