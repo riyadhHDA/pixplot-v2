@@ -894,3 +894,70 @@ Trois lectures récentes ont été intégrées directement dans le code, l'Atlas
    humaine (S. Bureau et G. Doras) ; les modèles texte-image réduisent le visible au « dicible »
    (M. Lista, d'après A. Somaini et H. Steyerl) ; la numérisation porte ses conditions matérielles
    (F. Ebner et O. Frydryszak-Rétat).
+
+## 27. Détection de copies : SSCD évalué, non retenu comme regard par défaut (19/11/2026)
+
+Question : un modèle spécialisé en **détection de copies** (SSCD) mérite-t-il de devenir un
+cinquième regard pour retrouver les filiations attestées (copies, répliques, gravures d'après) ?
+
+- **Candidat et licence.** [SSCD](https://github.com/facebookresearch/sscd-copy-detection) (*A
+  Self-Supervised Descriptor for Image Copy Detection*, Pizzi et al., Meta, CVPR 2022, **licence
+  MIT**), variante `sscd_disc_large` (ResNeXt-101 32×4d, 1 024 dimensions, entraînée sur DISC avec
+  augmentations avancées et mixup ; poids TorchScript autonomes stockés localement dans
+  `data/wikiart81k/models/`, hors git). Entrée : œuvre entière en *letterbox* à 320 px (taille carrée
+  recommandée par le dépôt pour l'inférence GPU par lots), normalisation ImageNet.
+- **Extraction.** `pixplot/encoders/sscd.py`, calculée sur les 80 716 œuvres de WikiArt 81k
+  (`features/sscd_disc_large_20261119-184816`) : **4 min 41 s**, **274,9 images/s**, **926 MiB** de
+  mémoire graphique (RX 7900 GRE, FP16), **0 échec**.
+- **Mesure.** `pixplot pairs bench --spaces forme,sujet,couleur,touche,copie` sur les **104 paires
+  annotées validées** par l'historien (`bench/wikiart81k_pairs.csv`, 208 requêtes, rangs exacts dans
+  les deux sens). Une variante **centrée** (soustraction de la moyenne du corpus puis normalisation
+  L2, recommandée par le dépôt SSCD) a également été mesurée en mémoire.
+
+| « Filiation attestée (copie, citation, modèle) » (9 paires, 18 recherches) | R@10 | R@100 | rang médian | centile |
+|---|---|---|---|---|
+| **Sujet (SigLIP 2)** | **38,9 %** | **66,7 %** | **25** | **0,997** |
+| **Forme (DINOv3)** | **38,9 %** | **66,7 %** | **26** | **0,993** |
+| Copie (SSCD brut) | 33,3 % | 44,4 % | 216 | 0,902 |
+| *Copie (SSCD centré, essai en mémoire)* | *33,3 %* | *50,0 %* | *108* | *0,904* |
+| Touche (DINOv3, couche 6) | 16,7 % | 27,8 % | 578 | 0,902 |
+| Couleur (CIELAB) | 0,0 % | 0,0 % | 17 656 | 0,557 |
+
+Sur les autres catégories annotées validées, SSCD reste nettement en retrait des regards spécialisés :
+
+| Catégorie annotée validée (n recherches) | SSCD R@10 | SSCD rang méd. | Meilleur regard actuel (R@10 · rang méd.) |
+|---|---|---|---|
+| Même sujet, composition différente (72) | 4,2 % | 27 374 | Sujet (37,5 % · 30) |
+| Même composition, sujet différent (28) | 7,1 % | 13 736 | Forme (53,6 % · 8) |
+| Artistes différents, facture comparable (32) | 0,0 % | 6 952 | Touche (31,2 % · 136) |
+| Même palette, traditions différentes (52) | 0,0 % | 32 982 | Couleur (50,0 % · 10) |
+| Même motif iconographique, époque différente (4) | 0,0 % | 5 612 | Sujet (50,0 % · 26) |
+| Même artiste, facture différente (2) | 0,0 % | 53 312 | Couleur (100,0 % · 2) |
+
+Sur les 600 recherches « témoin » (métadonnées disjointes), SSCD obtient un rang médian de 40 528
+(centile 0,490, quasi-hasard parfait), effet attendu de sa régularisation d'entropie différentielle.
+
+**Lecture paire par paire des 9 filiations.** SSCD classe en tête les copies très fidèles qui
+conservent la géométrie d'ensemble : Van Gogh / Millet (*Le Semeur*, rangs 1 et 1), Raphaël /
+Pérugin (*Mariage de la Vierge*, rangs 1 et 1), Manet / Titien (*Olympia* ← *Vénus d'Urbin*,
+rangs 6 et 3 ; centré 1 et 3 — seul cas où SSCD devance nettement Forme [4, 23] et Sujet [4, 58]).
+Hors banc, sur la paire proposée Rubens / Titien (*L'Enlèvement d'Europe*), SSCD donne aussi (1, 1),
+mais Forme et Sujet y sont déjà à (1, 1). En revanche, dès que la filiation passe par une
+réinterprétation libre, une inversion, un fragment ou un changement de technique — Manet / Goya
+(110, 983), Manet / Giorgione-Titien (323, 461), Monet / Manet (803, 732), Picasso / El Greco
+(13 406, 21 382), Van Gogh d'après l'eau-forte de Rembrandt (60 102, 44 044) — SSCD repousse le
+modèle très loin : son entraînement est fait pour séparer tout ce qui n'est pas quasi-identique.
+
+**Conclusion : SSCD n'est pas retenu comme cinquième regard par défaut.** Les regards Forme (DINOv3)
+et Sujet (SigLIP 2) retrouvent déjà les copies fidèles et résistent beaucoup mieux aux reprises
+artistiques. Les vecteurs restent sur disque (`features/sscd_disc_large_*`) pour les bancs d'essai
+(`pixplot pairs bench --spaces …,copie`), mais l'Atlas et le serveur MCP ne proposent pas SSCD par
+défaut (`NOT_KEPT` dans `pixplot/api/spaces.py`).
+
+**Limites et piste utile.** L'échantillon de filiations validées reste petit (9 paires, mêlant copies
+directes et réinterprétations libres ; pas encore de corpus dédié de gravures de reproduction).
+En revanche, un sondage sur 2 000 œuvres aléatoires de WikiArt 81k montre que **2,6 %** (52/2 000)
+ont une autre œuvre à cosinus SSCD ≥ 0,75 (dont des quasi-doublons JPEG réencodés sous deux
+étiquettes différentes qui échappent au hachage SHA-256 d'`ingest`) : SSCD pourrait donc servir à
+l'avenir d'outil de **dédoublonnage perceptuel** lors de l'ingestion, plutôt que de regard
+d'exploration historique.

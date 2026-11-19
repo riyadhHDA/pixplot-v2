@@ -10,6 +10,7 @@ ENCODERS = (
     "siglip2_so400m", "siglip2_base",
     "tipsv2_b14", "tipsv2_l14", "tipsv2_so400m14",
     "colorhist", "color_lab", "dinov3_vitb16_texture", "pe_spatial_b16",
+    "sscd_disc_mixup", "sscd_disc_large",
 )
 
 
@@ -42,6 +43,12 @@ def get_encoder(name: str, **kwargs) -> Encoder:
     if name.startswith("pe_spatial_"):
         from .pe_spatial import PESpatialEncoder
         return PESpatialEncoder(arch=name, **{k: v for k, v in kwargs.items() if k in ("input_size", "device", "fp16")})
+    if name.startswith("sscd_"):
+        from .sscd import SSCDEncoder
+        if kwargs.get("input_size") == 448:  # 448 est la valeur par défaut de la CLI (DINOv3)
+            kwargs.pop("input_size")
+        allowed = ("weights", "cache_dir", "input_size", "device", "fp16")
+        return SSCDEncoder(arch=name, **{k: v for k, v in kwargs.items() if k in allowed})
     if name.startswith("dinov2_"):
         from .dinov2 import DINOv2Encoder
         kwargs.pop("weights", None)
