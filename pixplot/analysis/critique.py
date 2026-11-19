@@ -114,6 +114,24 @@ CARDS: dict[str, dict] = {
                     "rang médian 216 (108 centré), derrière Forme (38,9 %, 26) et Sujet (38,9 %, 25) "
                     "(ARCHITECTURE § 27)",
     },
+    "profondeur": {
+        "model": "Depth Anything V2 Small (NeurIPS 2024, DINOv2 ViT-S/14 + DPT, licence Apache 2.0), "
+                 "grille 8 × 8 calée sur l'œuvre (z-score)",
+        "trained_on": "595 000 scènes synthétiques étiquetées en profondeur et 62 millions d'images "
+                      "réelles pseudo-étiquetées",
+        "sees": "l'agencement relatif des plans en profondeur (premier plan, plans intermédiaires, fond)",
+        "blind_to": "les couleurs, la facture, le sujet, l'iconographie et les compositions sans profondeur "
+                    "(abstraction, aplat, enluminure)",
+        "biases": [
+            "entraîné sur des scènes photographiques et 3D à perspective linéaire : les peintures sans "
+            "perspective ou très planes reçoivent souvent un gradient vertical par défaut (bas proche, haut loin)",
+            "sensible au contraste tonal et aux cadres/bordures présents dans la reproduction",
+        ],
+        "measured": "évalué, non retenu par défaut : sur « même composition » (14 paires), R@10 3,6 %, "
+                    "rang médian 13 754 (6 874 centré), loin derrière Forme (53,6 %, rang 8) ; "
+                    "la combinaison Forme + profondeur n'améliore pas Forme en validation croisée "
+                    "(ARCHITECTURE § 28)",
+    },
 }
 
 

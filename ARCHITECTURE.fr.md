@@ -961,3 +961,119 @@ ont une autre œuvre à cosinus SSCD ≥ 0,75 (dont des quasi-doublons JPEG rée
 étiquettes différentes qui échappent au hachage SHA-256 d'`ingest`) : SSCD pourrait donc servir à
 l'avenir d'outil de **dédoublonnage perceptuel** lors de l'ingestion, plutôt que de regard
 d'exploration historique.
+
+## 28. Composition par la profondeur : Depth Anything V2 évalué, non retenu (19/11/2026)
+
+Question (suite du § 24) : après l'échec de PE-Spatial et des dispositions 4 × 4 face au regard
+Forme (DINOv3) sur « même composition, sujet différent », l'agencement des plans en **profondeur**
+(premier plan, plans intermédiaires, fond) apporte-t-il un signal complémentaire que Forme ne voit pas ?
+
+- **Candidat et licence.** [Depth Anything V2 Small](https://huggingface.co/depth-anything/Depth-Anything-V2-Small-hf)
+  (Yang et al., NeurIPS 2024, backbone DINOv2 ViT-S/14 + tête DPT, chargé via `transformers`,
+  **licence Apache 2.0** vérifiée sur la fiche Hugging Face). Les variantes Base et Large sont sous
+  licence CC BY-NC 4.0 et ont été écartées par principe. Poids stockés dans le cache Hugging Face
+  local, jamais dans git.
+- **Descripteur (`pixplot/encoders/depth.py`).** L'œuvre entière est mise au carré par bandes
+  neutres (*letterbox*, normalisation ImageNet) à la résolution native de 518 px (37 × 14). La carte
+  de profondeur relative prédite (disparité affine-invariante : valeurs plus grandes pour les plans
+  proches) est **recadrée sur la seule boîte de l'œuvre** — les bandes du *letterbox* sont totalement
+  ignorées, ce qui répond aussi à la limite relevée au § 24 d'une grille calée sur le carré plutôt
+  que sur l'œuvre. Elle est ensuite moyennée sur une **grille 8 × 8** (64 valeurs), centrée et
+  normalisée L2 par œuvre (z-score de norme 1) : l'empreinte est strictement invariante à toute
+  transformation affine positive $a \cdot d + b$ ($a > 0$), et le cosinus entre deux œuvres vaut
+  exactement la corrélation de Pearson entre leurs grilles de profondeur 8 × 8. Le choix du z-score
+  plutôt que des rangs a été préféré par simplicité et fidélité à la perte d'entraînement du modèle ;
+  les deux variantes (ainsi que le centrage sur le corpus) ont été mesurées.
+- **Extraction.** Calculée sur les 80 716 œuvres de WikiArt 81k
+  (`features/depth_anything_v2_small_20261119-191351`, journal `data/wikiart81k/depth.log`) :
+  **14 min 3 s**, **95,7 images/s**, **3 082 MiB** de mémoire graphique (RX 7900 GRE, FP16, lots de
+  32), **0 échec** et 0 carte plate dégénérée.
+- **Mesure.** `pixplot composition` et `pixplot pairs bench --spaces forme,sujet,couleur,touche,profondeur`
+  sur les **104 paires annotées validées** (208 requêtes, rangs exacts sur 80 716 œuvres). Trois
+  variantes en mémoire ont aussi été testées : **centrée sur le corpus** (soustraction de la grille
+  moyenne du corpus puis renormalisation), **par rangs** (corrélation de Spearman sur les 64 cases)
+  et **par rangs centrée**.
+
+| « Même composition, sujet différent » (14 paires, 28 recherches) | R@10 | R@100 | rang médian | centile |
+|---|---|---|---|---|
+| **Forme (DINOv3), regard actuel** | **53,6 %** | **71,4 %** | **8** | **0,928** |
+| Forme, disposition 4 × 4 (cases communes, § 24) | 0,0 % | 32,1 % | 332 | 0,958 |
+| PE-Spatial, disposition 4 × 4 (cases communes, § 24) | 7,1 % | 28,6 % | 286 | 0,878 |
+| Sujet (SigLIP 2) | 21,4 % | 28,6 % | 814 | 0,738 |
+| Touche (DINOv3, couche 6) | 10,7 % | 32,1 % | 1 017 | 0,857 |
+| **Profondeur (Depth Anything V2 Small, 8 × 8 brut)** | **3,6 %** | **7,1 %** | **13 754** | **0,677** |
+| *Profondeur centrée sur le corpus (essai en mémoire)* | *3,6 %* | *7,1 %* | *6 874* | *0,682* |
+| *Profondeur par rangs / Spearman (essai en mémoire)* | *3,6 %* | *3,6 %* | *13 424* | *0,640* |
+
+Sur toutes les autres catégories annotées validées, la profondeur reste également très loin des
+regards spécialisés (et proche du hasard sur les paires de métadonnées : centile 0,544–0,552,
+témoin 0,479) :
+
+| Catégorie annotée validée (n recherches) | Profondeur R@10 | Profondeur rang méd. (centré) | Meilleur regard actuel (R@10 · rang méd.) |
+|---|---|---|---|
+| Filiation attestée (18) | 11,1 % | 14 889 (11 784) | Sujet (38,9 % · 25) / Forme (38,9 % · 26) |
+| Même sujet, composition différente (72) | 2,8 % | 32 444 (32 471) | Sujet (37,5 % · 30) |
+| Artistes différents, facture comparable (32) | 0,0 % | 28 682 (28 509) | Touche (31,2 % · 136) |
+| Même palette, traditions différentes (52) | 0,0 % | 51 211 (43 698) | Couleur (50,0 % · 10) |
+| Même motif, époque différente (4) | 0,0 % | 41 282 (—) | Sujet (50,0 % · 26) |
+| Même artiste, facture différente (2) | 0,0 % | 30 958 (—) | Couleur (100,0 % · 2) |
+
+**Pourquoi la profondeur seule échoue : deux effets mesurés.**
+1. *Un gradient vertical universel domine le corpus.* Sur les 80 716 œuvres, la grille moyenne 8 × 8
+   croît strictement du haut (−0,108 : ciel, mur, fond) vers le bas (+0,181 : sol, premier plan).
+   Deux tableaux pris au hasard ont déjà un cosinus brut moyen de **0,539** (contre 0,175 pour
+   Forme). Retirer cette moyenne ramène le cosinus aléatoire à **0,016** et divise par deux le rang
+   médian sur « même composition » (13 754 → 6 874 ; filiation : 14 889 → 11 784, centile 0,809),
+   sans pour autant faire émerger les paires dans les 100 premières. Les rangs (Spearman) font
+   légèrement moins bien que le z-score (centile 0,640 contre 0,677).
+2. *Un modèle 3D entraîné sur la photographie se trompe sur l'art non perspectif.* La lecture paire
+   par paire confirme que la profondeur fonctionne bien sur les compositions figuratives à plans
+   nets : Van Gogh / Millet (*Le Semeur*, filiation : rangs **3 et 1**, cosinus 0,948), la paire
+   proposée Rubens / Titien (*L'Enlèvement d'Europe* : rangs **1 et 1**, cosinus 0,987), Pérugin
+   (*Remise des clés* ↔ *Mariage de la Vierge* : rangs 1 285 et **85** ; centré 433 et 86), ou
+   Michel-Ange / Haute Renaissance (`24374 ↔ 54823` : rangs **7** et 6 183 ; centré 9 et 950). Mais
+   sur les œuvres planes, décoratives ou modernes (Pop Art `65822 ↔ 71779` : rangs 68 987 et
+   80 552 ; Chagall / Expressionnisme `22435 ↔ 60995` : 79 814 et 79 803 ; Expressionnisme / Pop Art
+   `48392 ↔ 76646` : 75 807 et 64 679), le modèle invente des plans de profondeur à partir des
+   contrastes tonaux et place la paire en toute fin de corpus. Même entre deux œuvres à perspective
+   de formats différents — Raphaël (*Mariage de la Vierge*, retable haut) et Pérugin (*Remise des
+   clés*, fresque large) — le décalage de la ligne d'horizon sur la grille 8 × 8 fait chuter la
+   paire aux rangs 2 256 et 25 374 (Forme : 3 et 7).
+
+**Combinaison Forme + profondeur (validation croisée sans triche).** Une somme pondérée des
+similarités $S = (1 - \alpha)\, S_{\text{forme}} + \alpha\, S_{\text{profondeur}}$ (en cosinus bruts,
+avec profondeur centrée, ou sur similarités normalisées par z-score par requête) a été testée en
+choisissant $\alpha \in \{0 ; 0{,}05 ; \dots ; 0{,}5 ; 1\}$ sur une moitié des 14 paires
+« même composition » et en mesurant sur l'autre moitié :
+
+| Combinaison (14 paires « même composition », 28 requêtes) | R@10 | R@100 | rang médian | centile |
+|---|---|---|---|---|
+| **Forme seule ($\alpha = 0$)** | **53,6 %** | **71,4 %** | **8** | **0,9275** |
+| CV 2 moitiés alternées (cosinus brut, $\alpha = 0{,}05 / 0{,}10$) | 42,9 % | 75,0 % | 26 | 0,9314 |
+| CV 2 moitiés consécutives (cosinus brut, $\alpha = 0{,}10 / 0{,}10$) | 42,9 % | 71,4 % | 26 | 0,9334 |
+| CV 2 moitiés alternées (z-score sim, prof. centrée, $\alpha = 0{,}05 / 0{,}40$) | 50,0 % | 64,3 % | 15 | 0,9283 |
+| CV 200 tirages aléatoires 7/7 (cosinus brut, $\alpha$ méd. 0,10, opt. centile) | 42,1 % | — | 691 (moy.) | 0,9037 |
+| CV 200 tirages aléatoires 7/7 (opt. R@10 puis médiane : $\alpha = 0$ dans 74 % des cas) | — | — | — | — |
+
+Un léger poids de profondeur ($\alpha \approx 0{,}05\text{–}0{,}10$) remonte marginalement les deux
+paires où Forme échoue très loin (`20355 ↔ 50955` Hokusai / Art Nouveau et `16620 ↔ 65443`
+Bilibin / Réalisme), ce qui grappille +0,004 de centile sur les découpages fixes, **mais dégrade
+nettement le haut du classement** (R@10 chute de 53,6 % à 42,9 % et le rang médian passe de 8 à
+26) et **fait moins bien que Forme seule en moyenne sur 200 tirages 7/7** (centile 0,9037 contre
+0,9275 ; dès qu'on optimise R@10/médiane, la validation croisée retient $\alpha = 0$ dans 74 % des
+tirages). Le même constat vaut sur `filiation` (à $\alpha = 0{,}10$, R@10 recule de 38,9 % à
+33,3 %).
+
+**Conclusion : Depth Anything V2 n'est pas retenu, ni seul ni combiné à Forme.** Le regard Forme
+(DINOv3) reste nettement le meilleur pour retrouver une composition partagée. Les vecteurs restent
+sur disque (`features/depth_anything_v2_small_*`, 10 Mo) pour les bancs d'essai (`pixplot
+composition`, `pixplot pairs bench --spaces …,profondeur`), mais le regard `"profondeur"` reste hors
+de l'Atlas et du serveur MCP (`NOT_KEPT` dans `pixplot/api/spaces.py`).
+
+**Limites.** L'échantillon « même composition » reste petit (14 paires) et majoritairement issu de la
+relecture de désaccords où Forme était déjà en tête (ce qui donne un biais favorable à Forme, mais
+n'explique pas l'effondrement de la profondeur sur les œuvres non perspectives). Par ailleurs, seule
+la variante Small (Apache 2.0) et une grille fixe 8 × 8 ont été mesurées : une carte de profondeur
+est surtout pertinente sur un corpus strictement figuratif et perspectif (paysages, scènes
+d'intérieur, peinture d'histoire), plutôt que sur un corpus généraliste mêlant gravures, aplats et
+art moderne.

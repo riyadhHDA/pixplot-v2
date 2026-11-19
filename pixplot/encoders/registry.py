@@ -10,7 +10,7 @@ ENCODERS = (
     "siglip2_so400m", "siglip2_base",
     "tipsv2_b14", "tipsv2_l14", "tipsv2_so400m14",
     "colorhist", "color_lab", "dinov3_vitb16_texture", "pe_spatial_b16",
-    "sscd_disc_mixup", "sscd_disc_large",
+    "sscd_disc_mixup", "sscd_disc_large", "depth_anything_v2_small",
 )
 
 
@@ -49,6 +49,14 @@ def get_encoder(name: str, **kwargs) -> Encoder:
             kwargs.pop("input_size")
         allowed = ("weights", "cache_dir", "input_size", "device", "fp16")
         return SSCDEncoder(arch=name, **{k: v for k, v in kwargs.items() if k in allowed})
+    if name.startswith("depth_anything_"):
+        from .depth import DepthAnythingEncoder
+        kwargs.pop("weights", None)
+        kwargs.pop("repo", None)
+        if kwargs.get("input_size") == 448:  # 448 est la valeur par défaut de la CLI (DINOv3)
+            kwargs.pop("input_size")
+        allowed = ("hf_model", "input_size", "grid", "device", "fp16", "model")
+        return DepthAnythingEncoder(arch=name, **{k: v for k, v in kwargs.items() if k in allowed})
     if name.startswith("dinov2_"):
         from .dinov2 import DINOv2Encoder
         kwargs.pop("weights", None)

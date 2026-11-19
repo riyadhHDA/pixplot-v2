@@ -126,7 +126,11 @@ def extract(
 
                 if good:
                     rows = np.array([it[0] for it in good])
-                    out = encoder.encode(np.stack([it[1] for it in good]))
+                    batch_arr = np.stack([it[1] for it in good])
+                    if getattr(encoder, "needs_boxes", False):
+                        out = encoder.encode(batch_arr, boxes=[it[2] for it in good])
+                    else:
+                        out = encoder.encode(batch_arr)
                     g_vec[rows] = out.global_vectors.astype(np.float16)
                     if r_vec is not None and out.patch_grid is not None:
                         masks = np.stack([letterbox_mask(it[2], size, encoder.patch_size) for it in good])
