@@ -65,5 +65,7 @@ un échantillon relu »).
 - Banc d'essai composition : `pixplot composition` ; rapport dans
   `data/wikiart81k/bench/composition_report_*.json`.
 - Paires validées : `bench/wikiart81k_pairs.csv` (104 paires relues à la main par l'utilisateur).
+- DOI Zenodo (toutes versions) : `10.5281/zenodo.24363789` ; chaque release GitHub est archivée
+  automatiquement par Zenodo, avec son propre DOI (0.15.1 : `10.5281/zenodo.24363790`).
 - Search Console : le site est vérifié (`site/googlea3776ac9a4d427ef.html`) ; le plan du site est
   `https://riyadhhda.github.io/pixplot-v2/sitemap.xml` (pas à la racine du domaine).

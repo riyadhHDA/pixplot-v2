@@ -9,6 +9,8 @@
 <p align="center">
   <a href="LICENSE"><img alt="License: GPL-3.0" src="https://img.shields.io/badge/license-GPL--3.0-e0b040"></a>
   <a href="https://github.com/riyadhHDA/pixplot-v2/releases"><img alt="Version" src="https://img.shields.io/github/v/release/riyadhHDA/pixplot-v2?label=version&color=e0b040"></a>
+  <a href="https://doi.org/10.5281/zenodo.24363789"><img alt="DOI" src="https://zenodo.org/badge/DOI/10.5281/zenodo.24363789.svg"></a>
+  <a href="https://github.com/riyadhHDA/pixplot-v2/actions/workflows/tests.yml"><img alt="Tests" src="https://github.com/riyadhHDA/pixplot-v2/actions/workflows/tests.yml/badge.svg"></a>
   <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776ab">
   <img alt="Runs locally" src="https://img.shields.io/badge/runs-100%25%20local-2c2c31">
   <img alt="GPU: AMD ROCm or CPU" src="https://img.shields.io/badge/GPU-AMD%20ROCm%20%7C%20CPU-9b978e">
@@ -144,6 +146,15 @@ similarity score is a lead, not proof of influence or attribution.
 
 **Riyadh HADJBA**, art history student at the [University of Strasbourg](https://www.unistra.fr).
 PixPlot v2 was designed and directed by Riyadh HADJBA and written with the help of Claude (Anthropic).
+
+## Citing PixPlot v2
+
+> Riyadh HADJBA, *PixPlot v2 : un laboratoire d'exploration visuelle pour l'histoire de l'art*,
+> software, Université de Strasbourg, 2026. DOI: [10.5281/zenodo.24363789](https://doi.org/10.5281/zenodo.24363789).
+
+This DOI covers all versions; each release also has its own, on [Zenodo](https://doi.org/10.5281/zenodo.24363789).
+GitHub's "Cite this repository" button gives the reference in APA and BibTeX
+([`CITATION.cff`](CITATION.cff)).
 
 ## Licence and credits
 

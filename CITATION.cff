@@ -10,6 +10,7 @@ authors:
 version: 0.15.1
 date-released: 2026-11-19
 license: GPL-3.0-or-later
+doi: 10.5281/zenodo.24363789
 repository-code: "https://github.com/riyadhHDA/pixplot-v2"
 url: "https://riyadhhda.github.io/pixplot-v2/"
 abstract: >-
