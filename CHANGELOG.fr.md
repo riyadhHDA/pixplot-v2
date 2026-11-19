@@ -14,6 +14,15 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## 0.16.2 — 19/11/2026 · Antigravity sous Windows, en lecture seule
+
+- `pixplot antigravity-mcp` : un second avis d'Antigravity (Google, Gemini) depuis Claude, par l'outil MCP
+  `ask_antigravity`, en lecture seule (`--mode plan --sandbox`) ; `agy.exe` trouvé aussi après une
+  installation par winget. Antigravity accède à PixPlot par `.agents/mcp_config.json` (docs/MCP).
+- Compétence d'accessibilité (WCAG 2.2) partagée par tous les assistants dans `.agents/skills/`.
+- « Pourquoi ? » corrigé d'après la relecture d'Antigravity : ressemblance moyenne sans la paire
+  elle-même, plus d'avertissement pour les œuvres non carrées.
+
 ## 0.16.1 — 19/11/2026 · Outil MCP « pourquoi ? » et guide de l'historien
 
 - Serveur MCP : outil `why_similar`, une planche des deux œuvres où les zones qui se répondent portent le

@@ -8,19 +8,12 @@ avec n'importe quel modèle.
 
 ## Version publiée
 
-**0.16.1** (19/11/2026) : outil MCP `why_similar` (16 outils) et guide de l'historien de l'art sur
+**0.16.2** (19/11/2026) : Antigravity sous Windows (`pixplot antigravity-mcp`, second avis en
+lecture seule ; PixPlot dans Antigravity par `.agents/mcp_config.json`), compétence d'accessibilité,
+« Pourquoi ? » corrigé. **0.16.1** : outil MCP `why_similar` (16 outils) et guide de l'historien de l'art sur
 le site. **0.16.0** : « Pourquoi ces deux œuvres se ressemblent ? » dans le comparateur (ARCHITECTURE § 25). Avant : **0.15.1**, tests sur GitHub (Linux et Windows), Atlas découpé en 8 scripts, projet
 citable (CITATION.cff, DOI Zenodo à chaque release). Avant : 0.15.0, la composition (ARCHITECTURE § 24). Historique
 complet dans le [CHANGELOG](../CHANGELOG.fr.md), étapes suivantes dans la [ROADMAP](../ROADMAP.fr.md).
-
-## Fait, commité dans main, pas encore publié
-
-- Antigravity sous Windows : `pixplot antigravity-mcp` (outil `ask_antigravity`, second avis en lecture
-  seule : `--mode plan --sandbox`), testé le 19/11/2026 avec agy 1.5.12 installé par winget (relecture
-  réelle en 65 s, aucun fichier modifié). PixPlot déclaré pour Antigravity dans `.agents/mcp_config.json`
-  (local). Compétence d'accessibilité dans `.agents/skills/`.
-- « Pourquoi ? » corrigé d'après la relecture d'Antigravity : ressemblance moyenne sans la paire
-  elle-même, plus d'avertissement Python pour les œuvres non carrées.
 
 ## Travail en cours, sur une branche
 

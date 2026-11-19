@@ -14,6 +14,15 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## 0.16.2 — 2026-11-19 · Antigravity on Windows, read-only
+
+- `pixplot antigravity-mcp`: a second opinion from Antigravity (Google, Gemini) from Claude, through the
+  `ask_antigravity` MCP tool, read-only (`--mode plan --sandbox`); `agy.exe` also found after a winget
+  install. Antigravity reaches PixPlot through `.agents/mcp_config.json` (docs/MCP).
+- Accessibility skill (WCAG 2.2) shared by all assistants in `.agents/skills/`.
+- "Why?" fixed after Antigravity's review: mean similarity excludes the pair itself, no more warning for
+  non-square works.
+
 ## 0.16.1 — 2026-11-19 · "Why?" MCP tool and the art historian's guide
 
 - MCP server: `why_similar` tool, a plate of the two works where the zones that answer each other carry
