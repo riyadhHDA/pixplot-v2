@@ -105,7 +105,7 @@ miss. Failed attempts are documented with their numbers and dropped.
     find duplicates)* and **Depth Anything V2** (NeurIPS 2024) for composition through depth
     *(evaluated in 0.19.0, § 28: not kept)*.
   - **CSD** (ECCV 2024) for pure style vs "touch", and **PE-Core** vs SigLIP 2 for "subject"
-    *(being evaluated)*.
+    *(evaluated, not kept: ARCHITECTURE §§ 31–32)*.
   - **Poses and gaze** (Stork § 8.3 & § 9.3.1; *Human-Art* CVPR 2023; Madhu et al.): skeleton
     detection for *Pathosformeln* and figure symmetry.
   - **Sparse autoencoders** (*PatchSAE* ICLR 2025, *Matryoshka SAE* ICML 2025) on already-computed

@@ -1378,3 +1378,81 @@ la facture :**
   de sélection repose surtout sur les paires de métadonnées. La contamination exacte entre WikiArt 81k
   et LAION-Styles n'a pas été décomptée œuvre par œuvre (le jeu LAION-Styles complet n'étant pas
   téléchargé localement).
+
+## 33. Ordre et désordre de la matière : entropie et complexité (19/11/2026)
+
+Question : peut-on situer la surface d'une œuvre entre l'aplat régulier et le grain désordonné,
+sans modèle de neurones, et suivre cette mesure d'un style ou d'une époque à l'autre ? Méthode de
+H. Sigaki, M. Perc et H. Ribeiro (*PNAS*, 2018), d'après les « motifs ordinaux » de Bandt et Pompe.
+
+- **Méthode.** Luminance de la vignette de 256 px ; chaque fenêtre de 2 × 2 pixels est réduite à
+  l'ordre de ses quatre valeurs (24 ordres possibles). **Entropie de permutation H** (0 à 1) : 1 si
+  les ordres sont répartis au hasard (bruit, matière très divisée), près de 0 s'ils se concentrent sur
+  quelques-uns (aplats, dégradés). **Complexité statistique C** : forte entre les deux extrêmes.
+  Contrôles : bruit pur H = 1,00 et C ≈ 0 ; dégradé régulier H = 0,09. `connoisseur.entropy_complexity`,
+  `pixplot ordre` (quelques minutes pour 80 716 œuvres, processeur seul), couleurs « Désordre » et
+  « Complexité » de la carte (par rang : les valeurs brutes se tassent entre 0,90 et 0,98), ligne
+  « Ordre de la matière » des mesures visuelles.
+- **Par style** (médianes, WikiArt 81k) : Minimalism H 0,622 · C 0,229 ; Color Field 0,712 · 0,221 ;
+  Pop Art 0,871 · 0,128 ; Baroque 0,916 ; Realism 0,927 ; Cubism 0,936 ; Impressionism 0,951 ;
+  Post-Impressionism 0,956 ; Pointillism 0,978 · 0,028. Par genre : abstract_painting 0,835 à
+  illustration 0,950. Les grands aplats d'un côté, la touche divisée de l'autre.
+- **Dans le temps** (56 794 œuvres datées grâce à MMArt, § 34) : pas de tendance simple (corrélation
+  de Spearman année / H = −0,03), mais une courbe :
+
+| Période | 1400–1599 | 1600–1749 | 1750–1849 | 1850–1879 | 1880–1909 | 1910–1939 | 1940–1969 | 1970–2012 |
+|---|---|---|---|---|---|---|---|---|
+| H médian | 0,941 | 0,915 | **0,912** | 0,936 | **0,948** | 0,944 | 0,923 | **0,895** |
+| Œuvres | 5 813 | 3 569 | 4 214 | 6 156 | 16 431 | 10 449 | 5 911 | 4 251 |
+
+  Surfaces les plus lisses entre 1600 et 1850 (glacis), désordre maximal autour de 1900 (touche
+  divisée), retour à l'ordre après 1940 (aplats de l'abstraction et du minimalisme).
+- **Limites.** La mesure porte sur la reproduction : compression JPEG, taille de la vignette, éclairage
+  et grain de la photographie comptent autant que la peinture. Les époques de WikiArt ne sont pas
+  équilibrées (16 431 œuvres entre 1880 et 1909) et mêlent les techniques (gravure, dessin, huile).
+  Aucun jugement de valeur : une surface ordonnée n'est ni meilleure ni plus « savante ».
+
+## 34. Titres, dates, artistes et émotions retrouvés pour WikiArt : MMArt et ArtEmis (19/11/2026)
+
+Notre WikiArt 81k vient du jeu Hugging Face `huggan/wikiart` : artiste (129 noms, le reste en
+« Unknown Artist »), style et genre, mais ni titre, ni date, ni nom de fichier, et un ordre mélangé.
+Deux jeux d'annotations désignent pourtant chaque œuvre par son nom de fichier WikiArt d'origine
+(« Style/artiste_titre-date.jpg ») : **MMArt** (Wang et al., 2026, 74 234 œuvres, CC BY 4.0, images
+comprises) et **ArtEmis** (Achlioptas et al., CVPR 2021, 454 684 réactions sur 80 031 œuvres, usage de
+recherche non commercial, obtenu par l'utilisateur via le formulaire des auteurs et gardé en local).
+
+- **Rattachement par l'image.** Pour chaque image de MMArt, la même empreinte que `pixplot ingest`
+  (dHash 64 bits), comparée à nos œuvres du même style et du même artiste (puis artiste inconnu chez
+  nous, puis même artiste dans tous les styles). Rattachement seulement si l'empreinte la plus proche
+  est à 8 bits au plus et devance la deuxième d'au moins 4 bits ; sinon, rien n'est deviné. Les
+  dimensions n'aident pas : notre copie est redimensionnée. `pixplot wikiart-noms`,
+  `pixplot/catalog/wikiart_names.py`. MMArt (25,3 Go) téléchargé en 14 min, rattachement en 3 min 38 s
+  sur processeur.
+- **Résultat.** **70 902 œuvres** rattachées ; 3 281 images de MMArt laissées de côté. Vérification :
+  32 paires tirées au sort, dont les cas limites (7–8 bits, rattachement par l'artiste seul, artiste
+  inconnu chez nous) : toutes justes. Sur les 35 717 œuvres rattachées qui avaient déjà un artiste,
+  **aucune** ne contredit le nom de fichier.
+- **Import** (chaque valeur garde sa source dans la fiche) : titres pour 70 902 œuvres ; **dates pour
+  56 794** (1401–2012), qui allument la vue chronologique ; **artistes** pour 35 185 œuvres « Unknown
+  Artist » (il en reste 6 729 ; 129 → 1 090 artistes distincts ; les étiquettes connues ne sont jamais
+  remplacées) ; **émotion dominante d'ArtEmis** pour 55 120 œuvres (au moins 40 % des réactions, hors
+  « autre chose » ; 70 324 œuvres ont des réactions, détail dans `<données>/artemis.json`). Les
+  descriptions de MMArt, écrites par un modèle de langage, ne sont pas importées comme source.
+- **Les regards captent-ils l'émotion ?** `pixplot bench --keys emotion,genre` (P@1 au sens du § 30) :
+
+| Regard | Même émotion (P@1 / P@10) | Même genre (P@1 / P@10) |
+|---|---|---|
+| Forme (DINOv3) | 41,8 % / 39,8 % | 80,9 % / 76,8 % |
+| Sujet (SigLIP 2) | 41,7 % / 40,4 % | 83,4 % / 79,5 % |
+| Touche (DINOv3, couche 6) | 37,5 % / 35,8 % | 69,4 % / 62,8 % |
+| Couleur (CIELAB) | 30,1 % / 29,6 % | 33,1 % / 30,3 % |
+| Hasard | 24,7 % | 14,6 % |
+
+  Les regards captent un peu l'émotion suscitée (1,7 fois le hasard), bien moins que le genre (5 à 6
+  fois) ; surtout par ce qui est représenté, à peine par la couleur.
+- **Limites.** L'émotion d'une œuvre repose sur environ 5 spectateurs (Amazon Mechanical Turk) et le
+  contentement domine (126 134 réactions sur 454 684). Une partie de l'effet peut venir du genre (un
+  portrait et une bataille ne suscitent pas les mêmes réactions) : non contrôlé ici. Les noms de
+  fichier WikiArt sont des étiquettes de bénévoles, comme les autres. Conséquence pour la suite : les
+  bancs d'essai par artiste, `pixplot suspects` et les noms de groupes calculés avant portent sur les
+  anciennes étiquettes et sont à recalculer.

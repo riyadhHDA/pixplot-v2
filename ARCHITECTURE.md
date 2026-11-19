@@ -1267,3 +1267,77 @@ while staying slightly more decoupled from genre on metadata "same subject" pair
 - **Limits.** Only 17 annotated `meme_facture` pairs (13 drawn from disagreements involving Brushwork)
   and 1 annotated `meme_main` pair exist; unbiased evaluation rests mainly on metadata pairs. Exact
   image-level overlap between WikiArt 81k and LAION-Styles was not enumerated locally.
+
+## 33. Order and disorder of the surface: entropy and complexity (19/11/2026)
+
+Question: can we place a work's surface between the regular flat area and disordered grain, with no
+neural model, and follow this measure across styles and periods? Method of H. Sigaki, M. Perc and
+H. Ribeiro (*PNAS*, 2018), after Bandt and Pompe's "ordinal patterns".
+
+- **Method.** Luminance of the 256 px thumbnail; each 2 × 2 pixel window is reduced to the order of its
+  four values (24 possible orders). **Permutation entropy H** (0 to 1): 1 when orders are spread at
+  random (noise, highly divided surface), near 0 when they concentrate on a few (flat areas,
+  gradients). **Statistical complexity C**: high between the two extremes. Checks: pure noise H = 1.00
+  and C ≈ 0; regular gradient H = 0.09. `connoisseur.entropy_complexity`, `pixplot ordre` (a few
+  minutes for 80,716 works, CPU only), map colours "Désordre" and "Complexité" (by rank: raw values
+  bunch between 0.90 and 0.98), "Ordre de la matière" line in the visual measures.
+- **By style** (medians, WikiArt 81k): Minimalism H 0.622 · C 0.229; Color Field 0.712 · 0.221; Pop Art
+  0.871 · 0.128; Baroque 0.916; Realism 0.927; Cubism 0.936; Impressionism 0.951; Post-Impressionism
+  0.956; Pointillism 0.978 · 0.028. By genre: abstract_painting 0.835 to illustration 0.950. Large
+  flat areas on one side, divided brushwork on the other.
+- **Over time** (56,794 works dated thanks to MMArt, § 34): no simple trend (Spearman year / H = −0.03),
+  but a curve:
+
+| Period | 1400–1599 | 1600–1749 | 1750–1849 | 1850–1879 | 1880–1909 | 1910–1939 | 1940–1969 | 1970–2012 |
+|---|---|---|---|---|---|---|---|---|
+| Median H | 0.941 | 0.915 | **0.912** | 0.936 | **0.948** | 0.944 | 0.923 | **0.895** |
+| Works | 5,813 | 3,569 | 4,214 | 6,156 | 16,431 | 10,449 | 5,911 | 4,251 |
+
+  Smoothest surfaces between 1600 and 1850 (glazes), most disorder around 1900 (divided brushwork),
+  back to order after 1940 (flat areas of abstraction and minimalism).
+- **Limits.** The measure is taken on the reproduction: JPEG compression, thumbnail size, lighting and
+  photographic grain count as much as the painting. WikiArt's periods are unbalanced (16,431 works
+  between 1880 and 1909) and mix techniques (prints, drawings, oil). No value judgement: an ordered
+  surface is neither better nor more "learned".
+
+## 34. Titles, dates, artists and emotions recovered for WikiArt: MMArt and ArtEmis (19/11/2026)
+
+Our WikiArt 81k comes from the Hugging Face dataset `huggan/wikiart`: artist (129 names, the rest as
+"Unknown Artist"), style and genre, but no title, date or file name, and a shuffled order. Yet two
+annotation sets identify each work by its original WikiArt file name ("Style/artist_title-date.jpg"):
+**MMArt** (Wang et al., 2026, 74,234 works, CC BY 4.0, images included) and **ArtEmis** (Achlioptas et
+al., CVPR 2021, 454,684 reactions on 80,031 works, non-commercial research use, obtained by the user
+through the authors' form and kept locally).
+
+- **Matching by image.** For each MMArt image, the same fingerprint as `pixplot ingest` (64-bit dHash),
+  compared with our works of the same style and artist (then unknown artist on our side, then same
+  artist in any style). A match is kept only if the closest fingerprint is within 8 bits and beats the
+  second by at least 4 bits; otherwise nothing is guessed. Dimensions do not help: our copy is resized.
+  `pixplot wikiart-noms`, `pixplot/catalog/wikiart_names.py`. MMArt (25.3 GB) downloaded in 14 min,
+  matching in 3 min 38 s on CPU.
+- **Result.** **70,902 works** matched; 3,281 MMArt images left aside. Check: 32 random pairs including
+  edge cases (7–8 bits, artist-only match, unknown artist on our side): all correct. Of the 35,717
+  matched works that already had an artist, **none** contradicts the file name.
+- **Import** (each value keeps its source in the record): titles for 70,902 works; **dates for
+  56,794** (1401–2012), which switch on the timeline view; **artists** for 35,185 "Unknown Artist" works
+  (6,729 remain; 129 → 1,090 distinct artists; known labels are never replaced); **ArtEmis dominant
+  emotion** for 55,120 works (at least 40 % of reactions, excluding "something else"; 70,324 works have
+  reactions, details in `<data>/artemis.json`). MMArt's descriptions, written by a language model, are
+  not imported as a source.
+- **Do the regards capture emotion?** `pixplot bench --keys emotion,genre` (P@1 as in § 30):
+
+| Regard | Same emotion (P@1 / P@10) | Same genre (P@1 / P@10) |
+|---|---|---|
+| Form (DINOv3) | 41.8 % / 39.8 % | 80.9 % / 76.8 % |
+| Subject (SigLIP 2) | 41.7 % / 40.4 % | 83.4 % / 79.5 % |
+| Touch (DINOv3, layer 6) | 37.5 % / 35.8 % | 69.4 % / 62.8 % |
+| Colour (CIELAB) | 30.1 % / 29.6 % | 33.1 % / 30.3 % |
+| Chance | 24.7 % | 14.6 % |
+
+  The regards capture a little of the emotion a work arouses (1.7 times chance), far less than genre
+  (5 to 6 times); mostly through what is depicted, hardly through colour.
+- **Limits.** A work's emotion rests on about 5 viewers (Amazon Mechanical Turk) and contentment
+  dominates (126,134 of 454,684 reactions). Part of the effect may come from genre (a portrait and a
+  battle do not arouse the same reactions): not controlled here. WikiArt file names are volunteer
+  labels like the others. Consequence: artist benchmarks, `pixplot suspects` and group names computed
+  earlier rest on the old labels and must be recomputed.

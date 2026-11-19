@@ -48,7 +48,7 @@ composition antigravity-mcp iconclass doublons ordre name-groups suspects audit 
 | Dossier | Rôle |
 |---|---|
 | `pixplot/catalog/` | catalogue SQLite, ingestion, métadonnées, lieux typés, répertoire de villes |
-| `pixplot/encoders/` | modèles (DINOv3, SigLIP 2, couleur, texture ; TIPSv2, PE-Spatial, SSCD et Depth Anything V2 évalués, non retenus) ; `registry.py` |
+| `pixplot/encoders/` | modèles (DINOv3, SigLIP 2, couleur, texture ; TIPSv2, PE-Spatial, SSCD, Depth Anything V2, PE-Core et CSD évalués, non retenus) ; `registry.py` |
 | `pixplot/features/` | extraction des vecteurs (reprenable), stockage |
 | `pixplot/index/` | FAISS, zones (`regions.py`), index des zones décrites (`textzones.py`) |
 | `pixplot/analysis/` | UMAP, Leiden, noms de groupes (lexique, Iconclass), bancs d'essai, désaccords, critique |

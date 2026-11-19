@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 19/11/2026 (après la 0.19.0 : PE-Core et CSD confiés à Neon, entropie et test d'installation par Claude).*
+*Dernière mise à jour : 19/11/2026 (PE-Core et CSD fusionnés ; MMArt et ArtEmis importés ; §§ 33-34).*
 
 ## Version publiée
 
@@ -118,11 +118,6 @@ corrigé ; 63 tests passent, Atlas vérifié.
 
 ## En cours
 
-- **PE-Core et CSD confiés à Gemini 4 Neon** (19/11/2026) : PE-Core contre SigLIP 2 (regard sujet,
-  § 31) et CSD contre la touche (§ 32). Copie de travail `..\pixplot-pecore-csd`, branche
-  `gemini/pecore-csd`, consigne dans `PROMPT-gemini-pecore-csd.md` (non versionné). À relire puis
-  fusionner avec `.\scripts\nouvelle-tache.ps1 pecore-csd -Agent gemini -Terminer`.
-- **Claude** : section ARCHITECTURE § 33 (entropie et complexité) après la fusion de Neon.
 - **Titres, dates et émotions pour WikiArt** (Claude, 19/11/2026) : notre WikiArt 81k (`huggan/wikiart`)
   n'a ni titres ni noms de fichier, et son ordre est mélangé. On rattache chaque œuvre à son nom de
   fichier d'origine en comparant les images de **MMArt** (CC BY 4.0, `Shuaimyself/MMArt`, 25,3 Go
@@ -142,8 +137,8 @@ corrigé ; 63 tests passent, Atlas vérifié.
   0,941 (1400–1599), 0,912 (1750–1849), 0,948 (1880–1909), 0,895 (1970–2012) ; (2) l'émotion
   dominante, P@1 (première voisine étiquetée) : forme 41,8 %, sujet 41,7 %, touche 37,5 %, couleur
   30,1 %, hasard 24,7 % (genre, pour comparer : 80,9 / 83,4 / 69,4 / 33,1 % contre 14,6 %). Les
-  regards captent un peu l'émotion, surtout par le sujet ; la couleur presque pas. Section ARCHITECTURE
-  § 34 à écrire après la fusion de Neon. **Artistes** (accord de l'utilisateur) :
+  regards captent un peu l'émotion, surtout par le sujet ; la couleur presque pas. Résultats dans ARCHITECTURE
+  § 34. **Artistes** (accord de l'utilisateur) :
   `pixplot wikiart-noms --artistes` complète les « Unknown Artist » par l'artiste du nom de fichier :
   35 185 œuvres complétées, il en reste 6 729 inconnues ; 129 → 1 090 artistes distincts. Sur les
   35 717 œuvres rattachées qui avaient déjà un artiste, **0** désaccord avec le nom de fichier.
@@ -154,6 +149,14 @@ corrigé ; 63 tests passent, Atlas vérifié.
 
 ## Fait depuis 0.19.0 (sur `main`, non publié)
 
+- **PE-Core L/14 et CSD ViT-L/14 évalués par Gemini 4 Neon, non retenus** (fusionné, ARCHITECTURE
+  §§ 31–32, `docs/handoff/gemini-pecore-csd.md`). PE-Core (Apache 2.0) contre SigLIP 2 : un peu
+  devant sur les étiquettes (style P@1 72,0 % contre 71,4 %), mais recherche par phrase en français
+  97/100 pour SigLIP 2 contre 81/100 (anglais 96 contre 92) : SigLIP 2 reste le regard « sujet ».
+  CSD (code MIT, poids CC BY 4.0) contre la touche : devant sur le style (P@1 67,0 % contre 61,3 %),
+  surtout sur les écoles nommées, mais entraîné sur LAION-Styles qui contient probablement WikiArt
+  (scores sans doute gonflés) : la touche reste DINOv3 couche 6. Recherche par phrase possible avec un
+  autre encodeur (`pixplot search-text --encoder pe_core_l14`).
 - Docs remises à jour (feuille de route, AGENTS, passation) ; README : cas d'usage ; P@1 écrit (§ 30).
 - **Ordre et désordre de la matière** (Sigaki, Perc et Ribeiro, PNAS 2018) : entropie de permutation H
   et complexité C sur la luminance des vignettes 256 px (fenêtres 2 × 2, 24 ordres possibles).
@@ -163,8 +166,13 @@ corrigé ; 63 tests passent, Atlas vérifié.
   « Complexité » de la carte (par rang dans le corpus, les valeurs brutes se tassant entre 0,90 et
   0,98). Médianes par style sur WikiArt 81k : du plus ordonné, Minimalism (H 0,622, C 0,229) et
   Color Field (0,712, 0,221), au plus désordonné, Post-Impressionism (0,956, 0,057) et Pointillism
-  (0,978, 0,028) ; par genre, abstract_painting (0,835) à illustration (0,950). Section ARCHITECTURE
-  § 33 à écrire après la fusion des §§ 31-32 de Neon.
+  (0,978, 0,028) ; par genre, abstract_painting (0,835) à illustration (0,950). Résultats dans ARCHITECTURE
+  § 33.
+
+## À faire avant la prochaine version
+
+- Recalculer ce qui dépend des étiquettes d'artiste (35 185 artistes ajoutés) : `pixplot suspects`,
+  `pixplot bench` (chiffres « artiste »), noms de groupes, puis mettre à jour les chiffres publiés.
 
 ## En attente de l'utilisateur
 

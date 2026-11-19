@@ -107,7 +107,7 @@ chiffres et on passe à autre chose.
     sert à repérer les doublons)* et **Depth Anything V2** (NeurIPS 2024) pour la composition par la
     profondeur *(évalué en 0.19.0, § 28 : non retenu)*.
   - **CSD** (ECCV 2024) pour le style pur face à la « touche », et **PE-Core** face à SigLIP 2 pour le
-    « sujet » *(en cours d'évaluation)*.
+    « sujet » *(évalués, non retenus : ARCHITECTURE §§ 31–32)*.
   - **Postures et regards** (Stork § 8.3 & § 9.3.1 ; *Human-Art* CVPR 2023 ; Madhu et al.) :
     détection de squelettes pour les *Pathosformeln* et la symétrie des figures.
   - **Auto-encodeurs parcimonieux** (*PatchSAE* ICLR 2025, *Matryoshka SAE* ICML 2025) sur les
