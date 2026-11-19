@@ -14,7 +14,7 @@
   <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776ab">
   <img alt="100 % local" src="https://img.shields.io/badge/100%25-local-2c2c31">
   <img alt="GPU : AMD ROCm ou CPU" src="https://img.shields.io/badge/GPU-AMD%20ROCm%20%7C%20CPU-9b978e">
-  <img alt="Serveur MCP" src="https://img.shields.io/badge/MCP-15%20outils-e0b040">
+  <img alt="Serveur MCP" src="https://img.shields.io/badge/MCP-16%20outils-e0b040">
 </p>
 
 # PixPlot v2
@@ -59,7 +59,7 @@ répond en 0,25 s.
 | **Atlas** | Carte interactive (deck.gl) où toutes les vignettes sont visibles, fiches d'œuvre aux métadonnées sourcées, **comparateur** (jusqu'à six œuvres côte à côte, similarité selon chaque regard), **carnet de recherche**, **une carte par regard**, dispositions **chronologique** et **géographique** (fond de carte du monde, hors ligne) quand les dates ou les coordonnées existent. Écran d'accueil, aide et raccourcis clavier ; s'adapte aux écrans de portable. |
 | **Un regard critique sur le catalogue** | Audit à l'aveugle (les modèles ne voient que les pixels) et liste des **étiquettes à vérifier** : les œuvres que toutes leurs voisines contredisent, erreur de catalogue ou œuvre réellement singulière. |
 | **Collections de musées** | `pixplot import-iiif` charge n'importe quel manifeste ou collection IIIF v2/v3 (images à la taille voulue, métadonnées normalisées, droits). |
-| **Avec Claude** | Un serveur MCP à 15 outils : Claude cherche, **regarde les images et les détails**, compare, lit les groupes et écrit dans votre carnet, selon des consignes de prudence d'interprétation. |
+| **Avec Claude** | Un serveur MCP à 16 outils : Claude cherche, **regarde les images et les détails**, compare, lit les groupes et écrit dans votre carnet, selon des consignes de prudence d'interprétation. |
 | **Traçabilité** | Chaque résultat est un *run* versionné (modèle, paramètres, run parent). Les Research Packs (.zip) réunissent images, métadonnées sourcées, relations explicites et provenance, pour un collègue ou un autre LLM. |
 
 ## Ce que les expériences ont montré
@@ -130,6 +130,7 @@ pixplot status
 
 ## Documentation
 
+- [**Guide de l'historien de l'art**](https://riyadhhda.github.io/pixplot-v2/fr/guide/) : lire une proximité, trois parcours de recherche (filiation, étiquette, motif), travailler avec un assistant, citer ([English](https://riyadhhda.github.io/pixplot-v2/guide/))
 - [ARCHITECTURE.fr.md](ARCHITECTURE.fr.md) : conception, couches, feuille de route, bancs d'essai et résultats ci-dessus ([English](ARCHITECTURE.md))
 - [docs/INSTALL_GPU.fr.md](docs/INSTALL_GPU.fr.md) : GPU sous Windows 11 (AMD ROCm), secours WSL2, modèles ([English](docs/INSTALL_GPU.md))
 - [docs/MCP.fr.md](docs/MCP.fr.md) : brancher Claude ou un autre LLM ([English](docs/MCP.md))

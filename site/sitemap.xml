@@ -12,4 +12,16 @@
     <xhtml:link rel="alternate" hreflang="en" href="https://riyadhhda.github.io/pixplot-v2/"/>
     <xhtml:link rel="alternate" hreflang="fr" href="https://riyadhhda.github.io/pixplot-v2/fr/"/>
   </url>
+  <url>
+    <loc>https://riyadhhda.github.io/pixplot-v2/guide/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://riyadhhda.github.io/pixplot-v2/guide/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://riyadhhda.github.io/pixplot-v2/fr/guide/"/>
+  </url>
+  <url>
+    <loc>https://riyadhhda.github.io/pixplot-v2/fr/guide/</loc>
+    <lastmod>2026-11-19</lastmod>
+    <xhtml:link rel="alternate" hreflang="en" href="https://riyadhhda.github.io/pixplot-v2/guide/"/>
+    <xhtml:link rel="alternate" hreflang="fr" href="https://riyadhhda.github.io/pixplot-v2/fr/guide/"/>
+  </url>
 </urlset>

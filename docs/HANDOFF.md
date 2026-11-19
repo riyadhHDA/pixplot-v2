@@ -13,6 +13,12 @@ avec n'importe quel modèle.
 citable (CITATION.cff, DOI Zenodo à chaque release). Avant : 0.15.0, la composition (ARCHITECTURE § 24). Historique
 complet dans le [CHANGELOG](../CHANGELOG.fr.md), étapes suivantes dans la [ROADMAP](../ROADMAP.fr.md).
 
+## Fait, commité dans main, pas encore publié
+
+- Outil MCP `why_similar` (16 outils) : planche des deux œuvres avec les zones qui se répondent.
+- Guide de l'historien de l'art sur le site (`site/fr/guide/`, `site/guide/`), lié depuis le menu, le
+  README et le plan du site. À publier (0.16.1 proposé) avec l'accord de l'utilisateur.
+
 ## Travail en cours, sur une branche
 
 **0.14 : nommer les groupes avec Iconclass** — branche `claude/iconclass` (commit `598b83c`, non

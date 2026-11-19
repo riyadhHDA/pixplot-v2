@@ -19,10 +19,12 @@ thumbnails, details).
 | `search_by_text` | works matching a description (SigLIP 2, French or English) |
 | `similar_artworks` | nearest neighbours of a work in the chosen space: `forme` (DINOv3), `sujet` (SigLIP 2), `couleur`, `touche` |
 | `search_detail` | regions similar to a detail (box x0, y0, x1, y1 as fractions) |
+| `search_zones` | regions of works matching a described detail ("a halo", "a skull"), with the crop |
 | `get_artwork` | record: metadata and their source, group, atypicality, neighbours |
 | `view_artwork` | **the image** of the work (256 to 1024 px) |
 | `view_detail` | **a cropped detail** from the original |
 | `compare_artworks` | **numbered contact sheet** of 2 to 12 works + one similarity matrix per space |
+| `why_similar` | **plate of the two works** where the zones that answer each other (4×4 cells, form regard) carry the same number, + their cosines |
 | `get_group` | a group of the map, most central works first |
 | `find_atypical` | the most isolated works (exceptions, cataloguing errors…) |
 | `check_labels` | labels contradicted by all the neighbours (possible errors or singular works) |

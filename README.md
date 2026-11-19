@@ -14,7 +14,7 @@
   <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776ab">
   <img alt="Runs locally" src="https://img.shields.io/badge/runs-100%25%20local-2c2c31">
   <img alt="GPU: AMD ROCm or CPU" src="https://img.shields.io/badge/GPU-AMD%20ROCm%20%7C%20CPU-9b978e">
-  <img alt="MCP server" src="https://img.shields.io/badge/MCP-15%20tools-e0b040">
+  <img alt="MCP server" src="https://img.shields.io/badge/MCP-16%20tools-e0b040">
 </p>
 
 # PixPlot v2
@@ -56,7 +56,7 @@ in about 3 seconds and a text or detail search answers in 0.25 s.
 | **Atlas** | Interactive deck.gl map with every thumbnail visible, artwork records with sourced metadata, **comparator** (up to six works side by side, similarity in each space), **research notebook**, **one map per way of seeing**, **timeline** and **geography** (offline world base map) layouts when dates or coordinates exist. Welcome screen, help and keyboard shortcuts; adapts to laptop screens. |
 | **A critical eye on the catalogue** | A blind audit (models see only pixels) and a list of **labels to check**: works whose neighbours all disagree with their label, either a cataloguing error or a genuinely singular work. |
 | **Museum collections** | `pixplot import-iiif` loads any IIIF v2/v3 manifest or collection (images at the requested size, normalised metadata, rights). |
-| **Working with Claude** | An MCP server with 15 tools: Claude searches, **looks at the images and details**, compares, reads the groups and writes to your notebook, following prudent-interpretation guidelines. |
+| **Working with Claude** | An MCP server with 16 tools: Claude searches, **looks at the images and details**, compares, reads the groups and writes to your notebook, following prudent-interpretation guidelines. |
 | **Traceability** | Every result is a versioned *run* (model, parameters, parent run). Research Packs (.zip) bundle images, sourced metadata, explicit relations and provenance for a colleague or another LLM. |
 
 ## What the experiments showed
@@ -127,6 +127,7 @@ pixplot status
 
 ## Documentation
 
+- [**The art historian's guide**](https://riyadhhda.github.io/pixplot-v2/guide/): reading a proximity, three research paths (filiation, label, motif), working with an assistant, citing ([Français](https://riyadhhda.github.io/pixplot-v2/fr/guide/))
 - [ARCHITECTURE.md](ARCHITECTURE.md): design, layers, roadmap, benchmarks and the findings above ([français](ARCHITECTURE.fr.md))
 - [docs/INSTALL_GPU.md](docs/INSTALL_GPU.md): GPU setup on Windows 11 (AMD ROCm), WSL2 fallback, models ([français](docs/INSTALL_GPU.fr.md))
 - [docs/MCP.md](docs/MCP.md): connecting Claude or another LLM ([français](docs/MCP.fr.md))

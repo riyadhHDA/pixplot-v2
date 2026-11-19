@@ -75,7 +75,9 @@ def test_mcp_tools(data):
         tools = {t.name for t in await srv.list_tools()}
         assert tools == {"corpus_overview", "search_by_text", "similar_artworks", "search_detail", "search_zones", "get_artwork",
                          "view_artwork", "view_detail", "compare_artworks", "get_group", "find_atypical",
-                         "export_research_pack", "check_labels", "notebook_add", "notebook_list"}
+                         "export_research_pack", "check_labels", "notebook_add", "notebook_list", "why_similar"}
+        why = await call("why_similar", {"artwork_a": first, "artwork_b": int(data.ids[1])})
+        assert "zone" in why.content[0].text and why.content[1].type == "image"
         overview = json.loads((await call("corpus_overview", {})).content[0].text)
         assert overview["count"] == len(data.ids) and len(overview["groups"]) == 3
         art = json.loads((await call("get_artwork", {"artwork_id": first})).content[0].text)

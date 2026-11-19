@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The art historian's guide — PixPlot v2</title>
+<meta name="description" content="How to read a computed proximity, three research paths (filiation, label, motif), working with an assistant and citing your results: the PixPlot v2 guide for art historians.">
+<meta property="og:title" content="The art historian's guide — PixPlot v2">
+<meta property="og:description" content="Read a computed proximity, trace a filiation, question a label, search for a motif.">
+<meta property="og:image" content="https://riyadhhda.github.io/pixplot-v2/images/banner.png">
+<meta name="theme-color" content="#0f0f10">
+<link rel="canonical" href="https://riyadhhda.github.io/pixplot-v2/guide/">
+<link rel="alternate" hreflang="en" href="https://riyadhhda.github.io/pixplot-v2/guide/">
+<link rel="alternate" hreflang="fr" href="https://riyadhhda.github.io/pixplot-v2/fr/guide/">
+<meta property="og:url" content="https://riyadhhda.github.io/pixplot-v2/guide/">
+<meta property="og:locale" content="en_GB">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f0f10'/%3E%3Ccircle cx='10' cy='12' r='3' fill='%23e0b040'/%3E%3Ccircle cx='21' cy='9' r='2' fill='%23e9e6df'/%3E%3Ccircle cx='17' cy='20' r='4' fill='%23e0b040'/%3E%3Ccircle cx='8' cy='23' r='2' fill='%239b978e'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="../">PixPlot <b>v2</b></a>
+    <button class="menu-btn" aria-expanded="false" aria-controls="nav-links">Menu</button>
+    <nav class="nav-links" id="nav-links">
+      <a href="#lire">Reading a proximity</a>
+      <a href="#parcours">Paths</a>
+      <a href="#assistant">With an assistant</a>
+      <a href="#citer">Citing</a>
+      <a href="../">The project</a>
+      <a class="lang" href="../fr/guide/" hreflang="fr" lang="fr">Français</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+  <div class="hero wrap">
+    <p class="eyebrow">Guide</p>
+    <h1>The <em>art historian's</em> guide</h1>
+    <p class="lead">PixPlot does not say that one work influenced another: it says that a vision model finds them
+      close. This guide explains how to read these proximities, and how to turn them into research leads that you
+      check for yourself.</p>
+  </div>
+
+  <section>
+    <div class="wrap prose">
+      <h2>Before you start</h2>
+      <div class="roles">
+        <div class="role"><span class="who">PixPlot</span><p>computes, observes and organises.</p></div>
+        <div class="role"><span class="who">An assistant</span><p>asks questions and makes suggestions.</p></div>
+        <div class="role"><span class="who">You</span><p>check, interpret and build knowledge.</p></div>
+      </div>
+      <p>A computed proximity is a <b>lead</b>, never proof of influence or attribution. The test corpus, WikiArt, is
+        filled in by volunteers: half the works have no named artist, the Western canon dominates, dates and places
+        are missing. The Atlas's <b>Corpus</b> button (key <kbd>I</kbd>) takes stock of this: read it before
+        generalising.</p>
+    </div>
+  </section>
+
+  <section id="lire" class="alt">
+    <div class="wrap prose">
+      <h2>Reading a proximity</h2>
+      <p class="section-lead">Four regards, four questions. Two works close in one regard and far apart in another
+        tell you <em>how</em> they are alike.</p>
+      <div class="grid4">
+        <div class="card"><span class="tag">DINOv3</span><h3>Form</h3><p class="q">What layout?</p>
+          <p>Shapes, composition, motifs. The best for finding a copy or a reused composition.</p></div>
+        <div class="card"><span class="tag">SigLIP 2</span><h3>Subject</h3><p class="q">What does it depict?</p>
+          <p>What you would describe in words: subject, genre, school. The best for the discipline's categories.</p></div>
+        <div class="card"><span class="tag">CIELAB</span><h3>Colour</h3><p class="q">What palette?</p>
+          <p>Proportions of hues, lightness and saturation, whatever the subject.</p></div>
+        <div class="card"><span class="tag">DINOv3, layer 6</span><h3>Touch</h3><p class="q">What handling?</p>
+          <p>Stroke, grain, impasto: useful for pointillism, prints, drawing.</p></div>
+      </div>
+      <ul class="points">
+        <li><b>The figures are cosines, not probabilities.</b> They only compare within one regard: 0.87 in subject
+          and 0.67 in form do not mean "more alike in subject".</li>
+        <li><b>A model sees what you do not look at</b>: the grain of a reproduction, a frame, a poor photograph. Each
+          regard has a card (Corpus button): what it was trained on, what it sees, its known biases.</li>
+        <li><b>Ask "why?".</b> In the comparator, the <b>Pourquoi ?</b> button outlines the zones of the two works that
+          answer each other most. That is where your judgement comes in: a motif, a pose, a composition, or only a
+          similar background?</li>
+        <li><b>Look for counter-examples.</b> The <b>Disagreements</b> panel (key <kbd>D</kbd>) shows pairs that one
+          regard brings together and another keeps apart: often the most instructive.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section id="parcours">
+    <div class="wrap prose">
+      <h2>Three paths</h2>
+      <p class="fine">The Atlas interface is in French; button names are translated here.</p>
+
+      <h3>1. Tracing a filiation</h3>
+      <p>A copy, a quotation, a reused model: start from one work and see what answers it.</p>
+      <ol class="steps">
+        <li>Search for the work (key <kbd>/</kbd>, <i>Metadata</i> mode: an artist, a title, a number) and open its record.</li>
+        <li>In <b>Closest works</b>, switch from one regard to another: <i>Form</i> first for a reused composition,
+          <i>Subject</i> for the same theme treated differently.</li>
+        <li>Set the candidates aside with <b>Compare</b>, then open the comparator (key <kbd>C</kbd>).</li>
+        <li>Click <b>Pourquoi ?</b> (why?): the zones that answer each other are drawn on both images.</li>
+        <li>If the relationship is attested (a source, a catalogue), record it with <b>Annotate</b>: it joins the
+          benchmark that measures which regard finds what. Keep a trace in the <b>Notebook</b>.</li>
+      </ol>
+      <p class="fine">Example: Raphael, <i>Marriage of the Virgin</i>, and Perugino, <i>Delivery of the Keys</i>. The
+        "why" button finds the central temple and, in the foreground, two figures face to face: Joseph slipping on the
+        ring, Christ handing over the keys.</p>
+
+      <h3>2. Questioning a label</h3>
+      <p>WikiArt's labels are volunteers' suggestions. PixPlot spots those that all the neighbours contradict.</p>
+      <ol class="steps">
+        <li>Open <b>To check</b> (key <kbd>V</kbd>): for each label (artist, style, genre), the works whose neighbours
+          say something else.</li>
+        <li>Look at the work and its neighbours: a cataloguing error, or a genuinely singular work? Both exist, and the
+          second is often the more interesting.</li>
+        <li>Write your conclusion in the <b>Notebook</b>; PixPlot never corrects a label for you.</li>
+      </ol>
+
+      <h3>3. Searching for a motif</h3>
+      <p>A detail rather than a whole work: a halo, a skull, a blessing hand.</p>
+      <ol class="steps">
+        <li><b>With words</b>: <i>Described zone</i> mode, then "a halo", "a skull", "a hand holding a letter". PixPlot
+          searches 1.6 million zones and shows each zone found.</li>
+        <li><b>With the image</b>: in a work's record, <b>Search a detail</b>, then draw a frame around the motif.
+          Similar zones in other works appear.</li>
+        <li><b>With a description</b>: <i>Description</i> mode for a whole scene ("a still life with a skull and a
+          candle").</li>
+      </ol>
+    </div>
+  </section>
+
+  <section id="assistant" class="alt">
+    <div class="wrap prose">
+      <h2>Working with an assistant</h2>
+      <p>PixPlot connects to an assistant (Claude, or any model that speaks the MCP protocol) through a server with
+        16 tools. The assistant can search, <b>look at the images</b> and details, compare, ask why two works look
+        alike, read the groups and write in your notebook. It receives cautionary instructions: distinguish what can
+        be seen, what the metadata say, what PixPlot computes and its own interpretation, and look for
+        counter-examples.</p>
+      <p>A good question: "Among the works close to this Annunciation, which reuse its composition? Look at them and
+        say what answers what." A bad one: "Who influenced this painter?"</p>
+      <p class="fine">Setup: <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/docs/MCP.md">docs/MCP.md</a>.</p>
+    </div>
+  </section>
+
+  <section id="citer">
+    <div class="wrap prose">
+      <h2>Keeping track and citing</h2>
+      <ul class="points">
+        <li><b>The notebook</b> (key <kbd>N</kbd>) keeps your leads, selections and notes, with the works concerned.</li>
+        <li><b>Export</b> produces a <i>Research Pack</i>: a .zip with the images, the metadata and their source, the
+          scores and the provenance of each computation (model, parameters, date). Enough to retrace the path.</li>
+        <li><b>Citing the software</b>: Riyadh HADJBA, <i>PixPlot v2 : un laboratoire d'exploration visuelle pour
+          l'histoire de l'art</i>, software, Université de Strasbourg, 2026,
+          DOI <a href="https://doi.org/10.5281/zenodo.24363789">10.5281/zenodo.24363789</a>. Also give the version used.</li>
+      </ul>
+      <h2 style="margin-top:40px">Known limits</h2>
+      <ul class="points">
+        <li>The test corpus is WikiArt: what it does not contain, PixPlot cannot find.</li>
+        <li>No regard follows a filiation once the artist strongly transforms the model; a "spatial" model was tried
+          without success (<a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/ARCHITECTURE.md">ARCHITECTURE</a>, § 24).</li>
+        <li>The "why" button compares 16 fixed cells: a shifted reuse, or one in another format, shows less well.</li>
+        <li>Group names are a model's suggestions, to be reviewed.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span>PixPlot v2 · GPL-3.0 · Riyadh HADJBA</span>
+    <span><a href="../">The project</a> · <a href="https://github.com/riyadhHDA/pixplot-v2">GitHub</a> · <a href="../fr/guide/" hreflang="fr">Français</a></span>
+  </div>
+</footer>
+<script src="../assets/site.js"></script>
+</body>
+</html>

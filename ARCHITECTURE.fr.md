@@ -116,9 +116,9 @@ Commande : `pixplot analyze [--clusters N] [--hdbscan]`. Graine fixe : reproduct
   `/api/clusters`, `/api/artwork/{id}` (métadonnées + sources, voisines, provenance du calcul),
   `/api/search?q=`, `/api/thumb/{taille}/{id}`, `/api/image/{id}` (images servies par
   identifiant uniquement, jamais par chemin). Documentation automatique : `/api/docs`.
-- **Serveur MCP** (`pixplot mcp`, stdio, SDK officiel `mcp` 2.x) : 15 outils —
+- **Serveur MCP** (`pixplot mcp`, stdio, SDK officiel `mcp` 2.x) : 16 outils —
   `corpus_overview`, `search_by_text`, `similar_artworks` (paramètre `space`),
-  `search_detail`, `get_artwork`, `view_artwork`, `view_detail`, `compare_artworks`,
+  `search_detail`, `search_zones`, `get_artwork`, `view_artwork`, `view_detail`, `compare_artworks`, `why_similar`,
   `get_group`, `find_atypical`, `check_labels`, `notebook_add`, `notebook_list`,
   `export_research_pack`. Les outils `view_*` et `compare_artworks` **renvoient des images**
   au LLM. Consignes de méthode et de prudence intégrées. Branchement : `docs/MCP.fr.md`.

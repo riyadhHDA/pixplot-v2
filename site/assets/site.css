@@ -113,6 +113,13 @@ pre { margin: 0; padding: 20px; overflow-x: auto; background: #0b0b0c; border: 1
 pre .c { color: #7d796f; }
 
 /* ------------------------------------------------------------ pied */
+.prose h3 { margin: 30px 0 8px; font: 600 20px var(--serif); }
+.prose p { max-width: 46em; }
+.points, .steps { max-width: 46em; padding-left: 22px; color: var(--muted); }
+.points li, .steps li { margin-bottom: 10px; }
+.points b, .steps b { color: var(--text); }
+.prose .grid4 { margin-bottom: 28px; }
+kbd { font: 12px ui-monospace, monospace; border: 1px solid var(--line); border-radius: 4px; padding: 1px 5px; color: var(--text); }
 .credits { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; }
 .credits ul { margin: 0; padding-left: 18px; color: var(--muted); }
 .credits li { margin-bottom: 6px; }

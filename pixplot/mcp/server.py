@@ -38,8 +38,9 @@ Méthode conseillée :
 2. Chercher : search_by_text (description, en français ou en anglais), similar_artworks,
    search_detail (un cadre sur une œuvre : main, drapé, objet…), search_zones (un détail
    décrit par des mots : « une auréole », « un crâne »), get_group, find_atypical.
-3. Regarder : view_artwork, view_detail, compare_artworks (planche numérotée). Ne conclus
-   jamais sur une œuvre sans l'avoir regardée.
+3. Regarder : view_artwork, view_detail, compare_artworks (planche numérotée), why_similar
+   (les zones de deux œuvres qui se répondent, dessinées sur une planche). Ne conclus jamais sur
+   une œuvre sans l'avoir regardée.
 4. Documenter : notebook_add pour garder une piste dans le carnet de l'historien (il le voit
    dans l'Atlas), export_research_pack pour un dossier traçable.
 5. Critiquer le catalogue : check_labels liste les étiquettes que toutes les voisines
@@ -214,6 +215,57 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
                      for a in range(len(ids))]
             blocks.append(f"Espace « {key} » (cosinus) :\n" + "\n".join([head, *lines]))
         return [legend, Image(data=_jpeg(sheet), format="jpeg"), "\n\n".join(blocks)]
+
+    WHY_COLORS = [(224, 176, 64), (86, 180, 233), (204, 121, 167), (0, 176, 121),
+                  (240, 228, 66), (213, 94, 0), (0, 114, 178), (255, 255, 255)]
+
+    @server.tool()
+    def why_similar(artwork_a: int, artwork_b: int, space: str | None = None, k: int = 4):
+        """Pourquoi deux œuvres se ressemblent : les zones (cases 4 × 4) qui se répondent le plus,
+        selon un regard qui garde des vecteurs par zone (la forme). Renvoie une planche des deux
+        œuvres où chaque paire de zones porte le même numéro et la même couleur, et la liste chiffrée.
+        Une piste pour regarder, pas une explication : dis ce que les zones montrent vraiment."""
+        from ..analysis.correspondences import correspondences
+
+        a, b = check(artwork_a), check(artwork_b)
+        available = data.spaces.region_spaces()
+        if not available:
+            raise ValueError("Aucun regard n'a de vecteurs par zone")
+        space = space or ("forme" if "forme" in available else available[0])
+        if space not in available:
+            raise ValueError(f"Regards possibles : {available}")
+        ra, rb = data.spaces.regions(space, a), data.spaces.regions(space, b)
+        if ra is None or rb is None:
+            raise ValueError("Œuvre absente de ce regard")
+        sizes = data.sizes([a, b])
+        pairs = correspondences(ra[0], rb[0], sizes.get(a, (1, 1)), sizes.get(b, (1, 1)), grids=ra[1],
+                                k=min(max(k, 1), 8))
+        cell, pad, head = 480, 10, 30
+        sheet = PILImage.new("RGB", (2 * cell, cell + head), (20, 20, 20))
+        draw, font = ImageDraw.Draw(sheet), _font(18)
+        for n, (i, key) in enumerate(((a, "box_a"), (b, "box_b"))):
+            with PILImage.open(thumb_path(data.settings.thumbs_dir, i, 1024)) as im:
+                im = im.convert("RGB")
+                im.thumbnail((cell - 2 * pad, cell - 2 * pad))
+                x0, y0 = n * cell + (cell - im.width) // 2, head + (cell - im.height) // 2
+                sheet.paste(im, (x0, y0))
+                draw.text((n * cell + pad, 5), f"{n + 1}. n° {i}", fill=(224, 176, 64), font=font)
+                for z, p in enumerate(pairs):
+                    bx = p[key]
+                    rect = [x0 + bx[0] * im.width, y0 + bx[1] * im.height, x0 + bx[2] * im.width, y0 + bx[3] * im.height]
+                    color = WHY_COLORS[z % len(WHY_COLORS)]
+                    draw.rectangle(rect, outline=color, width=3)
+                    draw.rectangle([rect[0], rect[1], rect[0] + 20, rect[1] + 20], fill=color)
+                    draw.text((rect[0] + 5, rect[1] + 1), str(z + 1), fill=(17, 17, 17), font=font)
+        lines = [f"1. n° {a} — {data.label(a)}", f"2. n° {b} — {data.label(b)}",
+                 f"Regard « {space} », cases 4 × 4, correspondances mutuelles :"]
+        lines += [f"  zone {z + 1} : cosinus {p['sim']:.2f}, {p['lift']:+.2f} au-dessus de leur ressemblance "
+                  f"moyenne (cadre sur 1 : {p['box_a']}, sur 2 : {p['box_b']})" for z, p in enumerate(pairs)]
+        if not pairs:
+            lines.append("  aucune zone ne se répond nettement.")
+        lines.append("Le regard compare des formes : regarde la planche et dis si ces zones partagent un motif, "
+                     "une pose, une composition, ou seulement un fond semblable.")
+        return [chr(10).join(lines), Image(data=_jpeg(sheet), format="jpeg")]
 
     # ------------------------------------------------------------------ groupes, atypiques
     @server.tool()

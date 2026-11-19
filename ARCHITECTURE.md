@@ -115,9 +115,9 @@ Command: `pixplot analyze [--clusters N] [--hdbscan]`. Fixed seed: reproducible.
   computation), search (metadata, text, detail), comparator, notebook, labels to check,
   thumbnails and images (served by identifier only, never by path). Automatic
   documentation: `/api/docs`.
-- **MCP server** (`pixplot mcp`, stdio, official `mcp` 2.x SDK): 15 tools —
+- **MCP server** (`pixplot mcp`, stdio, official `mcp` 2.x SDK): 16 tools —
   `corpus_overview`, `search_by_text`, `similar_artworks` (with a `space` parameter),
-  `search_detail`, `get_artwork`, `view_artwork`, `view_detail`, `compare_artworks`,
+  `search_detail`, `search_zones`, `get_artwork`, `view_artwork`, `view_detail`, `compare_artworks`, `why_similar`,
   `get_group`, `find_atypical`, `check_labels`, `notebook_add`, `notebook_list`,
   `export_research_pack`. The `view_*` and `compare_artworks` tools **return images** to
   the LLM. Method and caution guidelines are built in. Setup: `docs/MCP.md`.

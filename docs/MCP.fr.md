@@ -18,10 +18,12 @@ et ne transmet au LLM que ce que ses outils renvoient (textes, vignettes, détai
 | `search_by_text` | œuvres correspondant à une description (SigLIP 2, français ou anglais) |
 | `similar_artworks` | plus proches voisines d'une œuvre, dans l'espace choisi : `forme` (DINOv3), `sujet` (SigLIP 2), `couleur`, `touche` |
 | `search_detail` | zones semblables à un détail (cadre x0, y0, x1, y1 en fractions) |
+| `search_zones` | zones d'œuvres correspondant à un détail décrit (« une auréole », « un crâne »), avec le recadrage |
 | `get_artwork` | fiche : métadonnées et leur source, groupe, atypicité, voisines |
 | `view_artwork` | **l'image** de l'œuvre (256 à 1024 px) |
 | `view_detail` | **un détail recadré** depuis l'original |
 | `compare_artworks` | **planche numérotée** de 2 à 12 œuvres + une matrice de similarité par espace |
+| `why_similar` | **planche des deux œuvres** où les zones qui se répondent (cases 4 × 4, regard forme) portent le même numéro, + leurs cosinus |
 | `get_group` | un groupe de la carte, œuvres les plus centrales d'abord |
 | `find_atypical` | œuvres les plus isolées (exceptions, erreurs de catalogue…) |
 | `check_labels` | étiquettes que toutes les voisines contredisent (erreurs possibles ou œuvres singulières) |
