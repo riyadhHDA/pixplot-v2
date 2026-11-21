@@ -396,7 +396,7 @@ def test_review_queue_decide_and_undo(env):
     add_pair(path, Pair(a, b, "filiation", "annotée", "proposée", "essai", ""))
     q = c.get("/api/review/queue?limit=5").json()
     first = q["items"][0]
-    assert first["origin"] == "proposée" and {first["a"], first["b"]} == {a, b} and len(q["types"]) == 7
+    assert first["origin"] == "proposée" and {first["a"], first["b"]} == {a, b} and len(q["types"]) == 8
     assert any(x["origin"] == "désaccord" for x in q["items"])
     # valider en changeant de type, puis annuler : la paire proposée revient telle quelle
     body = {"a": a, "b": b, "decision": "valider", "type": "meme_sujet", "origin": "proposée",

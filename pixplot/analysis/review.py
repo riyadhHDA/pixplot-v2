@@ -24,8 +24,8 @@ LOG_FILE = "review_log.csv"
 LOG_FIELDS = ["a", "b", "decision", "origin", "time"]
 # regard qui rapproche → sorte de ressemblance proposée par défaut
 SUGGESTED = {"forme": "meme_composition", "sujet": "meme_sujet", "touche": "meme_facture",
-             "couleur": "meme_palette"}
-REVIEW_TYPES = [k for k in pairbench.TYPES if k != "temoin"]   # touches 1 à 7
+             "couleur": "meme_palette", "posture": "meme_geste"}
+REVIEW_TYPES = [k for k in pairbench.TYPES if k != "temoin"]   # touches 1 à 8
 
 
 def log_path(settings) -> Path:

@@ -42,12 +42,15 @@ KINDS = [
      "ce que l'on décrirait avec des mots : sujet, genre, école, manière (PE-Core, en essai)"),
     ("csd", "touche_csd", "Style / touche (CSD)",
      "descripteur contrastif de style (CSD ViT-L/14, entraîné sur LAION-Styles, en essai)"),
+    ("vitpose", "posture", "Posture (ViTPose)",
+     "formules gestuelles et postures des figures (squelette 50 d avec miroir gauche-droite, en essai)"),
     ("dinov2", "forme_v2", "Forme (DINOv2)", "ancien modèle, pour comparaison"),
 ]
 # Modèles évalués mais non retenus comme regards : leurs vecteurs restent sur le disque pour
 # les bancs d'essai, mais l'Atlas et le serveur MCP ne les proposent pas (ARCHITECTURE § 24).
-NOT_KEPT = ("pe_spatial", "sscd", "depth_anything", "pe_core", "csd")
-ORDER = ["forme", "sujet", "couleur", "touche", "composition", "profondeur", "copie", "sujet_pe", "touche_csd", "forme_v2", "couleur_rvb"]
+NOT_KEPT = ("pe_spatial", "sscd", "depth_anything", "pe_core", "csd", "vitpose")
+ORDER = ["forme", "sujet", "couleur", "touche", "composition", "profondeur", "posture", "copie",
+         "sujet_pe", "touche_csd", "forme_v2", "couleur_rvb"]
 
 
 def describe_encoder(encoder: str) -> tuple[str, str, str]:
@@ -105,7 +108,12 @@ class Spaces:
                 run = self.runs[key]
                 store = FeatureStore.open(run)
                 self._stores[key] = store
-                self._rows[key] = {int(i): r for r, i in enumerate(store.ids) if store.status[r] == OK}
+                p_cnt = Path(run.path) / "poses_count.npy"
+                if p_cnt.exists():
+                    cnt = np.load(p_cnt, mmap_mode="r")
+                    self._rows[key] = {int(i): r for r, i in enumerate(store.ids) if store.status[r] == OK and cnt[r] > 0}
+                else:
+                    self._rows[key] = {int(i): r for r, i in enumerate(store.ids) if store.status[r] == OK}
                 idx = find_index_for(run, runs_dir=self.data.settings.runs_dir)
                 self._indexes[key] = GlobalIndex.open(idx) if idx else None
         return self._stores[key]

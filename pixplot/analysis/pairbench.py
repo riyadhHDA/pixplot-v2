@@ -45,6 +45,8 @@ TYPES: dict[str, tuple[str, str | None, str]] = {
                    "un motif traverse-t-il les époques dans ce regard ?"),
     "meme_palette": ("Même palette, traditions différentes", "couleur",
                      "le regard rapproche-t-il des palettes au-delà des écoles ?"),
+    "meme_geste": ("Même geste ou posture, sujet ou style différents", "posture",
+                   "retrouve-t-on une même formule gestuelle malgré un changement de sujet ou de style ?"),
     "filiation": ("Filiation attestée (copie, citation, modèle)", None,
                   "le regard retrouve-t-il un lien établi par les historiens ?"),
     "temoin": ("Témoin : ni artiste, ni style, ni genre communs", None,

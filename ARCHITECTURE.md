@@ -1341,3 +1341,130 @@ through the authors' form and kept locally).
   battle do not arouse the same reactions): not controlled here. WikiArt file names are volunteer
   labels like the others. Consequence: artist benchmarks, `pixplot suspects` and group names computed
   earlier rest on the old labels and must be recomputed.
+
+## 35. "Posture" regard (Pathosformeln): RT-DETRv2 + ViTPose, evaluated and not kept by default (21/11/2026)
+
+Question: can we retrieve **gestural formulas** (Aby Warburg's *Pathosformeln* — a raised arm, a reclining
+body, a bent or striding figure) recurring across works even when subject, style, period or medium change
+(sources: D. G. Stork, *Pixels & Paintings*, §§ 8.3 & 9.3.1; *Human-Art*, CVPR 2023; Madhu et al.)?
+
+### 1. Model choice, licences and visual pilot
+
+- **Licences verified before download.** Ultralytics YOLO-pose (AGPL) and weights fine-tuned on *Human-Art*
+  (non-commercial CC BY-NC dataset) are excluded. We use a **100 % Apache 2.0** pipeline (code and weights,
+  built into `transformers`, trained on MS COCO): person detector **RT-DETRv2-R50**
+  (`PekingU/rtdetr_v2_r50vd`, 172 MB) followed by skeleton estimator **ViTPose Base Simple**
+  (`usyd-community/vitpose-base-simple`, 344 MB, 17 COCO keypoints).
+- **100-artwork visual pilot** (history/religious paintings, portraits & nudes, prints/drawings/Ukiyo-e,
+  figurative modern art, and 15 figureless controls: landscapes, still lifes, abstraction), inspected
+  skeleton by skeleton:
+  - **RT-DETRv2-R50** clearly outperforms the lighter **R18** (`PekingU/rtdetr_v2_r18vd`) on graphic arts
+    and multi-figure scenes: prints/drawings/Ukiyo-e **13/20 (65 %)** vs 4/20 (20 %) for R18;
+    history/religious **19/20 (95 %)** vs 15/20 (75 %). R50 at 640 px is selected.
+  - Skeletons are accurate across Western figurative painting, engravings (Doré, Rembrandt, Dürer), line
+    drawings and Ukiyo-e prints: *Olympia* / *Venus of Urbino* (cosine 0.951) and Van Gogh's / Millet's
+    *Sower* (0.981) match at **rank 1/100**. Zero false positives on abstraction and still lifes (rare
+    detections in landscapes are real staffage figures, filtered by minimum box size). Expected failure
+    on Cubism (*Les Demoiselles d'Avignon*: 0 figures in pilot) and strongly distorted modern figures.
+
+### 2. 50-D descriptor, multi-figure matching and left-right mirror
+
+Implementation: `pixplot/encoders/posture.py` (`vitpose_base`, in `NOT_KEPT` in `pixplot/api/spaces.py`).
+
+- **Filtering**: box confidence $\ge 0.40$, NMS deduplication (IoU 0.65), minimum size ($\ge 8\,\%$ of
+  artwork max side and $\ge 0.6\,\%$ of artwork area, removing tiny staffage), at least **4 body keypoints**
+  (shoulders to ankles, conf $\ge 0.30$, mean $\ge 0.40$) to exclude tight face-only portraits without body
+  posture. Up to **8 figures** stored per artwork (`poses_*.npy`), ranked by prominence.
+- **Per-figure descriptor (50 dimensions, L2-normalised)**:
+  1. **13 normalised joints (26 dims)**: one head centre (confidence-weighted average of the 5 face points,
+     preventing the face from weighting 29 % of the vector) plus the 12 body joints, centred on the torso
+     and scaled by RMS body radius.
+  2. **12 unit limb vectors (24 dims)**: neck, shoulders, spine, hips, upper arms, forearms, thighs and
+     shins — robust to elongated or stocky painted proportions (Mannerism, Botero) and half-length crops.
+- **Left-right mirror and multi-figure matching.** Prints after paintings and reversed citations flip left
+  and right: `mirror_pose_vector` applies an exact orthogonal involution $F$ on the 50-D vector ($x \mapsto -x$
+  and L/R swap, verified to $< 10^{-6}$). Exact artwork-to-artwork similarity (`posture_multi`,
+  `PostureIndex`) takes the best match across all figure pairs, direct and mirrored:
+  $$\operatorname{sim}(A, B) = \max_{i \in A,\; j \in B} \max\big(v_i \cdot v_j,\; v_i \cdot F(v_j)\big).$$
+  For compatibility with `FeatureStore` and `pixplot pairs bench`, `global.npy` stores the orientation-canonicalised
+  primary figure (`posture`). Figureless artworks are excluded from the index (`Spaces._open`), preventing
+  zero-vector tie artefacts.
+
+### 3. Extraction and coverage on WikiArt 81k
+
+Run `features/vitpose_base_20261121-182701` (`data/wikiart81k/posture.log`, RX 7900 GRE, FP16, rocBLAS
+fallback `cudnn=False` avoiding a Windows ROCm MIOpen hang on RT-DETRv2, batch size 64):
+**80,716 works**, **0 failures**, **53 min 55 s** (**25.0 images/s**), **7,375 MiB** VRAM, **139 MB** on
+disk (`global.npy` 7.7 MB + `poses_*.npy` 130.6 MB).
+
+- **Overall coverage**: **39,043 of 80,716 works (48.4 %)** have at least one valid body figure, yielding
+  **102,515 figures** in total (2.63 figures per figurative work).
+- **By genre**: religious painting **87.4 %** (3.65 figs/work), genre painting **83.2 %** (2.77), portrait
+  **76.5 %** (0.99; remaining 23.5 % are mostly tight headshots), nude **64.9 %**, illustration **63.8 %**,
+  sketch & study **50.7 %**, cityscape **30.9 %**, landscape **10.9 %** (staffage), still life **2.9 %**,
+  abstract **2.7 %**.
+- **By style**: Mannerism **88.5 %**, Early Renaissance **83.6 %**, High Renaissance **82.8 %**, Baroque
+  **82.3 %**, Rococo **81.5 %**, Northern Renaissance **80.9 %**, Romanticism **63.9 %**, Realism **52.9 %**,
+  Ukiyo-e **49.4 %**, Impressionism **41.8 %**, Pop Art **21.5 %**, Cubism **14.1 %**, Abstract
+  Expressionism **4.4 %**, Minimalism **1.4 %**.
+
+### 4. Benchmarks (`pixplot pairs bench` and `pixplot composition`)
+
+Measured on the **39,043 figurative works** (pairs with $\ge 1$ figure on both sides; the random control
+`Témoin` over 128 queries gives percentile **0.498**, median rank 19,648 — exact chance):
+
+| Category (n figurative queries / total) | Form (DINOv3) | Subject (SigLIP 2) | Touch (L6) | **Posture** (main fig.) | **Posture multi+mirror** |
+|---|---|---|---|---|---|
+| **Attested filiation** (18 / 20) | **50.0 % / 66.7 % · med. 16** (0.993) | **50.0 % / 72.2 % · med. 8** (0.998) | 16.7 % / 27.8 % · 578 (0.902) | 11.1 % / 22.2 % · 4,366 (0.639) | **22.2 % / 27.8 % · 1,754** (0.790) |
+| **Same composition, diff. subject** (12 / 28) | **66.7 % / 83.3 % · med. 2** (0.998) | 33.3 % / 50.0 % · 77 (0.995) | 0.0 % / 25.0 % · 494 (0.988) | **8.3 % / 25.0 % · 346** (0.910) | 0.0 % / 8.3 % · 1,276 (**0.967**) |
+| **Same subject, diff. comp.** (26 / 74) | 27.0 % / 39.2 % · 506 *(all)* | **37.8 % / 54.1 % · 30** *(all)* | 5.4 % / 13.5 % · 24,922 *(all)* | 0.0 % / 7.7 % · 9,472 (0.631) | 0.0 % / 3.8 % · 10,934 (0.620) |
+| **Metadata: Control** (128 / 600) | 0.0 % / 0.2 % · 45,138 (0.456) | 0.0 % / 0.0 % · 45,837 (0.450) | 0.0 % / 0.0 % · 45,880 (0.447) | 0.0 % / 0.8 % · 19,648 (**0.498**) | — |
+
+*(Format: R@10 / R@100 · median rank (percentile). For Filiation and Same composition, Form/Subject/Touch
+are shown on the same figurative subset; on all pairs — 10 filiation, 14 composition — Form scores
+45.0 % / 70.0 % · med. 20 and 53.6 % / 71.4 % · med. 8 respectively. Evaluating `posture_multi` across all
+80,716 works with figureless pairs ranked last drops percentiles to 0.809 on filiation and 0.422 on
+same composition.)*
+
+- **Pair-level hits and misses on filiation**: `posture_multi` retrieves Van Gogh / Millet (*The Sower*) at
+  **rank [1, 1]** (cosine 0.979, ahead of Form [2, 1]), Rubens / Titian (*Rape of Europa*) at **rank [1, 1]**
+  (0.946), *Olympia* → *Venus of Urbino* at **rank 13** (898 reverse, cos 0.951), and Van Gogh → Rembrandt
+  (*Raising of Lazarus*) at rank **1,152** (ahead of Form 1,856). Conversely, crowded scenes with common
+  standing/seated figures (Raphael / Perugino *Marriage of the Virgin* [2,267, 4,452], *Déjeuner sur
+  l'herbe* [7,593, 19,129]) collide with thousands of similar poses, and Picasso *Demoiselles* ↔ El Greco
+  fails on the Cubist skeleton ([30,617, 17,293]).
+- **Form + posture combination** ($S = (1 - \alpha) S_{\text{form}} + \alpha S_{\text{posture}}$,
+  out-of-sample cross-validation, posture set to 0 on figureless pairs):
+  - **Same composition (14 pairs)**: no gain. Over 200 random 50/50 splits, $\alpha = 0$ is chosen in
+    **90.5 %** of draws (mean percentile 0.9201 vs **0.9275** for Form alone).
+  - **Filiation (10 pairs)**: a small weight ($\alpha = 0.05\text{–}0.10$) slightly lowers median rank on
+    fixed splits (20 → 16, percentile 0.9941 → 0.9944), but across 200 50/50 splits R@10 dips slightly
+    (43.7 % vs 45.0 %) with flat percentile (0.9942 vs 0.9941).
+
+### 5. New "same gesture" (`meme_geste`) pairs and distinct value
+
+Existing benchmarks had no *Pathosformeln* pairs. Pair type `meme_geste` ("Same gesture or posture,
+different subject or style", expected regard: `posture`) was added in `pixplot/analysis/pairbench.py` and
+`review.py`, and **37 diverse candidate pairs** (15th–20th c., frescoes, oils, engravings, drawings,
+ukiyo-e, posters; 30 mirrored and 7 direct), all **visually inspected**, were added with status `proposée`
+for expert review (R shortcut). Examples: Titian *Venus* (1546) ↔ *La Libre Esthétique* Art Nouveau poster
+(mirrored); Michelangelo *Ignudo* (1509) ↔ Burne-Jones (1896, mirrored); Dürer drawing (1506) ↔
+Petrov-Vodkin; Botero (2001) ↔ Jan van Hemessen (1543, proportion-invariant); Fra Angelico (1449) ↔ Ogata
+Gekkō (ukiyo-e 1895, mirrored); Caillebotte *Floor Scrapers* (1876) ↔ Kirchner (mirrored).
+
+For reference only (with obvious selection bias since these 37 pairs were mined using posture, prior to
+human validation): Form (`R@10 = 0.0 %`, `R@100 = 2.7 %`, med. 9,600), Subject (`0.0 %`, med. 16,076) and
+Touch (`0.0 %`, med. 15,108) miss nearly all of them. On these same pairs, enabling **mirror reversal**
+improves `posture_multi` median rank from **8,914** (percentile 0.714) to **38** (percentile **0.972**),
+and matching **all figures** instead of only the primary figure raises percentile from 0.809 to **0.972**.
+
+- **Provisional decision.** `"posture"` stays in `NOT_KEPT` (hidden from Atlas and MCP by default): it
+  covers only 48.4 % of the corpus and neither replaces nor improves Form on existing validated pairs.
+  Unlike depth (§ 28), however, it answers a **genuinely orthogonal art-historical question** (*Pathosformeln*
+  across styles, media and mirror reversals): the art historian's review of the 37 proposed `meme_geste`
+  pairs will determine whether to expose it as a specialised regard for figurative works.
+- **Limits.** Detector and pose estimator are trained on photographs (MS COCO): blind to Cubism and
+  heavily stylised bodies, occasionally confused by heavy drapery or overlapping figures. Common poses
+  (frontal standing, seated bust) crowd the 102,515-figure neighbourhood; the 2D descriptor ignores depth
+  (front/back) and fine hand gestures (absent from COCO-17). Skeleton proximity is a formal lead, never
+  proof of borrowing.
