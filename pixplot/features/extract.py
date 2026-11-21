@@ -62,6 +62,7 @@ def extract(
     params = _params(encoder, limit, grids)
     run = _find_resumable(encoder, params, runs_dir) if resume else None
 
+    extra_specs: dict[str, tuple[tuple[int, ...], str]] = getattr(encoder, "extra_arrays", None) or {}
     if run is None:
         ids = db.ok_ids(conn, limit)
         if not ids:
@@ -72,6 +73,8 @@ def extract(
         open_memmap(run.path / "global.npy", "w+", np.float16, (n, encoder.dim)).flush()
         if encoder.patch_size:
             open_memmap(run.path / "regions.npy", "w+", np.float16, (n, region_count(grids), encoder.dim)).flush()
+        for ename, (eshape, edtype) in extra_specs.items():
+            open_memmap(run.path / f"{ename}.npy", "w+", np.dtype(edtype), (n, *eshape)).flush()
         open_memmap(run.path / "status.npy", "w+", np.int8, (n,)).flush()
     else:
         run.manifest.update(status="running", resumed=run.manifest.get("resumed", 0) + 1)
@@ -81,6 +84,7 @@ def extract(
     ids = np.load(run.path / "ids.npy")
     g_vec = open_memmap(run.path / "global.npy", "r+")
     r_vec = open_memmap(run.path / "regions.npy", "r+") if encoder.patch_size else None
+    e_vecs = {ename: open_memmap(run.path / f"{ename}.npy", "r+") for ename in extra_specs}
     status = open_memmap(run.path / "status.npy", "r+")
     paths = {i: r["path"] for i, r in db.get_artworks(conn, ids.tolist()).items()}
     conn.close()
@@ -135,21 +139,25 @@ def extract(
                     if r_vec is not None and out.patch_grid is not None:
                         masks = np.stack([letterbox_mask(it[2], size, encoder.patch_size) for it in good])
                         r_vec[rows] = pool_regions(out.patch_grid, grids, masks).astype(np.float16)
+                    if out.extras:
+                        for ename, earr in out.extras.items():
+                            if ename in e_vecs:
+                                e_vecs[ename][rows] = earr
                     done_rows.extend(rows.tolist())   # marqué « fait » au prochain enregistrement
 
                 processed += len(items)
                 n_batches += 1
                 if n_batches % flush_every == 0:
-                    _commit(g_vec, r_vec, status, done_rows)
+                    _commit(g_vec, r_vec, status, done_rows, extra=e_vecs.values())
                     failures.flush()
                 if progress:
                     progress(done_before + processed, total)
     except BaseException as exc:
-        _commit(g_vec, r_vec, status, done_rows)
+        _commit(g_vec, r_vec, status, done_rows, extra=e_vecs.values())
         run.fail("interrompu par l'utilisateur" if isinstance(exc, KeyboardInterrupt) else exc)
         raise
 
-    _commit(g_vec, r_vec, status, done_rows)
+    _commit(g_vec, r_vec, status, done_rows, extra=e_vecs.values())
     elapsed = time.perf_counter() - start
     extra = {}
     if getattr(encoder, "center_after", False):
@@ -202,10 +210,10 @@ def center_vectors(path: Path, status, block: int = 65536) -> bool:
     return True
 
 
-def _commit(g_vec, r_vec, status, done_rows: list[int]) -> None:
+def _commit(g_vec, r_vec, status, done_rows: list[int], extra=()) -> None:
     """Écrit d'abord les vecteurs sur le disque, ensuite seulement les marques « fait » : après une
     coupure, une œuvre marquée faite a toujours ses vecteurs (sinon elle resterait à zéro)."""
-    _flush(g_vec, r_vec)
+    _flush(g_vec, r_vec, *extra)
     if done_rows:
         status[np.asarray(done_rows)] = OK
         done_rows.clear()

@@ -61,6 +61,7 @@ class EncodedBatch:
 
     global_vectors: np.ndarray
     patch_grid: np.ndarray | None = None
+    extras: dict[str, np.ndarray] | None = None
 
 
 class Encoder(ABC):

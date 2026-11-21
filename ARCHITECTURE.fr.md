@@ -1456,3 +1456,140 @@ recherche non commercial, obtenu par l'utilisateur via le formulaire des auteurs
   fichier WikiArt sont des étiquettes de bénévoles, comme les autres. Conséquence pour la suite : les
   bancs d'essai par artiste, `pixplot suspects` et les noms de groupes calculés avant portent sur les
   anciennes étiquettes et sont à recalculer.
+
+## 35. Regard « posture » (Pathosformeln) : RT-DETRv2 + ViTPose, évalué et non retenu par défaut (21/11/2026)
+
+Question : peut-on retrouver des **formules gestuelles** (*Pathosformeln* d'Aby Warburg : un bras levé,
+un corps allongé, un personnage penché ou en marche) reprises d'une œuvre à l'autre quand le sujet, le
+style, l'époque ou la technique changent (sources : D. G. Stork, *Pixels & Paintings*, §§ 8.3 et 9.3.1 ;
+*Human-Art*, CVPR 2023 ; Madhu et al.) ?
+
+### 1. Choix du modèle, licences et pilote visuel
+
+- **Licences vérifiées avant téléchargement.** Les modèles YOLO-pose (Ultralytics, AGPL) et les poids
+  affinés sur *Human-Art* (jeu sous licence non commerciale CC BY-NC) sont écartés. Nous retenons une
+  chaîne **100 % Apache 2.0** (code et poids, disponibles directement dans `transformers`, entraînés sur
+  MS COCO) : détecteur de personnes **RT-DETRv2-R50** (`PekingU/rtdetr_v2_r50vd`, 172 Mo) suivi de
+  l'estimateur de squelettes **ViTPose Base Simple** (`usyd-community/vitpose-base-simple`, 344 Mo,
+  17 points clés COCO).
+- **Pilote sur 100 œuvres variées** (peinture d'histoire/religieuse, portraits et nus, gravures/dessins/Ukiyo-e,
+  art moderne figuratif, et 15 témoins sans figure : paysages, natures mortes, abstraction), inspecté
+  visuellement squelette par squelette :
+  - **RT-DETRv2-R50** devance nettement la variante légère **R18** (`PekingU/rtdetr_v2_r18vd`) sur les
+    arts graphiques et scènes complexes : gravures/dessins/Ukiyo-e **13/20 (65 %)** contre 4/20 (20 %)
+    pour R18 ; peinture d'histoire/religieuse **19/20 (95 %)** contre 15/20 (75 %). R50 à 640 px est retenu.
+  - Les squelettes sont précis sur la peinture figurative occidentale, les gravures (Doré, Rembrandt,
+    Dürer), les dessins au trait et les estampes Ukiyo-e : *Olympia* / *Vénus d'Urbin* (cosinus 0,951) et
+    *Le Semeur* de Van Gogh / Millet (0,981) se retrouvent au **rang 1/100**. Zéro faux positif sur
+    l'abstraction et les natures mortes (les rares détections en paysage sont du staffage réel, filtré
+    par taille minimale). Échec net attendu sur le cubisme (*Les Demoiselles d'Avignon* : 0 figure au
+    pilote) et l'art moderne très déformé.
+
+### 2. Descripteur 50-D, multi-figures et miroir gauche-droite
+
+Implémentation : `pixplot/encoders/posture.py` (`vitpose_base`, `NOT_KEPT` dans `pixplot/api/spaces.py`).
+
+- **Filtrage** : boîtes de confiance $\ge 0{,}40$, suppression des doublons (NMS IoU 0,65), taille minimale
+  ($\ge 8\,\%$ du grand côté et $\ge 0{,}6\,\%$ de l'aire de l'œuvre, pour écarter le staffage minuscule),
+  au moins **4 articulations corporelles** (épaules à chevilles, confiance $\ge 0{,}30$, moyenne $\ge 0{,}40$)
+  pour ignorer les portraits serrés sans corps. Jusqu'à **8 figures** conservées par œuvre (`poses_*.npy`),
+  classées par importance.
+- **Descripteur par figure (50 dimensions, normalisé L2)** :
+  1. **13 articulations normalisées (26 dim.)** : un unique centre de tête (moyenne pondérée des 5 points
+     du visage, évitant que le visage ne pèse 29 % du vecteur) et les 12 articulations du corps, centrés
+     sur le torse et ramenés à une taille commune (distance quadratique moyenne).
+  2. **12 vecteurs unitaires de membres (24 dim.)** : cou, ligne d'épaules, colonne, bassin, bras,
+     avant-bras, cuisses et jambes — robustes aux proportions allongées ou trapues (maniérisme, Botero)
+     et aux cadrages à mi-corps.
+- **Miroir gauche-droite et multi-figures.** Une gravure d'après un tableau ou une citation inversée
+  retourne gauche et droite : `mirror_pose_vector` applique une involution orthogonale exacte $F$ sur le
+  vecteur 50-D ($x \mapsto -x$ et échange gauche/droite, vérifiée à $< 10^{-6}$). La similarité exacte
+  entre deux œuvres (`posture_multi`, `PostureIndex`) prend la meilleure correspondance entre toutes
+  leurs figures, en direct et en miroir :
+  $$\operatorname{sim}(A, B) = \max_{i \in A,\; j \in B} \max\big(v_i \cdot v_j,\; v_i \cdot F(v_j)\big).$$
+  Pour compatibilité avec `FeatureStore` et `pixplot pairs bench`, `global.npy` stocke la figure
+  principale canonisée en orientation (`posture`). Les œuvres sans figure sont exclues de l'index
+  (`Spaces._open`), évitant tout biais d'ex aequo sur des vecteurs nuls.
+
+### 3. Extraction et couverture sur WikiArt 81k
+
+Run `features/vitpose_base_20261121-182701` (`data/wikiart81k/posture.log`, RX 7900 GRE, FP16, repli
+rocBLAS `cudnn=False` évitant un blocage MIOpen sur RT-DETRv2 sous ROCm Windows, lots de 64) :
+**80 716 œuvres**, **0 échec**, **53 min 55 s** (**25,0 images/s**), **7 375 MiB** VRAM, **139 Mo** sur
+disque (`global.npy` 7,7 Mo + `poses_*.npy` 130,6 Mo).
+
+- **Couverture globale** : **39 043 œuvres sur 80 716 (48,4 %)** ont au moins une figure corporelle
+  valide, pour **102 515 figures** au total (2,63 figures par œuvre figurée).
+- **Par genre** : peinture religieuse **87,4 %** (3,65 figs/œuvre), scène de genre **83,2 %** (2,77),
+  portrait **76,5 %** (0,99 ; les 23,5 % manquants sont surtout des visages serrés), nu **64,9 %**,
+  illustration **63,8 %**, dessin/étude **50,7 %**, vue urbaine **30,9 %**, paysage **10,9 %** (staffage),
+  nature morte **2,9 %**, abstraction **2,7 %**.
+- **Par style** : Maniérisme **88,5 %**, Première Renaissance **83,6 %**, Haute Renaissance **82,8 %**,
+  Baroque **82,3 %**, Rococo **81,5 %**, Renaissance du Nord **80,9 %**, Romantisme **63,9 %**, Réalisme
+  **52,9 %**, Ukiyo-e **49,4 %**, Impressionnisme **41,8 %**, Pop Art **21,5 %**, Cubisme **14,1 %**,
+  Expressionnisme abstrait **4,4 %**, Minimalisme **1,4 %**.
+
+### 4. Bancs d'essai (`pixplot pairs bench` et `pixplot composition`)
+
+Sur les **39 043 œuvres figurées** (paires ayant au moins une figure de chaque côté ; le témoin aléatoire
+`Témoin` de 128 requêtes donne un centile de **0,498**, rang médian 19 648 : exactement le hasard) :
+
+| Catégorie (n requêtes figurées / total) | Forme (DINOv3) | Sujet (SigLIP 2) | Touche (L6) | **Posture** (fig. princ.) | **Posture multi+miroir** |
+|---|---|---|---|---|---|
+| **Filiation attestée** (18 / 20) | **50,0 % / 66,7 % · méd. 16** (0,993) | **50,0 % / 72,2 % · méd. 8** (0,998) | 16,7 % / 27,8 % · 578 (0,902) | 11,1 % / 22,2 % · 4 366 (0,639) | **22,2 % / 27,8 % · 1 754** (0,790) |
+| **Même composition, sujet diff.** (12 / 28) | **66,7 % / 83,3 % · méd. 2** (0,998) | 33,3 % / 50,0 % · 77 (0,995) | 0,0 % / 25,0 % · 494 (0,988) | **8,3 % / 25,0 % · 346** (0,910) | 0,0 % / 8,3 % · 1 276 (**0,967**) |
+| **Même sujet, comp. diff.** (26 / 74) | 27,0 % / 39,2 % · 506 *(tous)* | **37,8 % / 54,1 % · 30** *(tous)* | 5,4 % / 13,5 % · 24 922 *(tous)* | 0,0 % / 7,7 % · 9 472 (0,631) | 0,0 % / 3,8 % · 10 934 (0,620) |
+| **Métadonnées : Témoin** (128 / 600) | 0,0 % / 0,2 % · 45 138 (0,456) | 0,0 % / 0,0 % · 45 837 (0,450) | 0,0 % / 0,0 % · 45 880 (0,447) | 0,0 % / 0,8 % · 19 648 (**0,498**) | — |
+
+*(Format : R@10 / R@100 · rang médian (centile). Pour Filiation et Même composition, les chiffres de Forme,
+Sujet et Touche sont donnés sur le même sous-ensemble figuré ; sur toutes les paires — 10 filiation, 14
+composition — Forme vaut respectivement 45,0 % / 70,0 % · méd. 20 et 53,6 % / 71,4 % · méd. 8. Si l'on
+évalue `posture_multi` sur les 80 716 œuvres en plaçant les paires sans figure au dernier rang, le centile
+tombe à 0,809 sur filiation et 0,422 sur même composition.)*
+
+- **Détail des succès et échecs sur les filiations** : `posture_multi` retrouve *Le Semeur* de Van Gogh et
+  Millet au **rang [1, 1]** (cosinus 0,979, mieux que Forme [2, 1]), *L'Enlèvement d'Europe* de Rubens et
+  Titien au **rang [1, 1]** (0,946), *Olympia* → *Vénus d'Urbin* au **rang 13** (898 en retour, cos 0,951),
+  et *La Résurrection de Lazare* Van Gogh → Rembrandt au rang **1 152** (devant Forme 1 856). En revanche,
+  les scènes à plusieurs figures ordinaires (debout ou assises : *Mariage de la Vierge* Raphaël ↔ Pérugin
+  [2 267, 4 452], *Déjeuner sur l'herbe* [7 593, 19 129]) partagent des poses trop fréquentes parmi
+  102 515 figures pour ressortir dans les 10 premières, et *Les Demoiselles d'Avignon* ↔ El Greco échoue
+  sur le squelette cubiste ([30 617, 17 293]).
+- **Combinaison Forme + posture** ($S = (1 - \alpha) S_{\text{forme}} + \alpha S_{\text{posture}}$,
+  validation croisée hors échantillon, posture remise à 0 hors œuvres figurées) :
+  - **Même composition (14 paires)** : aucun gain. En validation croisée sur 200 tirages 50/50, $\alpha = 0$
+    est retenu dans **90,5 %** des tirages (centile moyen 0,9201 contre **0,9275** pour Forme seule).
+  - **Filiation (10 paires)** : un poids faible ($\alpha = 0{,}05\text{–}0{,}10$) améliore légèrement le
+    rang médian sur les découpages fixes (20 → 16, centile 0,9941 → 0,9944), mais sur 200 tirages 50/50
+    R@10 recule légèrement (43,7 % contre 45,0 %) pour un centile stable (0,9942 vs 0,9941).
+
+### 5. Nouvelles paires « même geste » (`meme_geste`) et valeur propre du regard
+
+Les bancs existants ne contenaient aucune paire dédiée aux *Pathosformeln*. Le type `meme_geste`
+(« Même geste ou posture, sujet ou style différents », regard attendu : `posture`) a été ajouté dans
+`pixplot/analysis/pairbench.py` et `review.py`, et **37 paires candidates** variées (XVᵉ–XXᵉ s., fresques,
+huiles, gravures, dessins, ukiyo-e, affiches ; 30 en miroir et 7 directes), toutes **inspectées
+visuellement**, ont été enregistrées au statut `proposée` pour relecture par l'historien (touche R).
+Exemples : Titien *Vénus* (1546) ↔ affiche *La Libre Esthétique* (Art Nouveau, miroir) ; Michel-Ange
+*Ignudo* (1509) ↔ Burne-Jones (1896, miroir) ; Dürer dessin (1506) ↔ Petrov-Vodkine ; Botero (2001) ↔
+Jan van Hemessen (1543, invariant aux proportions) ; Fra Angelico (1449) ↔ Ogata Gekkō (ukiyo-e 1895,
+miroir) ; Caillebotte *Raboteurs* (1876) ↔ Kirchner (miroir).
+
+À titre indicatif (avec biais de sélection évident puisque ces 37 paires ont été extraites par le regard
+posture, avant validation humaine) : Forme (`R@10 = 0,0 %`, `R@100 = 2,7 %`, méd. 9 600), Sujet (`0,0 %`,
+méd. 16 076) et Touche (`0,0 %`, méd. 15 108) ne voient presque aucune de ces correspondances. Sur ces
+mêmes paires, le **miroir** fait passer `posture_multi` d'un rang médian de **8 914** (centile 0,714) sans
+miroir à **38** (centile **0,972**) avec miroir, et la prise en compte des **figures secondaires** fait
+passer le centile de 0,809 (`posture` figure principale) à **0,972** (`posture_multi`).
+
+- **Décision provisoire.** Le regard `"posture"` reste dans `NOT_KEPT` (hors Atlas et MCP par défaut) : il
+  ne couvre que 48,4 % du corpus et ne remplace ni ne renforce Forme sur les paires validées existantes.
+  En revanche, contrairement à la profondeur (§ 28), il répond à une **question réellement orthogonale**
+  (les *Pathosformeln* à travers styles, médiums et inversions en miroir) : la relecture des 37 paires
+  `meme_geste` par l'historien permettra de décider s'il mérite d'être exposé comme regard spécialisé pour
+  les œuvres figuratives.
+- **Limites.** Détecteur et estimateur entraînés sur des photographies (MS COCO) : aveugles au cubisme et
+  aux corps très déformés, parfois perturbés par des drapés lourds ou des figures imbriquées. Les postures
+  très courantes (debout de face, buste assis) saturent le voisinage de 102 515 figures ; le descripteur
+  2D ignore la profondeur (avant/arrière) et les gestes fins des mains (non modélisés dans COCO-17).
+  Une proximité de squelette est une piste formelle, jamais une preuve d'emprunt.

@@ -176,6 +176,27 @@ CARDS: dict[str, dict] = {
                     "possiblement gonflés par LAION-Styles et moins spécifique à la texture pure "
                     "(ARCHITECTURE § 32)",
     },
+    "posture": {
+        "model": "RT-DETRv2 + ViTPose Base Simple (Apache 2.0), descripteur de squelette 50 d "
+                 "(13 articulations + 12 vecteurs de membres) avec miroir gauche-droite",
+        "trained_on": "MS COCO (photographies annotées en personnes et 17 points clés)",
+        "sees": "la posture et les gestes des figures humaines détectées (inclinaison du torse, "
+                "position des bras et jambes, en direct et en miroir)",
+        "blind_to": "le sujet, la couleur, la facture, les paysages, natures mortes, abstractions, "
+                    "les portraits serrés sans corps et les figures très déformées (cubisme)",
+        "biases": [
+            "entraîné sur des photographies modernes (MS COCO) : fiable sur la peinture figurative "
+            "occidentale et les gravures, mais perd le fil sur le cubisme et l'art moderne très stylisé",
+            "ne couvre qu'une partie du corpus (œuvres où au moins une figure corporelle est détectée)",
+        ],
+        "measured": "évalué, non retenu par défaut : couvre 48,4 % de WikiArt 81k (39 043 œuvres, "
+                    "102 515 figures ; 87,4 % en peinture religieuse, 2,7 % en abstraction). Sur les "
+                    "paires figurées, retrouve Le Semeur et L'Enlèvement d'Europe au rang 1/1, mais "
+                    "reste derrière Forme sur « filiation » (multi-figures : R@10 22,2 %, méd. 1 754) "
+                    "et « même composition » (méd. 1 276, centile 0,967) ; Forme + posture n'apporte "
+                    "pas de gain net en validation croisée. 37 paires « même geste » proposées pour "
+                    "évaluation dédiée (ARCHITECTURE § 35)",
+    },
 }
 
 

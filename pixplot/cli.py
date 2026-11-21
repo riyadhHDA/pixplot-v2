@@ -96,7 +96,7 @@ def cmd_embed(args) -> int:
 
     s = get_settings(args.data)
     kwargs = {}
-    if args.encoder.startswith(("dinov3_", "dinov2_", "siglip2_", "depth_anything_", "pe_core_", "csd_")):
+    if args.encoder.startswith(("dinov3_", "dinov2_", "siglip2_", "depth_anything_", "pe_core_", "csd_", "vitpose_")):
         kwargs = {"weights": args.weights, "repo": args.repo, "hf_model": args.hf_model,
                   "input_size": args.input_size}
     elif args.encoder.startswith("sscd_"):
@@ -726,8 +726,13 @@ def cmd_composition(args) -> int:
                                ("global_masque", f"{key}_masq")):
                 print(f"Variante « {name} »…", flush=True)
                 results += score_layout(name, Path(run.path), pairs, ids, kind)
+        if (Path(run.path) / "poses_vecs.npy").exists() and key == "posture":
+            from .encoders.posture import score_posture_run
+            print("Variante « posture_multi »…", flush=True)
+            results += score_posture_run("posture_multi", Path(run.path), pairs, ids, allow_mirror=True)
     order = ["forme", "forme_masq", "forme_4x4", "forme_4x4c", "composition", "composition_masq",
-             "composition_4x4", "composition_4x4c", "profondeur", "sujet", "couleur", "touche", "copie"]
+             "composition_4x4", "composition_4x4c", "profondeur", "posture", "posture_multi",
+             "sujet", "couleur", "touche", "copie"]
     print(f"\nBanc d'essai « composition » · {len(ids)} œuvres · paires validées par l'utilisateur")
     print("centile : part du corpus plus éloignée que l'œuvre jumelle (0,5 = hasard, 1 = la plus proche)")
     print(f"{'type':<44} {'regard':<16} {'n':>4} {'R@10':>6} {'R@100':>6} {'rang méd.':>9} {'centile':>8}")
