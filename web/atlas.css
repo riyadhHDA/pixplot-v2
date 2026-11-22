@@ -426,3 +426,4 @@ kbd { display: inline-block; min-width: 22px; text-align: center; padding: 0 5px
 .notion-lbl.unnamed { color: var(--muted); font-style: italic; }
 .notion-lbl small { font-family: ui-monospace, monospace; font-size: 11px; color: var(--muted); margin-left: 4px; }
 .notion-n { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+.notion-lbl.meta { color: var(--accent-2); }

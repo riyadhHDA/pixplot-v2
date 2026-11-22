@@ -1563,7 +1563,9 @@ Iconclass notions, z-score against the other notions). CPU only, 3 h 28 (shared 
 - **In the Atlas (22/11/2026)**: "Notions" panel (key O): the 1,792 notions, filter, named (z ≥ 5) or
   not; a click lights up to 500 works on the map (activation index built on first use: 2.9 s on 81k,
   then ~10 ms). "Frames (no. 88)" tab in "To check" (2,321 works). No. 88 only holds for this run: a
-  new training renumbers the notions.
+  new training renumbers the notions. Without a reliable Iconclass name, a notion shows the catalogue
+  label shared by at least 60 % of its 50 most marked works ("style: Impressionism (100 %)"): 577 of
+  the 1,286 unnamed notions; 709 are left with nothing.
 
 ## 38. Confidence intervals for the pair benchmark (22/11/2026)
 

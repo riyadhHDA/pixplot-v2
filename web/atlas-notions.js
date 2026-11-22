@@ -14,8 +14,13 @@ const NOTION_HIGHLIGHT_MAX = 500;
 const framedFeature = () => ((state.info && state.info.notions && state.info.notions.framed) || {}).feature;
 const nt = { query: "", filter: "all", sort: "feature", shown: NOTIONS_PAGE, active: null, detail: null, qTimer: null };
 
+const META_KEY = { style: "style", genre: "genre", artist: "artiste" };
+// étiquette du catalogue partagée par ≥ 60 % des œuvres les plus marquées (ce que disent les
+// métadonnées, pas un nom donné par le modèle)
+const metaText = (m) => m ? `${META_KEY[m.key] || m.key} : ${pretty(m.value)} (${Math.round(m.share * 100)} %)` : "";
+
 function notionTitle(d) {
-  const lbl = d.named ? d.label : (d.editorial_label || "sans nom");
+  const lbl = d.named ? d.label : (d.editorial_label || metaText(d.meta) || "sans nom");
   return `Notion n° ${d.feature} (${lbl})`;
 }
 
@@ -36,7 +41,7 @@ function filteredNotions() {
   else if (nt.filter === "unnamed") out = out.filter((it) => !it.named);
   if (q) {
     out = out.filter((it) => {
-      const hay = `n° ${it.feature} #${it.feature} ${it.feature} ${it.label} ${it.iconclass ? it.iconclass.notation : ""}`.toLowerCase();
+      const hay = `n° ${it.feature} #${it.feature} ${it.feature} ${it.label} ${it.meta ? `${it.meta.value} ${pretty(it.meta.value)}` : ""} ${it.iconclass ? it.iconclass.notation : ""}`.toLowerCase();
       return hay.includes(q);
     });
   }
@@ -66,7 +71,7 @@ async function renderNotions() {
       <div class="sub">${data.total.toLocaleString("fr-FR")} notions vivantes · regard « ${esc(SPACE_SHORT[data.space] || data.space)} »
         · ${data.named.toLocaleString("fr-FR")} nommées (Iconclass z ≥ ${data.z_min})</div>
       <input type="search" id="notions-q" class="flt-q" style="margin-top:8px" value="${esc(nt.query)}"
-        placeholder="Filtrer par n°, étiquette Iconclass ou « sans nom »…" aria-label="Filtrer les notions">
+        placeholder="Filtrer par n°, nom Iconclass, style, genre, artiste…" aria-label="Filtrer les notions">
       <div class="chips" style="margin-bottom:6px">
         <button class="chip ${nt.filter === "all" ? "on" : ""}" data-nf="all">Toutes <small>${data.total}</small></button>
         <button class="chip ${nt.filter === "named" ? "on" : ""}" data-nf="named">Nommées <small>${data.named}</small></button>
@@ -118,7 +123,9 @@ function drawNotionsList() {
   $("notions-shown").textContent = `${matches.length.toLocaleString("fr-FR")} affichée${matches.length > 1 ? "s" : ""}`;
   list.innerHTML = slice.map((it) => `<li><button class="notion-row ${it.feature === nt.active ? "on" : ""}" data-feature="${it.feature}">
       <span class="notion-num">n° ${it.feature}</span>
-      <span class="notion-lbl ${it.named ? "" : "unnamed"}">${esc(it.label)}${it.iconclass ? ` <small>${esc(it.iconclass.notation)}</small>` : ""}</span>
+      ${!it.named && it.meta
+        ? `<span class="notion-lbl meta" title="Pas de nom Iconclass sûr : étiquette du catalogue partagée par les œuvres les plus marquées">${esc(metaText(it.meta))}</span>`
+        : `<span class="notion-lbl ${it.named ? "" : "unnamed"}">${esc(it.label)}${it.iconclass ? ` <small>${esc(it.iconclass.notation)}</small>` : ""}</span>`}
       <span class="notion-n" title="${it.count.toLocaleString("fr-FR")} œuvres actives">${it.count.toLocaleString("fr-FR")}</span>
     </button></li>`).join("") || `<li class="empty-note">Aucune notion ne correspond.</li>`;
   list.querySelectorAll("[data-feature]").forEach((b) => b.addEventListener("click", () => selectNotion(Number(b.dataset.feature))));
@@ -182,7 +189,7 @@ function drawNotionActive(d) {
       ${it.score != null ? `<div class="score">activation ${it.score.toFixed(2)}</div>` : ""}
       <div class="lbl">${esc(prettyLabel(it.label))}</div></button>`).join("");
   box.innerHTML = `<div class="notion-active-head">
-      <div><strong>Notion n° ${d.feature}</strong>${d.named ? ` — ${esc(d.label)}` : ""}${d.editorial_label ? ` · <em>${esc(d.editorial_label)}</em>` : ""}</div>
+      <div><strong>Notion n° ${d.feature}</strong>${d.named ? ` — ${esc(d.label)}` : d.meta ? ` — <span class="notion-lbl meta">${esc(metaText(d.meta))}</span>` : ""}${d.editorial_label ? ` · <em>${esc(d.editorial_label)}</em>` : ""}</div>
       ${ic}
       <div class="sub" style="margin:4px 0 0">${shownInfo}</div>
       ${dom ? `<div class="sub" style="margin:2px 0 0">${esc(dom)}</div>` : ""}

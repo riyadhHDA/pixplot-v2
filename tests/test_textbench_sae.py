@@ -35,3 +35,13 @@ def test_sae_learns_planted_notions():
     feats, baseline = describe(model, ids, X, meta, top=20)
     assert feats and {"feature", "frequency", "top", "labels"} <= set(feats[0])
     assert 0 < baseline["style"] <= 1
+
+
+def test_meta_label_prend_l_etiquette_dominante():
+    from pixplot.analysis import sae
+
+    feat = {"labels": {"style": {"value": "Impressionism", "share": 0.7},
+                       "genre": {"value": "landscape", "share": 0.9},
+                       "artist": {"value": "claude-monet", "share": 0.3}}}
+    assert sae.meta_label(feat) == {"key": "genre", "value": "landscape", "share": 0.9}
+    assert sae.meta_label({"labels": {"style": {"value": "Baroque", "share": 0.4}}}) is None

@@ -188,6 +188,22 @@ def framed_feature(run, meta: dict) -> int | None:
     return None
 
 
+META_SHARE_MIN = 0.6           # part des 50 œuvres les plus marquées qui partagent l'étiquette
+
+
+def meta_label(feat: dict, min_share: float = META_SHARE_MIN) -> dict | None:
+    """Étiquette du catalogue (style, genre ou artiste) que partagent au moins ``min_share`` des
+    œuvres les plus marquées par la notion ; ``None`` si aucune ne domine. Sert à lire une notion
+    sans nom Iconclass sûr : c'est ce que disent les métadonnées, pas un nom donné par le modèle."""
+    best = None
+    for key in ("style", "genre", "artist"):
+        lab = (feat.get("labels") or {}).get(key)
+        if lab and lab.get("value") and float(lab.get("share", 0)) >= min_share:
+            if best is None or float(lab["share"]) > best["share"]:
+                best = {"key": key, "value": str(lab["value"]), "share": float(lab["share"])}
+    return best
+
+
 def notion_label(feat: dict, z_min: float = ICONCLASS_Z_MIN) -> tuple[str, bool]:
     """Étiquette Iconclass si ``z >= z_min``, sinon « sans nom »."""
     ic = feat.get("iconclass")

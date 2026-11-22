@@ -1697,6 +1697,9 @@ notions). Processeur seul, 3 h 28 (en partage avec le § 36). Run `analysis/noti
   (z ≥ 5) ou non ; un clic allume jusqu'à 500 œuvres sur la carte (index des activations calculé à la
   première consultation : 2,9 s sur 81k, puis ~10 ms). Onglet « Cadres (n° 88) » dans « À vérifier »
   (2 321 œuvres). Le n° 88 ne vaut que pour ce calcul : un nouvel entraînement renumérote les notions.
+  Sans nom Iconclass sûr, une notion affiche l'étiquette du catalogue que partagent au moins 60 % de
+  ses 50 œuvres les plus marquées (« style : Impressionism (100 %) ») : c'est le cas de 577 des 1 286
+  notions sans nom ; 709 restent sans rien.
 
 ## 38. Intervalles de confiance du banc par paires (22/11/2026)
 
