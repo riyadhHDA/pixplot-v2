@@ -10,7 +10,8 @@ les prochaines étapes, les essais écartés et les pistes à tester.
 On évite d'empiler les modèles sans preuve. Une nouvelle méthode n'est intégrée que si elle
 améliore réellement un banc d'essai (paires annotées, étiquettes, RichArt…) en apportant un
 signal que les autres regards n'ont pas déjà. Quand un essai échoue, on documente les
-chiffres et on passe à autre chose.
+chiffres et on passe à autre chose. Depuis le 22/11/2026, « améliorer » veut dire que l'intervalle
+de confiance à 95 % de l'écart apparié exclut zéro (`pixplot pairs ci`, ARCHITECTURE § 38).
 
 ## Prochaines étapes
 

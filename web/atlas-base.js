@@ -33,9 +33,9 @@ const esc = (s) => String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const pretty = (v) => String(v ?? "").replace(/_/g, " ").replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 
 const state = {
-  searchSeq: 0, searchTimer: null, conceptSeq: 0, measuresSeq: 0, panelSeq: 0, colorSeq: 0,
+  searchSeq: 0, searchTimer: null, conceptSeq: 0, measuresSeq: 0, panelSeq: 0, colorSeq: 0, notionsSeq: 0,
   conceptAxes: { x: "sacré", y: "profane", corr: null },
-  info: null, map: null, clusters: [], n: 0, comm: {},
+  info: null, map: null, clusters: [], n: 0, comm: {}, notionsData: null,
   positions: null, rowOf: new Map(),
   colorMode: "cluster", highlight: null, highlightLabel: "",
   selected: null, selectedData: null,
@@ -147,7 +147,10 @@ async function init() {
   $("layout").innerHTML = groups.map(([g, opts]) => `<optgroup label="${esc(g)}">${opts.map(([v, l]) =>
     `<option value="${esc(v)}">${esc(l)}</option>`).join("")}</optgroup>`).join("");
   $("groups-count").textContent = `· ${state.clusters.length}`;
-  $("open-suspects").hidden = !Object.keys(state.info.suspects || {}).length && !Object.keys(state.info.annotated_pairs || {}).length;
+  const hasFramed = Boolean(state.info.notions && state.info.notions.framed);
+  $("open-notions").hidden = !state.info.notions;
+  $("open-suspects").hidden = !Object.keys(state.info.suspects || {}).length && !Object.keys(state.info.annotated_pairs || {}).length
+    && !Object.keys(state.info.duplicates || {}).length && !hasFramed;
   $("open-disagreements").hidden = !Object.keys(state.info.disagreements || {}).length;
   const textOpt = $("search-mode").querySelector('option[value="text"]');
   textOpt.disabled = !state.searchStatus.text;

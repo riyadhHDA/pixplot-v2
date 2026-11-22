@@ -1560,5 +1560,45 @@ Iconclass notions, z-score against the other notions). CPU only, 3 h 28 (shared 
   names ("Will", "hollow cheeks"). Names are proposed by the model, to be reviewed like group names.
 - A notion describes what the model separates, not a historian's category; its boundaries are fuzzy.
 - One regard (subject) and one seed; another seed would give similar but not identical notions.
-- Not yet in the Atlas: a possible step is a list of named notions that light up their works on the
-  map.
+- **In the Atlas (22/11/2026)**: "Notions" panel (key O): the 1,792 notions, filter, named (z ≥ 5) or
+  not; a click lights up to 500 works on the map (activation index built on first use: 2.9 s on 81k,
+  then ~10 ms). "Frames (no. 88)" tab in "To check" (2,321 works). No. 88 only holds for this run: a
+  new training renumbers the notions.
+
+## 38. Confidence intervals for the pair benchmark (22/11/2026)
+
+**Question.** The pair benchmark compares percentages computed on 10 to 37 pairs. Which gaps between
+regards are reliable, and which come from the luck of the pair selection?
+
+**Method.** `pixplot pairs ci` (`pairbench.bootstrap_report`), following Deepseek's reading
+(`docs/handoff/deepseek-lectures.md`, Smucker, Allan and Carterette, CIKM 2007): bootstrap over
+**pairs** (the two directions of a pair are not independent), 2,000 resamples, 95 % CI for R@10 and
+median rank; for each pair of regards, a **paired** R@10 difference on pairs measured in both, with a
+two-sided p. Reads the ranks of the latest `pixplot pairs bench` report: no recomputation, under one
+second. No interval below 5 pairs. Annotated pairs only by default (`--all-origins` for the others).
+Details in `bench/pairs_ci_*.json`.
+
+**Results** (WikiArt 81k, 108 validated annotated pairs, report of 21/11/2026).
+
+| Type | Pairs | Best regard (R@10, 95 % CI) | Reliable gaps |
+|---|---|---|---|
+| Same composition | 14 | Form 53.6 % [39–68] | Form > Subject (+32 pts), > Touch, > Colour, > Posture |
+| Same palette | 27 | Colour 48.1 % [31–63] | Colour > Form, Subject, Touch |
+| Same subject | 37 | Subject 37.8 % [28–49] | Subject > Touch, Colour, Posture; **not > Form (27.0 %)** |
+| Lineage | 10 | Form = Subject 45.0 % [20–70] | Form, Subject > Colour, Posture; nothing else |
+| Same facture | 17 | Touch 29.4 % [15–44] | Touch > Subject only |
+| Same motif, same hand | 2, 1 | — | too few pairs |
+
+**What it changes.**
+- The two solid results of the benchmark hold: **Form for composition, Colour for palette**.
+- **Subject does not reliably beat Form on "same subject"** (37.8 % vs 27.0 %, overlapping
+  intervals), although the median rank (30 vs 506) clearly leans towards Subject.
+- **Touch is only reliably ahead of Subject** on "same facture": not of Form or Colour.
+- **Lineage**: Form and Subject tie, as Deepseek noted; with 10 pairs no regard can be declared best.
+- Rule from now on: a new regard is "better" only if the paired-difference interval excludes zero.
+  Pairs to add first: same subject, same facture, lineage, then same motif and same hand.
+
+**Limits.** Percentile bootstrap on small samples: approximate intervals, rather narrow below 15
+pairs. Several comparisons without correction (about ten per type): an isolated "reliable gap" at
+p ≈ 0.03 still needs confirming. Pairs were reviewed by a single person (inter-rater agreement not
+measured, see Krippendorff in Deepseek's note).

@@ -205,18 +205,25 @@ function reviewTabs(active) {
   const nLabels = Object.values(state.info.suspects || {}).reduce((a, b) => a + b, 0);
   const nPairs = (state.info.annotated_pairs || {})["proposée"] || 0;
   const nDup = ((state.info.duplicates || {}).same || 0) + ((state.info.duplicates || {}).variant || 0);
+  const framed = state.info.notions && state.info.notions.framed;
   return `<div class="spaces">
     ${nLabels ? `<button class="space ${active === "labels" ? "on" : ""}" data-review="labels">Étiquettes <small>${nLabels}</small></button>` : ""}
     <button class="space ${active === "pairs" ? "on" : ""}" data-review="pairs">Paires de référence <small>${nPairs} à relire</small></button>
-    ${nDup ? `<button class="space ${active === "duplicates" ? "on" : ""}" data-review="duplicates">Doublons <small>${nDup}</small></button>` : ""}</div>`;
+    ${nDup ? `<button class="space ${active === "duplicates" ? "on" : ""}" data-review="duplicates">Doublons <small>${nDup}</small></button>` : ""}
+    ${framed ? `<button class="space ${active === "framed" ? "on" : ""}" data-review="framed" title="${esc(framed.label)}">Cadres (n° ${framed.feature}) <small>${framed.count.toLocaleString("fr-FR")}</small></button>` : ""}</div>`;
 }
 function wireReviewTabs(body) {
   body.querySelectorAll("[data-review]").forEach((b) => b.addEventListener("click", () =>
     b.dataset.review === "labels" ? renderSuspects(null, 0)
-      : b.dataset.review === "duplicates" ? renderDuplicates("same", true, 0) : renderPairs("proposée")));
+      : b.dataset.review === "duplicates" ? renderDuplicates("same", true, 0)
+        : b.dataset.review === "framed" ? renderFramed(0) : renderPairs("proposée")));
 }
 function openReview() {
-  if (Object.keys(state.info.suspects || {}).length) renderSuspects(null, 0); else renderPairs("proposée");
+  if (Object.keys(state.info.suspects || {}).length) renderSuspects(null, 0);
+  else if (Object.keys(state.info.annotated_pairs || {}).length) renderPairs("proposée");
+  else if (Object.keys(state.info.duplicates || {}).length) renderDuplicates("same", true, 0);
+  else if (state.info.notions && state.info.notions.framed) renderFramed(0);
+  else renderPairs("proposée");
 }
 
 // ------------------------------------------------------------------ paires de référence à relire

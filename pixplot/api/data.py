@@ -8,6 +8,7 @@ from __future__ import annotations
 import json
 import re
 import sqlite3
+import threading
 from collections import Counter
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -16,7 +17,7 @@ import numpy as np
 
 from ..catalog import db
 from ..catalog.metadata import get_metadata
-from ..analysis import communities, critique, disagreements, duplicates, order
+from ..analysis import communities, critique, disagreements, duplicates, order, sae
 from ..analysis import iconclass
 from ..analysis.naming import load_names
 from ..analysis.spacemaps import available_maps, load_space_map
@@ -69,6 +70,7 @@ class AtlasData:
     row_of: dict[int, int] = field(default_factory=dict)
     suspect_of: dict[int, list] = field(default_factory=dict)
     _spaces: object = None
+    _notions_lock: threading.Lock = field(default_factory=threading.Lock, repr=False)
 
     @property
     def spaces(self):
@@ -175,6 +177,7 @@ class AtlasData:
             "places": self.place_counts(),
             "disagreements": self.disagreement_counts(),
             "duplicates": (self._duplicates() or {}).get("counts", {}),
+            "notions": self.notions_info(),
             "main_space": self.spaces.main,
             "suspects": (self.suspects or {}).get("counts", {}),
             "annotated_pairs": self.annotated_pair_counts(),
@@ -261,6 +264,135 @@ class AtlasData:
         if not hasattr(self, "_dup_cache"):
             self._dup_cache = duplicates.load(self.analysis)
         return self._dup_cache
+
+    def _notions(self) -> tuple[Run, dict] | None:
+        """Dernier run de notions apprises et son ``notions.json``, mis en cache."""
+        if not hasattr(self, "_notions_cache"):
+            run = sae.latest_notions_run(self.settings.runs_dir)
+            meta = sae.load_notions(run) if run is not None else None
+            self._notions_cache = (run, meta) if run is not None and meta is not None else None
+        return self._notions_cache
+
+    def _notions_index(self) -> dict | None:
+        """Index inversé exact par notion, calculé une seule fois à la première consultation."""
+        pair = self._notions()
+        if pair is None:
+            return None
+        with self._notions_lock:
+            if not hasattr(self, "_notions_idx"):
+                run, _ = pair
+                self._notions_idx = sae.encode_index(run, self.settings.runs_dir, allowed_ids=set(self.row_of))
+        return self._notions_idx
+
+    def _notion_count(self, feat: dict) -> int:
+        idx = getattr(self, "_notions_idx", None)
+        f = int(feat["feature"])
+        if idx is not None and 0 <= f < idx["n_features"]:
+            return int(idx["offsets"][f + 1] - idx["offsets"][f])
+        return max(1, round(float(feat.get("frequency", 0.0)) * len(self.ids)))
+
+    def notions_info(self) -> dict | None:
+        pair = self._notions()
+        if pair is None:
+            return None
+        run, meta = pair
+        feats = meta.get("features", [])
+        named = sum(1 for f in feats if sae.notion_label(f)[1])
+        framed = None
+        fid = sae.framed_feature(run, meta)
+        if fid is not None:
+            f88 = next((f for f in feats if int(f["feature"]) == fid), None)
+            if f88 is not None:
+                framed = {"feature": fid, "label": sae.FRAMED_LABEL,
+                          "count": self._notion_count(f88)}
+        return {"run": run.id, "space": meta.get("space", "sujet"), "count": len(feats),
+                "named": named, "z_min": sae.ICONCLASS_Z_MIN, "framed": framed}
+
+    def notions_payload(self) -> dict | None:
+        """Liste des notions vivantes (numéro, étiquette Iconclass si z ≥ 5 sinon « sans nom »,
+        nombre d'œuvres actives)."""
+        pair = self._notions()
+        if pair is None:
+            return None
+        run, meta = pair
+        items = []
+        named_count = 0
+        for f in meta.get("features", []):
+            label, is_named = sae.notion_label(f)
+            if is_named:
+                named_count += 1
+            ic = f.get("iconclass")
+            ic_out = ({"notation": ic["notation"], "fr": ic["fr"], "z": ic["z"],
+                       "url": iconclass.link(ic["notation"])}
+                      if is_named and ic else None)
+            items.append({
+                "feature": int(f["feature"]),
+                "label": label,
+                "named": is_named,
+                "iconclass": ic_out,
+                "count": self._notion_count(f),
+                "frequency": f.get("frequency", 0.0),
+                "labels": f.get("labels", {}),
+                "top": [int(i) for i in f.get("top", []) if int(i) in self.row_of],
+            })
+        items.sort(key=lambda x: x["feature"])
+        info = self.notions_info()
+        return {"run": run.id, "space": meta.get("space", "sujet"), "z_min": sae.ICONCLASS_Z_MIN,
+                "n": int(len(self.ids)), "total": len(items), "named": named_count,
+                "dead": meta.get("dead", 0), "explained_variance": meta.get("explained_variance", {}),
+                "framed": info["framed"] if info else None, "items": items}
+
+    def notion_detail_payload(self, feature: int, offset: int = 0, limit: int = 40,
+                              highlight_limit: int = 500) -> dict | None:
+        """Œuvres actives d'une notion, triées par activation décroissante."""
+        pair = self._notions()
+        if pair is None:
+            return None
+        run, meta = pair
+        feat = next((f for f in meta.get("features", []) if int(f["feature"]) == feature), None)
+        if feat is None:
+            return None
+        label, is_named = sae.notion_label(feat)
+        ic = feat.get("iconclass")
+        ic_out = ({"notation": ic["notation"], "fr": ic["fr"], "z": ic["z"],
+                   "url": iconclass.link(ic["notation"])}
+                  if is_named and ic else None)
+        idx = self._notions_index()
+        exact = False
+        if idx is not None and 0 <= feature < idx["n_features"]:
+            lo, hi = int(idx["offsets"][feature]), int(idx["offsets"][feature + 1])
+            all_ids = idx["ids"][lo:hi]
+            all_scores = idx["scores"][lo:hi]
+            total = int(hi - lo)
+            page_ids = all_ids[offset:offset + limit].tolist()
+            page_scores = [round(float(s), 3) for s in all_scores[offset:offset + limit]]
+            hl_ids = all_ids[:highlight_limit].tolist()
+            exact = True
+        else:
+            fallback = [int(i) for i in feat.get("top", []) if int(i) in self.row_of]
+            total = len(fallback)
+            page_ids = fallback[offset:offset + limit]
+            page_scores = [None] * len(page_ids)
+            hl_ids = fallback[:highlight_limit]
+        items = [{**self.brief(int(i)), "score": sc} for i, sc in zip(page_ids, page_scores)]
+        is_framed = feature == sae.framed_feature(run, meta)
+        return {
+            "feature": feature,
+            "label": label,
+            "named": is_named,
+            "iconclass": ic_out,
+            "editorial_label": sae.FRAMED_LABEL if is_framed else "",
+            "space": meta.get("space", "sujet"),
+            "run": run.id,
+            "labels": feat.get("labels", {}),
+            "frequency": feat.get("frequency", 0.0),
+            "total": total,
+            "offset": offset,
+            "limit": limit,
+            "exact": exact,
+            "highlight_ids": hl_ids,
+            "items": items,
+        }
 
     def duplicates_payload(self, level: str = "same", conflicts: bool = False, offset: int = 0,
                            limit: int = 40) -> dict | None:

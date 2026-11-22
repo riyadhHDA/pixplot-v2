@@ -16,6 +16,7 @@ Carte interactive du corpus, servie par `pixplot serve` sur http://127.0.0.1:876
   | `atlas-revue.js` | à vérifier : étiquettes, bilan du corpus, relecture rapide, paires, désaccords |
   | `atlas-recherche.js` | recherche par détail et par zone décrite, résultats, Research Pack |
   | `atlas-filtres.js` | filtres combinés (étiquettes, groupes, atypicité, dates), sélection vers le carnet ou un Research Pack |
+  | `atlas-notions.js` | notions apprises (liste filtrable, surbrillance, carnet) et onglet « Cadres (n° 88) » dans « À vérifier » |
   | `atlas-ui.js` | branchement de l'interface (boutons, raccourcis), puis `init()` — toujours en dernier |
 
   Les appels entre fichiers se résolvent au moment où ils ont lieu (après le chargement de tous les

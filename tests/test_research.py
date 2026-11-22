@@ -214,6 +214,25 @@ def test_pair_ranks_are_exact():
     assert detail[(100 + a, 100 + b, "filiation")]["forme"] == (1, 1)
 
 
+def test_pair_bootstrap_ci():
+    from pixplot.analysis.pairbench import bootstrap_report
+
+    # 20 paires : « forme » les retrouve toutes au rang 1, « couleur » jamais ; « sujet » = forme
+    per_pair = [{"type": "filiation", "origin": "annotée",
+                 "ranks": {"forme": [1, 2], "sujet": [1, 2], "couleur": [500, 900]}} for _ in range(20)]
+    per_pair.append({"type": "temoin", "origin": "métadonnées", "ranks": {"forme": [5, 50]}})
+    rep = bootstrap_report(per_pair, n_boot=300, seed=0)
+    g = rep["groups"]["filiation|annotée"]
+    assert g["n_pairs"] == 20 and g["spaces"]["forme"]["r10"] == 1.0
+    assert g["spaces"]["forme"]["r10_ci"] == [1.0, 1.0] and g["spaces"]["couleur"]["r10_ci"] == [0.0, 0.0]
+    by = {(c["a"], c["b"]): c for c in g["paired"]}
+    assert by[("couleur", "forme")]["diff_r10"] == -1.0 and by[("couleur", "forme")]["p"] == 0.0
+    assert by[("forme", "sujet")]["diff_r10"] == 0.0 and by[("forme", "sujet")]["ties"] == 1.0
+    assert by[("forme", "sujet")]["p"] == 1.0
+    # les origines restent séparées
+    assert rep["groups"]["temoin|métadonnées"]["spaces"]["forme"]["r10"] == 0.5
+
+
 def test_pairs_file_and_metadata_pairs(tmp_path):
     from pixplot.analysis.pairbench import Pair, add_pair, load_pairs, metadata_pairs
 

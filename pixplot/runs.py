@@ -108,13 +108,16 @@ def list_runs(
     status: str | None = "complete",
     runs_dir: Path | None = None,
     include_zones: bool = False,
+    include_notions: bool = False,
 ) -> list[Run]:
     """Runs d'une étape, du plus ancien au plus récent.
 
     Les runs de zones (``features/zones_*`` : 20 vecteurs par œuvre, pour chercher une zone
     avec des mots) ne sont pas des espaces de ressemblance : ils sont exclus sauf demande
     explicite (``include_zones``), pour qu'aucun regard ni recherche ne les prenne pour des
-    vecteurs d'œuvres entières."""
+    vecteurs d'œuvres entières. De même, les runs de notions apprises (``analysis/notions_*``,
+    auto-encodeur parcimonieux) ne sont pas des analyses de carte/groupes : ils sont exclus
+    par défaut sauf ``include_notions`` ou demande explicite de ``name``."""
     base = _stage_dir(stage, runs_dir)
     if not base.exists():
         return []
@@ -124,6 +127,7 @@ def list_runs(
         if (name is None or r.manifest["name"] == name)
         and (status is None or r.manifest["status"] == status)
         and (include_zones or not (stage == "features" and r.manifest["name"].startswith("zones_")))
+        and (include_notions or name is not None or not (stage == "analysis" and r.manifest["name"].startswith("notions_")))
     ]
     return sorted(runs, key=lambda r: (r.manifest["created"], r.path.name))
 

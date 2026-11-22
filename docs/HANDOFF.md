@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 21/11/2026 (posture fusionnée ; §§ 36–37).*
+*Dernière mise à jour : 22/11/2026 (session multi-agent relue et commitée).*
 
 ## Version publiée
 
@@ -129,7 +129,7 @@ corrigé ; 63 tests passent, Atlas vérifié.
   `NOT_KEPT`. **37 paires `meme_geste` proposées, à relire par l'utilisateur** (touche R, en tête de
   file ; « même geste » = touche 7, « filiation » passe à la touche 8). Selon la relecture : exposer
   ou non « Posture » comme regard spécialisé (brancher `PostureIndex` dans `Spaces.neighbors`).
-- **Claude, fait le 21/11/2026, non commité ni publié** (processeur seul) :
+- **Claude, fait le 21/11/2026, commité (`c63b5e7`), non publié** (processeur seul) :
   - **Recherche par phrase avec les descriptions MMArt** (`pixplot textbench`, § 36), 300 œuvres :
     la description narrative retrouve l'œuvre (rang médian 13 avec SigLIP 2, 6 avec PE-Core), la
     formelle presque jamais (661 / 807), l'historique pas du tout. Textes coupés à 64 / 77 jetons.
@@ -141,6 +141,20 @@ corrigé ; 63 tests passent, Atlas vérifié.
   - **Émotion à genre égal** (§ 34) : rapport au hasard 1,37 (forme, sujet), 1,27 (touche), 1,12
     (couleur) ; environ deux tiers de l'effet survivent au contrôle du genre.
   - Raccourci clavier de la relecture passé de 1–7 à 1–8 (`web/atlas-revue.js`).
+- **Travail en équipe du 22/11/2026, relu et commité par Claude, non publié** (Claude coordonne et
+  intègre ; personne d'autre ne commite) :
+  - Claude : **intervalles de confiance du banc par paires** (`pixplot pairs ci`, § 38, 98 tests).
+    Sûrs : Forme pour la composition, Couleur pour la palette ; pas sûrs : Sujet > Forme sur « même
+    sujet », Touche > Forme sur « même facture » ; filiation à égalité. Règle : un regard n'est
+    « meilleur » que si l'IC de l'écart apparié exclut zéro.
+  - Gemini Neon : panneau « Notions » dans l'Atlas (touche O) et onglet « Cadres (n° 88) » dans
+    « À vérifier » ; correctif `runs.py` (les runs `notions_*` faisaient planter `pixplot serve`).
+    Relu : calcul des activations conforme à l'entraînement ; corrigé, le n° 88 n'est « cadre » que
+    pour le run `notions_sujet_20261121-213443` (`sae.FRAMED_RUN`). 100 tests, vérifié dans l'Atlas 81k.
+  - Deepseek : banc Wölfflin mesuré, seul linéaire/pictural robuste ; note pas écrite (arrêté).
+    Script et résultats copiés dans `data/wikiart81k/bench/wolfflin/` (hors git).
+  - Mistral : CHANGELOG « Non publié » pas fait (arrêté).
+  - **Détail, fichiers et suite dans [`handoff/session-2026-11-22.md`](handoff/session-2026-11-22.md).**
 
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
   19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.

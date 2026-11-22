@@ -1693,5 +1693,48 @@ notions). Processeur seul, 3 h 28 (en partage avec le § 36). Run `analysis/noti
 - Une notion décrit ce que le modèle sépare, pas une catégorie d'historien ; ses frontières sont floues.
 - Un seul regard (sujet) et une seule graine ; une autre graine donnerait des notions voisines mais
   pas identiques.
-- Pas encore dans l'Atlas : étape possible, une liste de notions nommées qui allument leurs œuvres sur
-  la carte.
+- **Dans l'Atlas (22/11/2026)** : panneau « Notions » (touche O) : les 1 792 notions, filtre, nommées
+  (z ≥ 5) ou non ; un clic allume jusqu'à 500 œuvres sur la carte (index des activations calculé à la
+  première consultation : 2,9 s sur 81k, puis ~10 ms). Onglet « Cadres (n° 88) » dans « À vérifier »
+  (2 321 œuvres). Le n° 88 ne vaut que pour ce calcul : un nouvel entraînement renumérote les notions.
+
+## 38. Intervalles de confiance du banc par paires (22/11/2026)
+
+**Question.** Le banc par paires compare des pourcentages calculés sur 10 à 37 paires. Quels écarts
+entre regards sont sûrs, et lesquels tiennent au hasard du choix des paires ?
+
+**Méthode.** `pixplot pairs ci` (`pairbench.bootstrap_report`), sur la lecture de Deepseek
+(`docs/handoff/deepseek-lectures.md`, Smucker, Allan et Carterette, CIKM 2007) : bootstrap sur les
+**paires** (les deux sens d'une paire ne sont pas indépendants), 2 000 tirages, IC à 95 % du R@10 et
+du rang médian ; pour chaque couple de regards, écart de R@10 **apparié** sur les paires mesurées dans
+les deux, avec p bilatéral. Relit les rangs du dernier rapport de `pixplot pairs bench` : aucun
+recalcul, moins d'une seconde. Pas d'intervalle sous 5 paires. Paires annotées seulement par défaut
+(`--all-origins` pour les autres). Détail dans `bench/pairs_ci_*.json`.
+
+**Résultats** (WikiArt 81k, 108 paires annotées validées, rapport du 21/11/2026).
+
+| Type | Paires | Meilleur regard (R@10, IC 95 %) | Écarts sûrs |
+|---|---|---|---|
+| Même composition | 14 | Forme 53,6 % [39–68] | Forme > Sujet (+32 pts), > Touche, > Couleur, > Posture |
+| Même palette | 27 | Couleur 48,1 % [31–63] | Couleur > Forme, Sujet, Touche |
+| Même sujet | 37 | Sujet 37,8 % [28–49] | Sujet > Touche, Couleur, Posture ; **pas > Forme (27,0 %)** |
+| Filiation | 10 | Forme = Sujet 45,0 % [20–70] | Forme, Sujet > Couleur, Posture ; rien d'autre |
+| Même facture | 17 | Touche 29,4 % [15–44] | Touche > Sujet seulement |
+| Même motif, même main | 2, 1 | — | trop peu de paires |
+
+**Ce que ça change.**
+- Les deux résultats solides du banc sont confirmés : **Forme pour la composition, Couleur pour la
+  palette**.
+- **Sujet ne bat pas Forme de façon sûre sur « même sujet »** (37,8 % contre 27,0 %, intervalles
+  qui se recouvrent), alors que le rang médian (30 contre 506) penche nettement pour Sujet.
+- **Touche n'est sûre que contre Sujet** sur « même facture » : pas contre Forme ni Couleur.
+- **Filiation** : Forme et Sujet à égalité, comme Deepseek l'avait relevé ; avec 10 paires, aucun
+  regard ne peut être déclaré meilleur pour la filiation.
+- Règle pour la suite : un nouveau regard n'est « meilleur » que si l'intervalle de l'écart apparié
+  exclut zéro. Les paires à ajouter en priorité : même sujet, même facture, filiation, puis même motif
+  et même main.
+
+**Limites.** Bootstrap par centiles sur de petits effectifs : intervalles approximatifs, plutôt
+étroits sous 15 paires. Plusieurs comparaisons sans correction (une dizaine par type) : un « écart
+sûr » isolé à p ≈ 0,03 reste à confirmer. Les paires ont été relues par une seule personne (accord
+entre lecteurs non mesuré, voir Krippendorff dans la note de Deepseek).

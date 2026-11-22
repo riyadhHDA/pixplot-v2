@@ -73,6 +73,10 @@
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M3 4h14l-5 6v5l-4 2v-7z"/></svg>
         <span class="label">Filtrer</span>
       </button>
+      <button class="tool" id="open-notions" hidden title="Notions apprises par le modèle (auto-encodeur parcimonieux) (O)">
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M4 6h12M4 10h9M4 14h6M15 11v6M12 14h6"/></svg>
+        <span class="label">Notions</span>
+      </button>
       <button class="tool" id="open-compare" hidden title="Comparer les œuvres mises de côté (C)">
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="M2 4h7v12H2z M11 4h7v12h-7z"/></svg>
         <span class="label">Comparer</span><b id="compare-count">0</b>
@@ -183,7 +187,7 @@
       </div>
       <h3>Raccourcis</h3>
       <div class="keys">
-        <span><kbd>/</kbd> chercher</span><span><kbd>G</kbd> groupes</span><span><kbd>F</kbd> filtres</span><span><kbd>C</kbd> comparer</span>
+        <span><kbd>/</kbd> chercher</span><span><kbd>G</kbd> groupes</span><span><kbd>F</kbd> filtres</span><span><kbd>O</kbd> notions</span><span><kbd>C</kbd> comparer</span>
         <span><kbd>N</kbd> carnet</span><span><kbd>V</kbd> à vérifier</span><span><kbd>D</kbd> désaccords</span><span><kbd>R</kbd> relecture rapide</span><span><kbd>I</kbd> corpus et regards</span><span><kbd>0</kbd> vue d'ensemble</span>
         <span><kbd>?</kbd> aide</span><span><kbd>Échap</kbd> fermer</span>
       </div>
@@ -205,6 +209,7 @@
   <script src="atlas-revue.js"></script>
   <script src="atlas-recherche.js"></script>
   <script src="atlas-filtres.js"></script>
+  <script src="atlas-notions.js"></script>
   <script src="atlas-ui.js"></script>
 </body>
 </html>

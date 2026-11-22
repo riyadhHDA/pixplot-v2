@@ -9,7 +9,9 @@ dropped experiments and leads worth testing.
 
 We avoid piling up models without evidence. A new method only stays if it beats the baseline
 on a benchmark (annotated pairs, labels, RichArt…) while adding a signal the existing spaces
-miss. Failed attempts are documented with their numbers and dropped.
+miss. Failed attempts are documented with their numbers and dropped. Since 22/11/2026, "beats"
+means that the 95 % confidence interval of the paired difference excludes zero (`pixplot pairs ci`,
+ARCHITECTURE § 38).
 
 ## Next steps
 

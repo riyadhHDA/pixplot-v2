@@ -108,6 +108,7 @@ function wireUI() {
   }));
   $("open-notebook").addEventListener("click", renderNotebook);
   $("open-filters").addEventListener("click", renderFilters);
+  $("open-notions").addEventListener("click", renderNotions);
   $("open-suspects").addEventListener("click", openReview);
   $("open-disagreements").addEventListener("click", () => renderDisagreements());
   $("open-corpus").addEventListener("click", renderCorpus);
@@ -166,6 +167,7 @@ function wireUI() {
     else if (k === "c") openCompare();
     else if (k === "n") renderNotebook();
     else if (k === "f") renderFilters();
+    else if (k === "o" && !$("open-notions").hidden) renderNotions();
     else if (k === "v" && !$("open-suspects").hidden) openReview();
     else if (k === "d" && !$("open-disagreements").hidden) renderDisagreements();
     else if (k === "r") openReviewSession();

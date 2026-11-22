@@ -980,6 +980,8 @@ def cmd_pairs(args) -> int:
             print(f"{TYPES.get(t, (t,))[0]:<48} {o:<12} {st:<9} {n:>5}")
         print(f"{len(pairs)} paires · {path}")
         return 0
+    if args.action == "ci":
+        return _pairs_ci(args, path)
 
     from .api.data import AtlasData
     from .api.spaces import Spaces
@@ -1039,13 +1041,64 @@ def cmd_pairs(args) -> int:
                 mark = " ◀" if r.space == best else ""
                 print(f"{TYPES[t][0][:44]:<44} {r.space:<9} {r.n:>5} {r.r10:>6.1%} {r.r100:>6.1%} "
                       f"{r.median_rank:>9.0f} {r.centile:>8.3f}{mark}")
+    origin_of = {(min(p.a, p.b), max(p.a, p.b), p.type): p.origin for p in pairs}
     out = path.parent / f"pairs_report_{Path(data.analysis.path).name}.json"
     out.write_text(json.dumps({
         "analysis": data.analysis.id, "n_artworks": len(ids), "spaces": keys,
         "results": [r.__dict__ for r in results],
-        "pairs": [{"a": a, "b": b, "type": t, "ranks": v} for (a, b, t), v in detail.items()],
+        "pairs": [{"a": a, "b": b, "type": t, "origin": origin_of.get((a, b, t), "annotée"), "ranks": v}
+                  for (a, b, t), v in detail.items()],
     }, ensure_ascii=False, indent=1), encoding="utf-8")
-    print(f"\nRapport : {out}")
+    print(f"\nRapport : {out}\nIntervalles de confiance : `pixplot pairs ci`")
+    return 0
+
+
+def _pairs_ci(args, path) -> int:
+    """Intervalles de confiance du dernier rapport de ``pixplot pairs bench``, sans recalcul."""
+    import json
+    from pathlib import Path
+
+    from .analysis.pairbench import TYPES, bootstrap_report, load_pairs
+
+    if args.report:
+        report = Path(args.report)
+    else:
+        found = sorted(path.parent.glob("pairs_report_*.json"), key=lambda f: f.stat().st_mtime)
+        if not found:
+            raise SystemExit("Aucun rapport : lancez d'abord `pixplot pairs bench`.")
+        report = found[-1]
+    rep = json.loads(report.read_text(encoding="utf-8"))
+    # anciens rapports : l'origine n'y figurait pas, on la reprend du fichier de paires
+    origin_of = {(min(p.a, p.b), max(p.a, p.b), p.type): p.origin for p in load_pairs(path)}
+    per_pair = [{**p, "origin": p.get("origin") or origin_of.get((min(p["a"], p["b"]), max(p["a"], p["b"]), p["type"]),
+                                                                 "annotée")} for p in rep["pairs"]]
+    if not args.all_origins:
+        per_pair = [p for p in per_pair if p["origin"] == "annotée"]
+    ci = bootstrap_report(per_pair, n_boot=args.boot, seed=args.seed)
+    order = {k: n for n, k in enumerate(rep.get("spaces", []))}
+    pct = int(round(ci["level"] * 100))
+    print(f"Rapport : {report.name} · bootstrap sur les paires, {args.boot} tirages, IC {pct} %")
+    for g in ci["groups"].values():
+        label = TYPES.get(g["type"], (g["type"],))[0]
+        print(f"\n{label} · {g['origin']} · {g['n_pairs']} paires")
+        if g["n_pairs"] < 5:
+            print("  moins de 5 paires : pas d'intervalle, à étoffer avant toute conclusion")
+            continue
+        print(f"  {'regard':<9} {'n':>4} {'R@10':>6} {'IC':>15} {'rang méd.':>9} {'IC':>17}")
+        for s, v in sorted(g["spaces"].items(), key=lambda kv: order.get(kv[0], 99)):
+            lo, hi = v["r10_ci"]
+            mlo, mhi = v["median_ci"]
+            print(f"  {s:<9} {v['n_pairs']:>4} {v['r10']:>6.1%} [{lo:>5.1%} – {hi:>5.1%}] "
+                  f"{v['median_rank']:>9.0f} [{mlo:>6.0f} – {mhi:>6.0f}]")
+        sure = [c for c in g["paired"] if c["ci"][0] > 0 or c["ci"][1] < 0]
+        for c in sure:
+            print(f"  écart sûr : {c['a']} − {c['b']} = {c['diff_r10']:+.1%} "
+                  f"[{c['ci'][0]:+.1%} – {c['ci'][1]:+.1%}], p = {c['p']:.3f}")
+        if g["paired"] and not sure:
+            print("  aucun écart de R@10 entre regards dont l'intervalle exclut zéro")
+    out = report.with_name(report.stem.replace("pairs_report_", "pairs_ci_") + ".json")
+    out.write_text(json.dumps({"report": report.name, **ci}, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"\nDétail (tous les couples de regards) : {out}")
     return 0
 
 
@@ -1305,7 +1358,11 @@ def build_parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_composition)
 
     p = sub.add_parser("pairs", help="banc d'essai par paires : quel regard retrouve quelle ressemblance")
-    p.add_argument("action", choices=["types", "add", "list", "generate", "bench"])
+    p.add_argument("action", choices=["types", "add", "list", "generate", "bench", "ci"])
+    p.add_argument("--report", help="pour ci : rapport de `pairs bench` (défaut : le dernier)")
+    p.add_argument("--boot", type=int, default=2000, help="pour ci : nombre de tirages bootstrap")
+    p.add_argument("--all-origins", action="store_true",
+                   help="pour ci : inclure les paires tirées des métadonnées")
     p.add_argument("ids", nargs="*", type=int, help="pour add : les deux numéros d'œuvre")
     p.add_argument("--type", help="type de ressemblance (voir `pixplot pairs types`)")
     p.add_argument("--status", default="validée", choices=["validée", "proposée", "rejetée"])

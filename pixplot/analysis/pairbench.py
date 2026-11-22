@@ -236,6 +236,68 @@ def score_pairs(pairs: list[Pair], spaces: dict[str, tuple[np.ndarray, dict[int,
     return results, dict(detail)
 
 
+# ------------------------------------------------------------------ incertitude
+def _r10(rs: np.ndarray) -> float:
+    return float((rs <= 10).mean())
+
+
+def bootstrap_report(per_pair: list[dict], n_boot: int = 2000, seed: int = 0,
+                     level: float = 0.95) -> dict:
+    """Intervalles de confiance par **bootstrap sur les paires** (Smucker, Allan et Carterette,
+    CIKM 2007), à partir des rangs déjà mesurés : aucun recalcul de vecteurs.
+
+    On tire les *paires* avec remise, pas les requêtes : les deux sens d'une même paire
+    (A → B, B → A) ne sont pas indépendants. ``per_pair`` : ``{"type", "origin",
+    "ranks": {regard: [rang A→B, rang B→A]}}``.
+
+    Renvoie, par (type, origine) :
+    - ``spaces`` : pour chaque regard, R@10 et rang médian avec leur intervalle ;
+    - ``paired`` : pour chaque couple de regards, écart de R@10 (premier − second) sur les
+      paires mesurées dans les deux, intervalle et p bilatéral du bootstrap apparié.
+    """
+    rng = np.random.default_rng(seed)
+    lo_q, hi_q = (1 - level) / 2 * 100, (1 + level) / 2 * 100
+    groups: dict[tuple[str, str], list[dict]] = defaultdict(list)
+    for p in per_pair:
+        groups[(p["type"], p.get("origin", "annotée"))].append(p)
+    out = {}
+    for (t, origin), ps in sorted(groups.items()):
+        spaces = sorted({s for p in ps for s in p["ranks"]})
+        entry: dict = {"type": t, "origin": origin, "n_pairs": len(ps), "spaces": {}, "paired": []}
+        for s in spaces:
+            R = np.array([p["ranks"][s] for p in ps if s in p["ranks"]], dtype=np.int64)  # (n, 2)
+            n = len(R)
+            idx = rng.integers(n, size=(n_boot, n))
+            boot = R[idx].reshape(n_boot, -1)                                           # (B, 2n)
+            r10_b = (boot <= 10).mean(axis=1)
+            med_b = np.median(boot, axis=1)
+            entry["spaces"][s] = {
+                "n_pairs": n, "r10": _r10(R.ravel()),
+                "r10_ci": [float(np.percentile(r10_b, lo_q)), float(np.percentile(r10_b, hi_q))],
+                "median_rank": float(np.median(R)),
+                "median_ci": [float(np.percentile(med_b, lo_q)), float(np.percentile(med_b, hi_q))],
+            }
+        for i, s1 in enumerate(spaces):
+            for s2 in spaces[i + 1:]:
+                both = [p for p in ps if s1 in p["ranks"] and s2 in p["ranks"]]
+                n = len(both)
+                if n < 2:
+                    continue
+                h1 = (np.array([p["ranks"][s1] for p in both]) <= 10).mean(axis=1)   # par paire
+                h2 = (np.array([p["ranks"][s2] for p in both]) <= 10).mean(axis=1)
+                d = h1 - h2
+                idx = rng.integers(n, size=(n_boot, n))
+                db = d[idx].mean(axis=1)
+                p_two = float(min(1.0, 2 * min((db <= 0).mean(), (db >= 0).mean())))
+                entry["paired"].append({
+                    "a": s1, "b": s2, "n_pairs": n, "diff_r10": float(d.mean()),
+                    "ci": [float(np.percentile(db, lo_q)), float(np.percentile(db, hi_q))],
+                    "p": p_two, "ties": float((d == 0).mean()),
+                })
+        out[f"{t}|{origin}"] = entry
+    return {"n_boot": n_boot, "seed": seed, "level": level, "groups": out}
+
+
 def load_space_matrix(spaces_obj, key: str, ids: list[int]) -> tuple[np.ndarray, dict[int, int]]:
     """Vecteurs normalisés d'un regard pour les œuvres données (celles qu'il connaît)."""
     spaces_obj._open(key)

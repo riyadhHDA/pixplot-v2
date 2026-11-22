@@ -27,6 +27,10 @@ import numpy as np
 
 PREFIXES = (64, 256, 1024)
 SEED = 0
+ICONCLASS_Z_MIN = 5.0          # en dessous, le nom Iconclass est trop bruité (ARCHITECTURE § 37)
+FRAMED_FEATURE = 88            # n° 88 sur le regard « sujet » : tableau photographié avec son cadre
+FRAMED_RUN = "notions_sujet_20261121-213443"   # numéro propre à ce calcul : un autre entraînement le change
+FRAMED_LABEL = "tableau photographié avec son cadre"
 
 
 def _prep(X: np.ndarray) -> tuple[np.ndarray, np.ndarray, float]:
@@ -151,3 +155,103 @@ def save(run_path: Path, model: dict, feats: list[dict], baseline: dict, info: d
                         scale=np.float32(model["scale"]), k=np.int32(model["k"]))
     (run_path / "notions.json").write_text(json.dumps({**info, "baseline": baseline, "features": feats},
                                                       ensure_ascii=False), encoding="utf-8")
+
+
+def latest_notions_run(runs_dir: Path, space: str | None = None):
+    """Dernier run terminé de notions apprises (``analysis/notions_*``), en privilégiant ``sujet``."""
+    from ..runs import list_runs
+
+    runs = [
+        r for r in list_runs("analysis", include_notions=True, runs_dir=runs_dir)
+        if r.manifest["name"].startswith("notions_") and (Path(r.path) / "notions.json").exists()
+    ]
+    if space:
+        runs = [r for r in runs if r.manifest["name"] == f"notions_{space}"]
+    elif any(r.manifest["name"] == "notions_sujet" for r in runs):
+        runs = [r for r in runs if r.manifest["name"] == "notions_sujet"]
+    return runs[-1] if runs else None
+
+
+def load_notions(run) -> dict | None:
+    """Lit ``notions.json`` d'un run de notions."""
+    p = Path(run.path) / "notions.json"
+    if not p.exists():
+        return None
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
+def framed_feature(run, meta: dict) -> int | None:
+    """Numéro de la notion « tableau photographié avec son cadre », s'il est connu pour ce run
+    (relu à l'œil sur ce calcul seulement ; les numéros changent à chaque entraînement)."""
+    if meta.get("space") == "sujet" and Path(run.path).name == FRAMED_RUN:
+        return FRAMED_FEATURE
+    return None
+
+
+def notion_label(feat: dict, z_min: float = ICONCLASS_Z_MIN) -> tuple[str, bool]:
+    """Étiquette Iconclass si ``z >= z_min``, sinon « sans nom »."""
+    ic = feat.get("iconclass")
+    if ic and float(ic.get("z", 0.0)) >= z_min and ic.get("fr"):
+        return str(ic["fr"]), True
+    return "sans nom", False
+
+
+def encode_index(run, runs_dir: Path, allowed_ids: set[int] | None = None, batch: int = 4096) -> dict | None:
+    """Recalcule en NumPy les activations TopK exactes depuis ``sae.npz`` et construit un index
+    inversé par notion (œuvres triées par activation décroissante). Renvoie ``None`` si ``sae.npz``
+    ou les vecteurs parents sont absents."""
+    from ..runs import Run
+    from .layout import load_valid
+
+    npz_path = Path(run.path) / "sae.npz"
+    parent = run.manifest.get("parent")
+    if not npz_path.exists() or not parent:
+        return None
+    feat_path = runs_dir / parent
+    if not (feat_path / "manifest.json").exists():
+        return None
+    ids, X = load_valid(Run.load(feat_path))
+    if allowed_ids is not None:
+        keep = np.fromiter((int(i) in allowed_ids for i in ids), dtype=bool, count=len(ids))
+        ids, X = ids[keep], X[keep]
+    n = len(ids)
+    with np.load(npz_path) as npz:
+        W_enc = npz["W_enc"].astype(np.float32)
+        b_enc = npz["b_enc"].astype(np.float32)
+        b_dec = npz["b_dec"].astype(np.float32)
+        mean = npz["mean"].astype(np.float32)
+        scale = float(npz["scale"])
+        k = int(npz["k"])
+    n_features = W_enc.shape[1]
+    k = max(1, min(k, n_features))
+    if n == 0:
+        return {"n_features": n_features, "n_artworks": 0, "offsets": np.zeros(n_features + 1, dtype=np.int64),
+                "ids": np.empty(0, dtype=np.int64), "scores": np.empty(0, dtype=np.float32)}
+    W_eff = W_enc / max(scale, 1e-12)
+    b_eff = b_enc - (mean / max(scale, 1e-12) + b_dec) @ W_enc
+    top_idx = np.empty((n, k), dtype=np.int32)
+    top_val = np.empty((n, k), dtype=np.float32)
+    for s in range(0, n, batch):
+        xb = X[s:s + batch].astype(np.float32, copy=False)
+        pre = xb @ W_eff + b_eff
+        if k < n_features:
+            idx = np.argpartition(pre, -k, axis=1)[:, -k:]
+            val = np.take_along_axis(pre, idx, axis=1)
+        else:
+            idx = np.broadcast_to(np.arange(n_features, dtype=np.int32), pre.shape)
+            val = pre
+        np.maximum(val, 0.0, out=val)
+        e = s + len(xb)
+        top_idx[s:e] = idx
+        top_val[s:e] = val
+    pos = top_val > 0
+    art_rows, _ = np.nonzero(pos)
+    feat_flat = top_idx[pos]
+    val_flat = top_val[pos]
+    art_flat = ids[art_rows].astype(np.int64)
+    order = np.lexsort((-val_flat, feat_flat))
+    counts = np.bincount(feat_flat, minlength=n_features)
+    offsets = np.zeros(n_features + 1, dtype=np.int64)
+    np.cumsum(counts, out=offsets[1:])
+    return {"n_features": n_features, "n_artworks": n, "offsets": offsets,
+            "ids": art_flat[order], "scores": val_flat[order]}
