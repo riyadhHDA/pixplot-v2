@@ -1741,3 +1741,119 @@ recalcul, moins d'une seconde. Pas d'intervalle sous 5 paires. Paires annotées 
 étroits sous 15 paires. Plusieurs comparaisons sans correction (une dizaine par type) : un « écart
 sûr » isolé à p ≈ 0,03 reste à confirmer. Les paires ont été relues par une seule personne (accord
 entre lecteurs non mesuré, voir Krippendorff dans la note de Deepseek).
+
+## 39. Le bouton « Pourquoi ? » explique-t-il vraiment ? Test par occultation (22/11/2026)
+
+**Question.** Dans le comparateur (§ 25, `pixplot/analysis/correspondences.py`), le bouton « Pourquoi ? »
+encadre 4 paires de cases 4 × 4 qui « se répondent » pour le regard forme (DINOv3). Mais ces zones
+sont-elles réellement **celles qui font la ressemblance globale** calculée par DINOv3, ou seulement une
+illustration plausible a posteriori (biais perceptif relevé par Wasielewski, 2023 ; protocole n° 1 de
+`docs/handoff/deepseek-lectures.md`) ? Si elles portent vraiment la ressemblance, les cacher doit faire
+chuter le cosinus bien plus que de cacher d'autres zones.
+
+**Méthode.** `pixplot whytest` (`pixplot/analysis/whytest.py`), sans modifier le calcul existant du
+« Pourquoi ? ».
+- **Paires** : les **104 paires validées** de `bench/wikiart81k_pairs.csv` (tous types ; **104/104** ont
+  au moins 4 correspondances mutuelles) et **104 paires témoins « voisines proches »** (première voisine
+  exacte en forme d'une œuvre tirée au sort, graine 0, disjointes des validées ; **103/104** ont au moins
+  4 correspondances). Total : 207 paires, 401 œuvres uniques.
+- **Vérification préalable** : réencodage sans occultation avec DINOv3 ViT-B/16 et exactement le même
+  prétraitement (letterbox 448 px, sans toucher aux bandes) que le run de référence
+  `features/dinov3_vitb16_20261116-102419`. Écart maximal de cosinus : **0,00033** (moyenne 0,00006,
+  auto-cosinus minimal 0,999999), très sous le seuil fixé (0,01).
+- **Occultation** : sur les deux images à la fois (`both`) puis sur une seule (`one`, image A), pour trois
+  conditions : **(a)** les 4 premières zones du « Pourquoi ? », **(b)** 4 cases tirées au hasard parmi les
+  cases recouvrant l'œuvre (hors bandes de letterbox, moyenne sur 10 tirages), **(c)** les 4 cases centrales
+  (5, 6, 9, 10). Deux remplissages : **couleur moyenne** de l'œuvre (`mean`, hors bandes) et **flou
+  gaussien fort** (`blur`, rayon 32 px). Chute = cosinus d'origine − cosinus après occultation.
+- **Statistiques et critère fixé d'avance** : bootstrap apparié sur les paires (2 000 tirages, IC 95 %,
+  p bilatéral comme `pixplot pairs ci`, § 38). **Réussi si** la chute médiane de (a) dépasse celle de (b)
+  d'un facteur ≥ 3 et que l'IC 95 % de (a − b) exclut zéro. Coût : **205 s** (3 min 25 s, RX 7900 GRE,
+  10 311 images encodées ; rapport `<données>/bench/whytest_report.json`, journal `<données>/whytest.log`).
+
+**Résultats : échec net dans toutes les conditions.**
+
+| Groupe et mode (`mean`) | n | cos₀ méd. | (a) Pourquoi [IC 95 %] | (b) Hasard | (c) Centre | Ratio a/b | (a − b) méd. [IC 95 %] · p | (a − c) méd. · p | Verdict |
+|---|---|---|---|---|---|---|---|---|---|
+| Validées · 2 images | 104 | 0,356 | −0,0006 [−0,0038 ; +0,0048] | −0,0089 | −0,0448 | — | +0,0148 [+0,0053 ; +0,0188] · 0,015 | +0,0474 · <0,001 | **Échec** |
+| Validées · 1 image (A) | 104 | 0,356 | +0,0019 [−0,0011 ; +0,0044] | +0,0034 | +0,0124 | 0,55 | −0,0003 [−0,0059 ; +0,0032] · 0,602 | −0,0113 · 0,128 | **Échec** |
+| Voisines · 2 images | 103 | 0,724 | +0,0099 [+0,0059 ; +0,0123] | +0,0274 | +0,0214 | **0,36** | −0,0119 [−0,0174 ; −0,0055] · 0,008 | −0,0034 · 0,274 | **Échec** |
+| Voisines · 1 image (A) | 103 | 0,724 | +0,0059 [+0,0027 ; +0,0133] | +0,0181 | **+0,0945** | **0,33** | −0,0090 [−0,0134 ; −0,0031] · 0,002 | **−0,0785 · <0,001** | **Échec** |
+
+Contrôle au **flou fort** (`blur`) — résultats quasi identiques, la conclusion ne dépend pas du remplissage :
+- Validées : `both` (a) +0,0012, (b) −0,0062, (c) −0,0316 (`a − b` +0,0125, p = 0,015) ; `one` (a) +0,0023,
+  (b) +0,0040, (c) +0,0195 (ratio 0,57, p = 0,598).
+- Voisines proches : `both` (a) +0,0075, (b) +0,0259, (c) +0,0322 (ratio **0,29**, `a − b` −0,0117, p = 0,006) ;
+  `one` (a) +0,0077, (b) +0,0191, (c) **+0,0857** (ratio **0,40**, `a − b` −0,0084, p = 0,010 ; `a − c`
+  −0,0758, p < 0,001).
+
+**Par type de paire validée** (types comptant au moins 10 paires ; `mean`, `both` / `one` ; `filiation` 9,
+`meme_motif` 2 et `meme_main` 1 non ventilés) :
+
+| Type (n) | cos₀ méd. | `both` : (a) / (b) / (c) | `both` : (a − b) · p | `one` : (a) / (b) / (c) | `one` : (a − b) · p |
+|---|---|---|---|---|---|
+| Même composition (14) | 0,544 | +0,0076 / +0,0169 / +0,0208 | −0,0042 · 0,749 | +0,0109 / +0,0179 / **+0,0769** | −0,0032 · 0,397 |
+| Même sujet (36) | 0,421 | +0,0088 / +0,0137 / +0,0070 | +0,0095 · 0,398 | +0,0035 / +0,0144 / **+0,0624** | −0,0086 · 0,017 |
+| Même facture (16) | 0,284 | +0,0031 / −0,0269 / −0,1041 | +0,0271 · 0,072 | −0,0007 / −0,0009 / −0,0214 | +0,0060 · 0,248 |
+| Même palette (26) | 0,097 | −0,0090 / −0,0275 / −0,1131 | +0,0172 · <0,001 | −0,0028 / −0,0099 / −0,0119 | +0,0045 · 0,099 |
+
+**Pourquoi le test échoue : deux mécanismes mis au jour.**
+1. **Un fort biais de coins dans « Pourquoi ? ».** Le décompte des cases retenues explique tout : sur les
+   paires validées (832 cases), **63,0 %** des zones choisies tombent dans les **4 coins** de la grille
+   (`{0, 3, 12, 15}`, contre 25 % au hasard), **95,8 %** sur les bords et seulement **4,2 % au centre**
+   (voisines proches : **57,5 %** dans les coins, **93,6 %** sur les bords, **6,4 %** au centre) ; dans
+   **92,8–93,0 %** des cas, une case est appariée à la même position exacte (`cell_a == cell_b`). Les patchs
+   périphériques de DINOv3 portent une forte signature de position et de bord : deux coins homologues se
+   ressemblent beaucoup entre eux tout en différant du reste de l'image, ce qui maximise mécaniquement le
+   score de distinction (`lift`) de `correspondences.py` au détriment du centre, là où le vecteur global
+   DINOv3 puise pourtant l'essentiel de sa ressemblance (+0,0945 en occultant le centre d'une seule voisine,
+   soit 16 fois plus que les zones du « Pourquoi ? »). Sur les voisines proches, cacher les 4 zones du
+   « Pourquoi ? » fait ainsi **environ 3 fois moins** chuter le cosinus que 4 cases au hasard.
+2. **Un artefact d'occultation symétrique sur les paires dissemblables.** Sur les paires validées de faible
+   cosinus initial (`meme_palette` 0,097, `meme_facture` 0,284, issues de désaccords entre regards), cacher le
+   centre des **deux** images efface leurs sujets différents et place un grand carré uniforme ou flou au même
+   endroit, ce qui *augmente* leur cosinus (chute négative : −0,113 pour le centre, −0,028 pour le hasard).
+   L'écart `(a − b) = +0,0148` sur `validees (both)` vient uniquement de cet artefact — (a) ne chute pas
+   (−0,0006) — et disparaît dès qu'on n'occulte qu'une seule image (`one`).
+
+**Examen visuel (planche de 6 paires validées, `<données>/bench/whytest_planche.jpg`).**
+- *Trois fortes chutes de (a)* :
+  1. `#49819` (illustration réaliste) ↔ `#67186` (Remington, *A Brush with the Redskins*, `meme_sujet`,
+     Δ(a) = +0,105, Δ(b) = −0,003) : seul cas de la planche où les 4 cadres se posent sur les figures
+     (chasseurs accroupis au centre-droit) plutôt que dans les coins.
+  2. `#8965` (Kirchner, *Walking Woman with Dog*) ↔ `#66489` (Billy Apple, `meme_sujet`, Δ(a) = +0,100,
+     Δ(b) = +0,092) : les 4 cadres collent aux coins haut et bas, pour une chute presque égale au hasard.
+  3. `#21020` (Makovski) ↔ `#31498` (Kontchalovski, `meme_sujet`, Δ(a) = +0,090, Δ(b) = +0,054,
+     Δ(c) = +0,087) : les 4 cadres alignent toute la bande supérieure (chevelure et fond), pas mieux que le
+     centre et quasi nul sur une seule image (+0,002).
+- *Trois paires où (a) ne chute pas plus que le hasard* :
+  4. `#71348` (crâne fumant, Expressionnisme) ↔ `#75862` (créature symboliste, `meme_facture`,
+     Δ(a) = +0,012, Δ(b) = +0,179, Δ(c) = +0,224) : les 4 cadres occupent strictement les 4 coins vides et
+     manquent complètement les deux figures centrales.
+  5. `#48392` (Flora-Karavia, *Marie Bonaparte*) ↔ `#76646` (Pogačnik, *Pop Object 3*, `meme_composition`,
+     Δ(a) = −0,006, Δ(b) = +0,061, Δ(c) = +0,207) : les 4 cadres s'accrochent aux 4 coins du fond, ignorant
+     le buste et le sac blanc au centre.
+  6. `#79406` (Van Gogh, *Le Semeur d'après Millet*) ↔ `#41274` (Millet, *Le Semeur*, `filiation`, cos 0,711,
+     Δ(a) = −0,022, Δ(b) = +0,044, Δ(c) = +0,031 ; une image : Δ(c) = +0,107) : sur une copie fidèle, les
+     4 cadres n'encadrent que les coins de ciel et de terre sombre, laissant tout le semeur dehors.
+
+**Limites.** Sur les formats non carrés, les cases de bord sont rognées par le letterbox : la surface réelle
+occultée moyenne vaut 21,9–22,5 % pour (a), 25,8–26,5 % pour (b) et 33,9–34,4 % pour (c). En ramenant
+chaque chute à 25 % de surface occultée, l'ordre ne change pas (voisines `one`, `mean` : (a) +0,0080 contre
+(b) +0,0177 et (c) +0,0669). L'occultation d'un seul modèle (DINOv3 ViT-B/16) sur grille fixe 4 × 4 ne juge
+que le « Pourquoi ? » actuel. Rappel de méthode : une proximité calculée — et a fortiori un cadre
+automatique — est une piste pour regarder, jamais une preuve.
+
+**Propositions pour la suite (non appliquées, à décider et re-mesurer par `pixplot whytest`).**
+1. **Mise en garde immédiate dans l'Atlas** : avertir dans la légende du bouton « Pourquoi ? » que les
+   zones montrées aujourd'hui sont fortement attirées par les coins et ne traduisent pas ce qui pèse le plus
+   dans le score global, ou désactiver le bouton par défaut tant que le classement n'est pas corrigé.
+2. **Corriger le classement dans `correspondences.py`** (sans réextraction) : (i) **centrer chaque case par
+   sa moyenne sur le corpus** $\mu_c$ (`c ∈ 0..15`) avant de calculer les cosinus, pour supprimer la signature
+   positionnelle de coin ; (ii) **pondérer par l'alignement avec le vecteur global** de chaque œuvre
+   (`regions` contre `global.npy`), afin de mettre en tête les zones qui contribuent réellement à la
+   représentation globale.
+3. **Alternative causale à la demande** : dans le comparateur (une paire à la fois), mesurer directement la
+   chute de cosinus par occultation case par case (16 passages GPU, ~0,15 s) — fidèle par construction, au
+   prix du chargement du modèle à la demande. Toute variante devra repasser `pixplot whytest` avant d'être
+   retenue.

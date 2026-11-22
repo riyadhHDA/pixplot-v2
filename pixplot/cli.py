@@ -1102,6 +1102,60 @@ def _pairs_ci(args, path) -> int:
     return 0
 
 
+# --------------------------------------------------------------------------- whytest
+def cmd_whytest(args) -> int:
+    """Banc d'occultation du bouton « Pourquoi ? » (correspondances mutuelles DINOv3)."""
+    import time
+
+    from .analysis.pairbench import load_pairs, pairs_path
+    from .analysis.whytest import find_dinov3_run, run_whytest
+
+    s = get_settings(args.data)
+    log_path = Path(s.data_dir) / "whytest.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
+
+    def say(msg: str) -> None:
+        print(msg, flush=True)
+        with open(log_path, "a", encoding="utf-8") as f:
+            f.write(f"{time.strftime('%H:%M:%S')} {msg}\n")
+
+    src = Path(args.pairs) if args.pairs else pairs_path(s)
+    pairs = [p for p in load_pairs(src) if p.status == "validée" and (args.pairs or p.origin == "annotée")]
+    if not pairs:
+        raise SystemExit(f"Aucune paire validée trouvée dans {src}.")
+    feat_run = find_dinov3_run(s.runs_dir, args.run)
+    fills = tuple(f.strip() for f in args.fills.split(",") if f.strip())
+    rep = run_whytest(
+        s, feat_run, pairs, device=args.device, k=args.k, n_random=args.random,
+        seed=args.seed, fills=fills, batch_size=args.batch_size, n_boot=args.boot,
+        resume=not args.no_resume, make_sheet=not args.no_sheet, say=say,
+    )
+
+    for fill, fdata in rep["results"].items():
+        say(f"\n=== Résultats · remplissage « {fill} » ===")
+        for grp, gdata in fdata["groups"].items():
+            for mode in ("both", "one"):
+                st = gdata[mode]
+                if not st.get("n_pairs"):
+                    continue
+                ab, ac, cr = st["diff_a_minus_b"], st["diff_a_minus_c"], st["criterion"]
+                verdict = "RÉUSSI" if cr["passed"] else "ÉCHEC"
+                say(f"  {grp:<9} ({mode:<4}, n={st['n_pairs']:>3})  "
+                    f"a={st['a_why']['median']:+.4f} {st['a_why']['median_ci']}  "
+                    f"b={st['b_random']['median']:+.4f}  c={st['c_center']['median']:+.4f}  "
+                    f"a/b={ab['ratio_median']}  (a-b)={ab['median_diff']:+.4f} p={ab['p_median']:.3f}  "
+                    f"(a-c)={ac['median_diff']:+.4f} p={ac['p_median']:.3f}  [{verdict}]")
+        if fdata["by_type"]:
+            say("  Par type (>= 10 paires, 2 images occultées) :")
+            for t, tdata in fdata["by_type"].items():
+                st = tdata["both"]
+                ab = st["diff_a_minus_b"]
+                say(f"    {t:<18} (n={st['n_pairs']:>2})  a={st['a_why']['median']:+.4f}  "
+                    f"b={st['b_random']['median']:+.4f}  c={st['c_center']['median']:+.4f}  "
+                    f"a/b={ab['ratio_median']}  (a-b)={ab['median_diff']:+.4f} p={ab['p_median']:.3f}")
+    return 0
+
+
 # --------------------------------------------------------------------------- status
 def cmd_status(args) -> int:
     from .catalog import db
@@ -1374,6 +1428,20 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("-n", type=int, default=300, help="pour generate : paires par type")
     p.add_argument("--seed", type=int, default=0)
     p.set_defaults(func=cmd_pairs)
+
+    p = sub.add_parser("whytest", help="tester le bouton « Pourquoi ? » par occultation (DINOv3)")
+    p.add_argument("--pairs", help="fichier CSV de paires (défaut : <données>/bench/pairs.csv)")
+    p.add_argument("--run", help="run DINOv3 de référence (défaut : le dernier complet avec regions.npy)")
+    p.add_argument("-k", type=int, default=4, help="nombre de zones occultées (défaut : 4)")
+    p.add_argument("--random", type=int, default=10, help="tirages aléatoires par paire (défaut : 10)")
+    p.add_argument("--fills", default="mean,blur", help="remplissages à tester : mean,blur")
+    p.add_argument("--batch-size", type=int, default=32)
+    p.add_argument("--boot", type=int, default=2000, help="tirages bootstrap pour les IC 95 %%")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--device", default=None, help="cuda ou cpu (défaut : automatique)")
+    p.add_argument("--no-resume", action="store_true", help="ne pas reprendre un calcul interrompu")
+    p.add_argument("--no-sheet", action="store_true", help="ne pas générer la planche visuelle")
+    p.set_defaults(func=cmd_whytest)
 
     sub.add_parser("status", help="état du catalogue et des runs").set_defaults(func=cmd_status)
     sub.add_parser("runs", help="alias de status").set_defaults(func=cmd_status)
