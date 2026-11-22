@@ -1338,9 +1338,24 @@ through the authors' form and kept locally).
   (5 to 6 times); mostly through what is depicted, hardly through colour.
 - **Limits.** A work's emotion rests on about 5 viewers (Amazon Mechanical Turk) and contentment
   dominates (126,134 of 454,684 reactions). Part of the effect may come from genre (a portrait and a
-  battle do not arouse the same reactions): not controlled here. WikiArt file names are volunteer
+  battle do not arouse the same reactions): see the control below. WikiArt file names are volunteer
   labels like the others. Consequence: artist benchmarks, `pixplot suspects` and group names computed
   earlier rest on the old labels and must be recomputed.
+
+- **Emotion at equal genre** (added 21/11/2026). For each work, the first neighbour (among 50) that
+  has an emotion **and the same genre**; chance is computed genre by genre (probability that two works
+  of the same genre share the dominant emotion):
+
+| Regard | All neighbours | Same-genre neighbour | Chance at equal genre | Ratio |
+|---|---|---|---|---|
+| Form | 42.5 % | 42.2 % | 30.8 % | 1.37 |
+| Subject | 42.4 % | 42.4 % | 30.8 % | 1.37 |
+| Touch | 38.2 % | 39.2 % | 30.9 % | 1.27 |
+| Colour | 31.8 % | 34.7 % | 31.0 % | 1.12 |
+
+  (about 45,000 works per regard.) Genre explains part of the effect: chance rises from 24.7 % to
+  31 %. But about two thirds of the gap to chance remain: two portraits the model finds close more
+  often arouse the same emotion than two random portraits. Colour stays almost silent.
 
 ## 35. "Posture" regard (Pathosformeln): RT-DETRv2 + ViTPose, evaluated and not kept by default (21/11/2026)
 
@@ -1468,3 +1483,82 @@ and matching **all figures** instead of only the primary figure raises percentil
   (frontal standing, seated bust) crowd the 102,515-figure neighbourhood; the 2D descriptor ignores depth
   (front/back) and fine hand gestures (absent from COCO-17). Skeleton proximity is a formal lead, never
   proof of borrowing.
+
+## 36. Sentence search: benchmark with MMArt descriptions (21/11/2026)
+
+**Question.** Sentence search (§ 12) had only been measured on short hand-written queries (100
+queries, § 31). MMArt (§ 34) gives five long descriptions for each matched work (formal, narrative,
+emotional, historical, unified): each model can be asked to find **the right work among 80,716** from
+its description.
+
+**Method.** `pixplot textbench --mmart … -n 300 --encoders siglip2,pe_core`
+(`pixplot/analysis/textbench.py`): 300 works drawn at random (seed 0) among the 70,902 matched; each
+description becomes a query; we record the rank of the true work. The title is the control. CPU only
+(SigLIP 2: 2 h 31; PE-Core: 1 h 02). Report: `<data>/bench/textbench_report.json`.
+
+| Query | SigLIP 2: R@1 / R@10 / R@100 · median rank | PE-Core L/14: R@1 / R@10 / R@100 · median rank |
+|---|---|---|
+| Narrative (what happens) | 20.3 / 45.7 / 71.0 % · **13** | 28.3 / 59.0 / 85.0 % · **6** |
+| Unified | 16.3 / 41.0 / 65.0 % · 26 | 21.7 / 46.7 / 75.3 % · 14 |
+| Title (control) | 9.3 / 23.7 / 49.0 % · 102 | 10.0 / 23.7 / 47.3 % · 115 |
+| Emotional | 5.7 / 18.0 / 43.3 % · 226 | 8.7 / 25.0 / 45.7 % · 136 |
+| Formal (colours, brushwork, composition) | 2.3 / 8.3 / 24.3 % · 661 | 2.0 / 7.7 / 23.7 % · 807 |
+| Historical (context, movement) | 0.7 / 6.7 / 14.0 % · 2,151 | 1.7 / 4.7 / 18.3 % · 1,404 |
+
+**What we learn.**
+- **The models find a work by what it shows**, not by how it is painted: the narrative description
+  puts the right work in the top 10 almost half the time, the formal one almost never (median rank
+  661 to 807). The art historian's vocabulary of facture ("impasto", "diagonal composition") barely
+  gets through.
+- **History is not visible**: the historical description (movement, context) is the worst, as expected
+  since it speaks of what is not in the image.
+- **PE-Core beats SigLIP 2 on long English descriptions** (median rank 6 against 13). This does not
+  contradict § 31: SigLIP 2 remains clearly better in French (97/100 against 81/100), the interface
+  language. Decision unchanged.
+
+**Limits.**
+- **Descriptions are truncated**: SigLIP 2 reads 64 tokens, PE-Core 77; MMArt descriptions have 82 to
+  193 (medians). Each model reads only about the first two sentences; the unified description, the
+  longest, is the most cut.
+- MMArt descriptions were written by a language model looking at the image: their vocabulary is close
+  to the models', which favours retrieval. This is not a historian describing from memory.
+- 300 works: one R@10 point carries about ± 3 points of uncertainty.
+
+## 37. Learned notions: sparse autoencoder on the "subject" regard (21/11/2026)
+
+**Question.** A SigLIP 2 vector holds 1,152 unreadable numbers. Can it be broken down into a small
+number of nameable **notions**, and do these notions say something other than the catalogue labels?
+
+**Method.** `pixplot notions --space sujet` (`pixplot/analysis/sae.py`): "TopK Matryoshka" sparse
+autoencoder (2,048 notions, 16 active per work; the first 64, 256 and 1,024 must already reconstruct
+on their own, which orders notions from broadest to finest). 30 passes over the 80,716 works, 10 %
+held out for measurement. For each notion: its 50 most marked works, the share sharing a style, genre,
+artist, century (against chance), and the closest Iconclass name (SigLIP 2 vectors of the 17,126
+Iconclass notions, z-score against the other notions). CPU only, 3 h 28 (shared with § 36). Run
+`analysis/notions_sujet_*` (`sae.npz`, `notions.json`).
+
+**Results.**
+- **Reconstruction** (held-out works): 49.8 % of variance with 64 notions, 63.0 % with 256, 71.5 % with
+  1,024, **73.7 % with 2,048**. 256 notions are never used: **1,792 alive**.
+- **What explains them** (share of the top 50 works sharing a label, threshold 60 %): genre for 423
+  notions, style for 353, artist for 57; **959 notions match no label**.
+- **The label-less notions are mostly objects and motifs**, checked on contact sheets: rainbow, deer,
+  butterfly, skull (from Cézanne to Pop Art), staircase, flag-decked streets (Childe Hassam),
+  locomotive, skating, violin, lion, peacock… The Iconclass name is right on all eight checked by eye
+  (z 7.5 to 8.6). WikiArt does not index these subjects; the model separates them on its own.
+- **Two unexpected notions**:
+  - no. 24 (17.6 % of works): **the famous masterpiece** (*The Starry Night*, *The Creation of Adam*,
+    *Sunflowers*, *The Thinker*, *Vitruvian Man*). Neither a subject nor a style, but fame learned on
+    the web: the model's "vector imaginary" (Impett and Offert, 2024);
+  - no. 88 (2.9 %): **the painting photographed with its frame**, a fact of reproduction, not of the
+    work. A lead for "To check".
+- Broad notions (first 64) recover the large families: battle, sleeper, fruit still life, forest
+  landscape, combat ukiyo-e…
+
+**Limits.**
+- **The Iconclass name is only reliable above z ≈ 5** (506 notions); below, vague notions get unrelated
+  names ("Will", "hollow cheeks"). Names are proposed by the model, to be reviewed like group names.
+- A notion describes what the model separates, not a historian's category; its boundaries are fuzzy.
+- One regard (subject) and one seed; another seed would give similar but not identical notions.
+- Not yet in the Atlas: a possible step is a list of named notions that light up their works on the
+  map.

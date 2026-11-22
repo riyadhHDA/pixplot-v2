@@ -1452,10 +1452,26 @@ recherche non commercial, obtenu par l'utilisateur via le formulaire des auteurs
   fois) ; surtout par ce qui est représenté, à peine par la couleur.
 - **Limites.** L'émotion d'une œuvre repose sur environ 5 spectateurs (Amazon Mechanical Turk) et le
   contentement domine (126 134 réactions sur 454 684). Une partie de l'effet peut venir du genre (un
-  portrait et une bataille ne suscitent pas les mêmes réactions) : non contrôlé ici. Les noms de
+  portrait et une bataille ne suscitent pas les mêmes réactions) : voir le contrôle ci-dessous. Les noms de
   fichier WikiArt sont des étiquettes de bénévoles, comme les autres. Conséquence pour la suite : les
   bancs d'essai par artiste, `pixplot suspects` et les noms de groupes calculés avant portent sur les
   anciennes étiquettes et sont à recalculer.
+
+- **Émotion à genre égal** (complément du 21/11/2026). Pour chaque œuvre, la première voisine (parmi
+  50) qui a une émotion **et le même genre** ; le hasard est calculé genre par genre (probabilité que
+  deux œuvres du même genre partagent l'émotion dominante) :
+
+| Regard | Toutes voisines | Voisine du même genre | Hasard à genre égal | Rapport |
+|---|---|---|---|---|
+| Forme | 42,5 % | 42,2 % | 30,8 % | 1,37 |
+| Sujet | 42,4 % | 42,4 % | 30,8 % | 1,37 |
+| Touche | 38,2 % | 39,2 % | 30,9 % | 1,27 |
+| Couleur | 31,8 % | 34,7 % | 31,0 % | 1,12 |
+
+  (environ 45 000 œuvres par regard.) Le genre explique une partie de l'effet : le hasard monte de
+  24,7 % à 31 %. Mais environ les deux tiers de l'écart au hasard restent : deux portraits proches pour
+  le modèle suscitent plus souvent la même émotion que deux portraits pris au hasard. La couleur reste
+  presque muette.
 
 ## 35. Regard « posture » (Pathosformeln) : RT-DETRv2 + ViTPose, évalué et non retenu par défaut (21/11/2026)
 
@@ -1593,3 +1609,89 @@ passer le centile de 0,809 (`posture` figure principale) à **0,972** (`posture_
   très courantes (debout de face, buste assis) saturent le voisinage de 102 515 figures ; le descripteur
   2D ignore la profondeur (avant/arrière) et les gestes fins des mains (non modélisés dans COCO-17).
   Une proximité de squelette est une piste formelle, jamais une preuve d'emprunt.
+
+## 36. Recherche par phrase : banc d'essai avec les descriptions de MMArt (21/11/2026)
+
+**Question.** La recherche par phrase (§ 12) n'avait été mesurée que sur des requêtes courtes écrites à
+la main (100 requêtes, § 31). MMArt (§ 34) donne, pour chaque œuvre rattachée, cinq descriptions
+longues (formelle, narrative, émotionnelle, historique, synthèse) : on peut demander à chaque modèle de
+retrouver **la bonne œuvre parmi 80 716** à partir de sa description.
+
+**Méthode.** `pixplot textbench --mmart … -n 300 --encoders siglip2,pe_core`
+(`pixplot/analysis/textbench.py`) : 300 œuvres tirées au sort (graine 0) parmi les 70 902 rattachées ;
+chaque description devient une requête ; on note le rang de la vraie œuvre. Le titre sert de témoin.
+Processeur seul (SigLIP 2 : 2 h 31 ; PE-Core : 1 h 02). Rapport :
+`<données>/bench/textbench_report.json`.
+
+| Requête | SigLIP 2 : R@1 / R@10 / R@100 · rang médian | PE-Core L/14 : R@1 / R@10 / R@100 · rang médian |
+|---|---|---|
+| Narrative (ce qui se passe) | 20,3 / 45,7 / 71,0 % · **13** | 28,3 / 59,0 / 85,0 % · **6** |
+| Synthèse | 16,3 / 41,0 / 65,0 % · 26 | 21,7 / 46,7 / 75,3 % · 14 |
+| Titre (témoin) | 9,3 / 23,7 / 49,0 % · 102 | 10,0 / 23,7 / 47,3 % · 115 |
+| Émotionnelle | 5,7 / 18,0 / 43,3 % · 226 | 8,7 / 25,0 / 45,7 % · 136 |
+| Formelle (couleurs, touche, composition) | 2,3 / 8,3 / 24,3 % · 661 | 2,0 / 7,7 / 23,7 % · 807 |
+| Historique (contexte, mouvement) | 0,7 / 6,7 / 14,0 % · 2 151 | 1,7 / 4,7 / 18,3 % · 1 404 |
+
+**Ce qu'on apprend.**
+- **Les modèles retrouvent une œuvre par ce qu'elle montre**, pas par la façon dont elle est peinte :
+  la description narrative met la bonne œuvre dans les 10 premières près d'une fois sur deux, la
+  description formelle presque jamais (rang médian 661 à 807). Le vocabulaire de l'historien sur la
+  facture (« empâtements », « composition diagonale ») ne passe presque pas.
+- **L'histoire ne se voit pas** : la description historique (mouvement, contexte) est la pire, normal
+  puisqu'elle parle de ce qui n'est pas dans l'image.
+- **PE-Core devance SigLIP 2 sur les longues descriptions en anglais** (rang médian 6 contre 13), ce qui
+  ne contredit pas le § 31 : SigLIP 2 reste nettement meilleur en français (97/100 contre 81/100), la
+  langue de l'interface. Décision inchangée.
+
+**Limites.**
+- **Les descriptions sont coupées** : SigLIP 2 lit 64 jetons, PE-Core 77 ; les descriptions MMArt en
+  font 82 à 193 (médianes). Chaque modèle ne lit donc que les deux premières phrases environ ; la
+  synthèse, la plus longue, est la plus amputée.
+- Les descriptions de MMArt sont écrites par un modèle de langage qui regardait l'image : leur
+  vocabulaire est proche de celui des modèles, ce qui avantage la recherche. Ce n'est pas un historien
+  qui décrit de mémoire.
+- 300 œuvres : un point de R@10 vaut environ ± 3 points d'incertitude.
+
+## 37. Notions apprises : auto-encodeur parcimonieux sur le regard « sujet » (21/11/2026)
+
+**Question.** Un vecteur SigLIP 2 compte 1 152 nombres illisibles. Peut-on le décomposer en un petit
+nombre de **notions** nommables, et ces notions disent-elles autre chose que les étiquettes du
+catalogue ?
+
+**Méthode.** `pixplot notions --space sujet` (`pixplot/analysis/sae.py`) : auto-encodeur parcimonieux
+« TopK Matryoshka » (2 048 notions, 16 actives par œuvre ; les 64, 256 et 1 024 premières doivent déjà
+reconstruire seules, ce qui range les notions de la plus large à la plus fine). 30 passes sur les
+80 716 œuvres, 10 % mises de côté pour mesurer. Pour chaque notion : ses 50 œuvres les plus marquées, la
+part qui partage un style, un genre, un artiste, un siècle (comparée au hasard), et le nom Iconclass
+le plus proche (vecteurs SigLIP 2 des 17 126 notions Iconclass, score z par rapport aux autres
+notions). Processeur seul, 3 h 28 (en partage avec le § 36). Run `analysis/notions_sujet_*`
+(`sae.npz`, `notions.json`).
+
+**Résultats.**
+- **Reconstruction** (œuvres mises de côté) : 49,8 % de la variance avec 64 notions, 63,0 % avec 256,
+  71,5 % avec 1 024, **73,7 % avec 2 048**. 256 notions ne servent jamais : **1 792 vivantes**.
+- **Ce qui les explique** (part des 50 premières œuvres qui partagent une étiquette, seuil 60 %) :
+  genre pour 423 notions, style pour 353, artiste pour 57 ; **959 notions ne correspondent à aucune
+  étiquette**.
+- **Les notions sans étiquette sont surtout des objets et des motifs**, regardés sur planches : arc-en-ciel,
+  biche, papillon, crâne (de Cézanne au Pop Art), escalier, rues pavoisées (Childe Hassam), locomotive,
+  patinage, violon, lion, paon… Le nom Iconclass est juste sur les huit vérifiés à l'œil (z de 7,5 à
+  8,6). WikiArt n'indexe pas ces sujets ; le modèle les sépare seul.
+- **Deux notions inattendues** :
+  - n° 24 (17,6 % des œuvres) : **le chef-d'œuvre célèbre** (*La Nuit étoilée*, *La Création d'Adam*,
+    *Les Tournesols*, *Le Penseur*, *L'Homme de Vitruve*). Ce n'est ni un sujet ni un style, mais la
+    notoriété apprise sur le web : l'« imaginaire vectoriel » du modèle (Impett et Offert, 2024) ;
+  - n° 88 (2,9 %) : **le tableau photographié avec son cadre**, un fait de reproduction, pas de l'œuvre.
+    Piste pour « À vérifier ».
+- Les notions larges (64 premières) retrouvent les grandes familles : bataille, dormeur, nature morte de
+  fruits, paysage de forêt, ukiyo-e de combat…
+
+**Limites.**
+- **Le nom Iconclass n'est fiable qu'au-dessus de z ≈ 5** (506 notions) ; en dessous, des notions
+  floues reçoivent des noms sans rapport (« Volonté », « joues creuses »). Les noms sont proposés par le
+  modèle, à relire comme les noms de groupes.
+- Une notion décrit ce que le modèle sépare, pas une catégorie d'historien ; ses frontières sont floues.
+- Un seul regard (sujet) et une seule graine ; une autre graine donnerait des notions voisines mais
+  pas identiques.
+- Pas encore dans l'Atlas : étape possible, une liste de notions nommées qui allument leurs œuvres sur
+  la carte.

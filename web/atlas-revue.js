@@ -149,7 +149,7 @@ async function reviewDecide(decision, n) {
   if (rv.busy || rv.i >= rv.queue.length) return;
   const it = rv.queue[rv.i];
   const type = decision === "valider" ? (rv.types[n] || {}).key : it.type;
-  if (!type) { toast("Choisissez la sorte de ressemblance (touches 1 à 7)"); return; }
+  if (!type) { toast("Choisissez la sorte de ressemblance (touches 1 à 8)"); return; }
   const body = { a: it.a, b: it.b, decision, type, origin: it.origin, proposed_type: it.origin === "proposée" ? it.type : "",
                  source: it.origin === "proposée" ? it.source : `relecture : ${it.source}`, note: it.note || "" };
   rv.busy = true;
@@ -192,7 +192,7 @@ function reviewKeys(e) {
   let handled = true;
   if (k === "Escape") closeReviewSession();
   else if (k === "Enter") $("rv-ok") && $("rv-ok").click();
-  else if (/^[1-7]$/.test(k)) reviewDecide("valider", Number(k) - 1);
+  else if (/^[1-8]$/.test(k)) reviewDecide("valider", Number(k) - 1);
   else if (k.toLowerCase() === "r") reviewDecide("rejeter");
   else if (k === " ") reviewSkip();
   else if (k.toLowerCase() === "z") reviewUndo();

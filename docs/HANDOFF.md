@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 19/11/2026 (publication de la 0.20.0).*
+*Dernière mise à jour : 21/11/2026 (posture fusionnée ; §§ 36–37).*
 
 ## Version publiée
 
@@ -121,7 +121,33 @@ corrigé ; 63 tests passent, Atlas vérifié.
 
 ## En cours
 
-- **Titres, dates et émotions pour WikiArt** (Claude, 19/11/2026) : notre WikiArt 81k (`huggan/wikiart`)
+- **Posture (Gemini 4 Neon), fusionnée dans main le 21/11/2026, non publiée** (ARCHITECTURE § 35,
+  `docs/handoff/gemini-postures.md`) : RT-DETRv2-R50 + ViTPose Base (Apache 2.0, licences vérifiées
+  sur Hugging Face), squelette 50 d par figure, comparaison multi-figures avec miroir gauche-droite.
+  81k en 54 min ; figures dans 48,4 % des œuvres. Ne bat pas Forme sur les paires validées ; réussites
+  ponctuelles (*Le Semeur* Van Gogh ↔ Millet, *Europe* Rubens ↔ Titien au rang 1). Reste dans
+  `NOT_KEPT`. **37 paires `meme_geste` proposées, à relire par l'utilisateur** (touche R, en tête de
+  file ; « même geste » = touche 7, « filiation » passe à la touche 8). Selon la relecture : exposer
+  ou non « Posture » comme regard spécialisé (brancher `PostureIndex` dans `Spaces.neighbors`).
+- **Claude, fait le 21/11/2026, non commité ni publié** (processeur seul) :
+  - **Recherche par phrase avec les descriptions MMArt** (`pixplot textbench`, § 36), 300 œuvres :
+    la description narrative retrouve l'œuvre (rang médian 13 avec SigLIP 2, 6 avec PE-Core), la
+    formelle presque jamais (661 / 807), l'historique pas du tout. Textes coupés à 64 / 77 jetons.
+  - **Notions apprises** (`pixplot notions --space sujet`, § 37, run `notions_sujet_20261121-213443`,
+    3 h 28) : 1 792 notions vivantes, 73,7 % de variance ; 959 sans étiquette, surtout des objets et
+    motifs bien nommés par Iconclass (z ≥ 5 fiable). Notions inattendues : n° 24 « chef-d'œuvre
+    célèbre », n° 88 « tableau photographié avec son cadre ». Planches de lecture faites avec un
+    script hors dépôt. Suite possible : liste de notions dans l'Atlas ; n° 88 dans « À vérifier ».
+  - **Émotion à genre égal** (§ 34) : rapport au hasard 1,37 (forme, sujet), 1,27 (touche), 1,12
+    (couleur) ; environ deux tiers de l'effet survivent au contrôle du genre.
+  - Raccourci clavier de la relecture passé de 1–7 à 1–8 (`web/atlas-revue.js`).
+
+- **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
+  19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.
+
+## Fait depuis 0.19.0 (publié en 0.20.0)
+
+- **Titres, dates et émotions pour WikiArt** (Claude, 19/11/2026, publié en 0.20.0) : notre WikiArt 81k (`huggan/wikiart`)
   n'a ni titres ni noms de fichier, et son ordre est mélangé. On rattache chaque œuvre à son nom de
   fichier d'origine en comparant les images de **MMArt** (CC BY 4.0, `Shuaimyself/MMArt`, 25,3 Go
   téléchargés avec l'accord de l'utilisateur dans `data/sources/mmart/`, hors git) à nos empreintes
@@ -147,11 +173,6 @@ corrigé ; 63 tests passent, Atlas vérifié.
   35 717 œuvres rattachées qui avaient déjà un artiste, **0** désaccord avec le nom de fichier.
   Conséquence : les bancs d'essai par artiste, `suspects` et les noms de groupes calculés avant
   portent sur les anciennes étiquettes ; à recalculer avant la prochaine publication de chiffres.
-- **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
-  19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.
-
-## Fait depuis 0.19.0 (publié en 0.20.0)
-
 - **PE-Core L/14 et CSD ViT-L/14 évalués par Gemini 4 Neon, non retenus** (fusionné, ARCHITECTURE
   §§ 31–32, `docs/handoff/gemini-pecore-csd.md`). PE-Core (Apache 2.0) contre SigLIP 2 : un peu
   devant sur les étiquettes (style P@1 72,0 % contre 71,4 %), mais recherche par phrase en français
@@ -189,6 +210,10 @@ corrigé ; 63 tests passent, Atlas vérifié.
 
 ## Bloqué ou plus tard
 
+- **Phrases des spectateurs d'ArtEmis** (idée du 19/11/2026, « plus tard » selon l'utilisateur) : les
+  afficher dans la fiche de l'œuvre et pouvoir chercher dedans (~2 h). Aujourd'hui seules l'émotion
+  dominante et 3 phrases par œuvre sont gardées (`<données>/artemis.json`) ; le fichier complet est
+  dans `data/sources/artemis/` (usage non commercial, local).
 - **Import Paris Musées** (premier corpus français, images CC0 seulement) : le site est revenu le
   18/11/2026, mais son `robots.txt` interdit explicitement les robots d'IA (`anthropic-ai`,
   `ClaudeBot`, `Google-Extended`, `CCBot`…) et ses pages de recherche aux robots : **ne pas parcourir

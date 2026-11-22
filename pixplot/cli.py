@@ -538,6 +538,90 @@ def cmd_wikiart_noms(args) -> int:
     return 0
 
 
+def cmd_textbench(args) -> int:
+    """Recherche par phrase : retrouve-t-on l'œuvre que décrit sa description MMArt ?"""
+    import json
+    import time
+
+    from .analysis import textbench as T
+    from .catalog import db
+    from .runs import list_runs
+
+    s = get_settings(args.data)
+    conn = db.connect(s.catalog_path)
+    queries = T.load_queries(conn, Path(args.mmart) / "data" / "data.parquet", args.n, seed=args.seed)
+    conn.close()
+    print(f"{len(queries)} œuvres tirées au sort (graine {args.seed}), requêtes en anglais (MMArt)", flush=True)
+    report = {"n": len(queries), "seed": args.seed, "device": args.device, "results": {}}
+    for prefix in args.encoders.split(","):
+        runs = [r for r in list_runs("features", runs_dir=s.runs_dir)
+                if str(r.manifest["params"].get("encoder", "")).startswith(prefix)
+                and not r.manifest["params"].get("limit")]
+        if not runs:
+            print(f"« {prefix} » : pas de vecteurs, ignoré")
+            continue
+        t = time.time()
+        print(f"\n{runs[-1].id}", flush=True)
+        report["results"][runs[-1].id] = T.run(runs[-1], queries, device=args.device,
+                                               say=lambda m: print(m, flush=True))
+        print(f"  ({time.time() - t:.0f} s)", flush=True)
+    out = s.data_dir / "bench" / "textbench_report.json"
+    out.parent.mkdir(exist_ok=True)
+    out.write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"\nRapport : {out}")
+    return 0
+
+
+def cmd_notions(args) -> int:
+    """Auto-encodeur parcimonieux sur les vecteurs d'un regard : les « notions » qu'il a apprises."""
+    import json
+    import time
+
+    import numpy as np
+
+    from .analysis import sae as SAE
+    from .analysis.layout import load_valid
+    from .catalog import db
+    from .catalog.metadata import get_metadata
+    from .runs import create_run, list_runs
+
+    prefix = {"sujet": "siglip2", "forme": "dinov3_vitb16"}.get(args.space, args.space)
+    s = get_settings(args.data)
+    runs = [r for r in list_runs("features", runs_dir=s.runs_dir)
+            if r.manifest["params"].get("encoder", "") == prefix or
+            (prefix == "siglip2" and r.manifest["params"].get("encoder", "").startswith("siglip2"))]
+    runs = [r for r in runs if not r.manifest["params"].get("limit")]
+    if not runs:
+        raise SystemExit(f"Pas de vecteurs pour « {args.space} ».")
+    feat_run = runs[-1]
+    ids, X = load_valid(feat_run)
+    print(f"{feat_run.id} : {len(ids)} œuvres, {X.shape[1]} dimensions → {args.features} notions, {args.k} par œuvre", flush=True)
+    t = time.time()
+    model = SAE.train(X, n_features=args.features, k=args.k, epochs=args.epochs, say=lambda m: print(m, flush=True))
+    print(f"  entraîné en {time.time() - t:.0f} s · variance expliquée (œuvres mises de côté) {model['explained_variance']}"
+          f" · notions jamais utilisées : {model['dead']}", flush=True)
+    conn = db.connect(s.catalog_path)
+    meta = get_metadata(conn, [int(i) for i in ids])
+    conn.close()
+    vecs = notions = None
+    if prefix == "siglip2":
+        from .analysis.iconclass import load_vocabulary
+        dest = s.data_dir.parent / "iconclass"
+        cache, keys = dest / "vectors_siglip2_so400m.npy", dest / "vectors_siglip2_so400m.json"
+        if cache.exists() and keys.exists():
+            vocab = load_vocabulary(dest)
+            if json.loads(keys.read_text(encoding="utf-8")) == [v["notation"] for v in vocab]:
+                vecs, notions = np.load(cache), vocab
+    feats, baseline = SAE.describe(model, ids, X, meta, notion_vecs=vecs, notions=notions)
+    run = create_run("analysis", f"notions_{args.space}", {"features": args.features, "k": args.k, "epochs": args.epochs,
+                     "method": "TopK Matryoshka", "prefixes": list(SAE.PREFIXES)}, parent=feat_run, runs_dir=s.runs_dir)
+    SAE.save(run.path, model, feats, baseline, {"space": args.space, "explained_variance": model["explained_variance"],
+                                               "dead": model["dead"]})
+    run.complete(notions=len(feats), dead=model["dead"])
+    print(f"Notions : {run.path / 'notions.json'} ({len(feats)} vivantes)")
+    return 0
+
+
 def cmd_import_places(args) -> int:
     from .catalog import db
     from .catalog.places import import_places_csv
@@ -1110,6 +1194,21 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--workers", type=int, default=6)
     p.add_argument("--force", action="store_true", help="refaire le rattachement des images")
     p.set_defaults(func=cmd_wikiart_noms)
+
+    p = sub.add_parser("textbench", help="banc d'essai de la recherche par phrase (descriptions MMArt)")
+    p.add_argument("--mmart", required=True, help="dossier du jeu MMArt téléchargé")
+    p.add_argument("-n", type=int, default=1000, help="nombre d'œuvres tirées au sort")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--encoders", default="siglip2,pe_core", help="préfixes d'encodeurs texte-image")
+    p.add_argument("--device", default="cpu", help="cpu (défaut : ne gêne pas un calcul GPU en cours) ou cuda")
+    p.set_defaults(func=cmd_textbench)
+
+    p = sub.add_parser("notions", help="auto-encodeur parcimonieux : les notions apprises par un regard")
+    p.add_argument("--space", default="sujet", help="sujet (SigLIP 2) ou forme (DINOv3)")
+    p.add_argument("--features", type=int, default=2048, help="taille du dictionnaire de notions")
+    p.add_argument("-k", type=int, default=16, help="notions actives par œuvre")
+    p.add_argument("--epochs", type=int, default=30)
+    p.set_defaults(func=cmd_notions)
 
     p = sub.add_parser("ordre", help="entropie et complexité de la matière (Sigaki et al., PNAS 2018), sans GPU")
     p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
