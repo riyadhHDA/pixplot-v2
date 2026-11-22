@@ -14,6 +14,27 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## Unreleased
+
+- **"Posture" regard** (Gemini 4 Neon): skeletons of the figures (RT-DETRv2 + ViTPose, Apache 2.0),
+  compared with their mirror image, figures found in 48 % of works. Does no better than form on the
+  validated pairs, but finds gestures taken up from one artist to another (Millet's and Van Gogh's
+  *Sower*). Not yet offered in the Atlas: **37 "same gesture" pairs to review** (key R; "same
+  gesture" = key 7, "filiation" moves to key 8). ARCHITECTURE § 35.
+- **Learned notions**: `pixplot notions` breaks the "subject" vectors into 1,792 notions; 959 match
+  no label and are mostly objects and motifs (rainbow, skull, staircase…). Two surprises: the
+  "famous masterpiece" and the "painting photographed with its frame". In the Atlas: "Notions" panel
+  (key O) and "Frames (no. 88)" tab in "To check". ARCHITECTURE § 37.
+- **Sentence search measured** with MMArt descriptions (`pixplot textbench`): a work is found by what
+  it shows (median rank 13), almost never by how it is painted (661) or by its historical context.
+  ARCHITECTURE § 36.
+- **Confidence intervals for the pair benchmark** (`pixplot pairs ci`): only two results are sure
+  (form for composition, colour for palette); a regard is called "better" only if the gap holds
+  despite the chance of which pairs were drawn. ARCHITECTURE § 38.
+- **Emotion at equal genre**: about two thirds of the effect survive controlling for genre
+  (ARCHITECTURE § 34).
+- Fix: a notions run no longer crashes `pixplot serve`.
+
 ## 0.20.0 — 2026-11-19 · Titles, dates, artists and emotions for WikiArt; order of the surface
 
 - **WikiArt gets its titles, dates and artists back**: `pixplot wikiart-noms` matches our works to

@@ -14,6 +14,28 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## Non publié
+
+- **Regard « posture »** (Gemini 4 Neon) : squelettes des figures (RT-DETRv2 + ViTPose, Apache 2.0),
+  comparés avec leur image en miroir, figures trouvées dans 48 % des œuvres. Ne fait pas mieux que la
+  forme sur les paires validées, mais retrouve des gestes repris d'un artiste à l'autre (*Le Semeur*
+  de Millet et de Van Gogh). Pas encore proposé dans l'Atlas : **37 paires « même geste » à relire**
+  (touche R ; « même geste » = touche 7, « filiation » passe à la touche 8). ARCHITECTURE § 35.
+- **Notions apprises** : `pixplot notions` décompose les vecteurs du regard « sujet » en 1 792
+  notions ; 959 ne correspondent à aucune étiquette et sont surtout des objets et des motifs
+  (arc-en-ciel, crâne, escalier…). Deux surprises : le « chef-d'œuvre célèbre » et le « tableau
+  photographié avec son cadre ». Dans l'Atlas : panneau « Notions » (touche O) et onglet
+  « Cadres (n° 88) » dans « À vérifier ». ARCHITECTURE § 37.
+- **Recherche par phrase mesurée** avec les descriptions de MMArt (`pixplot textbench`) : on retrouve
+  une œuvre par ce qu'elle montre (rang médian 13), presque jamais par la façon dont elle est peinte
+  (661) ni par son contexte historique. ARCHITECTURE § 36.
+- **Intervalles de confiance du banc par paires** (`pixplot pairs ci`) : seuls deux résultats sont
+  sûrs (la forme pour la composition, la couleur pour la palette) ; un regard n'est dit « meilleur »
+  que si l'écart reste net malgré le hasard du tirage des paires. ARCHITECTURE § 38.
+- **Émotion à genre égal** : environ deux tiers de l'effet survivent au contrôle du genre
+  (ARCHITECTURE § 34).
+- Correctif : un calcul de notions ne fait plus planter `pixplot serve`.
+
 ## 0.20.0 — 19/11/2026 · Titres, dates, artistes et émotions pour WikiArt ; ordre de la matière
 
 - **WikiArt retrouve ses titres, ses dates et ses artistes** : `pixplot wikiart-noms` rattache nos

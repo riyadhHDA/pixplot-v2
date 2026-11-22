@@ -121,6 +121,11 @@ corrigé ; 63 tests passent, Atlas vérifié.
 
 ## En cours
 
+- **Test du « Pourquoi ? » confié à Gemini 4 Neon** (22/11/2026) : occulter les zones montrées et
+  mesurer la chute de ressemblance contre des zones au hasard ou centrales (protocole n° 1 de
+  `handoff/deepseek-lectures.md`, futur § 39, `pixplot whytest`). Copie de travail
+  `..\pixplot-pourquoi`, branche `gemini/pourquoi`, consigne `PROMPT-gemini-pourquoi.md` (non
+  versionnée). À relire puis fusionner avec `.\scripts\nouvelle-tache.ps1 pourquoi -Agent gemini -Terminer`.
 - **Posture (Gemini 4 Neon), fusionnée dans main le 21/11/2026, non publiée** (ARCHITECTURE § 35,
   `docs/handoff/gemini-postures.md`) : RT-DETRv2-R50 + ViTPose Base (Apache 2.0, licences vérifiées
   sur Hugging Face), squelette 50 d par figure, comparaison multi-figures avec miroir gauche-droite.
@@ -151,9 +156,12 @@ corrigé ; 63 tests passent, Atlas vérifié.
     « À vérifier » ; correctif `runs.py` (les runs `notions_*` faisaient planter `pixplot serve`).
     Relu : calcul des activations conforme à l'entraînement ; corrigé, le n° 88 n'est « cadre » que
     pour le run `notions_sujet_20261121-213443` (`sae.FRAMED_RUN`). 100 tests, vérifié dans l'Atlas 81k.
-  - Deepseek : banc Wölfflin mesuré, seul linéaire/pictural robuste ; note pas écrite (arrêté).
-    Script et résultats copiés dans `data/wikiart81k/bench/wolfflin/` (hors git).
-  - Mistral : CHANGELOG « Non publié » pas fait (arrêté).
+  - Deepseek : banc Wölfflin mesuré, seul linéaire/pictural robuste (AUC 0,74 ; témoins jusqu'à
+    ±0,08, ±0,24 à genre égal). Note écrite par Claude : `handoff/deepseek-wolfflin.md` ; script et
+    résultats dans `data/wikiart81k/bench/wolfflin/` (hors git). **À décider par l'utilisateur** :
+    axe d'essai préréglé dans la vue « Axes conceptuels », ou rien ; section d'ARCHITECTURE après
+    la fusion du § 39.
+  - CHANGELOG FR + EN : section « Non publié » écrite par Claude (Mistral arrêté avant).
   - **Détail, fichiers et suite dans [`handoff/session-2026-11-22.md`](handoff/session-2026-11-22.md).**
 
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
