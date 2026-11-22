@@ -39,9 +39,9 @@ CARDS: dict[str, dict] = {
             "entraîné sur des photographies du web, pas sur des œuvres : il voit une peinture comme une photo",
             "biais perceptif : sensible au cadrage, à la qualité et au format de la reproduction",
         ],
-        "measured": "retrouve copies et reprises de composition au premier rang (paires de Honour et "
-                    "Fleming) ; mais sur les autres paires « même composition », le sujet fait mieux "
-                    "(ARCHITECTURE § 14, 18)",
+        "measured": "le meilleur sur « même composition » : 54 % des paires retrouvées parmi les 10 "
+                    "premières voisines, l'un des deux seuls écarts sûrs du banc ; à égalité avec le sujet "
+                    "sur les filiations (10 paires, trop peu pour conclure) (ARCHITECTURE § 38)",
     },
     "sujet": {
         "model": "SigLIP 2 So400m/16 (Google, 2025)",
@@ -57,8 +57,9 @@ CARDS: dict[str, dict] = {
             "a peut-être vu WikiArt pendant son entraînement : ses scores sur WikiArt sont sans doute optimistes",
             "légendes du web majoritairement en anglais et centrées sur l'art occidental",
         ],
-        "measured": "le meilleur sur les étiquettes et les filiations ; bat la forme sur « même composition » "
-                    "(ARCHITECTURE § 11, 18)",
+        "measured": "le meilleur sur les étiquettes (style, genre, artiste) ; sur « même sujet », devant "
+                    "la forme mais pas de façon sûre ; à égalité avec la forme sur les filiations "
+                    "(ARCHITECTURE §§ 30, 38)",
     },
     "couleur": {
         "model": "histogramme CIELAB (5 × 7 × 7), sans apprentissage",
@@ -69,8 +70,8 @@ CARDS: dict[str, dict] = {
             "mesure la couleur de la reproduction, pas de l'œuvre : balance des blancs, vernis jauni, "
             "scan ou photographie changent tout",
         ],
-        "measured": "seul regard qui retrouve « même palette » ; sous le hasard pour « même sujet » "
-                    "(ARCHITECTURE § 18)",
+        "measured": "seul regard qui retrouve « même palette » (48 % des paires parmi les 10 premières "
+                    "voisines, écart sûr) ; presque aveugle au sujet (ARCHITECTURE §§ 18, 38)",
     },
     "touche": {
         "model": "DINOv3 ViT-B/16, couche 6 : moyenne et écart-type des zones",
@@ -81,8 +82,8 @@ CARDS: dict[str, dict] = {
             "très sensible à la résolution et à la compression de la reproduction",
             "les styles larges (impressionnisme) n'ont pas une facture unique",
         ],
-        "measured": "pointillisme 21 % → 62 % de voisines du même style ; meilleur sur « même facture » "
-                    "(ARCHITECTURE § 11, 14, 18)",
+        "measured": "pointillisme 21 % → 62 % de voisines du même style ; en tête sur « même facture », "
+                    "mais de façon sûre seulement devant le sujet (ARCHITECTURE §§ 11, 38)",
     },
     "couleur_rvb": {
         "model": "histogramme RVB (encodeur de test)",
@@ -250,7 +251,8 @@ def source_note(source: str | None) -> str:
 
 
 # ------------------------------------------------------------------ bilan du corpus
-KEY_LABELS = {"artist": "artiste", "style": "style", "genre": "genre", "date": "date", "title": "titre"}
+KEY_LABELS = {"artist": "artiste", "style": "style", "genre": "genre", "date": "date", "title": "titre", "emotion": "émotion (ArtEmis)",
+              "wikiart_file": "nom de fichier WikiArt"}
 NON_WESTERN_HINTS = ("ukiyo", "japan", "chinese", "china", "islamic", "persian", "mughal", "indian",
                      "african", "aboriginal", "ottoman", "byzantine", "pre-columbian", "korean", "edo")
 
@@ -282,8 +284,13 @@ def corpus_report(meta: dict[int, dict[str, str]], sources: dict[str, Counter], 
             notes.append(f"L'étiquette « {KEY_LABELS.get(k, k)} » manque pour {100 - round(c['share'] * 100)} % des œuvres.")
     a = coverage.get("artist")
     if a and any("huggan" in x["source"] for x in a["sources"]):
-        notes.append("Le jeu huggan/wikiart ne nomme qu'une partie des artistes de WikiArt ; les autres "
-                     "œuvres sont « Unknown Artist » : l'absence d'artiste vient du jeu de données, pas des œuvres.")
+        recovered = sum(x["count"] for x in a["sources"] if "MMArt" in x["source"])
+        missing = 100 - round(a["share"] * 100)
+        notes.append(("Le jeu huggan/wikiart ne nomme qu'une partie des artistes de WikiArt"
+                      + (f" ; {recovered:,} ont été retrouvés".replace(",", " ") + " d'après les noms de fichier (MMArt)" if recovered else "")
+                      + f" ; {missing} % des œuvres restent « Unknown Artist » : l'absence d'artiste vient du "
+                      "jeu de données, pas des œuvres.") if missing else
+                     "Le jeu huggan/wikiart ne nommait qu'une partie des artistes ; tous ont été retrouvés ici.")
     if a and a["known"]:
         notes.append(f"Les 10 artistes les plus présents font {round(a['top10_share'] * 100)} % des œuvres attribuées "
                      f"({a['distinct']} artiste{'s' if a['distinct'] > 1 else ''} nommé{'s' if a['distinct'] > 1 else ''} en tout).")

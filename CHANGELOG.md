@@ -34,6 +34,7 @@ Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 - **Emotion at equal genre**: about two thirds of the effect survive controlling for genre
   (ARCHITECTURE § 34).
 - **MCP tool `explore_notions`** (20 tools): an assistant can search notions by name and see their works.
+- Fix: the regard cards (Corpus panel, MCP) said subject beats form on "same composition"; per § 38 it is the reverse, and the note on missing artists now accounts for MMArt (7 % remain unknown).
 - Fix: a notions run no longer crashes `pixplot serve`.
 
 ## 0.20.0 — 2026-11-19 · Titles, dates, artists and emotions for WikiArt; order of the surface
