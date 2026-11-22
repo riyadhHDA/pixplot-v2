@@ -69,7 +69,7 @@ avec toutes les vignettes affichées, et une recherche par texte ou par détail 
 | **Atlas web** | Carte interactive (deck.gl, hors ligne), fiches aux métadonnées sourcées et **mesures visuelles** sans GPU (équilibre, symétrie, entropie chromatique, d'après Stork), **comparateur** jusqu'à six œuvres avec bouton « Pourquoi ? », **filtres combinés** (artiste, style, genre, groupe…), **carnet de recherche**, une carte par regard, **axes conceptuels 2D** sur deux mots (façon *2D CLIP*), vues **chronologique** et **géographique** (lieux typés et datés, fond de carte embarqué). |
 | **Audit du catalogue** | Audit à l'aveugle (pixels seuls), liste **À vérifier** des œuvres dont l'étiquette est contredite par toutes leurs voisines (erreur de catalogue ou œuvre singulière) et **doublons** : les œuvres entrées deux fois et leurs variantes (`pixplot doublons`). |
 | **Collections IIIF** | `pixplot import-iiif` importe n'importe quel manifeste ou collection IIIF v2/v3 avec métadonnées normalisées et mention des droits. |
-| **Serveur MCP (19 outils)** | Branche Claude ou un autre assistant compatible : recherche, affichage des images et des recadrages, comparaisons, mesures visuelles, axes conceptuels et ajout de notes dans le carnet. |
+| **Serveur MCP (20 outils)** | Branche Claude ou un autre assistant compatible : recherche, affichage des images et des recadrages, comparaisons, mesures visuelles, axes conceptuels et ajout de notes dans le carnet. |
 | **Traçabilité** | Chaque calcul est rangé dans un *run* daté (`manifest.json` avec modèle, paramètres et run parent). L'export en *Research Pack* (.zip) rassemble images, métadonnées sourcées et scores. |
 
 ## Quelques mesures sur WikiArt

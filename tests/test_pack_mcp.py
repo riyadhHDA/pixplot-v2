@@ -76,7 +76,9 @@ def test_mcp_tools(data):
         assert tools == {"corpus_overview", "search_by_text", "similar_artworks", "search_detail", "search_zones", "get_artwork",
                          "view_artwork", "view_detail", "compare_artworks", "get_group", "find_atypical",
                          "export_research_pack", "check_labels", "notebook_add", "notebook_list", "why_similar",
-                         "probe_concepts", "measure_artwork", "find_duplicates"}
+                         "probe_concepts", "measure_artwork", "find_duplicates", "explore_notions"}
+        notions = json.loads((await call("explore_notions", {})).content[0].text)
+        assert "error" in notions  # pas de notions calculées dans ce corpus de test
         dup = json.loads((await call("find_duplicates", {})).content[0].text)
         assert "error" in dup  # pas de vecteurs SSCD dans ce corpus de test
         why = await call("why_similar", {"artwork_a": first, "artwork_b": int(data.ids[1])})

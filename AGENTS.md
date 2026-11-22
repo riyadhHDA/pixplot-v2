@@ -53,7 +53,7 @@ composition antigravity-mcp iconclass doublons ordre name-groups suspects audit 
 | `pixplot/index/` | FAISS, zones (`regions.py`), index des zones décrites (`textzones.py`) |
 | `pixplot/analysis/` | UMAP, Leiden, noms de groupes (lexique, Iconclass), bancs d'essai, désaccords, critique |
 | `pixplot/api/` | FastAPI (`app.py`), données de l'Atlas (`data.py`), recherche, regards |
-| `pixplot/mcp/server.py` | serveur MCP (19 outils) |
+| `pixplot/mcp/server.py` | serveur MCP (20 outils) |
 | `pixplot/runs.py` | chaque calcul est un *run* daté, avec `manifest.json` |
 | `web/` | Atlas : scripts `atlas-*.js` chargés dans l'ordre (voir `web/README.md`), `hd-worker.js`, `atlas.css`, deck.gl 9.4 dans `web/vendor/` |
 | `site/` | site de présentation (FR + EN) |

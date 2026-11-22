@@ -39,7 +39,9 @@ Méthode conseillée :
 2. Chercher : search_by_text (description, en français ou en anglais), similar_artworks,
    search_detail (un cadre sur une œuvre : main, drapé, objet…), search_zones (un détail
    décrit par des mots : « une auréole », « un crâne »), probe_concepts (comparer deux concepts
-   textuels sur tout le corpus, façon 2D CLIP d'Impett & Offert), get_group, find_atypical.
+   textuels sur tout le corpus, façon 2D CLIP d'Impett & Offert), get_group, find_atypical,
+   explore_notions (les notions que le modèle a apprises seul : objets, motifs, manières, que le
+   catalogue n'indexe pas toujours).
 3. Regarder : view_artwork, view_detail, compare_artworks (planche numérotée), why_similar
    (les zones de deux œuvres qui se répondent, dessinées sur une planche), measure_artwork
    (équilibre visuel, symétrie, entropie chromatique et première coupe, d'après Stork). Ne conclus
@@ -336,6 +338,43 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
         if out is None:
             return {"error": "Pas encore calculé : lancer « pixplot doublons » (vecteurs SSCD nécessaires)."}
         return out
+
+    @server.tool()
+    def explore_notions(query: str = "", notion: int | None = None, k: int = 20, offset: int = 0) -> dict:
+        """Notions apprises par le modèle (auto-encodeur parcimonieux sur le regard « sujet »,
+        ARCHITECTURE § 37) : chaque œuvre est décrite par 16 notions parmi environ 1 800, découvertes
+        sans étiquette. Sans ``notion`` : liste des notions dont le nom contient ``query`` (nom
+        Iconclass, ou style / genre / artiste dominant), avec leur nombre d'œuvres. Avec ``notion`` :
+        les œuvres où cette notion est la plus forte. Le nom Iconclass n'est donné que s'il est sûr
+        (z ≥ 5) ; sinon on indique l'étiquette du catalogue que partagent les œuvres les plus
+        marquées, ou rien. Une notion décrit ce que le modèle sépare, pas une catégorie d'historien :
+        regarder les œuvres (compare_artworks) avant de la nommer soi-même."""
+        lim = min(max(k, 1), 100)
+        if notion is not None:
+            out = data.notion_detail_payload(int(notion), offset=max(offset, 0), limit=lim, highlight_limit=1)
+            if out is None:
+                return {"error": f"Notion n° {notion} introuvable (ou notions non calculées : « pixplot notions »)."}
+            out.pop("highlight_ids", None)
+            return out
+        payload = data.notions_payload()
+        if payload is None:
+            return {"error": "Pas encore calculé : lancer « pixplot notions --space sujet »."}
+        q = query.strip().lower()
+
+        def text(it: dict) -> str:
+            m = it.get("meta") or {}
+            return f"{it['label']} {m.get('value', '')} {(it.get('iconclass') or {}).get('notation', '')}".lower()
+
+        items = [it for it in payload["items"] if not q or q in text(it) or q == str(it["feature"])]
+        items.sort(key=lambda it: -it["count"])
+        page = [{"notion": it["feature"], "name": it["label"] if it["named"] else None,
+                 "iconclass": it["iconclass"], "catalogue_label": it.get("meta"), "count": it["count"],
+                 "top_ids": it["top"][:6]} for it in items[offset:offset + lim]]
+        return {"space": payload["space"], "run": payload["run"], "total_notions": payload["total"],
+                "named": payload["named"], "z_min": payload["z_min"], "matches": len(items),
+                "items": page,
+                "note": "name = nom Iconclass sûr (z ≥ 5) ; catalogue_label = ce que disent les métadonnées "
+                        "des œuvres les plus marquées (≥ 60 %) ; ni l'un ni l'autre n'est un nom d'historien."}
 
     # ------------------------------------------------------------------ carnet de recherche
     from ..notebook import Notebook

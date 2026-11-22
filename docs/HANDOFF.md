@@ -162,6 +162,8 @@ corrigé ; 63 tests passent, Atlas vérifié.
     axe d'essai préréglé dans la vue « Axes conceptuels », ou rien ; section d'ARCHITECTURE après
     la fusion du § 39.
   - CHANGELOG FR + EN : section « Non publié » écrite par Claude (Mistral arrêté avant).
+  - Claude : outil MCP `explore_notions` (20 outils) : chercher les notions par nom, voir leurs
+    œuvres ; essayé sur 81k (liste 15–40 ms, première notion ouverte 2,7 s). README, MCP, site, AGENTS à jour.
   - **Détail, fichiers et suite dans [`handoff/session-2026-11-22.md`](handoff/session-2026-11-22.md).**
 
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du

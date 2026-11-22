@@ -34,6 +34,7 @@ Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numé
   que si l'écart reste net malgré le hasard du tirage des paires. ARCHITECTURE § 38.
 - **Émotion à genre égal** : environ deux tiers de l'effet survivent au contrôle du genre
   (ARCHITECTURE § 34).
+- **Outil MCP `explore_notions`** (20 outils) : un assistant peut chercher les notions par nom et voir leurs œuvres.
 - Correctif : un calcul de notions ne fait plus planter `pixplot serve`.
 
 ## 0.20.0 — 19/11/2026 · Titres, dates, artistes et émotions pour WikiArt ; ordre de la matière
