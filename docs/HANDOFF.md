@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 22/11/2026 (session multi-agent relue et commitée).*
+*Dernière mise à jour : 23/11/2026 (test du « Pourquoi ? » fusionné).*
 
 ## Version publiée
 
@@ -121,11 +121,17 @@ corrigé ; 63 tests passent, Atlas vérifié.
 
 ## En cours
 
-- **Test du « Pourquoi ? » confié à Gemini 4 Neon** (22/11/2026) : occulter les zones montrées et
-  mesurer la chute de ressemblance contre des zones au hasard ou centrales (protocole n° 1 de
-  `handoff/deepseek-lectures.md`, futur § 39, `pixplot whytest`). Copie de travail
-  `..\pixplot-pourquoi`, branche `gemini/pourquoi`, consigne `PROMPT-gemini-pourquoi.md` (non
-  versionnée). À relire puis fusionner avec `.\scripts\nouvelle-tache.ps1 pourquoi -Agent gemini -Terminer`.
+- **Test du « Pourquoi ? » (Gemini 4 Neon), fusionné le 23/11/2026, non publié** (ARCHITECTURE § 39,
+  `handoff/gemini-pourquoi.md`, `pixplot whytest`, 3 min 25 s sur GPU) : **échec net**. Cacher les
+  4 zones montrées ne fait pas plus chuter la ressemblance que 4 cases au hasard (voisines proches :
+  3 fois moins). Cause : biais de coins (63 % des zones dans les 4 coins, 4 % au centre), car les cases
+  de bord de DINOv3 portent une signature de position. Le bouton reste en place pour l'instant.
+  **Suite confiée à Neon** : corriger le classement (centrer chaque case par sa moyenne sur le corpus,
+  ou carte d'occultation à la demande), re-mesurer avec `pixplot whytest` sur des paires non
+  utilisées pour régler, mise en garde dans le comparateur tant que ce n'est pas réussi.
+  Copie de travail `..\pixplot-pourquoi-v2`, branche `gemini/pourquoi-v2`, consigne
+  `PROMPT-gemini-pourquoi-v2.md` (non versionnée), futur § 40. À relire puis fusionner avec
+  `.\scripts\nouvelle-tache.ps1 pourquoi-v2 -Agent gemini -Terminer`.
 - **Posture (Gemini 4 Neon), fusionnée dans main le 21/11/2026, non publiée** (ARCHITECTURE § 35,
   `docs/handoff/gemini-postures.md`) : RT-DETRv2-R50 + ViTPose Base (Apache 2.0, licences vérifiées
   sur Hugging Face), squelette 50 d par figure, comparaison multi-figures avec miroir gauche-droite.
