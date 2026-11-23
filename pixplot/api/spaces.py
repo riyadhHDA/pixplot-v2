@@ -69,6 +69,7 @@ class Spaces:
         self._stores: dict[str, FeatureStore] = {}
         self._indexes: dict[str, GlobalIndex | None] = {}
         self._rows: dict[str, dict[int, int]] = {}
+        self._cell_means: dict[str, np.ndarray | None] = {}
         self.runs = self._discover()
 
     def _discover(self) -> dict[str, Run]:
@@ -145,6 +146,17 @@ class Spaces:
         from ..index.regions import patches_per_side
         return (np.asarray(R[self._rows[key][artwork_id]], dtype=np.float32), grids,
                 patches_per_side(run.manifest["params"]))
+
+    def cell_means(self, key: str) -> np.ndarray | None:
+        """Moyenne sur le corpus de chaque case 4 × 4 pour cet espace (calculée une fois et mise en cache)."""
+        self._open(key)
+        with self._lock:
+            if key not in self._cell_means:
+                run = self.runs[key]
+                grids = tuple(run.manifest["params"].get("region_grids") or (1, 2, 4))
+                from ..analysis.correspondences import load_or_compute_cell_means
+                self._cell_means[key] = load_or_compute_cell_means(Path(run.path), grids=grids)
+            return self._cell_means[key]
 
     def neighbors(self, key: str, artwork_id: int, k: int = 20) -> list[tuple[int, float]]:
         """Les ``k`` plus proches voisines dans cet espace, limitées aux œuvres de l'analyse."""

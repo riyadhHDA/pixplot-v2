@@ -45,7 +45,7 @@ from ..features.regions import DEFAULT_GRIDS
 from ..imageio import open_image
 from ..index.regions import cell_boxes, patches_per_side, square_to_image
 from ..runs import Run
-from .correspondences import GRID, cells_of, correspondences
+from .correspondences import GRID, cells_of, correspondences, load_or_compute_cell_means
 from .pairbench import Pair, TYPES, load_pairs
 
 CENTER_CELLS = (5, 6, 9, 10)
@@ -498,8 +498,8 @@ def _pair_seed(seed: int, group: str, a: int, b: int) -> int:
     return int.from_bytes(h, "little")
 
 
-def _config_sig(run_id: str, fill: str, k: int, n_random: int, seed: int, blur_radius: int) -> str:
-    return f"{run_id}|{fill}|k={k}|r={n_random}|s={seed}|br={blur_radius if fill == 'blur' else 0}"
+def _config_sig(run_id: str, fill: str, k: int, n_random: int, seed: int, blur_radius: int, ranking: str = "v2_center_align") -> str:
+    return f"{run_id}|{ranking}|{fill}|k={k}|r={n_random}|s={seed}|br={blur_radius if fill == 'blur' else 0}"
 
 
 def _load_progress(progress_path: Path, sig: str) -> dict[tuple[str, int, int], dict]:
@@ -594,14 +594,20 @@ def run_whytest(
     conn.close()
     sizes = {aid: (artworks[aid]["width"] or 1, artworks[aid]["height"] or 1) for aid in unique_ids if aid in artworks}
 
-    # Correspondances existantes (calculées exactement comme /api/correspond)
+    # Correspondances (calculées exactement comme /api/correspond : centrage par case + alignement global)
+    cell_means = load_or_compute_cell_means(features_run.path, grids=grids)
     eligible: list[dict] = []
     counts_ge_k = {"validees": {"total": 0, "ge_k": 0}, "voisines": {"total": 0, "ge_k": 0}}
     for grp, pr in all_pairs:
         counts_ge_k[grp]["total"] += 1
         ra = np.asarray(R[row_of[pr.a]], dtype=np.float32)
         rb = np.asarray(R[row_of[pr.b]], dtype=np.float32)
-        matches_all = correspondences(ra, rb, sizes[pr.a], sizes[pr.b], grids=grids, k=16, patches=patches)
+        ga = np.asarray(G[row_of[pr.a]], dtype=np.float32)
+        gb = np.asarray(G[row_of[pr.b]], dtype=np.float32)
+        matches_all = correspondences(
+            ra, rb, sizes[pr.a], sizes[pr.b], grids=grids, k=16, patches=patches,
+            cell_means=cell_means, global_a=ga, global_b=gb,
+        )
         va = valid_cells_for(ra, sizes[pr.a], grids=grids, patches=patches)
         vb = valid_cells_for(rb, sizes[pr.b], grids=grids, patches=patches)
         if len(matches_all) >= k and len(va) >= k and len(vb) >= k:

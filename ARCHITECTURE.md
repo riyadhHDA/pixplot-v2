@@ -1717,3 +1717,94 @@ looking, never proof.
 3. **Direct on-demand occlusion**: in the comparator (one pair at a time), measure leave-one-cell-out
    cosine drops directly (16 GPU passes, ~0.15 s) — faithful by construction, at the cost of loading the
    model on demand. Any candidate fix should pass `pixplot whytest` before adoption.
+
+## 40. Fixing the "Why?" button: per-cell centring and global alignment (2026-11-23)
+
+**Question.** § 39 showed that the original ranking in `correspondences.py` (`lift` on raw cosines) picked
+mostly corners (58–63 %) and failed the occlusion test (`a / b` = 0.33–0.55). Can the ranking be fixed
+**without GPU or re-extraction** (Option 1: per-position centring + global-vector alignment weighting), or
+is an on-demand GPU occlusion map (Option 2) required?
+
+**Strict tuning / verification split.** Parameters were selected exclusively on **104 tuning "close
+neighbour" pairs** (exact top-1 shape neighbour, seed 1, strictly disjoint from both validated pairs and
+seed 0 neighbours). Validated pairs and seed 0 neighbours were used **once only** for final verification
+under the unchanged § 39 criterion (median drop `(a) ≥ 3 × (b)` and 95 % CI of `(a − b)` excluding zero).
+Single-image masking (`one`) is reported first, as it avoids the shared flat-patch artefact identified in § 39.
+
+**Option 1 tuning (seed 1 neighbours, `n = 100/104` with ≥ 4 matches, `mean`, `one` mode).**
+For each slot $c \in \{0..15\}$ of the 4 × 4 grid, we compute its corpus mean $\mu_c$ from `regions.npy`
+(L2-normalised valid cells, `OK` artworks only; computed once in **11.4 s** on CPU and cached in
+`cell_means_4x4.npy`, 48 KB). Diagnostic: $\|\mu_c\|$ is **0.831–0.845** in the 4 corners vs **0.762–0.768**
+at the centre (strong positional signature), while mean alignment with the global vector (`cell_raw · global`)
+is **0.228–0.242** in corners vs **0.388–0.392** at the centre.
+
+| Variant (seed 1 neighbours, `n = 100`, `one`) | Corners | Centre | Same cell | Median `(a)` drop | Ratio `a / b` | `(a − b)` 95 % CI · p | Criterion |
+|---|---|---|---|---|---|---|---|
+| Baseline (raw `lift`, § 39) | 52.8 % | 5.8 % | 96.4 % | +0.0091 | 0.40 | [−0.0170; −0.0030] · 0.003 | Fail |
+| $\mu_c$ centring + `lift` | 19.0 % | 32.8 % | 65.2 % | +0.0453 | 1.97 | [+0.0107; +0.0310] · <0.001 | Fail |
+| $\mu_c$ centring + `sim` | 15.0 % | 38.4 % | 63.7 % | +0.0544 | 2.36 | [+0.0200; +0.0472] · <0.001 | Fail |
+| $\mu_c$ centring + `lift × align` | 7.1 % | 49.3 % | 61.8 % | +0.0810 | 3.51 | [+0.0299; +0.0672] · <0.001 | **Pass** |
+| $\mu_c$ centring + `sim × align` | 4.1 % | 57.5 % | 61.3 % | +0.0872 | 3.78 | [+0.0466; +0.0840] · <0.001 | **Pass** |
+| **$\mu_c$ centring + `sim × align_a × align_b`** | **3.9 %** | **59.0 %** | **61.1 %** | **+0.0963** | **4.18** | **[+0.0523; +0.0877] · <0.001** | **Pass** |
+
+*(Shared controls: random `(b)` = +0.0231, centre `(c)` = +0.1121.)* Centring alone removes corner bias but
+stays below 3×; combined with global alignment weighting
+($\max(0, \text{sim}_{\text{centred}}) \cdot \max(0, c_a \cdot g_a) \cdot \max(0, c_b \cdot g_b)$), it
+reaches **4.18× random** with zero GPU cost at query time. Option 2 (on-demand GPU occlusion) is therefore
+unnecessary.
+
+**Single final verification (`pixplot whytest`, WikiArt 81k, 128.4 s on RX 7900 GRE, 8,273 images encoded).**
+Unoccluded check: max cosine difference **0.000663** (mean 0.000068, min self-cosine 0.999998) → OK. Out of
+the current 108 validated pairs and 108 seed 0 neighbours, **73/108 validated** and **93/108 neighbours**
+yield ≥ 4 mutual matches after centring (see Limits).
+
+| Group & mode (`mean`) | n | med cos₀ | (a) Why [95 % CI] | (b) Random | (c) Centre | Ratio `a / b` | (a − b) med [95 % CI] · p | (a − c) med · p | Verdict |
+|---|---|---|---|---|---|---|---|---|---|
+| **Validated · 1 image (`one`)** | 73 | 0.372 | **+0.0112** [+0.0041; +0.0220] | +0.0027 | +0.0129 | **4.20** | **+0.0138** [+0.0072; +0.0203] · <0.001 | +0.0001 · 0.706 | **Pass** |
+| **Neighbours · 1 image (`one`)** | 93 | 0.724 | **+0.0710** [+0.0603; +0.0968] | +0.0186 | +0.0960 | **3.82** | **+0.0541** [+0.0465; +0.0682] · <0.001 | −0.0053 · 0.121 | **Pass** |
+| Validated · 2 images (`both`) | 73 | 0.372 | +0.0045 [−0.0029; +0.0109] | −0.0116 | −0.0451 | — | +0.0136 [+0.0087; +0.0233] · 0.001 | +0.0541 · <0.001 | Fail *(artefact)* |
+| Neighbours · 2 images (`both`) | 93 | 0.724 | **+0.0612** [+0.0511; +0.0767] | +0.0270 | +0.0182 | 2.26 | +0.0331 [+0.0229; +0.0439] · <0.001 | **+0.0310 · <0.001** | Fail *(2.26 < 3)* |
+
+**Heavy blur control** (`blur`, radius 32 px) — even stronger in `one` mode:
+- **Validated `one`**: (a) **+0.0184** vs (b) +0.0032 vs (c) +0.0182 → ratio **5.69**, `(a − b)` = +0.0141, p < 0.001 → **Pass**.
+- **Neighbours `one`**: (a) **+0.0731** vs (b) +0.0197 vs (c) +0.0870 → ratio **3.71**, `(a − b)` = +0.0513, p < 0.001 → **Pass**.
+- **Neighbours `both`**: (a) +0.0592 vs (b) +0.0259 vs (c) +0.0282 (ratio **2.29**, `(a − c)` = +0.0205, p < 0.001).
+
+**Spatial distribution (before → after) and area-normalised drops:**
+
+| Group | Corners (before → after) | Edges (before → after) | Centre (before → after) | Same cell `a == b` | `one` drop scaled to 25 % area: `(a) / (b) / (c)` |
+|---|---|---|---|---|---|
+| Validated | 63.0 % → **17.5 %** | 95.8 % → **63.7 %** | 4.2 % → **36.3 %** | 92.8 % → **46.2 %** | **+0.0112** / +0.0028 / +0.0112 *(areas: 27.5 / 25.3 / 33.9 %)* |
+| Neighbours | 57.5 % → **4.8 %** | 93.6 % → **42.7 %** | 6.4 % → **57.3 %** | 93.0 % → **56.2 %** | **+0.0653** / +0.0180 / +0.0709 *(areas: 32.0 / 25.8 / 34.2 %)* |
+
+**By validated pair type (`mean`, `one`, ≥ 10 pairs)**:
+- `filiation` (n = 10, cos₀ 0.664): (a) **+0.0554** vs (b) +0.0097 vs (c) +0.0690 (ratio **5.72**, `a − b` +0.0371, p = 0.036).
+- `meme_composition` (n = 10, cos₀ 0.590): (a) +0.0327 vs (b) +0.0227 vs (c) +0.0577 (ratio 1.44).
+- `meme_sujet` (n = 22, cos₀ 0.374): (a) +0.0160 vs (b) +0.0144 vs (c) +0.0524 (`a − b` +0.0156, p = 0.009).
+- `meme_facture` (n = 12, cos₀ 0.328): (a) +0.0154 vs (b) +0.0020 vs (c) −0.0214 (ratio 7.58, p = 0.154).
+- `meme_palette` (n = 17, cos₀ 0.005): (a) −0.0057 vs (b) −0.0110 vs (c) −0.0212 (artworks with no shape similarity).
+
+**Visual inspection (before / after contact sheet on 6 verification pairs, `<data>/bench/whytest_avant_apres.jpg`).**
+1. `#79406` (Van Gogh, *Sower after Millet*) ↔ `#41274` (Millet, *The Sower*, `filiation`, cos 0.711): moves off the 4 sky/ground corners (`d(a)` −0.017) directly onto the sower's figure (`[5, 6, 10, 9]`, `d(a)` **+0.107**, 8× random).
+2. `#32834` ↔ `#33077` (Rembrandt, two oval portraits of a young woman, `meme_sujet`, cos 0.855): moves off the 4 white corners outside the oval (`+0.001`) onto the face and bust (`+0.515`, 16× random).
+3. `#4261` (Pissarro) ↔ `#15620` (Levitan, `meme_facture`, cos 0.716): moves off corners (`−0.004`) onto the horizontal river and bank band (`[10, 9, 11, 8]`, `+0.139`).
+4. `#22485` (Chagall) ↔ `#66396` (foxes in snow, `meme_sujet`, cos 0.340): moves off the 4 empty margin corners (`−0.015`) onto the lower-centre animal figures (`+0.108`).
+5. `#33547` (Rembrandt, castle) ↔ `#81005` (Turner, *Windsor Castle*, `meme_facture`, cos 0.510): edge case; boxes move onto the castle and reflection, yet masking them raises cosine (`−0.083`, like random `−0.025`), reflecting broad atmospheric rather than local similarity.
+6. `#31416` (Konchalovsky, pig) ↔ `#35524` (Dürer, young steer, `meme_composition`, cos 0.530): boxes track the animal in both versions (drop `+0.036` vs random `+0.075`).
+
+**Integration & UI.** Wired into `correspondences.py` (`load_or_compute_cell_means` + `match`), `Spaces.cell_means`
+(`pixplot/api/spaces.py`), `/api/correspond`, and MCP `why_similar` (unchanged output fields). An explicit
+disclaimer under the zones in `web/atlas-panneaux.js` states that they show "the zones that resemble each
+other most" and are "a lead to look at, not an explanation". Verified live in the Atlas (port 8770, 0 console
+errors, 0 network errors) on *The Sower*, the two Rembrandts, and Pissarro/Levitan.
+
+**Limits.**
+- **Fewer pairs reaching ≥ 4 mutual matches**: 73/108 validated and 93/108 neighbours (vs 104/104 and 103/104
+  previously). Stripping positional corner signatures prevents shape-dissimilar pairs (`meme_palette`,
+  `meme_facture`) from fabricating 4 spurious corner matches; the comparator simply shows the 1–3 remaining
+  zones (or none).
+- **Tied with fixed centre in `one` mode**: on neighbours, selected zones match the fixed centre (`a − c` =
+  −0.0053, p = 0.121) without statistically exceeding it; however, they clearly beat the centre in `both` mode
+  (`+0.0612` vs `+0.0182`, p < 0.001) and adapt to off-centre or horizontal compositions.
+- **Scope**: the ranking measures weighted local similarity, never causal proof of influence or an internal
+  explanation of the network.
