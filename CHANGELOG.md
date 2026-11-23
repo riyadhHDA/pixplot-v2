@@ -37,6 +37,7 @@ Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 - Fix: the regard cards (Corpus panel, MCP) said subject beats form on "same composition"; per § 38 it is the reverse, and the note on missing artists now accounts for MMArt (7 % remain unknown).
 - **The "Why?" button put to the test** (Gemini 4 Neon, `pixplot whytest`): hiding the zones it shows lowers the similarity no more than hiding random zones; it mostly picks corners (63 %). Fix in progress. ARCHITECTURE § 39.
 - **Corpus datasheet** (after Gebru et al., *Datasheets for Datasets*, 2021): where images and labels come from, known rights, gaps, what PixPlot found (duplicates, doubtful labels, frames), uses to avoid. Computed, never hand-written; included in every Research Pack (`datasheet.md`) and via `pixplot corpus --datasheet` (in French).
+- **File formats documented** (`docs/FORMATS.md` / `.fr.md`): catalogue, thumbnails, runs, pairs, notebook, Research Pack; a test checks that the code writes what is described (a 1.0 condition).
 - Fix: a notions run no longer crashes `pixplot serve`.
 
 ## 0.20.0 — 2026-11-19 · Titles, dates, artists and emotions for WikiArt; order of the surface

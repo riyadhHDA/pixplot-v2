@@ -20,7 +20,8 @@ principal : WikiArt 81k (80 716 œuvres). Site : https://riyadhhda.github.io/pix
 - **Chaîne** : ingestion → vecteurs → index FAISS → analyse (UMAP, groupes Leiden, noms) → Atlas web
   (deck.gl) + API FastAPI + serveur MCP.
 - Documentation : [README](README.fr.md) · [ARCHITECTURE](ARCHITECTURE.fr.md) (une section par étape,
-  avec les mesures) · [ROADMAP](ROADMAP.fr.md) · [CHANGELOG](CHANGELOG.fr.md) · [MCP](docs/MCP.fr.md).
+  avec les mesures) · [ROADMAP](ROADMAP.fr.md) · [CHANGELOG](CHANGELOG.fr.md) · [MCP](docs/MCP.fr.md) ·
+  [FORMATS](docs/FORMATS.fr.md) (fichiers écrits sur le disque ; les mettre à jour si un format change).
 
 L'utilisateur écrit en français. Répondre en français, en termes clairs pour un historien de l'art :
 pas de jargon sans explication.

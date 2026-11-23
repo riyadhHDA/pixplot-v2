@@ -134,6 +134,7 @@ de confiance à 95 % de l'écart apparié exclut zéro (`pixplot pairs ci`, ARCH
 
 ## Vers la 1.0
 
-La 1.0 viendra quand : les commandes et les formats de fichiers seront stables ; le banc
+La 1.0 viendra quand : les commandes et les formats de fichiers seront stables (formats décrits dans
+[docs/FORMATS.fr.md](docs/FORMATS.fr.md), vérifiés par un test) ; le banc
 d'essai aura au moins 100 paires validées ; l'installation aura été testée sur une machine
 neuve ; et la documentation sera complète dans les deux langues.

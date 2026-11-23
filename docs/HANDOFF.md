@@ -175,6 +175,8 @@ corrigé ; 63 tests passent, Atlas vérifié.
   `pixplot corpus --datasheet`, `datasheet.md` dans chaque Research Pack) ; fiches des regards et
   note sur les artistes corrigées d'après le § 38 et MMArt. Notions du regard forme : calcul coupé à
   l'époque 16/30 par la fin de session, à relancer (processeur, 1–2 h) quand Neon n'en a plus besoin.
+  Formats de fichiers décrits dans `docs/FORMATS.fr.md` / `.md`, vérifiés par `tests/test_formats.py`
+  (condition de la 1.0 : un format qui change se note au CHANGELOG et dans ce document).
 
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
   19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.
