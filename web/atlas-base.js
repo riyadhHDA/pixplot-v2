@@ -55,8 +55,8 @@ const ICON = {
   note: svg("M5 2h10v16H5z M8 6h5 M8 9h5 M8 12h3"),
   export: svg("M10 3v10 M6 9l4 4 4-4 M4 17h12"),
 };
-const SPACE_SHORT = { forme: "Forme", sujet: "Sujet et style", couleur: "Couleur", touche: "Touche", forme_v2: "DINOv2",
-  forme_localmap: "Forme · LocalMAP (essai, pas mieux)" };
+const SPACE_SHORT = { forme: "Forme", sujet: "Sujet et style", couleur: "Couleur", touche: "Touche", posture: "Posture",
+  forme_v2: "DINOv2", forme_localmap: "Forme · LocalMAP (essai, pas mieux)" };
 const store = {   // préférences de ce navigateur seulement (peuvent être indisponibles)
   get(k, d) { try { return JSON.parse(localStorage.getItem(`pixplot:${k}`)) ?? d; } catch { return d; } },
   set(k, v) { try { localStorage.setItem(`pixplot:${k}`, JSON.stringify(v)); } catch { /* navigation privée */ } },

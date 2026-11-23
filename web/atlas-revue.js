@@ -12,8 +12,10 @@ const prettyLabel = (l) => String(l).split(" · ").map((x) => pretty(x)).join(" 
 // dire ce que voit chaque regard, d'où viennent les étiquettes, et ce qui manque au corpus.
 function regardCard(sp) {
   const c = sp.card || {};
+  const tag = (sp.experimental || c.experimental)
+    ? `<span class="badge-essai">${esc(c.status || "spécialisé · en essai")}</span>` : "";
   return `<section class="card-regard">
-    <h3>${esc(SPACE_SHORT[sp.key] || sp.label)} <small>${esc(c.model || sp.encoder)}</small></h3>
+    <h3>${esc(SPACE_SHORT[sp.key] || sp.label)}${tag} <small>${esc(c.model || sp.encoder)}</small></h3>
     <dl>
       <dt>Entraîné sur</dt><dd>${esc(c.trained_on || "—")}</dd>
       <dt>Voit</dt><dd>${esc(c.sees || "—")}</dd>

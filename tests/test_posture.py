@@ -11,7 +11,7 @@ import pytest
 from pixplot.analysis import review
 from pixplot.analysis.pairbench import TYPES, Pair, add_pair, pairs_path
 from pixplot.api.data import AtlasData
-from pixplot.api.spaces import NOT_KEPT, Spaces, describe_encoder
+from pixplot.api.spaces import EXPERIMENTAL, NOT_KEPT, Spaces, describe_encoder
 from pixplot.cli import main as cli_main
 from pixplot.config import get_settings
 from pixplot.encoders.base import EncodedBatch, Encoder
@@ -188,10 +188,10 @@ class _FakePosture(Encoder):
         )
 
 
-def test_posture_registered_not_kept_meme_geste_and_bench(atlas_env, tmp_path):
-    """Posture est dans NOT_KEPT, meme_geste est enregistré, et pairs bench / composition fonctionnent."""
+def test_posture_registered_experimental_meme_geste_and_bench(atlas_env, tmp_path):
+    """Posture est un regard spécialisé en essai (hors NOT_KEPT), meme_geste est enregistré, et pairs bench fonctionne."""
     assert "vitpose_base" in ENCODERS and "vitpose_r18" in ENCODERS
-    assert "vitpose" in NOT_KEPT
+    assert "vitpose" not in NOT_KEPT and "posture" in EXPERIMENTAL
     key, label, _ = describe_encoder("vitpose_base")
     assert key == "posture" and "ViTPose" in label
 
@@ -209,9 +209,12 @@ def test_posture_registered_not_kept_meme_geste_and_bench(atlas_env, tmp_path):
     assert run.manifest["status"] == "complete" and run.manifest["outputs"]["ok"] == n
     assert (run.path / "poses_count.npy").exists() and (run.path / "poses_vecs.npy").exists()
 
-    # Par défaut, la posture n'est pas exposée dans l'Atlas ni le serveur MCP
+    # Exposé par défaut comme regard spécialisé en essai (avec drapeau dans list() et dans la fiche critique)
     data = AtlasData.load(s)
-    assert "posture" not in data.spaces.runs
+    assert "posture" in data.spaces.runs
+    sp_posture = next(sp for sp in data.spaces.list() if sp["key"] == "posture")
+    assert sp_posture["experimental"] is True and sp_posture["specialized"] is True
+    assert sp_posture["card"]["experimental"] is True
 
     # Ajout de paires meme_geste (validée + proposée)
     reds = [i for i, m in data.meta.items() if m.get("artist") == "Rouge"]
@@ -233,20 +236,134 @@ def test_posture_registered_not_kept_meme_geste_and_bench(atlas_env, tmp_path):
     spaces_measured = {r["space"] for r in comp["results"] if r["type"] == "meme_geste"}
     assert "posture" in spaces_measured and "posture_multi" in spaces_measured
 
-    # Une œuvre sans figure (poses_count == 0) est exclue de Spaces._rows["posture"] (pas de faux rang 1)
+    # Une œuvre sans figure (poses_count == 0) est exclue de Spaces._rows["posture"] et renvoie []
     cnt_path = run.path / "poses_count.npy"
     cnt_arr = np.load(cnt_path)
     cnt_arr[0] = 0
     np.save(cnt_path, cnt_arr)
-    Spaces.include_not_kept = True
-    try:
-        d2 = AtlasData.load(s)
-        d2.spaces._open("posture")
-        first_id = int(np.load(run.path / "ids.npy")[0])
-        assert first_id not in d2.spaces._rows["posture"]
-        assert d2.spaces.neighbors("posture", first_id) == []
-    finally:
-        Spaces.include_not_kept = False
+    d2 = AtlasData.load(s)
+    d2.spaces._open("posture")
+    first_id = int(np.load(run.path / "ids.npy")[0])
+    assert first_id not in d2.spaces._rows["posture"]
+    assert d2.spaces.neighbors("posture", first_id) == []
+
+
+def test_posture_api_skeletons_mirror_no_figure_and_mcp(atlas_env, tmp_path):
+    """API /api/artwork?space=posture, /api/posture/{id}, /api/posture/match, /api/compare et MCP."""
+    pytest.importorskip("fastapi")
+    import asyncio
+    from fastapi.testclient import TestClient
+    from pixplot.api.app import create_app
+    from pixplot.encoders.posture import letterbox_to_image_kpts
+
+    src_settings, _ = atlas_env
+    data_copy = tmp_path / "data_api"
+    shutil.copytree(src_settings.data_dir, data_copy)
+    s = get_settings(data_copy)
+
+    run = extract(_FakePosture(), s.catalog_path, s.runs_dir, batch_size=6, workers=1)
+    run_ids = np.load(run.path / "ids.npy")
+    cnt = np.load(run.path / "poses_count.npy")
+    vecs = np.load(run.path / "poses_vecs.npy")
+    kpts = np.load(run.path / "poses_kpts.npy")
+
+    # On fabrique 3 cas précis sur les 3 premières œuvres :
+    # - r=0 (id0) : 2 figures (fig 0 = striding, fig 1 = reclining)
+    # - r=1 (id1) : 1 figure (fig 0 = reclining EN MIROIR) → doit répondre à id0 (fig_a=1, fig_b=0, mirrored=True)
+    # - r=2 (id2) : 0 figure → aucune voisine, posture_figures=0, match=False
+    # Les autres œuvres reçoivent "orant" (éloigné de reclining/striding)
+    kp_stride = _make_skeleton("striding")
+    kp_rec = _make_skeleton("reclining")
+    kp_rec_mir = mirror_keypoints(kp_rec)
+    kp_orant = _make_skeleton("orant")
+    v_stride = pose_descriptor(kp_stride).astype(np.float16)
+    v_rec = pose_descriptor(kp_rec).astype(np.float16)
+    v_rec_mir = pose_descriptor(kp_rec_mir).astype(np.float16)
+    v_orant = pose_descriptor(kp_orant).astype(np.float16)
+
+    cnt[:] = 1
+    vecs[:] = 0
+    kpts[:] = 0
+    for r in range(len(run_ids)):
+        vecs[r, 0] = v_orant
+        kpts[r, 0] = kp_orant.astype(np.float16)
+
+    cnt[0] = 2
+    vecs[0, 0], vecs[0, 1] = v_stride, v_rec
+    kpts[0, 0], kpts[0, 1] = kp_stride.astype(np.float16), kp_rec.astype(np.float16)
+
+    cnt[1] = 1
+    vecs[1, 0] = v_rec_mir
+    kpts[1, 0] = kp_rec_mir.astype(np.float16)
+
+    cnt[2] = 0
+    vecs[2, 0] = 0
+    kpts[2, 0] = 0
+
+    np.save(run.path / "poses_count.npy", cnt)
+    np.save(run.path / "poses_vecs.npy", vecs)
+    np.save(run.path / "poses_kpts.npy", kpts)
+
+    id0, id1, id2 = int(run_ids[0]), int(run_ids[1]), int(run_ids[2])
+    data = AtlasData.load(s)
+    client = TestClient(create_app(data))
+
+    # 1. /api/spaces expose posture comme regard spécialisé en essai
+    sp = next(x for x in client.get("/api/spaces").json()["spaces"] if x["key"] == "posture")
+    assert sp["experimental"] is True and sp["specialized"] is True
+
+    # 2. /api/artwork/{id0}?space=posture retrouve id1 en tête (figure secondaire 1 ↔ 0, en miroir)
+    a0 = client.get(f"/api/artwork/{id0}", params={"space": "posture", "k": 5}).json()
+    assert a0["space"] == "posture" and a0["posture_figures"] == 2
+    assert a0["neighbors"][0]["id"] == id1
+    assert a0["neighbors"][0]["fig_a"] == 1 and a0["neighbors"][0]["fig_b"] == 0
+    assert a0["neighbors"][0]["mirrored"] is True
+    assert all(n["id"] != id2 for n in a0["neighbors"])
+
+    # 3. Œuvre sans figure : posture_figures == 0, neighbors == []
+    a2 = client.get(f"/api/artwork/{id2}", params={"space": "posture", "k": 5}).json()
+    assert a2["posture_figures"] == 0 and a2["neighbors"] == []
+
+    # 4. Route des squelettes /api/posture/{id} (avec conversion letterbox → image 90x120)
+    p0 = client.get(f"/api/posture/{id0}")
+    assert p0.status_code == 200
+    p0j = p0.json()
+    assert p0j["count"] == 2 and p0j["experimental"] is True and len(p0j["limbs"]) == 14
+    expected_kp0 = letterbox_to_image_kpts(kp_stride.astype(np.float16), 90, 120)
+    got_kp0 = np.array(p0j["figures"][0]["kpts"], dtype=np.float32)
+    assert np.allclose(got_kp0[:, :2], expected_kp0[:, :2], atol=1e-3)
+    assert client.get(f"/api/posture/{id2}").json()["count"] == 0
+    assert client.get("/api/posture/999999").status_code == 404
+
+    # 5. Route /api/posture/match et /api/compare
+    pm = client.get("/api/posture/match", params={"a": id0, "b": id1}).json()
+    assert pm["matched"] is True and pm["fig_a"] == 1 and pm["fig_b"] == 0 and pm["mirrored"] is True
+    assert pm["score"] > 0.99 and "pas la preuve" in pm["note"]
+    pm_empty = client.get("/api/posture/match", params={"a": id0, "b": id2}).json()
+    assert pm_empty["matched"] is False and pm_empty["score"] is None
+
+    cmp = client.get("/api/compare", params={"ids": f"{id0},{id1},{id2}"}).json()
+    assert cmp["similarity"]["posture"][0][1] > 0.99
+    assert cmp["similarity"]["posture"][0][2] is None
+    assert cmp["posture_matches"]["0,1"]["mirrored"] is True
+
+    # 6. MCP similar_artworks accepte « posture » avec mention essai + précaution, sans nouvel outil
+    pytest.importorskip("mcp")
+    from pixplot.mcp.server import create_server
+
+    srv = create_server(data)
+
+    async def check_mcp():
+        tools = {t.name for t in await srv.list_tools()}
+        assert len(tools) == 20
+        r0 = json.loads((await srv.call_tool("similar_artworks", {"artwork_id": id0, "k": 5, "space": "posture"})).content[0].text)
+        assert r0["space"] == "posture" and r0["experimental"] is True and r0["figures"] == 2
+        assert "essai" in r0["note"] and "pas la preuve" in r0["note"]
+        assert r0["neighbors"][0]["id"] == id1 and r0["neighbors"][0]["mirrored"] is True
+        r2 = json.loads((await srv.call_tool("similar_artworks", {"artwork_id": id2, "k": 5, "space": "posture"})).content[0].text)
+        assert r2["figures"] == 0 and r2["neighbors"] == [] and "Aucune figure" in r2["message"]
+
+    asyncio.run(check_mcp())
 
 
 def test_vitpose_encoder_torch_on_synthetic_corpus(atlas_env, tmp_path):
