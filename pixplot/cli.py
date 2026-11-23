@@ -386,6 +386,16 @@ def cmd_serve(args) -> int:
     return 0
 
 
+def _default_spaces(arg: str | None, data) -> list[str]:
+    """Regards demandés, ou par défaut tous sauf les regards en essai (la posture ne couvre que
+    les œuvres où une figure est détectée) ; on peut toujours les nommer avec --spaces."""
+    from .api.spaces import EXPERIMENTAL
+
+    if arg:
+        return arg.split(",")
+    return [k for k in data.spaces.runs if k not in EXPERIMENTAL]
+
+
 # --------------------------------------------------------------------------- noms
 def _analysis_arg(s, name: str | None) -> Run:
     if name:
@@ -427,7 +437,7 @@ def cmd_communities(args) -> int:
     ids = [int(i) for i in data.ids]
     n_groups = args.groups or int(data.clusters.max()) + 1
     n_families = args.families or max(4, round(n_groups / 6))
-    keys = args.spaces.split(",") if args.spaces else list(data.spaces.runs)
+    keys = _default_spaces(args.spaces, data)
     print(f"Analyse : {analysis.id} — groupes Leiden (≈ {n_groups} groupes, ≈ {n_families} familles)")
     for key in keys:
         if key in C.available(analysis) and not args.force:
@@ -452,7 +462,7 @@ def cmd_disagreements(args) -> int:
     analysis = _analysis_arg(s, args.analysis)
     data = AtlasData.load(s, analysis)
     ids = [int(i) for i in data.ids]
-    keys = args.spaces.split(",") if args.spaces else list(data.spaces.runs)
+    keys = _default_spaces(args.spaces, data)
     if len(keys) < 2:
         raise SystemExit("Il faut au moins deux regards : calculez-en d'autres avec `pixplot embed --encoder …`.")
     print(f"Analyse : {analysis.id} — désaccords entre {', '.join(keys)}", flush=True)
@@ -1338,7 +1348,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("communities", help="groupes Leiden emboîtés (familles ⊃ groupes), un jeu par regard")
     p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
-    p.add_argument("--spaces", help="regards à calculer, séparés par des virgules (défaut : tous)")
+    p.add_argument("--spaces", help="regards à calculer, séparés par des virgules (défaut : tous sauf ceux en essai)")
     p.add_argument("--groups", type=int, help="nombre de groupes visé (défaut : celui d'e-means)")
     p.add_argument("--families", type=int, help="nombre de familles visé (défaut : groupes / 6)")
     p.add_argument("-k", type=int, default=15, help="voisines par œuvre dans le graphe")
@@ -1348,7 +1358,7 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("disagreements", help="paires qu'un regard rapproche et qu'un autre sépare")
     p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
-    p.add_argument("--spaces", help="regards à confronter, séparés par des virgules (défaut : tous)")
+    p.add_argument("--spaces", help="regards à confronter, séparés par des virgules (défaut : tous sauf ceux en essai)")
     p.add_argument("-k", type=int, default=10, help="voisines calculées par œuvre")
     p.add_argument("--rank", type=int, default=5, help="rang maximal dans le regard qui rapproche")
     p.add_argument("--centile", type=float, default=0.35, help="centile maximal dans le regard qui sépare")

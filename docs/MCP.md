@@ -16,7 +16,7 @@ verification stays with the historian.
 |---|---|
 | `corpus_overview` | size, models, similarity spaces, groups (with their names) and their dominant metadata |
 | `search_by_text` | works matching a description (SigLIP 2, French or English) |
-| `similar_artworks` | nearest neighbours of a work in the chosen space: `forme` (DINOv3), `sujet` (SigLIP 2), `couleur`, `touche` |
+| `similar_artworks` | nearest neighbours of a work in the chosen space: `forme` (DINOv3), `sujet` (SigLIP 2), `couleur`, `touche`, `posture` (on trial: figures and gestures, mirror included) |
 | `search_detail` | regions similar to a detail (box x0, y0, x1, y1 as fractions) |
 | `search_zones` | regions of works matching a described detail ("a halo", "a skull"), with the crop |
 | `get_artwork` | record: metadata and their source, group, atypicality, neighbours |

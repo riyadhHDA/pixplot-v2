@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 23/11/2026 (publication de la 0.21.0).*
+*Dernière mise à jour : 23/11/2026 (posture dans l'Atlas fusionnée).*
 
 ## Version publiée
 
@@ -186,11 +186,15 @@ corrigé ; 63 tests passent, Atlas vérifié.
 
 - **Après la 0.21.0 (23/11/2026)** : planche « posture » dans le README FR + EN (poussée). Claude :
   référence des commandes `docs/COMMANDS.fr.md` / `.md` (41 commandes, `tests/test_commands_doc.py`,
-  condition de la 1.0), non publiée. Notions du regard forme relancées en arrière-plan
-  (journal `data/wikiart81k/notions_forme.log`, l'ancien coupé gardé à côté). **Neon** travaille dans
-  `..\pixplot-posture-atlas` (branche `gemini/posture-atlas`) : regard « posture » exposé en essai
-  dans l'Atlas et le MCP (voisines exactes multi-figures avec miroir, squelettes dessinés) ;
-  compte rendu attendu dans `docs/handoff/gemini-posture-atlas.md`.
+  condition de la 1.0), non publiée. Notions du regard forme **calculées** (run `notions_forme_20261123-132834`, 50 min,
+  2 048 notions vivantes, 63,4 % de variance contre 73,7 % pour le sujet ; pas encore lues ni montrées).
+  **Posture dans l'Atlas, en essai (Neon), fusionné le 23/11/2026, non publié** (ARCHITECTURE § 41,
+  `handoff/gemini-posture-atlas.md`) : `vitpose` sorti de `NOT_KEPT`, `posture` dans
+  `spaces.EXPERIMENTAL` ; voisines exactes `PostureIndex` (toutes figures, miroir), squelettes dans la
+  fiche et le comparateur, `/api/posture/…`, MCP `similar_artworks(space="posture")`. Vérifié par
+  Claude dans l'Atlas 81k (*Le Semeur* → Millet rang 1, Titien ↔ Mantegna en miroir, 0 erreur).
+  Ajout de Claude : `communities` / `disagreements` excluent les regards en essai par défaut
+  (`cli._default_spaces`). Copie de travail supprimée.
 
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
   19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.

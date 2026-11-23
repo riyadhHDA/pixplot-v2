@@ -1957,3 +1957,40 @@ l'Atlas (port 8770, 0 erreur console, 0 erreur réseau) sur *Le Semeur*, les deu
   (`+0,0612` contre `+0,0182`, p < 0,001) et s'adaptent aux compositions non centrées ou horizontales.
 - **Portée** : le classement mesure une ressemblance locale pondérée, jamais une preuve causale d'emprunt ni
   une explication interne du réseau.
+
+## 41. Le regard « posture » dans l'Atlas, en essai (23/11/2026)
+
+**Décision.** Le § 35 avait laissé la posture dans `NOT_KEPT` : elle ne bat pas la forme sur les paires
+validées. La relecture des paires « même geste » (25 validées, 7 rejetées, 5 à relire sur 37) montre
+pourtant qu'elle retrouve des formules gestuelles que les autres regards ne voient pas. Elle est donc
+proposée comme **regard spécialisé, en essai** : séparée des quatre regards principaux dans l'Atlas,
+marquée « essai », avec une fiche qui dit ses limites. Travail de Gemini 4 Neon
+(`docs/handoff/gemini-posture-atlas.md`), relu et vérifié par Claude.
+
+**Ce qui change.**
+
+- Les voisines « posture » passent par `PostureIndex` : toutes les figures de chaque œuvre, comparées
+  directement et en miroir, recherche **exacte** (pas d'index approché). Chaque voisine indique les deux
+  figures qui se répondent et si c'est en miroir. Les œuvres sans figure sont exclues, et leur fiche le dit.
+- Squelettes dessinés (SVG, sans bibliothèque) dans la fiche d'une œuvre et dans le comparateur ; routes
+  `/api/posture/{id}` et `/api/posture/match?a=…&b=…` ; `posture_matches` dans `/api/compare`.
+- `similar_artworks` (MCP) accepte `space="posture"`, avec la mention « en essai » et la précaution
+  habituelle. Toujours 20 outils.
+- `pixplot communities` et `pixplot disagreements` laissent les regards en essai de côté par défaut (la
+  posture ne couvre que 48,4 % du corpus) ; on peut les nommer avec `--spaces`.
+
+**Mesures (WikiArt 81k, 39 043 œuvres avec figure, 102 515 figures).**
+
+| Mesure | Valeur |
+|---|---|
+| Ouverture de l'index (une fois) | 1 606 ms → 486 ms (vectorisé, résultat identique) |
+| Voisines à chaud, `PostureIndex.similar`, k = 20 | 3 à 38 ms |
+| Fiche d'œuvre à chaud dans le navigateur | 142 à 177 ms (première demande : ~350 ms) |
+| *Le Semeur*, Van Gogh 79406 | Millet 41274 au rang 1 (pose 0,979) |
+| Titien 66184 ↔ Mantegna 56885 | pose 0,932, en miroir |
+
+**Limites.** Détecteur et squelettes entraînés sur des photographies (COCO) : échec sur le cubisme et les
+figures très déformées ; rien pour les paysages, natures mortes et portraits trop serrés. Pas de carte 2D
+propre à la posture (les œuvres sans figure n'y auraient pas de place). Les dessins se recalent au survol
+après un redimensionnement de la fenêtre. Une pose semblable est une piste, pas la preuve qu'un artiste a
+vu l'autre.

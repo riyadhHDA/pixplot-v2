@@ -67,8 +67,9 @@ Le regard « posture » (en essai) repère les figures, estime leur squelette et
 miroir. Sans aucune étiquette, il rapproche une *Vénus* de Titien de l'apôtre endormi de Mantegna, ou un enfant
 de Ferenczy d'une paysanne dessinée par Van Gogh : des formules gestuelles (les *Pathosformeln* d'Aby Warburg)
 que les autres regards ne voient pas. Sur 37 paires « même geste » qu'il a proposées, 25 ont été validées à la
-relecture. Une pose semblable reste une piste, pas la preuve qu'un artiste a vu l'autre
-([ARCHITECTURE § 35](ARCHITECTURE.fr.md)).
+relecture ; dans l'Atlas, choisir le regard « Posture » dessine les squelettes qui se répondent. Une pose
+semblable reste une piste, pas la preuve qu'un artiste a vu l'autre
+([ARCHITECTURE §§ 35 et 41](ARCHITECTURE.fr.md)).
 
 ## Fonctions principales
 

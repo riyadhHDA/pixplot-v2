@@ -16,6 +16,7 @@ Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numé
 
 ## Non publié
 
+- **Regard « posture » dans l'Atlas, en essai** (Gemini 4 Neon, relu par Claude) : voisines exactes sur toutes les figures, avec le miroir ; squelettes dessinés dans la fiche et le comparateur ; `similar_artworks` accepte `space="posture"`. Séparé des quatre regards principaux et marqué « essai ». `communities` et `disagreements` le laissent de côté par défaut. (ARCHITECTURE § 41)
 - **Référence des commandes** (`docs/COMMANDS.fr.md` / `.md`) : les 41 commandes de `pixplot`, rangées par étape de travail ; un test refuse une commande non décrite ou une description sans commande (condition de la 1.0).
 
 ## 0.21.0 — 23/11/2026 · Posture, notions apprises, « Pourquoi ? » mis à l'épreuve et réparé, fiche de données

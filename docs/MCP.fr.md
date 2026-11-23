@@ -17,7 +17,7 @@ comparer, et la vérification reste côté historien.
 |---|---|
 | `corpus_overview` | taille, modèles, groupes et leurs métadonnées dominantes |
 | `search_by_text` | œuvres correspondant à une description (SigLIP 2, français ou anglais) |
-| `similar_artworks` | plus proches voisines d'une œuvre, dans l'espace choisi : `forme` (DINOv3), `sujet` (SigLIP 2), `couleur`, `touche` |
+| `similar_artworks` | plus proches voisines d'une œuvre, dans l'espace choisi : `forme` (DINOv3), `sujet` (SigLIP 2), `couleur`, `touche`, `posture` (en essai : figures et gestes, avec le miroir) |
 | `search_detail` | zones semblables à un détail (cadre x0, y0, x1, y1 en fractions) |
 | `search_zones` | zones d'œuvres correspondant à un détail décrit (« une auréole », « un crâne »), avec le recadrage |
 | `get_artwork` | fiche : métadonnées et leur source, groupe, atypicité, voisines |

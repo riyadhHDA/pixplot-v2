@@ -1841,3 +1841,38 @@ errors, 0 network errors) on *The Sower*, the two Rembrandts, and Pissarro/Levit
   (`+0.0612` vs `+0.0182`, p < 0.001) and adapt to off-centre or horizontal compositions.
 - **Scope**: the ranking measures weighted local similarity, never causal proof of influence or an internal
   explanation of the network.
+
+## 41. The "posture" regard in the Atlas, on trial (2026-11-23)
+
+**Decision.** § 35 had left posture in `NOT_KEPT`: it does not beat form on the validated pairs. Yet the
+review of the "same gesture" pairs (25 validated, 7 rejected, 5 to review out of 37) shows that it finds
+gestural formulas the other regards do not see. It is therefore offered as a **specialised regard, on
+trial**: kept apart from the four main regards in the Atlas, marked "trial", with a card that states its
+limits. Work by Gemini 4 Neon (`docs/handoff/gemini-posture-atlas.md`), reviewed and checked by Claude.
+
+**What changes.**
+
+- "Posture" neighbours go through `PostureIndex`: every figure of each work, compared directly and
+  mirrored, **exact** search (no approximate index). Each neighbour states the two figures that answer
+  each other and whether the match is mirrored. Works without a figure are excluded, and their card says so.
+- Skeletons drawn (SVG, no library) on a work's card and in the comparator; routes `/api/posture/{id}` and
+  `/api/posture/match?a=…&b=…`; `posture_matches` in `/api/compare`.
+- `similar_artworks` (MCP) accepts `space="posture"`, with the "on trial" mention and the usual caution.
+  Still 20 tools.
+- `pixplot communities` and `pixplot disagreements` leave trial regards out by default (posture covers only
+  48.4 % of the corpus); they can be named with `--spaces`.
+
+**Measurements (WikiArt 81k, 39,043 works with a figure, 102,515 figures).**
+
+| Measurement | Value |
+|---|---|
+| Opening the index (once) | 1,606 ms → 486 ms (vectorised, identical result) |
+| Warm neighbours, `PostureIndex.similar`, k = 20 | 3 to 38 ms |
+| Warm work card in the browser | 142 to 177 ms (first request: ~350 ms) |
+| *The Sower*, Van Gogh 79406 | Millet 41274 at rank 1 (pose 0.979) |
+| Titian 66184 ↔ Mantegna 56885 | pose 0.932, mirrored |
+
+**Limits.** Detector and skeletons trained on photographs (COCO): they fail on Cubism and heavily distorted
+figures, and find nothing in landscapes, still lifes and tightly cropped portraits. No 2D map of its own
+(works without a figure would have no place on it). The drawings realign on hover after the window is
+resized. A similar pose is a lead, not proof that one artist saw the other.

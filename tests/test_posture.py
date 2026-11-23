@@ -423,3 +423,14 @@ def test_vitpose_encoder_torch_on_synthetic_corpus(atlas_env, tmp_path):
     idx = PostureIndex.open(run.path)
     assert idx.n_artworks == n and idx.n_with_figures == n
     assert len(idx.similar(int(idx.ids[0]), k=3)) == 3
+
+
+def test_regards_en_essai_hors_des_calculs_par_defaut():
+    """`communities` et `disagreements` laissent la posture de côté sauf si on la nomme."""
+    from types import SimpleNamespace
+
+    from pixplot.cli import _default_spaces
+
+    data = SimpleNamespace(spaces=SimpleNamespace(runs={"forme": 1, "sujet": 2, "posture": 3}))
+    assert _default_spaces(None, data) == ["forme", "sujet"]
+    assert _default_spaces("forme,posture", data) == ["forme", "posture"]

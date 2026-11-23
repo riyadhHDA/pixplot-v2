@@ -66,8 +66,9 @@ with all thumbnails rendered, and a text or detail query returns in 0.25 s.
 The "posture" regard (on trial) finds the figures, estimates their skeletons and compares the poses, mirror
 images included. Without any label, it brings a *Venus* by Titian close to Mantegna's sleeping apostle, or a boy by
 Ferenczy close to a peasant woman drawn by Van Gogh: gestural formulas (Aby Warburg's *Pathosformeln*) that the
-other regards do not see. Of 37 "same gesture" pairs it proposed, 25 were validated on review. A similar pose
-remains a lead, not proof that one artist saw the other ([ARCHITECTURE § 35](ARCHITECTURE.md)).
+other regards do not see. Of 37 "same gesture" pairs it proposed, 25 were validated on review; in the Atlas,
+choosing the "Posture" regard draws the skeletons that answer each other. A similar pose
+remains a lead, not proof that one artist saw the other ([ARCHITECTURE §§ 35 and 41](ARCHITECTURE.md)).
 
 ## Main features
 
