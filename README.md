@@ -59,6 +59,16 @@ with all thumbnails rendered, and a text or detail query returns in 0.25 s.
 ![Overview of the 80,716 artworks coloured by group](docs/images/atlas-overview.jpg)
 </details>
 
+## The same gesture, from one century to another
+
+![Three pairs of works whose figures strike the same pose, skeletons drawn: Titian and Mantegna, Ferenczy and Van Gogh, Tintoretto and Berthe Morisot](docs/images/posture.jpg)
+
+The "posture" regard (on trial) finds the figures, estimates their skeletons and compares the poses, mirror
+images included. Without any label, it brings a *Venus* by Titian close to Mantegna's sleeping apostle, or a boy by
+Ferenczy close to a peasant woman drawn by Van Gogh: gestural formulas (Aby Warburg's *Pathosformeln*) that the
+other regards do not see. Of 37 "same gesture" pairs it proposed, 25 were validated on review. A similar pose
+remains a lead, not proof that one artist saw the other ([ARCHITECTURE § 35](ARCHITECTURE.md)).
+
 ## Main features
 
 | | |

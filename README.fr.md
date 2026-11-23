@@ -59,6 +59,17 @@ avec toutes les vignettes affichées, et une recherche par texte ou par détail 
 ![Vue d'ensemble des 80 716 œuvres colorées par groupe](docs/images/atlas-overview.jpg)
 </details>
 
+## Le même geste, d'un siècle à l'autre
+
+![Trois paires d'œuvres dont les figures prennent la même pose, squelettes dessinés : Titien et Mantegna, Ferenczy et Van Gogh, le Tintoret et Berthe Morisot](docs/images/posture.fr.jpg)
+
+Le regard « posture » (en essai) repère les figures, estime leur squelette et compare les poses, y compris en
+miroir. Sans aucune étiquette, il rapproche une *Vénus* de Titien de l'apôtre endormi de Mantegna, ou un enfant
+de Ferenczy d'une paysanne dessinée par Van Gogh : des formules gestuelles (les *Pathosformeln* d'Aby Warburg)
+que les autres regards ne voient pas. Sur 37 paires « même geste » qu'il a proposées, 25 ont été validées à la
+relecture. Une pose semblable reste une piste, pas la preuve qu'un artiste a vu l'autre
+([ARCHITECTURE § 35](ARCHITECTURE.fr.md)).
+
 ## Fonctions principales
 
 | | |
