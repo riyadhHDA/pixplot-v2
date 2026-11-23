@@ -14,7 +14,7 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
-## Unreleased
+## 0.21.0 — 2026-11-23 · Posture, learned notions, "Why?" tested and fixed, datasheet
 
 - **"Posture" regard** (Gemini 4 Neon): skeletons of the figures (RT-DETRv2 + ViTPose, Apache 2.0),
   compared with their mirror image, figures found in 48 % of works. Does no better than form on the

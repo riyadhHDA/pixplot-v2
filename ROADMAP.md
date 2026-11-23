@@ -1,6 +1,6 @@
 # Roadmap
 
-**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-19 · Current version: **0.20.0**
+**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-23 · Current version: **0.21.0**
 
 Completed work is listed in [CHANGELOG.md](CHANGELOG.md). This file tracks upcoming steps,
 dropped experiments and leads worth testing.
@@ -108,9 +108,11 @@ ARCHITECTURE § 38).
     *(evaluated in 0.19.0, § 28: not kept)*.
   - **CSD** (ECCV 2024) for pure style vs "touch", and **PE-Core** vs SigLIP 2 for "subject"
     *(evaluated, not kept: ARCHITECTURE §§ 31–32)*.
-  - **Poses and gaze** (Stork § 8.3 & § 9.3.1; *Human-Art* CVPR 2023; Madhu et al.): skeleton
+  - **Poses and gaze** (Stork § 8.3 & § 9.3.1; *Human-Art* CVPR 2023; Madhu et al.) *(evaluated in
+    0.21.0, § 35: "posture" regard, not yet offered; 37 "same gesture" pairs to review)*: skeleton
     detection for *Pathosformeln* and figure symmetry.
-  - **Sparse autoencoders** (*PatchSAE* ICLR 2025, *Matryoshka SAE* ICML 2025) on already-computed
+  - **Sparse autoencoders** (*PatchSAE* ICLR 2025, *Matryoshka SAE* ICML 2025) *(done in 0.21.0, § 37:
+    1,792 notions of the "subject" regard, "Notions" panel in the Atlas)* on already-computed
     vectors, and enriched Iconclass hierarchy (*Visual Narratives*, WACV 2024).
 - **Collection Space Navigator** (Ohm et al., 2023) *(done in 0.19.0)*: combined filters in
   the Atlas (labels, groups, atypicality, dates) with cross counts, selection sent to the notebook or a
