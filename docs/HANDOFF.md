@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 23/11/2026 (test du « Pourquoi ? » fusionné).*
+*Dernière mise à jour : 23/11/2026 (« Pourquoi ? » réparé et fusionné).*
 
 ## Version publiée
 
@@ -126,12 +126,14 @@ corrigé ; 63 tests passent, Atlas vérifié.
   4 zones montrées ne fait pas plus chuter la ressemblance que 4 cases au hasard (voisines proches :
   3 fois moins). Cause : biais de coins (63 % des zones dans les 4 coins, 4 % au centre), car les cases
   de bord de DINOv3 portent une signature de position. Le bouton reste en place pour l'instant.
-  **Suite confiée à Neon** : corriger le classement (centrer chaque case par sa moyenne sur le corpus,
-  ou carte d'occultation à la demande), re-mesurer avec `pixplot whytest` sur des paires non
-  utilisées pour régler, mise en garde dans le comparateur tant que ce n'est pas réussi.
-  Copie de travail `..\pixplot-pourquoi-v2`, branche `gemini/pourquoi-v2`, consigne
-  `PROMPT-gemini-pourquoi-v2.md` (non versionnée), futur § 40. À relire puis fusionner avec
-  `.\scripts\nouvelle-tache.ps1 pourquoi-v2 -Agent gemini -Terminer`.
+  **Réparé par Neon, fusionné le 23/11/2026, non publié** (ARCHITECTURE § 40,
+  `handoff/gemini-pourquoi-v2.md`) : chaque case est centrée par sa moyenne sur le corpus
+  (`cell_means_4x4.npy` dans le run de vecteurs, 11 s une fois), puis les correspondances sont
+  classées par leur alignement avec le vecteur global. Réglé sur des voisines de graine 1, vérifié
+  une fois sur les paires validées : **réussi** (une image : 4,2 fois le hasard ; voisines 3,8 ;
+  flou 5,7 et 3,7). Coins 63 % → 17 %, centre 4 % → 36 %. Réserve : 35 paires validées sur 108
+  n'ont plus 4 correspondances (1 à 3 zones affichées) et sortent du test. Vérifié dans l'Atlas 81k
+  par Claude : *Le Semeur* sur le semeur, mise en garde sous les zones, 0 erreur console.
 - **Posture (Gemini 4 Neon), fusionnée dans main le 21/11/2026, non publiée** (ARCHITECTURE § 35,
   `docs/handoff/gemini-postures.md`) : RT-DETRv2-R50 + ViTPose Base (Apache 2.0, licences vérifiées
   sur Hugging Face), squelette 50 d par figure, comparaison multi-figures avec miroir gauche-droite.
