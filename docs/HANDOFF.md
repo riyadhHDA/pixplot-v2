@@ -171,6 +171,10 @@ corrigé ; 63 tests passent, Atlas vérifié.
   - Claude : outil MCP `explore_notions` (20 outils) : chercher les notions par nom, voir leurs
     œuvres ; essayé sur 81k (liste 15–40 ms, première notion ouverte 2,7 s). README, MCP, site, AGENTS à jour.
   - **Détail, fichiers et suite dans [`handoff/session-2026-11-22.md`](handoff/session-2026-11-22.md).**
+- **Claude, 23/11/2026, non publié** : fiche de données du corpus (`pixplot/analysis/datasheet.py`,
+  `pixplot corpus --datasheet`, `datasheet.md` dans chaque Research Pack) ; fiches des regards et
+  note sur les artistes corrigées d'après le § 38 et MMArt. Notions du regard forme : calcul coupé à
+  l'époque 16/30 par la fin de session, à relancer (processeur, 1–2 h) quand Neon n'en a plus besoin.
 
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
   19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.

@@ -41,7 +41,7 @@ check, not a conclusion.
 | **Is my catalogue reliable?** | A **To check** list of labels contradicted by all neighbours, and **duplicate** detection. | 4,884 labels to check; 839 works entered twice, 702 of them under two different styles (the same Corot as "Romantic" and "Realist"). |
 | **What brings these two works together?** | The same pair seen through form, subject, colour and touch; **disagreements** between regards (same composition, different subject…). | A layout reused for another theme; one subject painted by two hands. |
 | **What is my corpus made of?** | A map of named groups (art-history vocabulary and **Iconclass**), **combined filters**, timeline and geographic views, a report on what is missing. | "Baroque" + "portrait" = 980 works, lit up on the map in 14 ms. |
-| **How do I keep track of my research?** | A **research notebook**, **Research Pack** export (.zip: images, sourced metadata, scores, method) and an assistant plugged in through **MCP** that searches and compares with you. | A file ready for a seminar, a thesis or a colleague's review. |
+| **How do I keep track of my research?** | A **research notebook**, **Research Pack** export (.zip: images, sourced metadata, scores, method, corpus datasheet) and an assistant plugged in through **MCP** that searches and compares with you. | A file ready for a seminar, a thesis or a colleague's review. |
 | **Which model sees what?** | Benchmarks on pairs validated by the historian; every model has a card (training data, biases). | Four models set aside after measurement (TIPSv2, PE-Spatial, SSCD, Depth Anything), figures published (ARCHITECTURE § 19, 24, 27, 28). |
 
 ## Full WikiArt on one PC
@@ -137,6 +137,7 @@ pixplot audit                           # blind audit against labels
 pixplot bench                           # compare runs (labels, known pairs)
 pixplot pairs generate | bench          # pair benchmark: which space finds which kind of kinship
 pixplot pack --text "Annunciation" -k 20 --question "…"   # Research Pack (.zip)
+pixplot corpus --datasheet                                  # corpus datasheet (provenance, rights, gaps; in French)
 pixplot mcp                             # MCP server: see docs/MCP.md
 pixplot status
 ```

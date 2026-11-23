@@ -41,7 +41,7 @@ chaque résultat est une piste à vérifier, pas une conclusion.
 | **Mon catalogue est-il fiable ?** | Liste **À vérifier** des étiquettes contredites par toutes les voisines, et repérage des **doublons**. | 4 884 étiquettes à vérifier ; 839 œuvres entrées deux fois, dont 702 sous deux styles différents (un même Corot « romantique » et « réaliste »). |
 | **Qu'est-ce qui rapproche ces deux œuvres ?** | Le même couple vu par la forme, le sujet, la couleur et la touche ; les **désaccords** entre regards (même composition, sujet différent…). | Une mise en page reprise pour un autre thème ; un même sujet traité par deux mains. |
 | **De quoi mon corpus est-il fait ?** | Carte de groupes nommés (vocabulaire d'histoire de l'art et **Iconclass**), **filtres combinés**, vues chronologique et géographique, bilan de ce qui manque. | « Baroque » + « portrait » = 980 œuvres, allumées sur la carte en 14 ms. |
-| **Comment garder la trace de ma recherche ?** | **Carnet de recherche**, export en **Research Pack** (.zip : images, métadonnées sourcées, scores, méthode) et assistant branché par **MCP** qui cherche et compare avec vous. | Un dossier prêt pour un séminaire, un mémoire ou une relecture par un collègue. |
+| **Comment garder la trace de ma recherche ?** | **Carnet de recherche**, export en **Research Pack** (.zip : images, métadonnées sourcées, scores, méthode, fiche de données du corpus) et assistant branché par **MCP** qui cherche et compare avec vous. | Un dossier prêt pour un séminaire, un mémoire ou une relecture par un collègue. |
 | **Quel modèle voit quoi ?** | Bancs d'essai sur des paires validées par l'historien ; chaque modèle a une fiche (données d'entraînement, biais). | Quatre modèles écartés après mesure (TIPSv2, PE-Spatial, SSCD, Depth Anything), chiffres publiés (ARCHITECTURE § 19, 24, 27, 28). |
 
 ## WikiArt complet sur un seul PC
@@ -137,6 +137,7 @@ pixplot audit                           # audit à l'aveugle face aux étiquette
 pixplot bench                           # comparer des runs (étiquettes, paires connues)
 pixplot pairs generate | bench          # banc d'essai par paires : quel regard pour quelle ressemblance
 pixplot pack --text "Annonciation" -k 20 --question "…"   # Research Pack (.zip)
+pixplot corpus --datasheet                                 # fiche de données du corpus (provenance, droits, manques)
 pixplot mcp                             # serveur MCP : voir docs/MCP.fr.md
 pixplot status
 ```

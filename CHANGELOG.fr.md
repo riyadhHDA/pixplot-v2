@@ -37,6 +37,7 @@ Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numé
 - **Outil MCP `explore_notions`** (20 outils) : un assistant peut chercher les notions par nom et voir leurs œuvres.
 - Correctif : les fiches des regards (panneau Corpus, MCP) disaient que le sujet bat la forme sur « même composition » ; d'après le § 38 c'est l'inverse, et la note sur les artistes manquants tient compte de MMArt (7 % restent inconnus).
 - **Le bouton « Pourquoi ? » mis à l'épreuve** (Gemini 4 Neon, `pixplot whytest`) : cacher les zones qu'il montre ne fait pas plus baisser la ressemblance que cacher des zones au hasard ; il choisit surtout des coins (63 %). Correction en cours. ARCHITECTURE § 39.
+- **Fiche de données du corpus** (d'après Gebru et al., *Datasheets for Datasets*, 2021) : provenance des images et des étiquettes, droits connus, ce qui manque, ce que PixPlot a repéré (doublons, étiquettes douteuses, cadres), usages à éviter. Calculée, jamais écrite à la main ; jointe à chaque Research Pack (`datasheet.md`) et par `pixplot corpus --datasheet`.
 - Correctif : un calcul de notions ne fait plus planter `pixplot serve`.
 
 ## 0.20.0 — 19/11/2026 · Titres, dates, artistes et émotions pour WikiArt ; ordre de la matière

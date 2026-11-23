@@ -700,6 +700,13 @@ def cmd_corpus(args) -> int:
 
     s = get_settings(args.data)
     data = AtlasData.load(s, _analysis_arg(s, args.analysis))
+    if args.datasheet is not None:
+        from .analysis import datasheet
+
+        out = Path(args.datasheet) if args.datasheet else s.data_dir / "fiche_de_donnees.md"
+        out.write_text(datasheet.build(data), encoding="utf-8")
+        print(f"Fiche de données : {out}")
+        return 0
     r = data.corpus_report()
     print(f"Corpus : {r['n']} œuvres ({data.analysis.id})\n")
     print("Ce qui manque ou déséquilibre le corpus :")
@@ -1366,6 +1373,8 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("corpus", help="bilan critique : ce qui manque au corpus, d'où viennent les étiquettes, ce que voit chaque regard")
     p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
+    p.add_argument("--datasheet", nargs="?", const="", default=None, metavar="FICHIER",
+                   help="écrire la fiche de données du corpus (Markdown ; défaut : <données>/fiche_de_donnees.md)")
     p.set_defaults(func=cmd_corpus)
 
     p = sub.add_parser("zonebench", help="chercher une zone avec des mots : banc d'essai RichArt")

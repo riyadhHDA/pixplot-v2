@@ -9,7 +9,9 @@ contient donc :
     summary.md        le dossier rédigé pour un LLM (et lisible par l'historien) : question,
                       méthode, composition, œuvres, relations les plus fortes, atypiques,
                       consignes d'interprétation
-    artworks.csv      une ligne par œuvre : métadonnées, groupe, famille, atypicité, image
+    datasheet.md      la fiche de données du corpus entier (provenance, droits, manques,
+                      biais des regards : ``analysis.datasheet``)
+    artworks.csv     une ligne par œuvre : métadonnées, groupe, famille, atypicité, image
     relations.csv     paires d'œuvres du pack et leur similarité (DINOv3, et SigLIP si dispo)
     evidence/         une vignette (512 px) par œuvre + les détails recadrés s'il y en a
     vectors.npy       (option « expert ») vecteurs globaux, pour reproduire les calculs
@@ -33,6 +35,7 @@ import numpy as np
 from PIL import Image
 
 from .. import __version__
+from ..analysis import datasheet
 from ..catalog.ingest import thumb_path
 
 CAVEATS = [
@@ -196,7 +199,8 @@ def build_pack(
     lines += ["## Méthode", "",
               f"- Ressemblance visuelle : **{feats_p.get('encoder')}** ({feats_p.get('weights', '')}), "
               f"image entière sans recadrage, {feats_p.get('input_size')} px. Run `{data.features.id}`.",
-              f"- Groupes : e-means sur ces vecteurs ; carte UMAP ; analyse `{data.analysis.id}`.",
+              f"- Groupes : {data.analysis.manifest.get('params', {}).get('cluster_method', '?')} sur ces "
+              f"vecteurs ; carte UMAP ; analyse `{data.analysis.id}`.",
               "- Atypicité : 0 = œuvre très entourée de voisines semblables, 1 = très isolée (rang centile)."]
     if text_S is not None:
         lines += ["- Similarité sémantique : SigLIP 2 (relations.csv, colonne siglip)."]
@@ -221,6 +225,7 @@ def build_pack(
     lines += ["", "## Œuvres les plus atypiques du dossier", ""]
     lines += [f"- {i} : atypicité {float(data.atypicality[r]):.2f} — {data.label(i)}" for i, r in atyp]
     lines += ["", "## Mises en garde", ""] + [f"- {c}" for c in CAVEATS]
+    lines += ["- D'où vient le corpus, ce qui lui manque, les droits connus : voir `datasheet.md`."]
     lines += ["", "## Consigne proposée pour un LLM", "", "```", PROMPT.format(question=question).strip(), "```", ""]
     summary = "\n".join(lines)
 
@@ -231,7 +236,7 @@ def build_pack(
         "models": {"visual": {k: feats_p.get(k) for k in ("encoder", "weights", "input_size", "source")}},
         "runs": {"features": data.features.id, "analysis": data.analysis.id,
                  "analysis_params": data.analysis.manifest.get("params", {})},
-        "files": ["summary.md", "artworks.csv", "relations.csv", "evidence/"] + (["vectors.npy"] if include_vectors else []),
+        "files": ["summary.md", "datasheet.md", "artworks.csv", "relations.csv", "evidence/"] + (["vectors.npy"] if include_vectors else []),
         "caveats": CAVEATS,
     }
 
@@ -241,6 +246,7 @@ def build_pack(
     with zipfile.ZipFile(zpath, "w", compression=zipfile.ZIP_DEFLATED) as z:
         z.writestr("manifest.json", json.dumps(manifest, indent=2, ensure_ascii=False))
         z.writestr("summary.md", summary)
+        z.writestr("datasheet.md", datasheet.build(data, now))
         z.writestr("artworks.csv", artworks_csv.getvalue())
         z.writestr("relations.csv", relations_csv.getvalue())
         for i in ids:

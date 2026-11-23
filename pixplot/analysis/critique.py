@@ -234,6 +234,12 @@ PRINCIPLES: list[dict[str, str]] = [
 
 # ------------------------------------------------------------------ sources d'étiquettes
 SOURCE_NOTES = [
+    ("retrouvé par mmart", "Artiste lu dans le nom de fichier d'origine de WikiArt, retrouvé par empreinte d'image "
+                           "(MMArt) : aucun désaccord sur les 35 717 œuvres qui avaient déjà un artiste (ARCHITECTURE § 34)."),
+    ("mmart", "MMArt : titres, dates et noms de fichier de WikiArt, rattachés à nos images par empreinte "
+              "(70 902 œuvres, 32 rattachements vérifiés à l'œil, ARCHITECTURE § 34)."),
+    ("artemis", "ArtEmis : réactions de spectateurs recrutés en ligne (environ 5 par œuvre) ; on garde "
+                "l'émotion citée par au moins 40 % d'entre eux (ARCHITECTURE § 34)."),
     ("huggan/wikiart", "Étiquettes de WikiArt, encyclopédie en ligne remplie par des contributeurs bénévoles "
                        "(principe du wiki), reprises par le jeu huggan/wikiart : des propositions, pas une vérité."),
     ("wikiart", "Étiquettes de WikiArt, encyclopédie remplie par des contributeurs bénévoles : à vérifier."),

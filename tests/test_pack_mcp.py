@@ -37,6 +37,10 @@ def test_research_pack(data, tmp_path):
     assert len(rel) == 6 * 5 // 2
     summary = z.read("summary.md").decode()
     assert "Pourquoi ces rouges ?" in summary and "pas une preuve" in summary
+    assert "datasheet.md" in names and "datasheet.md" in manifest["files"]
+    sheet = z.read("datasheet.md").decode()
+    assert "# Fiche de données" in sheet and "## 2. D'où viennent" in sheet and "pas une preuve" in sheet
+    assert f"{len(data.ids)} œuvres" in sheet.replace(" ", " ")
     assert path.stat().st_size < 2 * 2**20
 
 
