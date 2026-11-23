@@ -251,8 +251,12 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
         if ra is None or rb is None:
             raise ValueError("Œuvre absente de ce regard")
         sizes = data.sizes([a, b])
-        pairs = correspondences(ra[0], rb[0], sizes.get(a, (1, 1)), sizes.get(b, (1, 1)), grids=ra[1], patches=ra[2],
-                                k=min(max(k, 1), 8))
+        vecs = data.spaces.vectors(space, [a, b])
+        pairs = correspondences(
+            ra[0], rb[0], sizes.get(a, (1, 1)), sizes.get(b, (1, 1)),
+            grids=ra[1], patches=ra[2], k=min(max(k, 1), 8),
+            cell_means=data.spaces.cell_means(space), global_a=vecs[0], global_b=vecs[1],
+        )
         cell, pad, head = 480, 10, 30
         sheet = PILImage.new("RGB", (2 * cell, cell + head), (20, 20, 20))
         draw, font = ImageDraw.Draw(sheet), _font(18)
@@ -271,13 +275,13 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
                     draw.rectangle([rect[0], rect[1], rect[0] + 20, rect[1] + 20], fill=color)
                     draw.text((rect[0] + 5, rect[1] + 1), str(z + 1), fill=(17, 17, 17), font=font)
         lines = [f"1. n° {a} — {data.label(a)}", f"2. n° {b} — {data.label(b)}",
-                 f"Regard « {space} », cases 4 × 4, correspondances mutuelles :"]
-        lines += [f"  zone {z + 1} : cosinus {p['sim']:.2f}, {p['lift']:+.2f} au-dessus de leur ressemblance "
+                 f"Regard « {space} », cases 4 × 4, zones qui se ressemblent le plus (centrées par position et pondérées par l'alignement global) :"]
+        lines += [f"  zone {z + 1} : cosinus centré {p['sim']:.2f}, {p['lift']:+.2f} au-dessus de leur ressemblance "
                   f"moyenne (cadre sur 1 : {p['box_a']}, sur 2 : {p['box_b']})" for z, p in enumerate(pairs)]
         if not pairs:
             lines.append("  aucune zone ne se répond nettement.")
-        lines.append("Le regard compare des formes : regarde la planche et dis si ces zones partagent un motif, "
-                     "une pose, une composition, ou seulement un fond semblable.")
+        lines.append("Une piste à regarder, pas une explication : le regard compare des formes ; dis si ces zones "
+                     "partagent un motif, une pose, une composition, ou seulement un fond semblable.")
         return [chr(10).join(lines), Image(data=_jpeg(sheet), format="jpeg")]
 
     # ------------------------------------------------------------------ groupes, atypiques

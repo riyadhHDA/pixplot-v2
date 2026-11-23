@@ -663,6 +663,56 @@ def test_correspondences_mutual_and_masked():
     assert match(cells_of(Ra), cells_of(Rb), boxes, boxes, k=0) == []
 
 
+def test_correspondences_centered_and_global_aligned(tmp_path):
+    """Centrage par case (efface une signature de coin) + pondération par alignement global + cache."""
+    from pixplot.analysis.correspondences import (
+        CELL_MEANS_FILE,
+        correspondences,
+        load_or_compute_cell_means,
+    )
+    from pixplot.features.extract import FAILED, OK
+
+    rng = np.random.default_rng(7)
+    D = 24
+    # Signature constante forte dans le coin 0, partagée par tout le corpus
+    corner_sig = np.zeros(D, dtype=np.float32)
+    corner_sig[0] = 1.0
+    motif = np.zeros(D, dtype=np.float32)
+    motif[1] = 1.0
+    bg = np.zeros(D, dtype=np.float32)
+    bg[2] = 1.0
+
+    # Corpus synthétique de 10 œuvres (dont 1 en échec, ignorée)
+    R = rng.normal(scale=0.05, size=(10, 21, D)).astype(np.float32)
+    R[:, 5 + 0, :] += corner_sig * 5.0                      # coin 0 dominé par la signature de position
+    R[0, 5 + 5, :] = motif + 0.02 * rng.normal(size=D)      # case centrale 5 : motif partagé (aligné au global)
+    R[1, 5 + 6, :] = motif + 0.02 * rng.normal(size=D)      # case centrale 6 : même motif, déplacé
+    R[0, 5 + 10, :] = bg + 0.02 * rng.normal(size=D)        # case 10 : fond partagé, orthogonal au global
+    R[1, 5 + 10, :] = bg + 0.02 * rng.normal(size=D)
+    status = np.full(10, OK, dtype=np.int8)
+    status[-1] = FAILED
+    R[-1] = 999.0                                           # ne doit pas polluer la moyenne
+
+    np.save(tmp_path / "regions.npy", R)
+    np.save(tmp_path / "status.npy", status)
+
+    means = load_or_compute_cell_means(tmp_path)
+    assert means is not None and means.shape == (16, D)
+    assert (tmp_path / CELL_MEANS_FILE).exists()
+    assert means[0, 0] > 0.9                                # la signature de coin est bien captée
+    # second appel : relu depuis le cache
+    means2 = load_or_compute_cell_means(tmp_path)
+    assert np.allclose(means, means2)
+
+    # Avec centrage + alignement sur le motif global, (5, 6) passe devant le coin (0, 0) et le fond (10, 10)
+    m = correspondences(
+        R[0], R[1], (1000, 1000), (1000, 1000), k=4,
+        cell_means=means, global_a=motif, global_b=motif,
+    )
+    assert m and (m[0]["cell_a"], m[0]["cell_b"]) == (5, 6)
+    assert set(m[0].keys()) == {"cell_a", "cell_b", "box_a", "box_b", "sim", "lift"}
+
+
 def test_center_vectors_once(tmp_path):
     """Centrage (couleur, touche) : remplacé d'un coup, jamais refait à la reprise (audit Argon)."""
     from numpy.lib.format import open_memmap

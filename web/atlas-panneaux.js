@@ -279,8 +279,9 @@ async function showWhy(idA, idB, nA, nB, btn) {
     ? `<h3>Pourquoi ${nA + 1} et ${nB + 1} se ressemblent-elles ? <small>regard « ${esc(SPACE_SHORT[r.space] || r.space)} », cases ${esc(r.grid)}</small></h3>
        <ol>${r.pairs.map((p, k) => `<li style="--c:${WHY_COLORS[k % WHY_COLORS.length]}">zone ${k + 1} ↔ zone ${k + 1} :
          cosinus ${p.sim.toFixed(2)}, ${p.lift >= 0 ? "+" : ""}${p.lift.toFixed(2)} au-dessus de leur ressemblance moyenne</li>`).join("")}</ol>
-       <p class="prov">${esc(r.note)} Le regard compare des formes : à vous de dire si ces zones partagent un motif,
-       une pose, une composition, ou seulement un fond semblable.</p>`
+       <p class="prov">Zones qui se ressemblent le plus (correspondances mutuelles centrées par position et pondérées
+       par leur poids global) : une piste à regarder, pas une explication. Le regard compare des formes : à vous de
+       dire si ces zones partagent un motif, une pose, une composition, ou seulement un fond semblable.</p>`
     : `<p class="prov">Aucune zone ne se répond nettement entre ces deux œuvres (selon le regard « ${esc(r.space)} »).</p>`;
 }
 

@@ -1864,3 +1864,96 @@ automatique — est une piste pour regarder, jamais une preuve.
    chute de cosinus par occultation case par case (16 passages GPU, ~0,15 s) — fidèle par construction, au
    prix du chargement du modèle à la demande. Toute variante devra repasser `pixplot whytest` avant d'être
    retenue.
+
+## 40. Réparation du bouton « Pourquoi ? » : centrage par case et alignement global (23/11/2026)
+
+**Question.** Le § 39 a montré que le classement initial de `correspondences.py` (`lift` sur cosinus brut)
+choisissait surtout les 4 coins (58–63 %) et échouait au test d'occultation (`a / b` = 0,33–0,55). Peut-on
+corriger ce classement **sans GPU ni réextraction** (Option 1 : centrage par position + pondération par
+alignement avec le vecteur global), ou faut-il une carte d'occultation GPU à la demande (Option 2) ?
+
+**Séparation réglage / vérification.** Pour éviter tout surajustement, le choix des paramètres se fait
+uniquement sur **104 paires « voisines proches » de réglage** (1ʳᵉ voisine en forme, graine 1, strictement
+disjointes des validées et des voisines de graine 0). Les paires validées et les voisines de graine 0 ne
+servent qu'une seule fois, pour la **vérification finale**, avec le critère inchangé du § 39 (chute médiane
+`(a) ≥ 3 × (b)` et IC 95 % de `(a − b)` excluant zéro). On rapporte d'abord le mode **une seule image**
+(`one`), exempt de l'artefact d'aplat commun identifié au § 39.
+
+**Réglage de l'Option 1 (voisines graine 1, `n = 100/104` avec ≥ 4 correspondances, `mean`, mode `one`).**
+Pour chaque case $c \in \{0..15\}$ de la grille 4 × 4, on calcule sa moyenne $\mu_c$ sur le corpus
+(`regions.npy`, vecteurs normalisés L2, œuvres `OK` uniquement ; calculé une fois en **11,4 s** sur processeur
+et mis en cache dans `cell_means_4x4.npy`, 48 Ko). Diagnostic : la norme $\|\mu_c\|$ vaut **0,831–0,845**
+dans les 4 coins contre **0,762–0,768** au centre (signature de position forte), tandis que l'alignement
+moyen avec le vecteur global (`cell_raw · global`) vaut **0,228–0,242** dans les coins contre
+**0,388–0,392** au centre.
+
+| Variante (voisines graine 1, `n = 100`, `one`) | Coins | Centre | Même case | Chute `(a)` méd. | Ratio `a / b` | `(a − b)` IC 95 % · p | Critère |
+|---|---|---|---|---|---|---|---|
+| Base (`lift` brut, § 39) | 52,8 % | 5,8 % | 96,4 % | +0,0091 | 0,40 | [−0,0170 ; −0,0030] · 0,003 | Échec |
+| Centrage $\mu_c$ + `lift` | 19,0 % | 32,8 % | 65,2 % | +0,0453 | 1,97 | [+0,0107 ; +0,0310] · <0,001 | Échec |
+| Centrage $\mu_c$ + `sim` | 15,0 % | 38,4 % | 63,7 % | +0,0544 | 2,36 | [+0,0200 ; +0,0472] · <0,001 | Échec |
+| Centrage $\mu_c$ + `lift × align` | 7,1 % | 49,3 % | 61,8 % | +0,0810 | 3,51 | [+0,0299 ; +0,0672] · <0,001 | **Réussi** |
+| Centrage $\mu_c$ + `sim × align` | 4,1 % | 57,5 % | 61,3 % | +0,0872 | 3,78 | [+0,0466 ; +0,0840] · <0,001 | **Réussi** |
+| **Centrage $\mu_c$ + `sim × align_a × align_b`** | **3,9 %** | **59,0 %** | **61,1 %** | **+0,0963** | **4,18** | **[+0,0523 ; +0,0877] · <0,001** | **Réussi** |
+
+*(Témoins communs : hasard `(b)` = +0,0231, centre `(c)` = +0,1121.)* Le centrage seul supprime le biais de
+coins mais reste sous le facteur 3 ; combiné à la pondération par l'alignement de chaque case avec le vecteur
+global de son œuvre ($\max(0, \text{sim}_{\text{centré}}) \cdot \max(0, c_a \cdot g_a) \cdot \max(0, c_b \cdot g_b)$),
+il atteint **4,18× le hasard** sans GPU au moment de la requête. L'Option 2 (occultation GPU à la demande)
+n'est donc pas nécessaire.
+
+**Vérification finale unique (`pixplot whytest`, WikiArt 81k, 128,4 s sur RX 7900 GRE, 8 273 images encodées).**
+Vérification sans occultation : écart max de cosinus **0,000663** (moyenne 0,000068, auto-cosinus min 0,999998)
+→ OK. Sur les 108 paires validées actuelles et 108 voisines proches (graine 0), **73/108 validées** et
+**93/108 voisines** ont au moins 4 correspondances mutuelles après centrage (voir Limites).
+
+| Groupe et mode (`mean`) | n | cos₀ méd. | (a) Pourquoi [IC 95 %] | (b) Hasard | (c) Centre | Ratio `a / b` | (a − b) méd. [IC 95 %] · p | (a − c) méd. · p | Verdict |
+|---|---|---|---|---|---|---|---|---|---|
+| **Validées · 1 image (`one`)** | 73 | 0,372 | **+0,0112** [+0,0041 ; +0,0220] | +0,0027 | +0,0129 | **4,20** | **+0,0138** [+0,0072 ; +0,0203] · <0,001 | +0,0001 · 0,706 | **Réussi** |
+| **Voisines · 1 image (`one`)** | 93 | 0,724 | **+0,0710** [+0,0603 ; +0,0968] | +0,0186 | +0,0960 | **3,82** | **+0,0541** [+0,0465 ; +0,0682] · <0,001 | −0,0053 · 0,121 | **Réussi** |
+| Validées · 2 images (`both`) | 73 | 0,372 | +0,0045 [−0,0029 ; +0,0109] | −0,0116 | −0,0451 | — | +0,0136 [+0,0087 ; +0,0233] · 0,001 | +0,0541 · <0,001 | Échec *(artefact)* |
+| Voisines · 2 images (`both`) | 93 | 0,724 | **+0,0612** [+0,0511 ; +0,0767] | +0,0270 | +0,0182 | 2,26 | +0,0331 [+0,0229 ; +0,0439] · <0,001 | **+0,0310 · <0,001** | Échec *(2,26 < 3)* |
+
+Contrôle au **flou fort** (`blur`, rayon 32 px) — résultats encore plus nets en mode `one` :
+- **Validées `one`** : (a) **+0,0184** vs (b) +0,0032 vs (c) +0,0182 → ratio **5,69**, `(a − b)` = +0,0141, p < 0,001 → **Réussi**.
+- **Voisines `one`** : (a) **+0,0731** vs (b) +0,0197 vs (c) +0,0870 → ratio **3,71**, `(a − b)` = +0,0513, p < 0,001 → **Réussi**.
+- **Voisines `both`** : (a) +0,0592 vs (b) +0,0259 vs (c) +0,0282 (ratio **2,29**, `(a − c)` = +0,0205, p < 0,001).
+
+**Répartition spatiale avant / après et normalisation par la surface occultée :**
+
+| Groupe | Coins (avant → après) | Bords (avant → après) | Centre (avant → après) | Même case `a == b` | Chute `one` ramenée à 25 % de surface : `(a) / (b) / (c)` |
+|---|---|---|---|---|---|
+| Validées | 63,0 % → **17,5 %** | 95,8 % → **63,7 %** | 4,2 % → **36,3 %** | 92,8 % → **46,2 %** | **+0,0112** / +0,0028 / +0,0112 *(surfaces : 27,5 / 25,3 / 33,9 %)* |
+| Voisines | 57,5 % → **4,8 %** | 93,6 % → **42,7 %** | 6,4 % → **57,3 %** | 93,0 % → **56,2 %** | **+0,0653** / +0,0180 / +0,0709 *(surfaces : 32,0 / 25,8 / 34,2 %)* |
+
+**Par type de paire validée (`mean`, `one`, ≥ 10 paires)** :
+- `filiation` (n = 10, cos₀ 0,664) : (a) **+0,0554** vs (b) +0,0097 vs (c) +0,0690 (ratio **5,72**, `a − b` +0,0371, p = 0,036).
+- `meme_composition` (n = 10, cos₀ 0,590) : (a) +0,0327 vs (b) +0,0227 vs (c) +0,0577 (ratio 1,44).
+- `meme_sujet` (n = 22, cos₀ 0,374) : (a) +0,0160 vs (b) +0,0144 vs (c) +0,0524 (`a − b` +0,0156, p = 0,009).
+- `meme_facture` (n = 12, cos₀ 0,328) : (a) +0,0154 vs (b) +0,0020 vs (c) −0,0214 (ratio 7,58, p = 0,154).
+- `meme_palette` (n = 17, cos₀ 0,005) : (a) −0,0057 vs (b) −0,0110 vs (c) −0,0212 (œuvres sans ressemblance de forme).
+
+**Examen visuel (planche avant / après sur 6 paires de vérification, `<données>/bench/whytest_avant_apres.jpg`).**
+1. `#79406` (Van Gogh, *Le Semeur*) ↔ `#41274` (Millet, *Le Semeur*, `filiation`, cos 0,711) : quitte les 4 coins de ciel/terre (`d(a)` −0,017) pour encadrer exactement la silhouette du semeur (`[5, 6, 10, 9]`, `d(a)` **+0,107**, 8× le hasard).
+2. `#32834` ↔ `#33077` (Rembrandt, deux portraits ovales de jeune femme, `meme_sujet`, cos 0,855) : quitte les 4 coins blancs hors de l'ovale (`+0,001`) pour encadrer le visage et le buste (`+0,515`, 16× le hasard).
+3. `#4261` (Pissarro) ↔ `#15620` (Levitan, `meme_facture`, cos 0,716) : quitte les coins (`−0,004`) pour suivre la bande horizontale de la rivière et des berges (`[10, 9, 11, 8]`, `+0,139`).
+4. `#22485` (Chagall) ↔ `#66396` (renards dans la neige, `meme_sujet`, cos 0,340) : quitte les 4 coins de marge (`−0,015`) pour pointer les figures animales en bas au centre (`+0,108`).
+5. `#33547` (Rembrandt, château) ↔ `#81005` (Turner, *Windsor Castle*, `meme_facture`, cos 0,510) : cas limite ; les cadres se posent sur le château et le reflet, mais leur occultation fait remonter le cosinus (`−0,083`, comme le hasard `−0,025`), signe que la proximité repose sur l'atmosphère globale plutôt que sur des détails locaux.
+6. `#31416` (Kontchalovski, cochon) ↔ `#35524` (Dürer, jeune taureau, `meme_composition`, cos 0,530) : les cadres encadrent l'animal dans les deux cas (chute `+0,036` contre hasard `+0,075`).
+
+**Branchement et interface.** Branché dans `correspondences.py` (`load_or_compute_cell_means` + `match`),
+`Spaces.cell_means` (`pixplot/api/spaces.py`), `/api/correspond` et l'outil MCP `why_similar` (mêmes champs
+de sortie). Une mise en garde explicite sous les zones dans `web/atlas-panneaux.js` rappelle qu'il s'agit
+des « zones qui se ressemblent le plus » et d'« une piste à regarder, pas une explication ». Vérifié dans
+l'Atlas (port 8770, 0 erreur console, 0 erreur réseau) sur *Le Semeur*, les deux Rembrandt et Pissarro/Levitan.
+
+**Limites.**
+- **Couverture en paires à ≥ 4 correspondances** : 73/108 validées et 93/108 voisines (contre 104/104 et
+  103/104 avant). En retirant la signature de coin, les paires dissemblables en forme (`meme_palette`,
+  `meme_facture`) ne fabriquent plus artificiellement 4 correspondances mutuelles ; le comparateur affiche
+  simplement les 1 à 3 zones restantes (ou aucune).
+- **Égalité avec le centre en mode `one`** : sur les voisines, les zones retenues égalent le centre fixe
+  (`a − c` = −0,0053, p = 0,121) sans le dépasser ; elles le dépassent en revanche nettement en mode `both`
+  (`+0,0612` contre `+0,0182`, p < 0,001) et s'adaptent aux compositions non centrées ou horizontales.
+- **Portée** : le classement mesure une ressemblance locale pondérée, jamais une preuve causale d'emprunt ni
+  une explication interne du réseau.
