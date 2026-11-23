@@ -140,7 +140,8 @@ corrigé ; 63 tests passent, Atlas vérifié.
   sur Hugging Face), squelette 50 d par figure, comparaison multi-figures avec miroir gauche-droite.
   81k en 54 min ; figures dans 48,4 % des œuvres. Ne bat pas Forme sur les paires validées ; réussites
   ponctuelles (*Le Semeur* Van Gogh ↔ Millet, *Europe* Rubens ↔ Titien au rang 1). Reste dans
-  `NOT_KEPT`. **37 paires `meme_geste` proposées, à relire par l'utilisateur** (touche R, en tête de
+  `NOT_KEPT`. **37 paires `meme_geste` : 25 validées, 7 rejetées, 5 à relire** (état du 23/11/2026 ;
+  exemples choisis pour illustrer le projet : `handoff/exemples-posture.md`) (touche R, en tête de
   file ; « même geste » = touche 7, « filiation » passe à la touche 8). Selon la relecture : exposer
   ou non « Posture » comme regard spécialisé (brancher `PostureIndex` dans `Spaces.neighbors`).
 - **Claude, fait le 21/11/2026, commité (`c63b5e7`), non publié** (processeur seul) :
