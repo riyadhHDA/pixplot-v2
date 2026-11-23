@@ -1604,3 +1604,116 @@ Details in `bench/pairs_ci_*.json`.
 pairs. Several comparisons without correction (about ten per type): an isolated "reliable gap" at
 p ≈ 0.03 still needs confirming. Pairs were reviewed by a single person (inter-rater agreement not
 measured, see Krippendorff in Deepseek's note).
+
+## 39. Does the "Why?" button really explain? Occlusion test (22/11/2026)
+
+**Question.** In the comparator (§ 25, `pixplot/analysis/correspondences.py`), the "Pourquoi ?" ("Why?")
+button highlights 4 pairs of 4 × 4 cells that match across two works in the form regard (DINOv3). Are these
+zones genuinely **what drives the global similarity** computed by DINOv3, or merely a plausible post-hoc
+picture (the perceptual bias noted by Wasielewski, 2023; protocol no. 1 in
+`docs/handoff/deepseek-lectures.md`)? If they carry the similarity, masking them should drop the cosine
+far more than masking other regions.
+
+**Method.** `pixplot whytest` (`pixplot/analysis/whytest.py`), without altering the existing "Why?"
+computation.
+- **Pairs**: the **104 validated pairs** of `bench/wikiart81k_pairs.csv` (all types; **104/104** have at
+  least 4 mutual matches) plus **104 random "nearest neighbour" control pairs** (exact 1st neighbour in
+  form of a randomly drawn work, seed 0, disjoint from validated pairs; **103/104** have at least 4
+  matches). Total: 207 pairs, 401 unique works.
+- **Pre-check**: unoccluded re-encoding with DINOv3 ViT-B/16 using the exact same preprocessing (448-px
+  letterbox, bands untouched) as reference run `features/dinov3_vitb16_20261116-102419`. Maximum cosine
+  difference against `global.npy`: **0.00033** (mean 0.00006, minimum self-cosine 0.999999), well below
+  the 0.01 gate.
+- **Occlusion**: on both images (`both`) and on one image only (`one`, image A), across three conditions:
+  **(a)** the top 4 "Why?" zones, **(b)** 4 cells drawn at random among valid artwork cells (excluding
+  letterbox bands, mean over 10 draws), **(c)** the 4 central cells (5, 6, 9, 10). Two fill modes:
+  artwork **mean colour** (`mean`, excluding bands) and **strong Gaussian blur** (`blur`, radius 32 px).
+  Drop = original cosine − occluded cosine.
+- **Statistics and pre-registered criterion**: paired bootstrap over pairs (2,000 resamples, 95 % CI,
+  two-sided p as in `pixplot pairs ci`, § 38). **Pass if** the median drop of (a) exceeds (b) by a
+  factor ≥ 3 and the 95 % CI of (a − b) excludes zero. Cost: **205 s** (3 min 25 s on RX 7900 GRE,
+  10,311 images encoded; report `<data>/bench/whytest_report.json`, log `<data>/whytest.log`).
+
+**Results: clear failure across all conditions.**
+
+| Group & mode (`mean`) | n | med. cos₀ | (a) Why [95 % CI] | (b) Random | (c) Centre | Ratio a/b | med. (a − b) [95 % CI] · p | med. (a − c) · p | Verdict |
+|---|---|---|---|---|---|---|---|---|---|
+| Validated · 2 images | 104 | 0.356 | −0.0006 [−0.0038; +0.0048] | −0.0089 | −0.0448 | — | +0.0148 [+0.0053; +0.0188] · 0.015 | +0.0474 · <0.001 | **Fail** |
+| Validated · 1 image (A) | 104 | 0.356 | +0.0019 [−0.0011; +0.0044] | +0.0034 | +0.0124 | 0.55 | −0.0003 [−0.0059; +0.0032] · 0.602 | −0.0113 · 0.128 | **Fail** |
+| Neighbours · 2 images | 103 | 0.724 | +0.0099 [+0.0059; +0.0123] | +0.0274 | +0.0214 | **0.36** | −0.0119 [−0.0174; −0.0055] · 0.008 | −0.0034 · 0.274 | **Fail** |
+| Neighbours · 1 image (A) | 103 | 0.724 | +0.0059 [+0.0027; +0.0133] | +0.0181 | **+0.0945** | **0.33** | −0.0090 [−0.0134; −0.0031] · 0.002 | **−0.0785 · <0.001** | **Fail** |
+
+**Strong-blur control (`blur`)** — nearly identical figures; the conclusion does not depend on fill mode:
+- Validated: `both` (a) +0.0012, (b) −0.0062, (c) −0.0316 (`a − b` +0.0125, p = 0.015); `one` (a) +0.0023,
+  (b) +0.0040, (c) +0.0195 (ratio 0.57, p = 0.598).
+- Nearest neighbours: `both` (a) +0.0075, (b) +0.0259, (c) +0.0322 (ratio **0.29**, `a − b` −0.0117,
+  p = 0.006); `one` (a) +0.0077, (b) +0.0191, (c) **+0.0857** (ratio **0.40**, `a − b` −0.0084, p = 0.010;
+  `a − c` −0.0758, p < 0.001).
+
+**By validated pair type** (types with ≥ 10 pairs; `mean`, `both` / `one`; `filiation` 9, `meme_motif` 2,
+`meme_main` 1 omitted from breakdown):
+
+| Type (n) | med. cos₀ | `both`: (a) / (b) / (c) | `both`: (a − b) · p | `one`: (a) / (b) / (c) | `one`: (a − b) · p |
+|---|---|---|---|---|---|
+| Same composition (14) | 0.544 | +0.0076 / +0.0169 / +0.0208 | −0.0042 · 0.749 | +0.0109 / +0.0179 / **+0.0769** | −0.0032 · 0.397 |
+| Same subject (36) | 0.421 | +0.0088 / +0.0137 / +0.0070 | +0.0095 · 0.398 | +0.0035 / +0.0144 / **+0.0624** | −0.0086 · 0.017 |
+| Same facture (16) | 0.284 | +0.0031 / −0.0269 / −0.1041 | +0.0271 · 0.072 | −0.0007 / −0.0009 / −0.0214 | +0.0060 · 0.248 |
+| Same palette (26) | 0.097 | −0.0090 / −0.0275 / −0.1131 | +0.0172 · <0.001 | −0.0028 / −0.0099 / −0.0119 | +0.0045 · 0.099 |
+
+**Why it fails: two mechanisms uncovered.**
+1. **A severe corner bias in "Why?".** Tallying the chosen cells explains everything: on validated pairs
+   (832 cells), **63.0 %** of selected zones fall in the **4 corners** (`{0, 3, 12, 15}`, vs 25 % uniform),
+   **95.8 %** on the border and only **4.2 % in the centre** (nearest neighbours: **57.5 %** corners,
+   **93.6 %** border, **6.4 %** centre); in **92.8–93.0 %** of matches, a cell is paired with the exact same
+   grid slot (`cell_a == cell_b`). DINOv3's outer patches carry a strong positional and edge signature: two
+   matching corners look very similar to each other while differing from the rest of the painting, which
+   mechanically inflates the `lift` score in `correspondences.py` at the expense of the centre — precisely
+   where DINOv3's global vector draws most of its similarity (+0.0945 when masking the centre of one
+   neighbour, 16 times the drop of the "Why?" boxes). On nearest neighbours, masking the 4 "Why?" zones
+   causes **roughly 3 times less** cosine drop than masking 4 random cells.
+2. **A symmetric-masking artefact on dissimilar pairs.** On validated pairs with low initial cosine
+   (`meme_palette` 0.097, `meme_facture` 0.284, mostly cross-regard disagreements), masking the centre of
+   **both** images erases their distinct subjects and places a matching flat/blurred square in the middle,
+   *raising* their cosine (negative drop: −0.113 for centre, −0.028 for random). The positive `(a − b) =
+   +0.0148` on `validated (both)` comes solely from this artefact — (a) itself does not drop (−0.0006) —
+   and vanishes as soon as only one image is masked (`one`).
+
+**Visual inspection (6-pair contact sheet, `<data>/bench/whytest_planche.jpg`).**
+- *Three large drops of (a)*:
+  1. `#49819` (Realist illustration) ↔ `#67186` (Remington, *A Brush with the Redskins*, `meme_sujet`,
+     Δ(a) = +0.105, Δ(b) = −0.003): the only pair on the sheet where the 4 boxes land on the figures
+     (crouching riflemen at centre-right) rather than the corners.
+  2. `#8965` (Kirchner, *Walking Woman with Dog*) ↔ `#66489` (Billy Apple, `meme_sujet`, Δ(a) = +0.100,
+     Δ(b) = +0.092): all 4 boxes hug the top and bottom corners, dropping no more than chance.
+  3. `#21020` (Makovsky) ↔ `#31498` (Konchalovsky, `meme_sujet`, Δ(a) = +0.090, Δ(b) = +0.054,
+     Δ(c) = +0.087): all 4 boxes line up across the top strip (hair and background), no better than centre
+     and nearly zero when masking one image (+0.002).
+- *Three pairs where (a) drops no more than chance*:
+  4. `#71348` (Expressionist smoking skull) ↔ `#75862` (Symbolist creature, `meme_facture`, Δ(a) = +0.012,
+     Δ(b) = +0.179, Δ(c) = +0.224): the 4 boxes sit strictly on the 4 empty corners, missing both central
+     subjects entirely.
+  5. `#48392` (Flora-Karavia, *Marie Bonaparte*) ↔ `#76646` (Pogačnik, *Pop Object 3*, `meme_composition`,
+     Δ(a) = −0.006, Δ(b) = +0.061, Δ(c) = +0.207): the 4 boxes cling to the 4 background corners, ignoring
+     both the portrait bust and the white sack in the middle.
+  6. `#79406` (Van Gogh, *Sower after Millet*) ↔ `#41274` (Millet, *The Sower*, `filiation`, cos 0.711,
+     Δ(a) = −0.022, Δ(b) = +0.044, Δ(c) = +0.031; one image: Δ(c) = +0.107): on a faithful copy, the 4
+     boxes frame only the sky and dark ground corners, leaving the entire sower figure outside.
+
+**Limits.** On non-square artworks, outer cells are clipped by letterboxing: mean masked artwork area is
+21.9–22.5 % for (a), 25.8–26.5 % for (b) and 33.9–34.4 % for (c). Normalising each drop to 25 % masked
+area leaves the ranking unchanged (neighbours `one`, `mean`: (a) +0.0080 vs (b) +0.0177 and (c) +0.0669).
+Testing one model (DINOv3 ViT-B/16) on a fixed 4 × 4 grid only evaluates the current "Why?" implementation.
+Methodological reminder: a computed proximity — and even more so an automatic highlight — is a lead for
+looking, never proof.
+
+**Proposals for next steps (not applied; to be decided and re-tested with `pixplot whytest`).**
+1. **Immediate UI warning**: clarify in the "Pourquoi ?" legend that current boxes are heavily biased
+   toward corners and do not reflect what drives the global score, or hide the button until ranking is
+   fixed.
+2. **Fix zone ranking in `correspondences.py`** (no re-extraction needed): (i) **per-cell corpus
+   centring** (subtract the mean vector $\mu_c$ of each grid slot `c ∈ 0..15` before computing cell cosines)
+   to strip out positional corner signatures; (ii) **weight by alignment with each artwork's global vector**
+   (`regions` vs `global.npy`), favouring zones that actually contribute to the global representation.
+3. **Direct on-demand occlusion**: in the comparator (one pair at a time), measure leave-one-cell-out
+   cosine drops directly (16 GPU passes, ~0.15 s) — faithful by construction, at the cost of loading the
+   model on demand. Any candidate fix should pass `pixplot whytest` before adoption.
