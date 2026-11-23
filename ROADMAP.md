@@ -136,7 +136,7 @@ ARCHITECTURE § 38).
 
 ## Towards 1.0
 
-1.0 will come when: commands and file formats are stable (formats described in
-[docs/FORMATS.md](docs/FORMATS.md), checked by a test); the benchmark has at least 100
+1.0 will come when: commands and file formats are stable (described in
+[docs/COMMANDS.md](docs/COMMANDS.md) and [docs/FORMATS.md](docs/FORMATS.md), checked by tests); the benchmark has at least 100
 validated pairs; installation has been tested on a fresh machine; and the documentation is
 complete in both languages.

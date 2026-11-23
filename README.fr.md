@@ -161,6 +161,7 @@ pixplot status
 - [docs/INSTALL_GPU.fr.md](docs/INSTALL_GPU.fr.md) : GPU sous Windows 11 (AMD ROCm), secours WSL2, poids des modèles ([English](docs/INSTALL_GPU.md))
 - [docs/MCP.fr.md](docs/MCP.fr.md) : brancher Claude ou un autre assistant ([English](docs/MCP.md))
 - [docs/FORMATS.fr.md](docs/FORMATS.fr.md) : ce que PixPlot écrit sur le disque, fichier par fichier ([English](docs/FORMATS.md))
+- [docs/COMMANDS.fr.md](docs/COMMANDS.fr.md) : toutes les commandes `pixplot`, par étape de travail ([English](docs/COMMANDS.md))
 - [ROADMAP.fr.md](ROADMAP.fr.md) : suite prévue, critères de réussite et essais écartés ([English](ROADMAP.md))
 - [CHANGELOG.fr.md](CHANGELOG.fr.md) : historique des versions ([English](CHANGELOG.md))
 

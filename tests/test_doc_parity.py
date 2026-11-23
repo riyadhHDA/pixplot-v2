@@ -10,7 +10,8 @@ from pathlib import Path
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-DOCS = ["README", "ARCHITECTURE", "ROADMAP", "CHANGELOG", "docs/MCP", "docs/INSTALL_GPU", "docs/FORMATS"]
+DOCS = ["README", "ARCHITECTURE", "ROADMAP", "CHANGELOG", "docs/MCP", "docs/INSTALL_GPU", "docs/FORMATS",
+        "docs/COMMANDS"]
 
 
 def _sections(path: Path) -> list[tuple[str, int, int]]:

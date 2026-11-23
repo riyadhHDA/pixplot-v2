@@ -160,6 +160,7 @@ pixplot status
 - [docs/INSTALL_GPU.md](docs/INSTALL_GPU.md): GPU setup on Windows 11 (AMD ROCm), WSL2 fallback, model weights ([Français](docs/INSTALL_GPU.fr.md))
 - [docs/MCP.md](docs/MCP.md): connecting Claude or another assistant ([Français](docs/MCP.fr.md))
 - [docs/FORMATS.md](docs/FORMATS.md): what PixPlot writes to disk, file by file ([Français](docs/FORMATS.fr.md))
+- [docs/COMMANDS.md](docs/COMMANDS.md): every `pixplot` command, by stage of work ([Français](docs/COMMANDS.fr.md))
 - [ROADMAP.md](ROADMAP.md): planned work, success criteria and dropped experiments ([Français](ROADMAP.fr.md))
 - [CHANGELOG.md](CHANGELOG.md): release history ([Français](CHANGELOG.fr.md))
 

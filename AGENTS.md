@@ -21,7 +21,8 @@ principal : WikiArt 81k (80 716 œuvres). Site : https://riyadhhda.github.io/pix
   (deck.gl) + API FastAPI + serveur MCP.
 - Documentation : [README](README.fr.md) · [ARCHITECTURE](ARCHITECTURE.fr.md) (une section par étape,
   avec les mesures) · [ROADMAP](ROADMAP.fr.md) · [CHANGELOG](CHANGELOG.fr.md) · [MCP](docs/MCP.fr.md) ·
-  [FORMATS](docs/FORMATS.fr.md) (fichiers écrits sur le disque ; les mettre à jour si un format change).
+  [FORMATS](docs/FORMATS.fr.md) (fichiers écrits sur le disque ; les mettre à jour si un format change) ·
+  [COMMANDS](docs/COMMANDS.fr.md) (une ligne par commande ; un test refuse une commande non décrite).
 
 L'utilisateur écrit en français. Répondre en français, en termes clairs pour un historien de l'art :
 pas de jargon sans explication.

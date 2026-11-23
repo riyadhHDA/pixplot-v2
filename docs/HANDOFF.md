@@ -184,6 +184,14 @@ corrigé ; 63 tests passent, Atlas vérifié.
   Parité FR / EN de la doc vérifiée par `tests/test_doc_parity.py` (mêmes titres ; par section, autant de
   blocs de code et de tableaux) : écarts corrigés dans ARCHITECTURE §§ 4, 14, 17, 19 et INSTALL_GPU.
 
+- **Après la 0.21.0 (23/11/2026)** : planche « posture » dans le README FR + EN (poussée). Claude :
+  référence des commandes `docs/COMMANDS.fr.md` / `.md` (41 commandes, `tests/test_commands_doc.py`,
+  condition de la 1.0), non publiée. Notions du regard forme relancées en arrière-plan
+  (journal `data/wikiart81k/notions_forme.log`, l'ancien coupé gardé à côté). **Neon** travaille dans
+  `..\pixplot-posture-atlas` (branche `gemini/posture-atlas`) : regard « posture » exposé en essai
+  dans l'Atlas et le MCP (voisines exactes multi-figures avec miroir, squelettes dessinés) ;
+  compte rendu attendu dans `docs/handoff/gemini-posture-atlas.md`.
+
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
   19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.
 

@@ -14,6 +14,10 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## Non publié
+
+- **Référence des commandes** (`docs/COMMANDS.fr.md` / `.md`) : les 41 commandes de `pixplot`, rangées par étape de travail ; un test refuse une commande non décrite ou une description sans commande (condition de la 1.0).
+
 ## 0.21.0 — 23/11/2026 · Posture, notions apprises, « Pourquoi ? » mis à l'épreuve et réparé, fiche de données
 
 - **Regard « posture »** (Gemini 4 Neon) : squelettes des figures (RT-DETRv2 + ViTPose, Apache 2.0),
