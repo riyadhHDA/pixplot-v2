@@ -39,6 +39,7 @@ Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numé
 - **Le bouton « Pourquoi ? » mis à l'épreuve** (Gemini 4 Neon, `pixplot whytest`) : cacher les zones qu'il montre ne fait pas plus baisser la ressemblance que cacher des zones au hasard ; il choisit surtout des coins (63 %). Correction en cours. ARCHITECTURE § 39.
 - **Fiche de données du corpus** (d'après Gebru et al., *Datasheets for Datasets*, 2021) : provenance des images et des étiquettes, droits connus, ce qui manque, ce que PixPlot a repéré (doublons, étiquettes douteuses, cadres), usages à éviter. Calculée, jamais écrite à la main ; jointe à chaque Research Pack (`datasheet.md`) et par `pixplot corpus --datasheet`.
 - **Formats de fichiers documentés** (`docs/FORMATS.fr.md` / `.md`) : catalogue, vignettes, runs, paires, carnet, Research Pack ; un test vérifie que le code écrit bien ce qui est décrit (condition de la 1.0).
+- **Documentation au même niveau dans les deux langues** : tableaux des §§ 14, 17 et 19 rétablis en anglais, installation GPU française mise à jour, arborescence d'ARCHITECTURE refaite ; un test vérifie désormais que chaque section a, dans les deux langues, autant de blocs de code et de tableaux (condition de la 1.0).
 - Correctif : un calcul de notions ne fait plus planter `pixplot serve`.
 
 ## 0.20.0 — 19/11/2026 · Titres, dates, artistes et émotions pour WikiArt ; ordre de la matière

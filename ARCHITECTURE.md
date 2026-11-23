@@ -160,26 +160,32 @@ relations, sourced metadata and images**.
 
 ```
 pixplot-v2/
-├── ARCHITECTURE.md / ARCHITECTURE.fr.md
-├── pyproject.toml
+├── README / ARCHITECTURE / ROADMAP / CHANGELOG (.md English, .fr.md French)
+├── AGENTS.md              instructions shared by all coding assistants
+├── pyproject.toml, CITATION.cff
 ├── pixplot/
 │   ├── config.py          paths and settings (PIXPLOT_DATA)
-│   ├── runs.py            versioned runs + manifests
-│   ├── cli.py             pixplot ingest | embed | index | analyze | serve | …
-│   ├── catalog/           ① SQLite, ingestion, thumbnails, duplicates
+│   ├── runs.py            dated runs + manifests
+│   ├── cli.py             every `pixplot …` command
+│   ├── catalog/           ① SQLite, ingestion, thumbnails, metadata, places, WikiArt titles (MMArt, ArtEmis)
 │   ├── importers/         ① IIIF
-│   ├── encoders/          ② Encoder interface, letterbox, dinov3, siglip2, texture, colorlab
+│   ├── encoders/          ② Encoder interface, letterbox, DINOv3, SigLIP 2, colour, touch, posture,
+│   │                         and the evaluated, non-adopted models (TIPSv2, PE-Spatial, SSCD, Depth Anything, PE-Core, CSD)
 │   ├── features/          ② batch extraction, resume, regions
-│   ├── index/             ③ FAISS
-│   ├── analysis/          ④ e-means, hdbscan, umap, neighbours, naming, suspects, audit
+│   ├── index/             ③ FAISS, regions, regions described by words
+│   ├── analysis/          ④ map (e-means, UMAP), Leiden groups, naming (lexicon, Iconclass), disagreements,
+│   │                         duplicates, order of the surface, notions, benchmarks, critical layer, datasheet
 │   ├── export/            ⑦ Research Pack
 │   ├── notebook.py        research notebook (SQLite)
-│   ├── api/               ⑤ FastAPI, similarity spaces
-│   └── mcp/               ⑤ MCP server
+│   ├── api/               ⑤ FastAPI, ways of seeing
+│   └── mcp/               ⑤ MCP server (20 tools)
 ├── web/                   ⑥ Atlas: index.html, atlas-*.js, atlas.css, vendor/deck.gl
-├── scripts/               full_pipeline.sh, Parquet extraction, synthetic variants
+├── site/                  presentation site (EN + FR), published by GitHub Actions
+├── docs/                  MCP, GPU install, file formats, hand-over between assistants
+├── bench/                 pairs of works reviewed by the user (versioned)
 ├── tests/
-└── data/                  (not in git) catalog.sqlite, thumbs/, runs/, notebook.sqlite
+├── scripts/               full pipeline, Parquet extraction, site, assistants' working copies
+└── data/                  (not in git) catalog.sqlite, thumbs/, runs/, notebook.sqlite — see docs/FORMATS.md
 ```
 
 ## 5. Roadmap
@@ -455,14 +461,26 @@ and palette, before adding new models (STELLAR, PE-Spatial).
 
 **First annotated pairs** (11 pairs, "proposed" status, to be validated in the Atlas; 4
 documented by Honour and Fleming, pp. 671, 672, 709 and 772, the others from outside the
-book). Exact copies and borrowed compositions are found at rank 1–2 by both form and
-subject (Raphael ← Perugino *Marriage of the Virgin*, Van Gogh ← Millet *The Sower*,
-Manet ← Goya *Maximilian*); as soon as the artist transforms the model (Picasso ← El
-Greco, Picasso ← Delacroix *Women of Algiers*, Van Gogh's fragment after Rembrandt's
-*Lazarus*), no way of seeing follows it. Form alone finds Manet's quotation of the
-*Pastoral Concert* from the *Déjeuner* (rank 8). Colour finds no filiation: a copy changes
-its palette. This is exactly what a new composition model (STELLAR) should be tested on.
-See the French version for the full rank table.
+book). Rank of the twin in each direction, among 80,716 works:
+
+| pair | form | subject | colour | touch |
+|---|---|---|---|---|
+| Raphael ← Perugino, *Marriage of the Virgin* | 2 / 1 | 1 / 1 | 9,656 | 8 / 19 |
+| Van Gogh ← Millet, *The Sower* | 2 / 1 | 1 / 1 | 21,160 | 251 / 728 |
+| Manet ← Goya, *Maximilian* / *Third of May* (p. 672) | 2 / 68 | 2 / 12 | 41,279 | 391 / 998 |
+| Manet ← Titian, *Olympia* / *Venus of Urbino* (p. 709) | 4 / 23 | 4 / 58 | 4,075 | 568 / 588 |
+| Manet ← *Pastoral Concert* (p. 671) | 8 / 796 | 155 / 130 | 14,153 | 1,070 / 2,062 |
+| Monet ← Manet, *Déjeuner sur l'herbe* | 84 / 435 | 22 / 3 | 3,328 | 124 / 18 |
+| Picasso ← El Greco, *Demoiselles* / *Vision of Saint John* (p. 772) | 418 / 2,144 | 671 / 96 | 74,329 | 2,106 / 1,497 |
+| Picasso ← Delacroix, *Women of Algiers* | 20,944 / 49,444 | 2,076 / 766 | 32,508 | 4,308 / 7,472 |
+| Van Gogh ← Rembrandt, *Lazarus* (fragment) | 1,856 / 3,645 | 591 / 1,814 | 77,018 | 67,412 |
+| Perugino, *Delivery of the Keys* / *Marriage of the Virgin* (same composition) | 2 / 2 | 2 / 21 | 47,111 | 103 / 62 |
+
+Exact copies and borrowed compositions are found at the very first rank by both form and
+subject; as soon as the artist transforms the model (Picasso, the *Lazarus* fragment), no
+way of seeing follows it. Form alone finds Manet's quotation of the *Pastoral Concert* from
+the *Déjeuner* (rank 8). Colour finds no filiation: a copy changes its palette. This is
+exactly what a new composition model (STELLAR) should be tested on.
 
 ## 15. Leiden groups: nested, per way of seeing (16/11/2026)
 
@@ -523,10 +541,16 @@ review, which is the art historian's work.
 
 Reviewing a list of pairs card by card was too slow. **Quick review** (key R in the Atlas, or
 the button in the "Paires de référence" tab) shows one pair at a time, large, and each
-decision is one key: Enter validates with the suggested kind of resemblance; 1 to 7 validate
-as same subject, same composition, same hand, same handling, same motif, same palette,
-filiation; R rejects (proposed pair) or marks "no link" (candidate); Space skips; Z undoes
-the last decision; Escape quits.
+decision is one key:
+
+| key | effect |
+|---|---|
+| Enter | validate with the suggested kind of resemblance |
+| 1 to 7 | validate as: same subject, same composition, same hand, same handling, same motif, same palette, filiation |
+| R | reject (proposed pair) or "no link" (candidate) |
+| Space | skip |
+| Z | undo the last decision |
+| Escape | quit |
 
 The queue starts with proposed pairs, then **candidates** drawn from disagreements between
 ways of seeing, alternating the couples of ways of seeing; the default kind of resemblance
@@ -535,6 +559,8 @@ subject → same subject, touch → same handling, colour → same palette). A v
 candidate becomes an annotated pair (source "relecture : désaccord forme > sujet"); a
 dismissed one is logged in `bench/review_log.csv` and never comes back. At the top: progress
 towards 100 validated pairs and the count per kind, to see which are missing.
+
+*Since 21/11/2026 (§ 35): keys 1 to 8, "same gesture" on 7, "filiation" moves to 8.*
 
 ## 18. First benchmark on 104 validated pairs (16/11/2026)
 
@@ -580,9 +606,16 @@ words). Methods: SigLIP 2 on the cropped region, TIPSv2 on the cropped region, T
 (one pass on the whole painting, mean of the 14-px region vectors inside the box); TIPSv2 in two
 sizes, B/14 and SO400m/14 (same size as SigLIP 2).
 
-**Finding the region among 2,174** (R@1 / R@10 / median rank): SigLIP 2 on crops wins clearly —
-name 16.0% / 43.8% / 17, sentence **28.2% / 61.1% / 5**; TIPSv2 SO400m on crops: sentence 20.4% /
-47.9% / 12; TIPSv2 B/14 on crops: 15.1% / 41.7% / 19; TIPSv2 dense: 13.3–15.4% / 38.6–41.0%.
+**Finding the region among 2,174** (share of objects with a region at rank 1 / in the top 10;
+median rank):
+
+| method | name: R@1 | R@10 | rank | sentence: R@1 | R@10 | rank |
+|---|---|---|---|---|---|---|
+| **SigLIP 2, cropped region** | **16.0%** | **43.8%** | **17** | **28.2%** | **61.1%** | **5** |
+| TIPSv2 SO400m, cropped region | 12.7% | 36.8% | 32 | 20.4% | 47.9% | 12 |
+| TIPSv2 B/14, cropped region | 11.6% | 34.7% | 37 | 15.1% | 41.7% | 19 |
+| TIPSv2 SO400m, dense | 10.5% | 31.4% | 43 | 15.4% | 41.0% | 17 |
+| TIPSv2 B/14, dense | 7.6% | 25.7% | 67 | 13.3% | 38.6% | 24 |
 
 **Pointing at the region in its painting**: TIPSv2 B/14 61.9% (name) and 56.6% (sentence),
 SO400m 54.2% and 50.2%; chance (area covered by the boxes) 34.2%, but **always pointing at the

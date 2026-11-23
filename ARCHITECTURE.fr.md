@@ -165,27 +165,32 @@ compte, ce sont les **relations explicites, les métadonnées sourcées et les i
 
 ```
 Pixplot V2/
-├── ARCHITECTURE.md / ARCHITECTURE.fr.md
-├── pyproject.toml
+├── README / ARCHITECTURE / ROADMAP / CHANGELOG (.md anglais, .fr.md français)
+├── AGENTS.md              consignes communes à tous les assistants de code
+├── pyproject.toml, CITATION.cff
 ├── pixplot/
 │   ├── config.py          chemins et réglages (PIXPLOT_DATA)
-│   ├── runs.py            runs versionnés + manifests
-│   ├── cli.py             pixplot ingest | embed | index | analyze | serve
-│   ├── catalog/           ① SQLite, ingestion, vignettes, doublons
+│   ├── runs.py            runs datés + manifests
+│   ├── cli.py             toutes les commandes `pixplot …`
+│   ├── catalog/           ① SQLite, ingestion, vignettes, métadonnées, lieux, titres WikiArt (MMArt, ArtEmis)
 │   ├── importers/         ① IIIF
-│   ├── encoders/          ② interface Encoder, letterbox, dinov3, siglip2, texture, colorlab
-│   ├── features/          ② extraction par lots, reprise, régions
-│   ├── index/             ③ FAISS
-│   ├── analysis/          ④ e-means, hdbscan, umap, voisins, noms, étiquettes à vérifier, audit
+│   ├── encoders/          ② interface Encoder, letterbox, DINOv3, SigLIP 2, couleur, touche, posture,
+│   │                         et les modèles évalués non retenus (TIPSv2, PE-Spatial, SSCD, Depth Anything, PE-Core, CSD)
+│   ├── features/          ② extraction par lots, reprise, zones
+│   ├── index/             ③ FAISS, zones, zones décrites par des mots
+│   ├── analysis/          ④ carte (e-means, UMAP), groupes Leiden, noms (lexique, Iconclass), désaccords,
+│   │                         doublons, ordre de la matière, notions, bancs d'essai, couche critique, fiche de données
 │   ├── export/            ⑦ Research Pack
 │   ├── notebook.py        carnet de recherche (SQLite)
-│   ├── api/               ⑤ FastAPI, espaces de ressemblance
-│   └── mcp/               ⑤ serveur MCP
+│   ├── api/               ⑤ FastAPI, regards
+│   └── mcp/               ⑤ serveur MCP (20 outils)
 ├── web/                   ⑥ Atlas : index.html, atlas-*.js, atlas.css, vendor/deck.gl
+├── site/                  site de présentation (FR + EN), publié par GitHub Actions
+├── docs/                  MCP, installation GPU, formats de fichiers, passation entre assistants
+├── bench/                 paires d'œuvres relues par l'utilisateur (versionnées)
 ├── tests/
-├── data/                  (hors git) catalog.sqlite, thumbs/, runs/
-├── scripts/               full_pipeline.sh, extraction Parquet, variantes synthétiques
-└── pix-plot-0.0.1.1/      PixPlot v1 (Yale, 2018) — référence locale, non publiée
+├── scripts/               chaîne complète, extraction Parquet, site, copies de travail des assistants
+└── data/                  (hors git) catalog.sqlite, thumbs/, runs/, notebook.sqlite — voir docs/FORMATS.fr.md
 ```
 
 ## 5. Feuille de route
@@ -573,6 +578,8 @@ même sujet, touche → même facture, couleur → même palette). Une candidate
 une paire annotée (source « relecture : désaccord forme > sujet ») ; une candidate écartée est
 notée dans `bench/review_log.csv` et ne revient plus. En haut : la progression vers les 100
 paires validées et le compte par sorte, pour voir lesquelles manquent.
+
+*Depuis le 21/11/2026 (§ 35) : touches 1 à 8, « même geste » en 7, « filiation » passe en 8.*
 
 ## 18. Premier banc d'essai sur 104 paires validées (16/11/2026)
 

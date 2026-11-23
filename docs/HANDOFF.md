@@ -177,6 +177,8 @@ corrigé ; 63 tests passent, Atlas vérifié.
   l'époque 16/30 par la fin de session, à relancer (processeur, 1–2 h) quand Neon n'en a plus besoin.
   Formats de fichiers décrits dans `docs/FORMATS.fr.md` / `.md`, vérifiés par `tests/test_formats.py`
   (condition de la 1.0 : un format qui change se note au CHANGELOG et dans ce document).
+  Parité FR / EN de la doc vérifiée par `tests/test_doc_parity.py` (mêmes titres ; par section, autant de
+  blocs de code et de tableaux) : écarts corrigés dans ARCHITECTURE §§ 4, 14, 17, 19 et INSTALL_GPU.
 
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
   19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.

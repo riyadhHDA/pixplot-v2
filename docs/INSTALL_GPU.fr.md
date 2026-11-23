@@ -43,7 +43,11 @@ python -m pip install -U pip
 
 Installer **les roues PyTorch fournies par AMD pour Windows** (page officielle ci-dessus),
 dans le `.venv` activé. Les installer en premier évite que pip installe à la place la
-version CPU de PyTorch.
+version CPU de PyTorch. Exemple utilisé pour ce projet (ROCm 10.1, gfx1100) :
+
+```powershell
+pip install --index-url https://stable.repo.amd.com/rocm/whl-next/ "torch[device-gfx1100]==2.14.0+rocm10.1.0" "torchvision[device-gfx1100]==0.29.0a0+rocm10.1.0"
+```
 
 Puis le projet :
 
@@ -89,19 +93,14 @@ Gardez de préférence les images et le dossier `data\` sur un SSD.
 
 ```powershell
 pixplot ingest "D:\MesImages"
-pixplot embed --encoder dinov2_vitb14_reg --limit 1000 --batch-size 16
+pixplot embed --limit 1000 --batch-size 16
 pixplot similar 1 --html planche.html
 pixplot status
 ```
 
-Puis, une fois DINOv3 validé :
-
-```powershell
-pixplot embed --limit 1000 --batch-size 16
-```
-
 Notez dans le résultat de `embed` : **images/s** et **VRAM maximale**. Ce sont les
-chiffres qui permettent d'estimer le temps pour 100 000 à 500 000 œuvres.
+chiffres qui permettent d'estimer le temps pour 100 000 à 500 000 œuvres (sur la RX 7900 GRE :
+DINOv3 B/16 à 448 px ≈ 97 images/s, SigLIP 2 ≈ 73 images/s).
 
 Si la mémoire GPU déborde : `--batch-size 8`, ou `--input-size 224`.
 Un `embed` interrompu (Ctrl+C, plantage) reprend là où il s'était arrêté.
