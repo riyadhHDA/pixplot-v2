@@ -170,11 +170,24 @@ a.chip { text-decoration: none; }
 .neighbor .score { font-size: 11px; color: var(--accent-2); margin-top: 3px; }
 .neighbor .lbl { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .prov { color: var(--muted); font-size: 11px; margin-top: 18px; border-top: 1px solid var(--line); padding-top: 10px; }
-.spaces { display: flex; flex-wrap: wrap; gap: 4px; margin: 0 0 10px; }
+.spaces { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 0 0 10px; }
+.spaces-sep { width: 1px; height: 18px; background: var(--line); margin: 0 3px; }
 .space { background: var(--panel-2); border: 1px solid var(--line); border-radius: 6px; padding: 3px 9px; font-size: 12px; color: var(--muted); }
 .space:hover { color: var(--text); }
 .space.on { border-color: var(--accent); color: var(--accent-2); }
-.space small { color: var(--muted); margin-left: 4px; }
+.space.essai { border-style: dashed; }
+.space.essai.on { border-style: solid; }
+.space small { color: var(--muted); margin-left: 4px; font-size: 10.5px; }
+.badge-essai { display: inline-block; margin-left: 6px; padding: 1px 6px; border-radius: 999px;
+  border: 1px dashed var(--accent); color: var(--accent-2); font: 400 11px/1.3 var(--font); vertical-align: middle; }
+.mirror-tag { display: inline-block; margin-left: 4px; padding: 0 4px; border-radius: 3px;
+  border: 1px solid var(--accent); color: var(--accent-2); font-size: 10px; line-height: 1.4; }
+.empty-posture { padding: 12px 10px; border: 1px dashed var(--line); border-radius: var(--radius);
+  color: var(--muted); font-size: 12.5px; line-height: 1.45; background: var(--panel-2); }
+svg.pose-svg { position: absolute; width: auto; height: auto; stroke: none; fill: none; pointer-events: none; overflow: visible; z-index: 2; }
+.pose-badge { position: absolute; right: 8px; bottom: 8px; z-index: 3; pointer-events: none;
+  background: rgba(15, 15, 18, .82); color: var(--accent-2); border: 1px solid var(--accent);
+  border-radius: 6px; padding: 2px 7px; font-size: 11px; line-height: 1.4; }
 .checks { border: 1px solid var(--accent); border-radius: var(--radius); padding: 8px 10px; margin-bottom: 14px; background: rgba(224, 176, 64, .07); font-size: 13px; }
 .checks-title { color: var(--accent-2); font-weight: 600; margin-bottom: 2px; }
 .checks ul { margin: 4px 0; padding-left: 18px; }

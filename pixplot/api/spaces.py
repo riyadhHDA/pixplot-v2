@@ -48,7 +48,9 @@ KINDS = [
 ]
 # Modèles évalués mais non retenus comme regards : leurs vecteurs restent sur le disque pour
 # les bancs d'essai, mais l'Atlas et le serveur MCP ne les proposent pas (ARCHITECTURE § 24).
-NOT_KEPT = ("pe_spatial", "sscd", "depth_anything", "pe_core", "csd", "vitpose")
+NOT_KEPT = ("pe_spatial", "sscd", "depth_anything", "pe_core", "csd")
+# Regards spécialisés, en essai : proposés à part dans l'Atlas et marqués « essai ».
+EXPERIMENTAL = frozenset({"posture"})
 ORDER = ["forme", "sujet", "couleur", "touche", "composition", "profondeur", "posture", "copie",
          "sujet_pe", "touche_csd", "forme_v2", "couleur_rvb"]
 
@@ -68,6 +70,7 @@ class Spaces:
         self._lock = threading.Lock()
         self._stores: dict[str, FeatureStore] = {}
         self._indexes: dict[str, GlobalIndex | None] = {}
+        self._posture: dict[str, object] = {}
         self._rows: dict[str, dict[int, int]] = {}
         self._cell_means: dict[str, np.ndarray | None] = {}
         self.runs = self._discover()
@@ -96,8 +99,12 @@ class Spaces:
         for key, run in sorted(self.runs.items(), key=lambda kv: order.get(kv[0], 99)):
             enc = run.manifest["params"].get("encoder", "")
             _, label, about = describe_encoder(enc)
+            c = card(key)
+            exp = key in EXPERIMENTAL or bool(c.get("experimental"))
             out.append({"key": key, "label": label, "about": about, "encoder": enc,
-                        "features": run.id, "main": key == self.main, "card": card(key)})
+                        "features": run.id, "main": key == self.main,
+                        "experimental": exp, "specialized": exp or bool(c.get("specialized")),
+                        "card": c})
         return out
 
     # ------------------------------------------------------------------ accès
@@ -158,8 +165,33 @@ class Spaces:
                 self._cell_means[key] = load_or_compute_cell_means(Path(run.path), grids=grids)
             return self._cell_means[key]
 
+    def posture_index(self, key: str = "posture"):
+        """Index exact multi-figures + miroir pour le regard posture (ouvert une fois, mis en cache)."""
+        if key not in self.runs:
+            return None
+        with self._lock:
+            if key not in self._posture:
+                run = self.runs[key]
+                p = Path(run.path)
+                if not ((p / "poses_count.npy").exists() and (p / "poses_vecs.npy").exists()):
+                    self._posture[key] = None
+                else:
+                    from ..encoders.posture import PostureIndex
+                    self._posture[key] = PostureIndex.open(p, ids=self.data.ids.tolist())
+            return self._posture[key]
+
+    def posture_neighbors(self, artwork_id: int, k: int = 20, key: str = "posture") -> list[dict]:
+        """Voisines exactes par posture (toutes figures, direct et miroir) avec ``fig_a``, ``fig_b``, ``mirrored``."""
+        idx = self.posture_index(key)
+        if idx is None:
+            return []
+        return idx.similar(int(artwork_id), k=k, allow_mirror=True)
+
     def neighbors(self, key: str, artwork_id: int, k: int = 20) -> list[tuple[int, float]]:
         """Les ``k`` plus proches voisines dans cet espace, limitées aux œuvres de l'analyse."""
+        if key == "posture" and self.posture_index(key) is not None:
+            hits = self.posture_neighbors(artwork_id, k=k, key=key)
+            return [(int(h["id"]), float(h["score"])) for h in hits]
         store = self._open(key)
         if artwork_id not in self._rows[key]:
             return []
@@ -178,6 +210,18 @@ class Spaces:
         """Similarité cosinus entre les œuvres données, dans chaque espace (None si absente)."""
         out = {}
         for key in self.runs:
+            if key == "posture" and (pidx := self.posture_index(key)) is not None:
+                n = len(ids)
+                mat: list[list[float | None]] = [[None] * n for _ in range(n)]
+                for a in range(n):
+                    if pidx.figure_count(ids[a]) > 0:
+                        mat[a][a] = 1.0
+                    for b in range(a + 1, n):
+                        m = pidx.match_pair(ids[a], ids[b], allow_mirror=True)
+                        if m is not None:
+                            mat[a][b] = mat[b][a] = round(float(m["score"]), 4)
+                out[key] = mat
+                continue
             self._open(key)
             V = self.vectors(key, ids)
             present = np.array([i in self._rows[key] for i in ids])

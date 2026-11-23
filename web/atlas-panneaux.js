@@ -113,9 +113,94 @@ function spaceAbout(key) {
 
 function spaceTabs(current) {
   if (state.spaces.length < 2) return "";
-  return `<div class="spaces" role="tablist" aria-label="Voisines selon">${state.spaces.map((s) =>
-    `<button class="space ${s.key === current ? "on" : ""}" data-space="${esc(s.key)}" title="${esc(s.about)}" role="tab"
-      aria-selected="${s.key === current}">${esc(SPACE_SHORT[s.key] || s.label)}</button>`).join("")}</div>`;
+  const main = state.spaces.filter((s) => !s.experimental);
+  const exp = state.spaces.filter((s) => s.experimental);
+  const btn = (s) => `<button class="space ${s.experimental ? "essai " : ""}${s.key === current ? "on" : ""}" data-space="${esc(s.key)}"
+      title="${esc(s.about)}" role="tab" aria-selected="${s.key === current}">${esc(SPACE_SHORT[s.key] || s.label)}${s.experimental ? "<small>essai</small>" : ""}</button>`;
+  const sep = main.length && exp.length ? `<span class="spaces-sep" aria-hidden="true"></span>` : "";
+  return `<div class="spaces" role="tablist" aria-label="Voisines selon">${main.map(btn).join("")}${sep}${exp.map(btn).join("")}</div>`;
+}
+
+// Squelettes posture (COCO-17) : dessin SVG simple superposé à l'image réelle (sans bibliothèque).
+const POSE_LIMBS = [[0, 5], [0, 6], [5, 6], [5, 7], [7, 9], [6, 8], [8, 10],
+  [5, 11], [6, 12], [11, 12], [11, 13], [13, 15], [12, 14], [14, 16]];
+
+function clearPoseOverlay(container) {
+  if (!container) return;
+  container.querySelectorAll(".pose-svg, .pose-badge").forEach((el) => el.remove());
+}
+
+function drawPoseOverlay(container, img, figures, activeFig, limbs, thr, badgeText) {
+  if (!container || !img) return;
+  const place = () => {
+    clearPoseOverlay(container);
+    if (!img.naturalWidth || !img.naturalHeight) return;
+    const rect = imageRect(img);
+    if (!rect.w || !rect.h) return;
+    const segs = limbs && limbs.length ? limbs : POSE_LIMBS;
+    const minC = thr ?? 0.30;
+    const ns = "http://www.w3.org/2000/svg";
+    const el = document.createElementNS(ns, "svg");
+    el.setAttribute("class", "pose-svg");
+    el.setAttribute("viewBox", `0 0 ${rect.w.toFixed(1)} ${rect.h.toFixed(1)}`);
+    el.setAttribute("width", rect.w.toFixed(1));
+    el.setAttribute("height", rect.h.toFixed(1));
+    el.style.left = `${rect.left}px`;
+    el.style.top = `${rect.top}px`;
+    el.style.width = `${rect.w.toFixed(1)}px`;
+    el.style.height = `${rect.h.toFixed(1)}px`;
+    // Dessine d'abord les figures secondaires (discrètes), puis la figure active (dorée) par-dessus.
+    const ordered = (figures || []).slice().sort((a, b) => (a.fig === activeFig ? 1 : 0) - (b.fig === activeFig ? 1 : 0));
+    const lw = Math.max(2, Math.min(4, rect.w / 110));
+    for (const f of ordered) {
+      const isMain = activeFig == null || f.fig === activeFig;
+      const kp = f.kpts || [];
+      const g = document.createElementNS(ns, "g");
+      g.setAttribute("opacity", isMain ? "0.95" : "0.28");
+      for (const [p, q] of segs) {
+        const a = kp[p], b = kp[q];
+        if (!a || !b || a[2] < minC || b[2] < minC) continue;
+        const x1 = a[0] * rect.w, y1 = a[1] * rect.h, x2 = b[0] * rect.w, y2 = b[1] * rect.h;
+        if (isMain) {
+          const halo = document.createElementNS(ns, "line");
+          halo.setAttribute("x1", x1); halo.setAttribute("y1", y1);
+          halo.setAttribute("x2", x2); halo.setAttribute("y2", y2);
+          halo.setAttribute("stroke", "rgba(0,0,0,0.68)");
+          halo.setAttribute("stroke-width", (lw + 2.5).toFixed(1));
+          halo.setAttribute("stroke-linecap", "round");
+          g.appendChild(halo);
+        }
+        const line = document.createElementNS(ns, "line");
+        line.setAttribute("x1", x1); line.setAttribute("y1", y1);
+        line.setAttribute("x2", x2); line.setAttribute("y2", y2);
+        line.setAttribute("stroke", isMain ? "#e0b040" : "#cccccc");
+        line.setAttribute("stroke-width", (isMain ? lw : Math.max(1.2, lw * 0.65)).toFixed(1));
+        line.setAttribute("stroke-linecap", "round");
+        g.appendChild(line);
+      }
+      if (isMain) {
+        for (const pt of kp) {
+          if (!pt || pt[2] < minC) continue;
+          const dot = document.createElementNS(ns, "circle");
+          dot.setAttribute("cx", pt[0] * rect.w); dot.setAttribute("cy", pt[1] * rect.h);
+          dot.setAttribute("r", (lw * 0.95).toFixed(1));
+          dot.setAttribute("fill", "#fff5dc");
+          dot.setAttribute("stroke", "rgba(0,0,0,0.7)");
+          dot.setAttribute("stroke-width", "1");
+          g.appendChild(dot);
+        }
+      }
+      el.appendChild(g);
+    }
+    container.appendChild(el);
+    if (badgeText) {
+      const bd = document.createElement("span");
+      bd.className = "pose-badge";
+      bd.textContent = badgeText;
+      container.appendChild(bd);
+    }
+  };
+  if (img.complete && img.naturalWidth) place(); else img.addEventListener("load", place, { once: true });
 }
 
 function labelChecks(d) {
@@ -168,7 +253,9 @@ async function openCompare() {
   const pairs = [];
   for (let a = 0; a < n; a++) for (let b = a + 1; b < n; b++) pairs.push([a, b]);
   const spaces = res.spaces.filter((s) => res.similarity[s.key]);
-  const head = spaces.map((s) => `<th title="${esc([s.about, s.card && `Entraîné sur : ${s.card.trained_on}`, ...((s.card || {}).biases || []).map((b) => `Biais : ${b}`)].filter(Boolean).join(" · "))}">${esc(SPACE_SHORT[s.key] || s.label)}</th>`).join("");
+  const hasPosture = spaces.some((s) => s.key === "posture");
+  const pMatches = res.posture_matches || {};
+  const head = spaces.map((s) => `<th title="${esc([s.about, s.card && `Entraîné sur : ${s.card.trained_on}`, ...((s.card || {}).biases || []).map((b) => `Biais : ${b}`)].filter(Boolean).join(" · "))}">${esc(SPACE_SHORT[s.key] || s.label)}${s.experimental ? " <small>essai</small>" : ""}</th>`).join("");
   let ref = { types: [], pairs: [] };
   try { ref = await getJSON(`/api/pairs?ids=${res.ids.join(",")}`); } catch (_) { /* banc d'essai indisponible */ }
   const typeLabel = Object.fromEntries(ref.types.map((t) => [t.key, t.label]));
@@ -177,10 +264,13 @@ async function openCompare() {
   const body = pairs.map(([a, b]) => {
     const tags = annotations(a, b).map((p) =>
       `<span class="pair-tag ${p.status === "validée" ? "ok" : ""}" title="${esc([p.status, p.source, p.note].filter(Boolean).join(" · "))}">${esc(typeLabel[p.type] || p.type)}</span>`).join("");
+    const pm = pMatches[`${a},${b}`];
     return `<tr><td>${a + 1} ↔ ${b + 1}</td>${spaces.map((s) => {
       const v = res.similarity[s.key][a][b];
-      return v == null ? "<td>—</td>" : `<td><span class="bar" style="--v:${Math.max(0, v)}"></span>${v.toFixed(3)}</td>`;
-    }).join("")}<td class="pair-cell"><button class="chip" data-why="${a},${b}" title="Montrer les zones de ces deux œuvres qui se répondent le plus">Pourquoi ?</button>${tags}${ref.types.length ? `<button class="chip" data-annotate="${a},${b}">Annoter</button>` : ""}</td></tr>`;
+      if (v == null) return "<td>—</td>";
+      const mir = s.key === "posture" && pm && pm.mirrored ? `<span class="mirror-tag" title="Meilleure correspondance en miroir gauche-droite">miroir</span>` : "";
+      return `<td><span class="bar" style="--v:${Math.max(0, v)}"></span>${v.toFixed(3)}${mir}</td>`;
+    }).join("")}<td class="pair-cell"><button class="chip" data-why="${a},${b}" title="Montrer les zones de ces deux œuvres qui se répondent le plus">Pourquoi ?</button>${hasPosture ? `<button class="chip" data-pose="${a},${b}" title="Dessiner les squelettes des figures qui se répondent (essai)">Squelettes</button>` : ""}${tags}${ref.types.length ? `<button class="chip" data-annotate="${a},${b}">Annoter</button>` : ""}</td></tr>`;
   }).join("");
   $("compare-body").innerHTML = `<div class="cmp-row" style="--n:${n}">${cols}</div>
     <div class="cmp-why" id="cmp-why" hidden></div>
@@ -209,6 +299,14 @@ async function openCompare() {
     const [a, b] = btn.dataset.why.split(",").map(Number);
     showWhy(res.ids[a], res.ids[b], a, b, btn);
   }));
+  $("compare-body").querySelectorAll("[data-pose]").forEach((btn) => btn.addEventListener("click", () => {
+    const [a, b] = btn.dataset.pose.split(",").map(Number);
+    showPosturePair(res.ids[a], res.ids[b], a, b, btn);
+  }));
+  if (state.space === "posture" && hasPosture) {
+    const firstPoseBtn = $("compare-body").querySelector('[data-pose="0,1"]');
+    if (firstPoseBtn) showPosturePair(res.ids[0], res.ids[1], 0, 1, firstPoseBtn);
+  }
   const form = $("pair-form");
   if (!form) return;
   let current = null;
@@ -238,9 +336,40 @@ const WHY_COLORS = ["#e0b040", "#56b4e9", "#cc79a7", "#00b079", "#f0e442", "#d55
 let whySeq = 0;
 function clearWhy() {
   whySeq++;
-  document.querySelectorAll("#compare-body .why-box").forEach((el) => el.remove());
-  document.querySelectorAll("#compare-body [data-why]").forEach((el) => el.classList.remove("on"));
+  document.querySelectorAll("#compare-body .why-box, #compare-body .pose-svg, #compare-body .pose-badge").forEach((el) => el.remove());
+  document.querySelectorAll("#compare-body [data-why], #compare-body [data-pose]").forEach((el) => el.classList.remove("on"));
   const box = $("cmp-why"); if (box) { box.hidden = true; box.innerHTML = ""; }
+}
+
+async function showPosturePair(idA, idB, nA, nB, btn) {
+  const wasOn = btn.classList.contains("on");
+  clearWhy();
+  if (wasOn) return;
+  const seq = whySeq;
+  let r;
+  try { r = await getJSON(`/api/posture/match?a=${idA}&b=${idB}`); } catch (err) { toast(`Échec : ${err.message}`); return; }
+  if (seq !== whySeq) return;
+  btn.classList.add("on");
+  const drawOn = (id, figs, activeFig, badge) => {
+    const fig = document.querySelector(`#compare-body .cmp[data-id="${id}"] .cmp-img`);
+    const img = fig && fig.querySelector("img");
+    if (!img) return;
+    drawPoseOverlay(fig, img, figs, activeFig, r.limbs, r.kpt_threshold, badge);
+  };
+  if (r.matched) {
+    drawOn(idA, r.figures_a, r.fig_a, `figure ${r.fig_a + 1}`);
+    drawOn(idB, r.figures_b, r.fig_b, `figure ${r.fig_b + 1}${r.mirrored ? " · en miroir" : ""}`);
+  } else {
+    if (r.figures_a.length) drawOn(idA, r.figures_a, null, `${r.figures_a.length} figure${r.figures_a.length > 1 ? "s" : ""}`);
+    if (r.figures_b.length) drawOn(idB, r.figures_b, null, `${r.figures_b.length} figure${r.figures_b.length > 1 ? "s" : ""}`);
+  }
+  const box = $("cmp-why");
+  box.hidden = false;
+  box.innerHTML = r.matched
+    ? `<h3>Postures qui se répondent (${nA + 1} ↔ ${nB + 1}) <small>regard « posture » (essai)</small></h3>
+       <p style="margin:0 0 6px;font-size:13px">Ressemblance de pose : <b>${r.score.toFixed(3)}</b> · figure ${r.fig_a + 1} ↔ figure ${r.fig_b + 1}${r.mirrored ? ` <span class="mirror-tag">en miroir</span>` : ""}</p>
+       <p class="prov">${esc(r.note)}</p>`
+    : `<p class="prov">Aucune figure corporelle détectée dans au moins l'une de ces deux œuvres (regard « posture », en essai).</p>`;
 }
 
 async function showWhy(idA, idB, nA, nB, btn) {
@@ -389,17 +518,31 @@ function renderMeasuresBody(m) {
     <p class="prov">${esc(m.note)}</p>`;
 }
 
+let fichePoseSeq = 0;
+
 function renderFiche(d) {
+  const isPosture = d.space === "posture";
+  const noFigures = isPosture && (d.posture_figures === 0 || (!d.neighbors.length && d.posture_figures == null));
   const meta = Object.entries(d.metadata).filter(([, v]) => v).map(([k, v]) =>
     `<tr><th>${esc(LABELS[k] || pretty(k))}</th><td>${esc(SLUG_KEYS.has(k) ? pretty(v) : v)}${d.metadata_sources[k] ? `<small title="${esc((d.metadata_source_notes || {})[k] || "")}">source : ${esc(d.metadata_sources[k])}${(d.metadata_source_notes || {})[k] ? " · étiquette bénévole, à vérifier" : ""}</small>` : ""}</td></tr>`).join("");
   const fam = d.hdbscan == null ? "" : d.hdbscan < 0
     ? `<span class="chip warn" title="HDBSCAN ne la rattache à aucune famille">Œuvre « à part »</span>`
     : `<span class="chip">Famille ${d.hdbscan + 1}</span>`;
   const atyp = Math.round(d.atypicality * 100);
-  const neigh = d.neighbors.map((n) => `<button class="neighbor" data-id="${n.id}" title="${esc(n.label)}">
+  const neigh = noFigures
+    ? `<div class="empty-posture"><b>Aucune figure détectée</b> dans cette œuvre. Le regard « posture » (spécialisé, en essai) ne s'applique qu'aux œuvres figuratives (~48 % du corpus).</div>`
+    : d.neighbors.map((n) => {
+      const mir = n.mirrored ? `<span class="mirror-tag" title="Meilleure correspondance en miroir gauche-droite">miroir</span>` : "";
+      const figAttrs = isPosture && n.fig_a != null
+        ? ` data-fig-a="${n.fig_a}" data-fig-b="${n.fig_b ?? 0}" data-mirrored="${n.mirrored ? 1 : 0}"` : "";
+      return `<button class="neighbor" data-id="${n.id}"${figAttrs} title="${esc(n.label)}${n.mirrored ? " (en miroir)" : ""}">
       <img src="/api/thumb/256/${n.id}" alt="" loading="lazy">
-      <div class="score">${n.score.toFixed(3)} · groupe ${n.cluster ?? "?"}</div>
-      <div class="lbl">${esc(pretty(n.label))}</div></button>`).join("");
+      <div class="score">${n.score.toFixed(3)} · groupe ${n.cluster ?? "?"}${mir}</div>
+      <div class="lbl">${esc(pretty(n.label))}</div></button>`;
+    }).join("");
+  const provNote = isPosture
+    ? "Regard spécialisé (en essai) : une pose semblable est une piste, pas la preuve qu'un artiste a vu l'autre."
+    : "Une proximité est une piste à examiner, pas une preuve de filiation.";
   $("fiche-body").innerHTML = `
     <a class="hero" href="/api/image/${d.id}" target="_blank" rel="noopener" title="Ouvrir l'image originale">
       <img src="/api/thumb/1024/${d.id}" alt="${esc(d.label)}"></a>
@@ -427,8 +570,33 @@ function renderFiche(d) {
       ${spaceTabs(d.space)}
       <div class="neighbors">${neigh}</div>
       <div class="prov">${esc(spaceAbout(d.space))} Vecteurs de l'analyse : ${esc(d.provenance.features)} · ${esc(d.provenance.analysis)}.
-        Une proximité est une piste à examiner, pas une preuve de filiation.</div>
+        ${provNote}</div>
     </div>`;
+  const pSeq = ++fichePoseSeq;
+  if (isPosture && !noFigures) {
+    const hero = $("fiche-body").querySelector(".hero");
+    const heroImg = hero && hero.querySelector("img");
+    getJSON(`/api/posture/${d.id}`).then((pose) => {
+      if (pSeq !== fichePoseSeq || state.selected !== d.id || state.drawing) return;
+      if (!pose.figures || !pose.figures.length) return;
+      const defFig = d.neighbors.length && d.neighbors[0].fig_a != null ? d.neighbors[0].fig_a : pose.figures[0].fig;
+      const defBadge = `${pose.count} figure${pose.count > 1 ? "s" : ""} · essai`;
+      drawPoseOverlay(hero, heroImg, pose.figures, defFig, pose.limbs, pose.kpt_threshold, defBadge);
+      $("fiche-body").querySelectorAll(".neighbor[data-fig-a]").forEach((btn) => {
+        btn.addEventListener("mouseenter", () => {
+          if (pSeq !== fichePoseSeq || state.drawing) return;
+          const fa = Number(btn.dataset.figA);
+          const mir = btn.dataset.mirrored === "1";
+          drawPoseOverlay(hero, heroImg, pose.figures, fa, pose.limbs, pose.kpt_threshold,
+            `figure ${fa + 1}${mir ? " · en miroir" : ""}`);
+        });
+        btn.addEventListener("mouseleave", () => {
+          if (pSeq !== fichePoseSeq || state.drawing) return;
+          drawPoseOverlay(hero, heroImg, pose.figures, defFig, pose.limbs, pose.kpt_threshold, defBadge);
+        });
+      });
+    }).catch(() => { /* squelette indisponible */ });
+  }
   $("fiche-body").querySelectorAll(".space[data-space]").forEach((b) => b.addEventListener("click", () => {
     state.space = b.dataset.space;
     store.set("space", state.space);
@@ -450,7 +618,10 @@ function renderFiche(d) {
     const li = document.querySelector(`.group[data-cluster="${d.cluster - 1}"]`);
     if (li) { li.scrollIntoView({ block: "nearest" }); if (!li.classList.contains("active")) li.click(); }
   });
-  if ($("chip-detail")) $("chip-detail").addEventListener("click", () => toggleDrawing(d));
+  if ($("chip-detail")) $("chip-detail").addEventListener("click", () => {
+    clearPoseOverlay($("fiche-body").querySelector(".hero"));
+    toggleDrawing(d);
+  });
   const mbox = $("fiche-measures");
   if (mbox) mbox.addEventListener("toggle", async () => {
     if (!mbox.open || mbox.dataset.loaded) return;

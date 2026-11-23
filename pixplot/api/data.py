@@ -491,6 +491,12 @@ class AtlasData:
     def neighbor_list(self, artwork_id: int, k: int = 20, space: str | None = None) -> list[dict]:
         """Voisines dans l'espace de l'analyse (précalculées) ou dans un autre espace."""
         r = self.row_of[artwork_id]
+        if space == "posture" and self.spaces.posture_index("posture") is not None:
+            hits = self.spaces.posture_neighbors(artwork_id, k=k)
+            return [{"id": int(h["id"]), "score": round(float(h["score"]), 4), "label": self.label(int(h["id"])),
+                     "cluster": int(self.clusters[self.row_of[int(h["id"])]]) + 1 if int(h["id"]) in self.row_of else None,
+                     "fig_a": int(h["fig_a"]), "fig_b": int(h["fig_b"]), "mirrored": bool(h["mirrored"])}
+                    for h in hits]
         if space and space != self.spaces.main:
             pairs = self.spaces.neighbors(space, artwork_id, k)
         else:
@@ -509,7 +515,8 @@ class AtlasData:
             "SELECT key, source FROM metadata WHERE artwork_id = ?", (artwork_id,))}
         conn.close()
         neigh = self.neighbor_list(artwork_id, k, space)
-        return {
+        active_space = space or self.spaces.main
+        out = {
             "id": artwork_id,
             "label": self.label(artwork_id),
             "filename": Path(row["path"]).name,
@@ -522,13 +529,16 @@ class AtlasData:
             "atypicality": round(float(self.atypicality[r]), 3),
             "x": round(float(self.coords[r, 0]), 5), "y": round(float(self.coords[r, 1]), 5),
             "neighbors": neigh,
-            "space": space or self.spaces.main,
+            "space": active_space,
             "label_checks": self.suspect_of.get(artwork_id, []),
             "label_checks_space": (self.suspects or {}).get("space"),
             "group_name": self.names.get(int(self.clusters[r]), {}).get("name", ""),
             "provenance": {"features": self.features.id, "analysis": self.analysis.id,
                            "encoder": self.features.manifest["params"].get("encoder")},
         }
+        if active_space == "posture" and (pidx := self.spaces.posture_index("posture")) is not None:
+            out["posture_figures"] = pidx.figure_count(artwork_id)
+        return out
 
     def search(self, q: str, limit: int = 5000) -> list[int]:
         """Œuvres dont une métadonnée ou le nom de fichier contient ``q`` (sans casse)."""

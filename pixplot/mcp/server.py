@@ -32,7 +32,10 @@ Plusieurs « espaces » de ressemblance répondent à des questions différentes
 space de similar_artworks) : forme (DINOv3 : formes, composition, motifs), sujet (SigLIP 2 :
 sujet, genre, école, manière — le meilleur pour les catégories de l'histoire de l'art),
 couleur (palette), touche (facture, trait, grain — utile pour pointillisme, fauvisme,
-gravure). Comparer les espaces aide à dire POURQUOI deux œuvres se ressemblent.
+gravure), et posture (spécialisé, en essai : gestes et postures des figures détectées,
+avec miroir gauche-droite, ~48 % du corpus — une pose semblable est une piste, pas la
+preuve qu'un artiste a vu l'autre). Comparer les espaces aide à dire POURQUOI deux œuvres
+se ressemblent.
 
 Méthode conseillée :
 1. corpus_overview pour connaître le corpus, ses groupes et ce qui est disponible.
@@ -137,13 +140,23 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
     @server.tool()
     def similar_artworks(artwork_id: int, k: int = 20, space: str = "forme") -> dict:
         """Les œuvres les plus proches d'une œuvre dans un espace de ressemblance :
-        « forme » (DINOv3, défaut), « sujet » (SigLIP 2), « couleur » ou « touche »
-        (voir corpus_overview → spaces pour ceux qui sont calculés)."""
+        « forme » (DINOv3, défaut), « sujet » (SigLIP 2), « couleur », « touche »,
+        ou « posture » (spécialisé, en essai : postures des figures, avec miroir gauche-droite ;
+        voir corpus_overview → spaces pour ceux qui sont calculés)."""
         if space not in data.spaces.runs:
             raise ValueError(f"Espace « {space} » indisponible (calculés : {', '.join(data.spaces.runs)})")
         a = data.artwork(check(artwork_id), k=min(max(k, 1), 100), space=space)
-        return {"artwork": {"id": a["id"], "label": a["label"], "group": a["cluster"]},
-                "space": space, "neighbors": a["neighbors"]}
+        out = {"artwork": {"id": a["id"], "label": a["label"], "group": a["cluster"]},
+               "space": space, "neighbors": a["neighbors"]}
+        if space == "posture":
+            out["experimental"] = True
+            out["figures"] = a.get("posture_figures", 0)
+            out["note"] = ("Regard spécialisé (en essai) : compare les postures des figures détectées, "
+                           "y compris en miroir. Une pose semblable est une piste, pas la preuve qu'un "
+                           "artiste a vu l'autre.")
+            if out["figures"] == 0:
+                out["message"] = "Aucune figure corporelle détectée dans cette œuvre."
+        return out
 
     @server.tool()
     def search_zones(query: str, k: int = 20) -> dict:

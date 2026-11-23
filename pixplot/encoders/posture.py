@@ -54,6 +54,41 @@ MIN_BODY_CONF = 0.40    # confiance moyenne minimale des articulations du corps 
 # Échange gauche/droite des 17 points COCO
 COCO_LR_SWAP = np.array([0, 2, 1, 4, 3, 6, 5, 8, 7, 10, 9, 12, 11, 14, 13, 16, 15], dtype=np.int64)
 
+# Os du squelette COCO-17 (tête, bras, tronc, jambes), pour le dessin dans l'Atlas et les planches
+COCO_LIMBS: tuple[tuple[int, int], ...] = (
+    (0, 5), (0, 6), (5, 6), (5, 7), (7, 9), (6, 8), (8, 10),
+    (5, 11), (6, 12), (11, 12), (11, 13), (13, 15), (12, 14), (14, 16),
+)
+
+
+def letterbox_to_image_kpts(kp: np.ndarray, width: int, height: int) -> np.ndarray:
+    """Ramène un squelette COCO (17, 3) du carré de letterbox [0, 1] aux coordonnées [0, 1] de l'image réelle."""
+    out = np.asarray(kp, dtype=np.float32).copy()
+    w = max(float(width), 1.0)
+    h = max(float(height), 1.0)
+    m = max(w, h)
+    fx, fy = w / m, h / m
+    out[:, 0] = (out[:, 0] - (1.0 - fx) * 0.5) / fx
+    out[:, 1] = (out[:, 1] - (1.0 - fy) * 0.5) / fy
+    return out
+
+
+def letterbox_to_image_box(box: np.ndarray, width: int, height: int) -> list[float]:
+    """Ramène une boîte [x0, y0, x1, y1, score] du carré de letterbox aux fractions [0, 1] de l'image réelle."""
+    b = np.asarray(box, dtype=np.float32)
+    w = max(float(width), 1.0)
+    h = max(float(height), 1.0)
+    m = max(w, h)
+    fx, fy = w / m, h / m
+    ox, oy = (1.0 - fx) * 0.5, (1.0 - fy) * 0.5
+    return [
+        round(float(np.clip((b[0] - ox) / fx, 0.0, 1.0)), 4),
+        round(float(np.clip((b[1] - oy) / fy, 0.0, 1.0)), 4),
+        round(float(np.clip((b[2] - ox) / fx, 0.0, 1.0)), 4),
+        round(float(np.clip((b[3] - oy) / fy, 0.0, 1.0)), 4),
+        round(float(b[4]), 4) if len(b) > 4 else 1.0,
+    ]
+
 # Permutation et signes exacts du miroir horizontal sur le vecteur 50-D :
 # - 0..25  : 13 articulations (tête, épaules L/R, coudes L/R, poignets L/R, hanches L/R, genoux L/R, chevilles L/R)
 # - 26..33 : 4 axes centraux (cou, épaules L→R, colonne, hanches L→R)
@@ -283,43 +318,41 @@ class PostureIndex:
         vecs: np.ndarray,
         kpts: np.ndarray | None = None,
         boxes: np.ndarray | None = None,
+        run_rows: np.ndarray | None = None,
     ):
         self.ids = np.asarray(ids, dtype=np.int64)
         self.row_of = {int(i): r for r, i in enumerate(self.ids)}
         self.counts = np.asarray(counts, dtype=np.int32)
         self.n_artworks = len(self.ids)
         self.n_with_figures = int((self.counts > 0).sum())
+        self._run_rows = np.asarray(run_rows, dtype=np.int64) if run_rows is not None else None
 
-        # Aplatissement en tableau contigu de toutes les figures valides (K, 50)
-        flat_vecs: list[np.ndarray] = []
-        flat_art: list[np.ndarray] = []
-        flat_slot: list[np.ndarray] = []
+        # Aplatissement vectorisé en tableau contigu de toutes les figures valides (K, 50)
+        v_arr = np.asarray(vecs, dtype=np.float32)
         offsets = np.zeros(self.n_artworks + 1, dtype=np.int32)
-        cur = 0
-        for r in range(self.n_artworks):
-            c = int(self.counts[r])
-            if c > 0:
-                v = np.asarray(vecs[r, :c], dtype=np.float32)
-                norms = np.linalg.norm(v, axis=1, keepdims=True)
-                good = (norms[:, 0] > 1e-5)
-                if good.any():
-                    v = v[good] / norms[good]
-                    k = len(v)
-                    flat_vecs.append(v)
-                    flat_art.append(np.full(k, r, dtype=np.int32))
-                    flat_slot.append(np.flatnonzero(good).astype(np.int8))
-                    cur += k
-            offsets[r + 1] = cur
-
-        self.offsets = offsets
-        if flat_vecs:
-            self.vecs = np.ascontiguousarray(np.concatenate(flat_vecs, axis=0), dtype=np.float32)
-            self.art_of = np.concatenate(flat_art, axis=0)
-            self.slot_of = np.concatenate(flat_slot, axis=0)
+        if self.n_artworks > 0 and v_arr.ndim == 3 and v_arr.shape[1] > 0:
+            max_f = v_arr.shape[1]
+            slots = np.arange(max_f, dtype=np.int32)[None, :]
+            in_cnt = slots < np.minimum(self.counts[:, None], max_f)
+            norms = np.linalg.norm(v_arr, axis=2)
+            valid = in_cnt & (norms > 1e-5)
+            art_idx, slot_idx = np.nonzero(valid)
+            if len(art_idx):
+                sel = v_arr[art_idx, slot_idx]
+                sel /= norms[art_idx, slot_idx, None]
+                self.vecs = np.ascontiguousarray(sel, dtype=np.float32)
+                self.art_of = art_idx.astype(np.int32)
+                self.slot_of = slot_idx.astype(np.int8)
+                np.cumsum(valid.sum(axis=1, dtype=np.int32), out=offsets[1:])
+            else:
+                self.vecs = np.zeros((0, DIM), dtype=np.float32)
+                self.art_of = np.zeros((0,), dtype=np.int32)
+                self.slot_of = np.zeros((0,), dtype=np.int8)
         else:
             self.vecs = np.zeros((0, DIM), dtype=np.float32)
             self.art_of = np.zeros((0,), dtype=np.int32)
             self.slot_of = np.zeros((0,), dtype=np.int8)
+        self.offsets = offsets
         self.kpts = kpts
         self.boxes = boxes
 
@@ -347,7 +380,70 @@ class PostureIndex:
             vecs=np.asarray(vecs[rows], dtype=np.float32),
             kpts=kpts,
             boxes=boxes,
+            run_rows=rows,
         )
+
+    def figure_count(self, artwork_id: int) -> int:
+        """Nombre de figures corporelles valides détectées pour cette œuvre (0 si absente)."""
+        row = self.row_of.get(int(artwork_id))
+        if row is None:
+            return 0
+        return int(self.offsets[row + 1] - self.offsets[row])
+
+    def figures(self, artwork_id: int, size: tuple[int, int] | None = None) -> list[dict]:
+        """Squelettes (17 points COCO) et boîtes des figures détectées, ramenés à l'image réelle si ``size`` est donné."""
+        row = self.row_of.get(int(artwork_id))
+        if row is None or self.kpts is None:
+            return []
+        s0, s1 = int(self.offsets[row]), int(self.offsets[row + 1])
+        if s0 == s1:
+            return []
+        src_row = int(self._run_rows[row]) if self._run_rows is not None else row
+        out: list[dict] = []
+        for slot in self.slot_of[s0:s1].tolist():
+            kp = np.asarray(self.kpts[src_row, slot], dtype=np.float32)
+            if size is not None:
+                kp = letterbox_to_image_kpts(kp, size[0], size[1])
+            entry: dict = {
+                "fig": int(slot),
+                "kpts": [[round(float(x), 4), round(float(y), 4), round(float(c), 3)] for x, y, c in kp],
+            }
+            if self.boxes is not None:
+                bx = np.asarray(self.boxes[src_row, slot], dtype=np.float32)
+                entry["box"] = (letterbox_to_image_box(bx, size[0], size[1]) if size is not None
+                                else [round(float(v), 4) for v in bx])
+            out.append(entry)
+        return out
+
+    def match_pair(self, id_a: int, id_b: int, allow_mirror: bool = True) -> dict | None:
+        """Meilleure correspondance posture entre deux œuvres (toutes figures, direct et miroir)."""
+        ra = self.row_of.get(int(id_a))
+        rb = self.row_of.get(int(id_b))
+        if ra is None or rb is None:
+            return None
+        sa0, sa1 = int(self.offsets[ra]), int(self.offsets[ra + 1])
+        sb0, sb1 = int(self.offsets[rb]), int(self.offsets[rb + 1])
+        if sa0 == sa1 or sb0 == sb1:
+            return None
+        qa = self.vecs[sa0:sa1]
+        qb = self.vecs[sb0:sb1]
+        d_dir = qa @ qb.T
+        best = float(d_dir.max())
+        fa, fb = np.unravel_index(int(d_dir.argmax()), d_dir.shape)
+        mirrored = False
+        if allow_mirror:
+            d_mir = mirror_pose_vector(qa) @ qb.T
+            best_mir = float(d_mir.max())
+            if best_mir > best:
+                best = best_mir
+                fa, fb = np.unravel_index(int(d_mir.argmax()), d_mir.shape)
+                mirrored = True
+        return {
+            "score": round(best, 4),
+            "fig_a": int(self.slot_of[sa0 + fa]),
+            "fig_b": int(self.slot_of[sb0 + fb]),
+            "mirrored": mirrored,
+        }
 
     def similarities_from(self, row: int, allow_mirror: bool = True) -> np.ndarray:
         """Similarité exacte (N,) entre l'œuvre ``row`` et tout le corpus (-1.0 si sans figure)."""

@@ -415,8 +415,69 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
         missing = [i for i in wanted if i not in data.row_of]
         if missing:
             raise HTTPException(404, f"Œuvres absentes de cette analyse : {missing}")
-        return {"ids": wanted, "artworks": [data.artwork(i, k=0) for i in wanted],
-                "spaces": data.spaces.list(), "similarity": data.spaces.pairwise(wanted)}
+        out = {"ids": wanted, "artworks": [data.artwork(i, k=0) for i in wanted],
+               "spaces": data.spaces.list(), "similarity": data.spaces.pairwise(wanted)}
+        pidx = data.spaces.posture_index("posture")
+        if pidx is not None:
+            matches = {}
+            for a in range(len(wanted)):
+                for b in range(a + 1, len(wanted)):
+                    m = pidx.match_pair(wanted[a], wanted[b], allow_mirror=True)
+                    if m is not None:
+                        matches[f"{a},{b}"] = m
+            out["posture_matches"] = matches
+        return out
+
+    @app.get("/api/posture/match")
+    def posture_match(a: int, b: int):
+        """Squelettes des deux œuvres (ramenés à l'image réelle) et paire de figures qui se répondent."""
+        from ..encoders.posture import COCO_LIMBS, KPT_THRESHOLD
+
+        pidx = data.spaces.posture_index("posture")
+        if pidx is None:
+            raise HTTPException(404, "Regard « posture » indisponible pour ce corpus")
+        if a not in data.row_of or b not in data.row_of:
+            raise HTTPException(404, "Œuvre absente de cette analyse")
+        sizes = data.sizes([a, b])
+        figs_a = pidx.figures(a, size=sizes.get(a))
+        figs_b = pidx.figures(b, size=sizes.get(b))
+        m = pidx.match_pair(a, b, allow_mirror=True)
+        return {
+            "a": a, "b": b,
+            "matched": m is not None,
+            "score": m["score"] if m else None,
+            "fig_a": m["fig_a"] if m else None,
+            "fig_b": m["fig_b"] if m else None,
+            "mirrored": m["mirrored"] if m else False,
+            "figures_a": figs_a,
+            "figures_b": figs_b,
+            "limbs": [list(pair) for pair in COCO_LIMBS],
+            "kpt_threshold": KPT_THRESHOLD,
+            "experimental": True,
+            "note": "Regard spécialisé (en essai). Une pose semblable est une piste, pas la preuve qu'un artiste a vu l'autre.",
+        }
+
+    @app.get("/api/posture/{artwork_id}")
+    def posture_artwork(artwork_id: int):
+        """Squelettes (17 points COCO ramenés à l'image réelle) des figures détectées dans une œuvre."""
+        from ..encoders.posture import COCO_LIMBS, KPT_THRESHOLD
+
+        pidx = data.spaces.posture_index("posture")
+        if pidx is None:
+            raise HTTPException(404, "Regard « posture » indisponible pour ce corpus")
+        if artwork_id not in data.row_of:
+            raise HTTPException(404, "Œuvre absente de cette analyse")
+        sizes = data.sizes([artwork_id])
+        figs = pidx.figures(artwork_id, size=sizes.get(artwork_id))
+        return {
+            "id": artwork_id,
+            "count": len(figs),
+            "figures": figs,
+            "limbs": [list(pair) for pair in COCO_LIMBS],
+            "kpt_threshold": KPT_THRESHOLD,
+            "experimental": True,
+            "note": "Regard spécialisé (en essai). Une pose semblable est une piste, pas la preuve qu'un artiste a vu l'autre.",
+        }
 
     @app.get("/api/correspond")
     def correspond(a: int, b: int, space: str | None = None, k: int = Query(4, ge=1, le=8)):
