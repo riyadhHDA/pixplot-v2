@@ -2095,3 +2095,41 @@ visible** ; il recoupe Wölfflin sur la période pour laquelle Wölfflin l'a pen
 **Limites.** Étiquettes de style de WikiArt (bénévoles) ; dates de MMArt pour 70 % des œuvres ; phrases
 écrites une fois, en anglais, sans relecture par un historien ; une AUC dit qu'un axe sépare deux groupes,
 pas qu'il mesure une notion. Les extrêmes restent pollués par les reproductions encadrées (§ 37, n° 88).
+
+## 44. Pyramide de tuiles pour la carte principale (24/11/2026)
+
+**Question.** L'Atlas envoyait à l'ouverture les 5 planches de vignettes (4 096 px, 35,7 Mo) sur la carte
+graphique, même pour la vue d'ensemble où chaque œuvre fait 2 pixels. Des images de la carte déjà
+assemblées, à plusieurs niveaux de zoom, comme les cartes en ligne, font-elles mieux ? Travail de Gemini 4
+Neon (`docs/handoff/gemini-tuiles.md`), relu et vérifié par Claude.
+
+**Méthode.** `pixplot tiles` (processeur seul, reprenable, journal `<données>/tiles.log`) rend le niveau le
+plus fin (16 × 16 tuiles de 512 px) depuis les planches, dans l'ordre d'empilement de l'Atlas, puis réduit
+2 × 2 (Lanczos) jusqu'au niveau 0 ; WebP qualité 85, run daté `runs/tiles/<analyse>_<date>/`. Dans
+l'Atlas, `TileLayer` + `BitmapLayer` de deck.gl affichent les tuiles tant qu'une œuvre mesure moins de
+24 px à l'écran ; au-delà, les planches puis la HD prennent le relais. Les textures sont statiques et
+sans mipmaps (ce qui avait fait échouer l'essai de la 0.13.5). Dès qu'une couleur, un filtre, une
+recherche, une surbrillance ou une autre disposition est active, l'Atlas revient aux vignettes : jamais
+de carte fausse. Le clic sur une tuile retrouve l'œuvre par sa position.
+
+**Mesures** (WikiArt 81k ; calcul 13 s, 210 tuiles non vides, 10,7 Mio ; Chrome 1 440 × 900, cache vidé,
+RX 7900 GRE, écran 144 Hz) :
+
+| Mesure | Avant (planches) | Après (tuiles) |
+|---|---|---|
+| Transfert à l'ouverture | 38,0 Mio | 3,4 Mio (−91 %) |
+| Mémoire de la carte graphique à l'ouverture | 435 Mio | 10 Mio (÷ 42) |
+| Mémoire JavaScript | 61,5 Mo | 22,6 Mo |
+| Première image complète | 4,9 s (points seuls) | 4,5 s (vraie mosaïque) |
+| Images par seconde en déplacement | 144 (plafond de l'écran) | 144 |
+| Premier grand zoom | — | un à-coup unique de 208 ms (chargement des planches) |
+
+**Lecture.** Sur ce PC, la fluidité était déjà au plafond de l'écran : le gain porte sur la mémoire, le
+transfert et la vue d'ensemble, qui montre maintenant les œuvres au lieu de points. Il comptera davantage
+sur une machine plus modeste ou un corpus plus grand. Vérifié par Claude dans l'Atlas 81k : 210 Ko de
+tuiles à l'ouverture, aucune planche ; vignettes chargées au-delà de 24 px ; clic juste ; 0 erreur. Ajout
+de Claude : chaque tuile qui sort du cache libère son image (`onTileUnload`).
+
+**Limites.** Seulement la carte principale ; à refaire (`pixplot tiles`) après une nouvelle analyse ou de
+nouvelles vignettes ; l'Atlas doit être relancé pour voir une pyramide neuve ; case « Tuiles
+précalculées » dans le menu de la vue pour les désactiver.

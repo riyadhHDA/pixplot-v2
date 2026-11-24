@@ -432,6 +432,8 @@ function redraw() {
         if (!resp.ok) return null;
         return createImageBitmap(await resp.blob());
       },
+      // une tuile sortie du cache libère son image (sinon la mémoire grossit à chaque zoom)
+      onTileUnload: (tile) => { if (tile.content && tile.content.close) tile.content.close(); },
       renderSubLayers: (props) => {
         if (!props.data) return null;
         const { left, top, right, bottom } = props.tile.bbox;

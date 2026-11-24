@@ -1973,3 +1973,39 @@ with Wölfflin over the period he designed it for, without being its measure.
 **Limits.** WikiArt style labels (volunteers); MMArt dates for 70 % of the works; sentences written once,
 in English, without review by an art historian; an AUC says an axis separates two groups, not that it
 measures a notion. The extremes are still polluted by framed reproductions (§ 37, no. 88).
+
+## 44. A tile pyramid for the main map (2026-11-24)
+
+**Question.** On opening, the Atlas sent the 5 thumbnail sheets (4,096 px, 35.7 MB) to the graphics card,
+even for the overview where each work is 2 pixels wide. Do pre-assembled images of the map at several
+zoom levels, like online maps, do better? Work by Gemini 4 Neon (`docs/handoff/gemini-tuiles.md`),
+reviewed and checked by Claude.
+
+**Method.** `pixplot tiles` (CPU only, resumable, log `<data>/tiles.log`) renders the finest level
+(16 × 16 tiles of 512 px) from the sheets, in the Atlas's stacking order, then downsamples 2 × 2 (Lanczos)
+down to level 0; WebP quality 85, dated run `runs/tiles/<analysis>_<date>/`. In the Atlas, deck.gl's
+`TileLayer` + `BitmapLayer` show the tiles while a work is under 24 px on screen; beyond that, the sheets
+then HD take over. Textures are static, without mipmaps (which made the 0.13.5 attempt fail). As soon as a
+colour, filter, search, highlight or other layout is active, the Atlas goes back to thumbnails: never a
+wrong map. Clicking on a tile finds the work by its position.
+
+**Measurements** (WikiArt 81k; computed in 13 s, 210 non-empty tiles, 10.7 MiB; Chrome 1,440 × 900, cache
+disabled, RX 7900 GRE, 144 Hz screen):
+
+| Measure | Before (sheets) | After (tiles) |
+|---|---|---|
+| Transfer on opening | 38.0 MiB | 3.4 MiB (−91 %) |
+| Graphics memory on opening | 435 MiB | 10 MiB (÷ 42) |
+| JavaScript memory | 61.5 MB | 22.6 MB |
+| First complete image | 4.9 s (points only) | 4.5 s (real mosaic) |
+| Frames per second while panning | 144 (screen limit) | 144 |
+| First deep zoom | — | a single 208 ms hitch (loading the sheets) |
+
+**Reading.** On this PC, smoothness was already at the screen's limit: the gain is in memory, transfer and
+the overview, which now shows the works instead of dots. It will matter more on a modest machine or a
+larger corpus. Checked by Claude in the 81k Atlas: 210 KB of tiles on opening, no sheet; thumbnails loaded
+beyond 24 px; correct click; 0 errors. Added by Claude: each tile leaving the cache releases its image
+(`onTileUnload`).
+
+**Limits.** Main map only; to be rerun (`pixplot tiles`) after a new analysis or new thumbnails; the Atlas
+must be restarted to see a new pyramid; a "Pre-computed tiles" box in the view menu turns them off.

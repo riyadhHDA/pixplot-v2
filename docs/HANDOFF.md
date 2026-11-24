@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 24/11/2026 (Wölfflin, tuiles confiées à Neon).*
+*Dernière mise à jour : 24/11/2026 (Wölfflin, tuiles de Neon fusionnées).*
 
 ## Version publiée
 
@@ -206,9 +206,11 @@ corrigé ; 63 tests passent, Atlas vérifié.
     l'ancien « linéaire / pictural » à deux mots). Mesuré tel que l'Atlas le calcule : AUC 0,743
     (identique au banc), 0,757 avec l'écart à la diagonale ; avec les dates, Spearman 0,49 avant 1800
     (bascule vers 1550), nul ensuite. Vérifié dans l'Atlas 81k (1 s par appel, 17 s au premier, 0 erreur).
-  - **Gemini 4 Neon : pyramide de tuiles** pour la carte principale, en cours dans
-    `C:\Users\Riyadh\Documents\pixplot-tuiles` (branche `gemini/tuiles`, port 8770). Compte rendu
-    attendu : `docs/handoff/gemini-tuiles.md`. À relire, puis `nouvelle-tache.ps1 tuiles -Agent gemini -Terminer`.
+  - **Gemini 4 Neon : pyramide de tuiles**, fusionnée le 24/11/2026 (ARCHITECTURE § 44,
+    `handoff/gemini-tuiles.md`) : `pixplot tiles`, run `tiles/dinov3_vitb16_20261116-111508_20261124-171819`
+    calculé pour 81k. Ouverture : 210 Ko au lieu de 35 Mo, mémoire graphique ÷ 42 ; fluidité inchangée
+    (déjà au plafond). Vérifié par Claude dans l'Atlas 81k ; ajout `onTileUnload`. Copie supprimée.
+    À décider plus tard : lancer `tiles` depuis `analyze` ou non (aujourd'hui à part).
 
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
   19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.

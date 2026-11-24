@@ -16,6 +16,7 @@ Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numé
 
 ## Non publié
 
+- **Pyramide de tuiles** (Gemini 4 Neon) : `pixplot tiles` (13 s sur processeur pour 81k) ; l'Atlas montre la vue d'ensemble en tuiles et ne charge les planches qu'au zoom : transfert à l'ouverture −91 %, mémoire de la carte graphique ÷ 42. Nouveau format de fichiers : `runs/tiles/` (FORMATS). (ARCHITECTURE § 44)
 - **Wölfflin, linéaire / pictural** : préréglage mesuré dans la vue « Axes conceptuels », avec sa mise en garde (seul des cinq couples à séparer Renaissance et Baroque, AUC 0,74 ; avant 1800, l'axe suit le temps). Un axe peut réunir plusieurs phrases séparées par « | », aussi dans l'outil MCP `probe_concepts`. (ARCHITECTURE § 43)
 
 ## 0.22.0 — 24/11/2026 · Posture dans l'Atlas, notions du regard « forme », référence des commandes
