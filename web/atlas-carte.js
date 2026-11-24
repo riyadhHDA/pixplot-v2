@@ -34,8 +34,10 @@ function setupDeck() {
     controller: { dragRotate: false, doubleClickZoom: true, scrollZoom: { speed: 0.02, smooth: true } },
     onViewStateChange: ({ viewState, interactionState }) => {
       if (interactionState && (interactionState.isDragging || interactionState.isZooming || interactionState.isPanning)) state.userMoved = true;
+      const wasTiles = useTiles();
       state.viewState = viewState;
       deckgl.setProps({ viewState });
+      if (useTiles() !== wasTiles) redraw();
       scheduleIcons();
     },
     getCursor: ({ isHovering, isDragging }) => (isDragging ? "grabbing" : isHovering ? "pointer" : "grab"),
@@ -50,21 +52,67 @@ function setupDeck() {
   renderLegend();
 }
 
+function pickRowAt(wx, wy) {
+  // Sur les tuiles (image précalculée), on retrouve l'œuvre sous le pointeur en parcourant
+  // les positions en ordre inverse (l'œuvre dessinée en dernier est au-dessus).
+  const half = Math.max(state.iconSize * 0.55, 6 / Math.pow(2, state.viewState.zoom));
+  const pos = state.positions;
+  for (let r = state.n - 1; r >= 0; r--) {
+    if (Math.abs(pos[2 * r] - wx) <= half && Math.abs(pos[2 * r + 1] - wy) <= half) return r;
+  }
+  return -1;
+}
+
 function pickedId(info) {
-  if (!info || !info.layer || info.index < 0) return null;
+  if (!info || !info.layer) return null;
   const id = info.layer.id;
+  if (id.startsWith("map-tiles")) {
+    if (!info.coordinate) return null;
+    const r = pickRowAt(info.coordinate[0], info.coordinate[1]);
+    return r >= 0 ? state.map.ids[r] : null;
+  }
+  if (info.index < 0) return null;
   if (id.startsWith("sheet-") || id.startsWith("hd-")) return state.map.ids[info.object.r ?? info.object];
   if (id === "points") return state.map.ids[info.index];
   return null;
 }
 
-// ------------------------------------------------------------------ vignettes
-// Toutes les vignettes viennent de quelques planches (atlas de textures) chargées une
-// fois sur le GPU : elles restent toutes affichées, sans scintillement. Au zoom, des
-// versions haute définition se posent PAR-DESSUS les mêmes vignettes (jamais à la place).
+// ------------------------------------------------------------------ tuiles & vignettes
+// Les tuiles précalculées servent aux zooms éloignés de la carte principale (sans filtre ni
+// surbrillance) : elles évitent de télécharger et d'envoyer sur le GPU toutes les planches
+// dès l'ouverture. Au zoom (ou dès qu'un filtre/une autre carte demande les vignettes), on
+// charge les planches puis la haute définition.
+const TILE_MAX_PX = 24;
+
+async function loadTiles() {
+  state.tilesLoading = true;
+  try {
+    const meta = await getJSON("/api/tiles");
+    const sets = {};
+    for (const [lv, keys] of Object.entries(meta.levels || {})) sets[lv] = new Set(keys);
+    state.tiles = meta;
+    state.tileSet = sets;
+    state.tilesLoading = false;
+    if ($("tiles-row")) $("tiles-row").hidden = false;
+    if ($("use-tiles")) $("use-tiles").checked = state.tilesEnabled;
+    computeHD();
+    redraw();
+  } catch {
+    state.tiles = null;
+    state.tilesLoading = false;
+    loadSprites();
+  }
+}
+
+function ensureSprites() {
+  if (!state.sprites && !state.spritesLoading) loadSprites();
+}
+
 async function loadSprites() {
+  if (state.sprites || state.spritesLoading) return;
+  state.spritesLoading = true;
   let meta;
-  try { meta = await getJSON("/api/sprites"); } catch { return; } // à défaut : les points
+  try { meta = await getJSON("/api/sprites"); } catch { state.spritesLoading = false; return; } // à défaut : les points
   const sheets = [];
   for (let s = 0; s < meta.sheets; s++) sheets.push({ rows: [], mapping: {} });
   state.spriteSize = new Float32Array(state.n);
@@ -77,12 +125,23 @@ async function loadSprites() {
     state.spriteSize[r] = state.iconSize * h / Math.max(w, h, 1);
   }
   state.sprites = sheets;
+  state.spritesLoading = false;
   redraw();
   scheduleHD();
 }
 
 function onScreenSize() { return state.iconSize * Math.pow(2, state.viewState.zoom); }
-function showSprites() { return state.sprites && state.display === "sprites" && onScreenSize() >= 4; }
+function tilesAllowed() {
+  return Boolean(state.tiles && state.tilesEnabled && state.display === "sprites"
+    && state.layout === "map" && !state.highlight);
+}
+function useTiles() {
+  if (!tilesAllowed()) return false;
+  // On garde les tuiles aux zooms éloignés (< TILE_MAX_PX), et aussi le temps que les
+  // planches finissent de se charger si l'utilisateur vient de franchir le seuil.
+  return onScreenSize() < TILE_MAX_PX || !state.sprites;
+}
+function showSprites() { return !useTiles() && state.sprites && state.display === "sprites" && onScreenSize() >= 4; }
 
 function scheduleIcons() { scheduleHD(); }
 function scheduleHD() {
@@ -260,9 +319,13 @@ function computeHD() {
   if (!showSprites() || dpx < HD_TIERS[0].from) {
     HD_TIERS.forEach((t) => { t.order = []; t.wanted = new Set(); t.shown = []; });
     hdFinest = null;
-    $("hint").textContent = state.display === "sprites"
-      ? `${state.n.toLocaleString("fr-FR")} vignettes · zoomez pour la haute définition · clic : fiche`
-      : "Molette : zoomer · glisser : se déplacer · clic sur une œuvre : sa fiche";
+    if (useTiles()) {
+      $("hint").textContent = `${state.n.toLocaleString("fr-FR")} œuvres (tuiles) · zoomez pour les vignettes et la haute définition · clic : fiche`;
+    } else {
+      $("hint").textContent = state.display === "sprites"
+        ? `${state.n.toLocaleString("fr-FR")} vignettes · zoomez pour la haute définition · clic : fiche`
+        : "Molette : zoomer · glisser : se déplacer · clic sur une œuvre : sa fiche";
+    }
     return;
   }
   const el = $("map"), scale = Math.pow(2, state.viewState.zoom);
@@ -310,8 +373,12 @@ function spriteColor(r) {
 
 function redraw() {
   const layers = [];
+  const tilesOn = useTiles();
   const sprites = showSprites();
-  const showingIcons = sprites;
+  const showingIcons = sprites || tilesOn;
+  // Charger les planches dès que l'utilisateur quitte le domaine des tuiles (zoom proche,
+  // filtre actif, autre carte ou tuiles désactivées) et veut des vignettes.
+  if (state.display === "sprites" && !state.tilesLoading && (!tilesAllowed() || onScreenSize() >= TILE_MAX_PX)) ensureSprites();
   if (state.layout === "geo" && state.world) {
     // fond de carte (Natural Earth 1:110 M, embarqué : fonctionne hors ligne)
     layers.push(new deck.SolidPolygonLayer({
@@ -331,7 +398,7 @@ function redraw() {
   }
   layers.push(new ScatterplotLayer({
     id: "points",
-    visible: !sprites,
+    visible: !sprites && !tilesOn,
     data: { length: state.n, attributes: {
       getPosition: { value: state.positions, size: 2 },
       getFillColor: { value: colorArray(), size: 4, normalized: true },
@@ -342,6 +409,45 @@ function redraw() {
     pickable: true, autoHighlight: true, highlightColor: [255, 255, 255, 255],
     updateTriggers: { getFillColor: [state.colorMode, state.highlightLabel], getPosition: [state.layout, state.posVersion] },
   }));
+  if (state.tiles && state.tilesEnabled) {
+    const tm = state.tiles, ext = tm.extent;
+    layers.push(new TileLayer({
+      id: "map-tiles",
+      visible: tilesOn,
+      tileSize: tm.tile_size,
+      extent: [-ext, -ext, ext, ext],
+      minZoom: -1,
+      maxZoom: Math.max(-1, tm.max_level - 2),
+      refinementStrategy: "best-available",
+      pickable: true,
+      getTileData: async ({ index: { x, y, z }, signal }) => {
+        const level = z + 2;
+        if (level < 0 || level > tm.max_level) return null;
+        const grid = 1 << level, half = grid >> 1;
+        const tx = x + half, ty = (grid - 1) - (y + half);
+        if (tx < 0 || tx >= grid || ty < 0 || ty >= grid) return null;
+        const set = state.tileSet && state.tileSet[level];
+        if (set && !set.has(`${tx}/${ty}`)) return null;
+        const resp = await fetch(`/api/tiles/${level}/${tx}/${ty}.${tm.format}`, { signal });
+        if (!resp.ok) return null;
+        return createImageBitmap(await resp.blob());
+      },
+      renderSubLayers: (props) => {
+        if (!props.data) return null;
+        const { left, top, right, bottom } = props.tile.bbox;
+        return new BitmapLayer(props, {
+          data: null,
+          image: props.data,
+          bounds: [left, top, right, bottom],
+          pickable: true,
+          textureParameters: {
+            minFilter: "linear", magFilter: "linear",
+            addressModeU: "clamp-to-edge", addressModeV: "clamp-to-edge",
+          },
+        });
+      },
+    }));
+  }
   if (state.sprites) {
     state.sprites.forEach((sheet, s) => layers.push(new IconLayer({
       id: `sheet-${s}`,
@@ -402,7 +508,7 @@ function redraw() {
       fontFamily: "Segoe UI, sans-serif",
     }));
   }
-  if (isMapLayout() && state.groupLabels.length && onScreenSize() < 40 && (state.colorMode === "cluster" || sprites)) {
+  if (isMapLayout() && state.groupLabels.length && onScreenSize() < 40 && (state.colorMode === "cluster" || sprites || tilesOn)) {
     layers.push(new TextLayer({
       id: `group-labels-${state.layout}`,
       data: state.groupLabels,

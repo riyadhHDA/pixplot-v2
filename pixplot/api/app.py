@@ -530,6 +530,27 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
             raise HTTPException(404, "Planche inexistante")
         return FileResponse(p, media_type="image/jpeg", headers=CACHE)
 
+    TILE_MEDIA = {"webp": "image/webp", "jpg": "image/jpeg", "png": "image/png"}
+
+    @app.get("/api/tiles")
+    def tiles_info():
+        trun = data.tiles_run()
+        if trun is None:
+            raise HTTPException(404, "Aucune pyramide de tuiles : lancez `pixplot tiles`.")
+        return FileResponse(trun.path / "tiles.json", media_type="application/json", headers=CACHE)
+
+    @app.get("/api/tiles/{level}/{x}/{y}.{ext}")
+    def tile_image(level: int, x: int, y: int, ext: str):
+        trun = data.tiles_run()
+        if trun is None:
+            raise HTTPException(404, "Aucune pyramide de tuiles")
+        if level < 0 or x < 0 or y < 0 or ext not in TILE_MEDIA:
+            raise HTTPException(404, "Tuile inexistante")
+        p = trun.path / str(level) / str(x) / f"{y}.{ext}"
+        if not p.exists():
+            raise HTTPException(404, "Tuile inexistante")
+        return FileResponse(p, media_type=TILE_MEDIA[ext], headers=CACHE)
+
     @app.get("/api/thumb/{size}/{artwork_id}")
     def thumb(size: int, artwork_id: int):
         if size not in THUMB_SIZES:

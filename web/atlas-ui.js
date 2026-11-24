@@ -11,6 +11,14 @@ function wireUI() {
     computeHD();
     redraw();
   });
+  if ($("use-tiles")) {
+    $("use-tiles").addEventListener("change", (e) => {
+      state.tilesEnabled = e.target.checked;
+      if (!state.tilesEnabled) ensureSprites();
+      computeHD();
+      redraw();
+    });
+  }
   $("colorby").addEventListener("change", async (e) => {
     const mode = e.target.value;
     const seq = ++state.colorSeq;                    // un autre choix pendant le chargement l'emporte

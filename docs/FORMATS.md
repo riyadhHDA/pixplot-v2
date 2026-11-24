@@ -17,7 +17,7 @@ One corpus = one folder (`--data`, or the `PIXPLOT_DATA` variable), **never in g
 ├── catalog.sqlite        the catalogue: one row per image, its labels, its places
 ├── notebook.sqlite       the research notebook
 ├── thumbs/               thumbnails
-├── runs/                 every computation, dated (features/, index/, analysis/)
+├── runs/                 every computation, dated (features/, index/, analysis/, tiles/)
 ├── bench/                reference pairs and benchmark reports
 ├── corpus/               the original images (depending on the import)
 ├── fiche_de_donnees.md   the datasheet (`pixplot corpus --datasheet`, in French)
@@ -51,7 +51,7 @@ Example: work 41274 at 256 px is `thumbs/256/0041/41274.webp`.
 
 Each computation is a **run**: a folder `runs/<stage>/<name>_<YYYYMMDD-HHMMSS>/`. A run is never
 overwritten; a new one is created. Stages: `features` (vectors), `index` (FAISS), `analysis` (map,
-groups, and everything that depends on them).
+groups, and everything that depends on them), `tiles` (precomputed tile pyramid for the main map).
 
 ### `manifest.json` (in every run)
 
@@ -103,6 +103,17 @@ for zones described by words.
 `analysis/notions_<regard>_…` runs (§ 37) are not map analyses: `sae.npz` (autoencoder weights) and
 `notions.json` (`space`, `explained_variance`, `dead`, `baseline`, `features`: one entry per notion
 with `feature`, `frequency`, `top`, `labels`, `iconclass`).
+
+### Tiles (`tiles/…`)
+
+Precomputed tile pyramid for the main map (`pixplot tiles`), linked to its analysis via `parent` in
+`manifest.json`. Each file is written atomically (`.tmp` then replace), allowing resumption after
+interruption.
+
+| File | Format | Content |
+|---|---|---|
+| `tiles.json` | JSON | parameters (`format`, `tile_size`, `extent`, `world`, `min_level`, `max_level`, `background`, `icon_size`, `count`, `analysis`) and `levels` (non-empty `"x/y"` tiles per level) |
+| `<level>/<x>/<y>.webp` | WebP (or JPEG/PNG) | `tile_size × tile_size` px tile (512 px by default), `x` left to right, `y` top to bottom, on `#0f0f10` background |
 
 ## 5. Reference pairs
 

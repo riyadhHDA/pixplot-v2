@@ -53,6 +53,7 @@ corpus.
 |---|---|---|
 | `pixplot analyze` | groupes (e-means), carte UMAP, voisinages, œuvres atypiques : crée un run d'analyse | `--clusters`, `--no-map` |
 | `pixplot maps` | une carte par regard ; `--localmap` ajoute la carte d'essai LocalMAP | `--spaces`, `--force`, `--localmap` |
+| `pixplot tiles` | pyramide de tuiles précalculées pour la carte principale de l'Atlas (CPU, reprenable) | `--max-level`, `--tile-size`, `--format`, `--no-resume` |
 | `pixplot communities` | groupes Leiden emboîtés (familles ⊃ groupes), un jeu par regard | `--spaces`, `--groups`, `--families` |
 | `pixplot name-groups` | propose un nom à chaque groupe (SigLIP 2 et vocabulaire) | `--show` |
 | `pixplot iconclass` | propose des noms de groupes tirés d'Iconclass | `--fetch` |

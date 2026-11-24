@@ -52,6 +52,7 @@ Long computations resume where they stopped and write a log in the corpus folder
 |---|---|---|
 | `pixplot analyze` | groups (e-means), UMAP map, neighbourhoods, atypical works: creates an analysis run | `--clusters`, `--no-map` |
 | `pixplot maps` | one map per regard; `--localmap` adds the LocalMAP trial map | `--spaces`, `--force`, `--localmap` |
+| `pixplot tiles` | precomputed tile pyramid for the main Atlas map (CPU, resumable) | `--max-level`, `--tile-size`, `--format`, `--no-resume` |
 | `pixplot communities` | nested Leiden groups (families ⊃ groups), one set per regard | `--spaces`, `--groups`, `--families` |
 | `pixplot name-groups` | proposes a name for each group (SigLIP 2 and vocabulary) | `--show` |
 | `pixplot iconclass` | proposes group names drawn from Iconclass | `--fetch` |

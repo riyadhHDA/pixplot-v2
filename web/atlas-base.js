@@ -11,7 +11,7 @@
  */
 "use strict";
 
-const { Deck, OrthographicView, ScatterplotLayer, IconLayer, TextLayer, LineLayer, LinearInterpolator } = deck;
+const { Deck, OrthographicView, ScatterplotLayer, IconLayer, TextLayer, LineLayer, TileLayer, BitmapLayer, LinearInterpolator } = deck;
 
 const WORLD = 1000;            // les coordonnées [-1, 1] deviennent [-1000, 1000]
 const PALETTE = [
@@ -41,7 +41,8 @@ const state = {
   selected: null, selectedData: null,
   viewState: { target: [0, 0, 0], zoom: 0, minZoom: -4, maxZoom: 9 },
   fitZoom: 0, iconSize: 20, iconTimer: null,
-  sprites: null, spriteSize: null, display: "sprites",
+  sprites: null, spriteSize: null, spritesLoading: false, display: "sprites",
+  tiles: null, tileSet: null, tilesEnabled: true, tilesLoading: false,
   searchStatus: { region: false, text: false }, lastResults: null, drawing: false,
   spaces: [], mainSpace: null, space: null,          // espaces de ressemblance (voisines)
   layout: "map", umapPositions: null, axis: [],      // carte, chronologie ou géographie
@@ -161,10 +162,12 @@ async function init() {
   buildColorOptions();
   renderGroups();
   computeGroupLabels();
+  state.tilesLoading = Boolean(state.info.tiles);
   setupDeck();
   updateStats();
   wireUI();
-  loadSprites();
+  if (state.info.tiles) loadTiles();
+  else loadSprites();
   const fromHash = parseInt(location.hash.replace("#oeuvre-", ""), 10);
   if (state.rowOf.has(fromHash)) select(fromHash, true);
 }
