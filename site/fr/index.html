@@ -2,19 +2,20 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>PixPlot v2 — explorer de grands corpus d'œuvres par ressemblance visuelle</title>
-<meta name="description" content="Outil libre et local pour cartographier des dizaines de milliers d'œuvres d'art par ressemblance visuelle, chercher par texte ou par détail, et croiser plusieurs modèles sur un seul PC.">
+<meta name="description" content="Outil libre et local pour ranger des dizaines de milliers d'œuvres d'art par ressemblance visuelle, retrouver reprises, motifs et gestes, vérifier son catalogue et garder la trace de sa recherche, sur un seul PC.">
 <meta property="og:title" content="PixPlot v2">
-<meta property="og:description" content="Cartographier et comparer 80 716 œuvres de WikiArt sur un seul PC, avec DINOv3, SigLIP 2 et un serveur MCP.">
+<meta property="og:description" content="Ranger et comparer 80&nbsp;716 œuvres de WikiArt sur un seul PC : reprises, motifs, gestes, catalogue, avec DINOv3, SigLIP 2 et un serveur MCP.">
 <meta property="og:image" content="https://riyadhhda.github.io/pixplot-v2/images/banner.png">
-<meta name="theme-color" content="#0f0f10">
+<meta name="theme-color" content="#e9eae6" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#111315" media="(prefers-color-scheme: dark)">
 <link rel="canonical" href="https://riyadhhda.github.io/pixplot-v2/fr/">
 <link rel="alternate" hreflang="en" href="https://riyadhhda.github.io/pixplot-v2/">
 <link rel="alternate" hreflang="fr" href="https://riyadhhda.github.io/pixplot-v2/fr/">
 <meta property="og:url" content="https://riyadhhda.github.io/pixplot-v2/fr/">
 <meta property="og:locale" content="fr_FR">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f0f10'/%3E%3Ccircle cx='10' cy='12' r='3' fill='%23e0b040'/%3E%3Ccircle cx='21' cy='9' r='2' fill='%23e9e6df'/%3E%3Ccircle cx='17' cy='20' r='4' fill='%23e0b040'/%3E%3Ccircle cx='8' cy='23' r='2' fill='%239b978e'/%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23e9eae6'/%3E%3Ccircle cx='10' cy='12' r='3' fill='%231f4b77'/%3E%3Ccircle cx='21' cy='9' r='2' fill='%2316191c'/%3E%3Ccircle cx='17' cy='20' r='4' fill='%231f4b77'/%3E%3Ccircle cx='8' cy='23' r='2' fill='%2350565d'/%3E%3C/svg%3E">
 <link rel="stylesheet" href="../assets/site.css">
 </head>
 <body>
@@ -23,213 +24,334 @@
   <div class="wrap">
     <a class="brand" href="#top">PixPlot <b>v2</b></a>
     <button class="menu-btn" aria-expanded="false" aria-controls="nav-links">Menu</button>
-    <nav class="nav-links" id="nav-links">
-      <a href="#regards">Regards</a>
-      <a href="#fonctions">Fonctions</a>
-      <a href="#resultats">Résultats</a>
-      <a href="#feuille-de-route">Feuille de route</a>
-      <a href="#demarrer">Démarrer</a>
+    <nav class="nav-links" id="nav-links" aria-label="Sections">
+      <a href="#usages">Usages</a>
+      <a href="#mesures">Mesures</a>
+      <a href="#avancement">Avancement</a>
+      <a href="#installer">Installer</a>
       <a href="guide/">Guide</a>
-      <a class="gh" href="https://github.com/riyadhHDA/pixplot-v2">GitHub</a>
+      <a href="https://github.com/riyadhHDA/pixplot-v2">GitHub</a>
       <a class="lang" href="../" hreflang="en" lang="en">English</a>
     </nav>
   </div>
 </header>
 
 <main id="top">
-  <div class="hero wrap">
-    <p class="eyebrow">Logiciel libre · local · GPL-3.0</p>
-    <h1>Explorer de grands corpus <em>d'histoire de l'art</em> sur son PC</h1>
-    <p class="lead">PixPlot v2 reprend l'idée du PixPlot de Yale avec les modèles de vision actuels. Le programme
-      range des dizaines de milliers d'œuvres sur une carte interactive, retrouve des compositions proches ou des
-      détails récurrents, et garde la trace des modèles et des sources utilisés pour chaque résultat.</p>
-    <div class="cta">
-      <a class="btn primary" href="https://github.com/riyadhHDA/pixplot-v2">Voir sur GitHub</a>
-      <a class="btn" href="#demarrer">Installer</a>
+  <div class="opening">
+    <div class="wrap">
+      <div>
+        <h1>Un atlas de 80&nbsp;716 œuvres, sur un seul ordinateur</h1>
+        <p class="lead">PixPlot range de grands corpus d'œuvres par ressemblance visuelle et aide à y chercher des
+          reprises, des motifs, des gestes et des erreurs de catalogue. Il propose des pistes ; l'historien les
+          vérifie.</p>
+        <div class="actions">
+          <a class="btn primary" href="#usages">Voir ce qu'il permet</a>
+          <a class="btn" href="https://github.com/riyadhHDA/pixplot-v2">Code sur GitHub</a>
+        </div>
+        <p class="version">Logiciel libre (GPL-3.0), 100 % local · version
+          <a href="https://github.com/riyadhHDA/pixplot-v2/releases" data-version>v0.22.0</a> ·
+          <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/CHANGELOG.fr.md">historique</a></p>
+      </div>
+      <figure class="map-plate">
+        <canvas data-map="../assets/carte.json" width="840" height="630" role="img"
+          aria-label="Carte de WikiArt : 6 000 œuvres tirées au hasard, placées selon leur ressemblance de forme ; quelques groupes nommés, comme les Vierges à l'Enfant, les marines ou l'abstraction gestuelle"></canvas>
+        <figcaption class="cartel"><span><b>WikiArt, 80&nbsp;716 œuvres</b> · carte du regard « forme » (DINOv3, UMAP)</span>
+          <span>6 000 œuvres tirées au hasard · groupes nommés par PixPlot</span></figcaption>
+      </figure>
     </div>
-    <p class="version">Version actuelle : <a href="https://github.com/riyadhHDA/pixplot-v2/releases" data-version>v0.22.0</a>
-      · <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/CHANGELOG.fr.md">historique</a></p>
-    <div class="banner"><img src="../images/banner.png" width="1280" height="640"
-      alt="PixPlot v2 — carte de 80 716 œuvres de WikiArt, regroupées par ressemblance visuelle"></div>
   </div>
+
+  <section id="usages">
+    <div class="wrap">
+      <div class="section-head">
+        <h2>Les questions qu'on peut lui poser</h2>
+        <p>Partez d'un dossier d'images, d'une collection IIIF de musée ou d'un jeu comme WikiArt, avec ou sans
+          métadonnées. Chaque planche montre ce que fait l'Atlas, avec un exemple réel tiré de WikiArt 81k. Un
+          rapprochement calculé reste une piste : il ne prouve ni une influence ni une attribution.</p>
+      </div>
+
+      <div class="plates">
+        <article class="plate">
+          <div>
+            <p class="label smallcaps">Voisines et « Pourquoi ? »</p>
+            <h3>Qui a copié, cité ou repris qui ?</h3>
+            <p>Pour chaque œuvre, PixPlot donne les plus proches voisines selon quatre regards. Le comparateur montre
+              ensuite quelles zones de l'une répondent à quelles zones de l'autre.</p>
+            <dl>
+              <dt>Sur WikiArt</dt><dd>pour <i>Le Semeur</i> que Van Gogh copia d'après Millet en 1889, la 1ʳᵉ voisine est sa
+                copie de 1881, la 2ᵉ l'original de Millet ; quatre zones se répondent.</dd>
+              <dt>Dans l'Atlas</dt><dd>clic sur une œuvre, puis <kbd>C</kbd> pour comparer</dd>
+            </dl>
+          </div>
+          <figure class="scene" data-scene="reprise" data-label="Le Semeur de Van Gogh, ses quatre plus proches voisines, et les zones qui répondent à celles du Semeur de Millet">
+            <figcaption class="cartel"><span>Réponse réelle de PixPlot · WikiArt 81k</span><button class="replay" type="button" hidden>Rejouer</button></figcaption>
+          </figure>
+        </article>
+
+        <article class="plate">
+          <div>
+            <p class="label smallcaps">Recherche de détail et de zone</p>
+            <h3>Où revient ce motif ?</h3>
+            <p>Tracez un cadre sur une main, un drapé ou un objet, ou décrivez le détail avec des mots : PixPlot
+              cherche dans 1,6 million de zones et encadre la zone trouvée dans chaque œuvre.</p>
+            <dl>
+              <dt>Essai</dt><dd>« a skull » : El Greco, Cézanne, Zurbarán, Dürer, Mabuse, Ribera. Pour les zones, les
+                phrases en anglais marchent mieux.</dd>
+              <dt>Dans l'Atlas</dt><dd>bouton « Chercher ce détail » sur la fiche, ou <kbd>/</kbd></dd>
+            </dl>
+          </div>
+          <figure class="scene" data-scene="motif" data-label="Un cadre tracé autour d'une auréole, et six œuvres où la même zone est retrouvée et encadrée">
+            <figcaption class="cartel"><span>Réponse réelle de PixPlot · WikiArt 81k</span><button class="replay" type="button" hidden>Rejouer</button></figcaption>
+          </figure>
+        </article>
+
+        <article class="plate">
+          <div>
+            <p class="label smallcaps">Recherche en phrase libre</p>
+            <h3>Quelles œuvres traitent ce thème ?</h3>
+            <p>Écrivez une phrase, en français ou en anglais. SigLIP 2 classe tout le corpus selon sa proximité avec
+              elle, titres et étiquettes absents compris.</p>
+            <dl>
+              <dt>Essai</dt><dd>« Annonciation dans un jardin »</dd>
+              <dt>Mesure</dt><dd>sur 10 phrases en français, 97 des 100 premiers résultats sont pertinents (ARCHITECTURE § 31)</dd>
+            </dl>
+          </div>
+          <figure class="scene" data-scene="theme" data-label="Une phrase tapée dans la recherche, et six œuvres classées par score">
+            <figcaption class="cartel"><span>Réponse réelle de PixPlot · WikiArt 81k</span><button class="replay" type="button" hidden>Rejouer</button></figcaption>
+          </figure>
+        </article>
+
+        <article class="plate">
+          <div>
+            <p class="label smallcaps">Regard « posture », en essai</p>
+            <h3>Le même geste revient-il d'un siècle à l'autre ?</h3>
+            <p>PixPlot repère les figures, estime leur squelette et compare les poses, y compris en miroir. Il retrouve
+              ainsi des formules gestuelles, les <i>Pathosformeln</i> d'Aby Warburg, que les autres regards ne voient pas.</p>
+            <dl>
+              <dt>Sur WikiArt</dt><dd>une <i>Vénus</i> de Titien et un apôtre endormi du <i>Christ au jardin des Oliviers</i>
+                de Mantegna, en miroir (similarité 0,93)</dd>
+              <dt>Relecture</dt><dd>25 paires « même geste » validées sur 37 proposées</dd>
+            </dl>
+            <p class="caveat">Une pose semblable est une piste, pas la preuve qu'un artiste a vu l'autre.
+              <a href="#planche-posture">Voir la planche réelle</a></p>
+          </div>
+          <figure class="scene" data-scene="geste" data-label="Deux squelettes de figures étendues ; le second, retourné en miroir, vient se poser sur le premier">
+            <figcaption class="cartel"><span>Réponse réelle de PixPlot · WikiArt 81k</span><button class="replay" type="button" hidden>Rejouer</button></figcaption>
+          </figure>
+        </article>
+
+        <article class="plate">
+          <div>
+            <p class="label smallcaps">À vérifier et doublons</p>
+            <h3>Mon catalogue est-il fiable ?</h3>
+            <p>Quand toutes les voisines d'une œuvre contredisent son étiquette, elle remonte dans une liste à vérifier.
+              On y trouve des erreurs de catalogue, et aussi des œuvres vraiment singulières. PixPlot repère enfin les
+              œuvres entrées deux fois.</p>
+            <dl>
+              <dt>Sur WikiArt</dt><dd>un Sisley de 1894 dont les dix voisines étiquetées sont des Monet ; un même Corot
+                entré deux fois, « romantique » et « réaliste » (839 doublons, dont 702 sous deux styles)</dd>
+              <dt>Dans l'Atlas</dt><dd><kbd>V</kbd> à vérifier</dd>
+            </dl>
+          </div>
+          <figure class="scene" data-scene="catalogue" data-label="Une œuvre étiquetée Réalisme entourée de six voisines romantiques, l'étiquette barrée ; deux fois le même Corot sous deux styles">
+            <figcaption class="cartel"><span>Réponse réelle de PixPlot · WikiArt 81k</span><button class="replay" type="button" hidden>Rejouer</button></figcaption>
+          </figure>
+        </article>
+
+        <article class="plate">
+          <div>
+            <p class="label smallcaps">Quatre regards, désaccords</p>
+            <h3>Qu'est-ce qui rapproche ces deux œuvres ?</h3>
+            <p>Forme, sujet, couleur et touche restent séparés, jamais fondus en un score. Quand deux œuvres sont proches
+              dans un regard et loin dans un autre, cet écart dit ce qu'elles partagent : une mise en page reprise pour
+              un autre thème, un même sujet traité par deux mains.</p>
+            <dl>
+              <dt>Sur WikiArt</dt><dd>une gravure d'après Rembrandt et un Bryullov : 3ᵉ voisine en forme, mais au
+                17ᵉ centile en sujet</dd>
+              <dt>Dans l'Atlas</dt><dd><kbd>D</kbd> désaccords · <kbd>I</kbd> fiche de chaque regard (données, biais)</dd>
+            </dl>
+          </div>
+          <figure class="scene" data-scene="regards" data-label="Deux œuvres à la même mise en page ; barres des quatre regards, forme haute et sujet bas, marquées comme désaccord">
+            <figcaption class="cartel"><span>Réponse réelle de PixPlot · WikiArt 81k</span><button class="replay" type="button" hidden>Rejouer</button></figcaption>
+          </figure>
+        </article>
+
+        <article class="plate">
+          <div>
+            <p class="label smallcaps">Filtres, groupes, dates, lieux</p>
+            <h3>De quoi mon corpus est-il fait ?</h3>
+            <p>La carte regroupe les œuvres et nomme les groupes avec le vocabulaire de l'histoire de l'art et
+              Iconclass. Les filtres combinés croisent style, genre, artiste, groupe, date et atypicité, en affichant
+              ce que donnerait chaque choix. Vues chronologique et géographique, bilan de ce qui manque.</p>
+            <dl>
+              <dt>Sur WikiArt</dt><dd>« Baroque » + « portrait » : 980 œuvres allumées sur la carte en 14 ms</dd>
+              <dt>Dans l'Atlas</dt><dd><kbd>F</kbd> filtres · <kbd>G</kbd> groupes</dd>
+            </dl>
+          </div>
+          <figure class="scene" data-scene="filtres" data-label="Une carte de points ; deux filtres, Baroque et portrait, allument 980 œuvres">
+            <figcaption class="cartel"><span>Réponse réelle de PixPlot · WikiArt 81k</span><button class="replay" type="button" hidden>Rejouer</button></figcaption>
+          </figure>
+        </article>
+
+        <article class="plate">
+          <div>
+            <p class="label smallcaps">Notions apprises</p>
+            <h3>Que voit le modèle que le catalogue ne nomme pas ?</h3>
+            <p>Un auto-encodeur décompose les regards « sujet » et « forme » en environ 2 000 notions chacun : objets,
+              motifs, mises en page. Chaque notion porte un nom Iconclass quand ce nom est sûr, et ses œuvres
+              s'allument sur la carte.</p>
+            <dl>
+              <dt>Sur WikiArt</dt><dd>la notion n° 607, nommée « échelle », rassemble des Descentes de croix (Fra Angelico,
+                Rosso, Rembrandt, le Tintoret) ; d'autres notions : citrouilles, rayures, moissons</dd>
+              <dt>Dans l'Atlas</dt><dd><kbd>O</kbd> notions</dd>
+            </dl>
+          </div>
+          <figure class="scene" data-scene="notions" data-label="Huit œuvres de styles différents qui contiennent une échelle s'allument l'une après l'autre">
+            <figcaption class="cartel"><span>Réponse réelle de PixPlot · WikiArt 81k</span><button class="replay" type="button" hidden>Rejouer</button></figcaption>
+          </figure>
+        </article>
+
+        <article class="plate">
+          <div>
+            <p class="label smallcaps">Axes conceptuels</p>
+            <h3>Où se place une œuvre entre deux notions ?</h3>
+            <p>Tout le corpus est rangé entre deux mots ou deux séries de phrases : sacré et profane, ou le couple
+              linéaire / pictural de Wölfflin. Ce qui s'écarte de la diagonale éclaire le corpus, et aussi la façon
+              dont le modèle comprend les mots.</p>
+            <dl>
+              <dt>Mesure</dt><dd>avant 1800, l'axe de Wölfflin suit le temps, avec une bascule vers 1550 (ARCHITECTURE § 43)</dd>
+            </dl>
+          </div>
+          <figure class="scene" data-scene="axes" data-label="Deux nuages d'œuvres sur l'axe linéaire-pictural : 1500-1549 à gauche, 1550-1599 plus à droite">
+            <figcaption class="cartel"><span>Réponse réelle de PixPlot · WikiArt 81k</span><button class="replay" type="button" hidden>Rejouer</button></figcaption>
+          </figure>
+        </article>
+
+        <article class="plate">
+          <div>
+            <p class="label smallcaps">Carnet, Research Pack, assistant</p>
+            <h3>Comment garder la trace de ma recherche ?</h3>
+            <p>Les pistes vont au carnet de recherche. L'export en Research Pack (.zip) rassemble images, métadonnées
+              sourcées, scores, méthode et fiche du corpus. Un assistant branché par MCP peut chercher et comparer avec
+              vous et écrire dans le même carnet.</p>
+            <dl>
+              <dt>Dans l'Atlas</dt><dd><kbd>N</kbd> carnet</dd>
+              <dt>Assistant</dt><dd>Claude ou tout assistant compatible MCP (20 outils, <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/docs/MCP.fr.md">MCP.fr.md</a>)</dd>
+            </dl>
+          </div>
+          <figure class="scene" data-scene="trace" data-label="Un assistant appelle deux outils, une piste entre dans le carnet, un Research Pack réunit images, métadonnées, scores et méthode">
+            <figcaption class="cartel"><span>Réponse réelle de PixPlot · WikiArt 81k</span><button class="replay" type="button" hidden>Rejouer</button></figcaption>
+          </figure>
+        </article>
+      </div>
+    </div>
+  </section>
 
   <section>
     <div class="wrap">
-      <h2>Partage du travail</h2>
-      <p class="section-lead">Un modèle de vision rapproche des images à partir de leurs pixels. Il ne sait rien
-        d'une commande, d'un atelier ou d'une filiation réelle, donc chaque étape reste séparée.</p>
-      <div class="roles">
-        <div class="role"><span class="who">PixPlot</span><p>Calcule les voisinages, indexe les zones et produit les cartes.</p></div>
-        <div class="role"><span class="who">L'assistant (MCP)</span><p>Interroge le corpus, affiche des planches et soumet des pistes.</p></div>
-        <div class="role"><span class="who">L'historien</span><p>Regarde les œuvres, vérifie les sources et décide ce qui tient.</p></div>
+      <div class="section-head">
+        <h2>Qui fait quoi</h2>
+        <p>Un modèle de vision rapproche des images à partir de leurs pixels. Il ne sait rien d'une commande, d'un
+          atelier ou d'une filiation réelle : chaque étape reste donc séparée.</p>
       </div>
+      <ul class="roles-line">
+        <li><b>PixPlot</b><span>calcule les voisinages, indexe les zones et produit les cartes.</span></li>
+        <li><b>L'assistant (MCP)</b><span>interroge le corpus, affiche des planches et soumet des pistes.</span></li>
+        <li><b>L'historien</b><span>regarde les œuvres, vérifie les sources et décide ce qui tient.</span></li>
+      </ul>
     </div>
   </section>
 
-  <section class="alt">
-    <div class="wrap split">
-      <div class="shot"><img src="../images/atlas-artwork.jpg" loading="lazy" width="1600" height="900"
-        alt="L'Atlas : 80 716 œuvres, la fiche d'un Claude Monet et ses plus proches voisines"></div>
-      <div>
-        <h2>Tout WikiArt sur une seule machine</h2>
-        <p class="section-lead" style="margin-bottom:0">Le jeu complet (80 716 œuvres, 33,7 Go) a été traité de bout
-          en bout sur un PC de bureau sous Windows 11 avec une AMD Radeon RX 7900 GRE et 16 Go de RAM : ingestion,
-          vecteurs DINOv3 et SigLIP 2, index de 1,58 million de zones, regroupement, cartes et audit.</p>
-        <div class="stats">
-          <div class="stat"><b>80 716</b><span>œuvres (33,7 Go d'images)</span></div>
-          <div class="stat"><b>≈ 1 h 21</b><span>de calcul pour toute la chaîne</span></div>
-          <div class="stat"><b>≈ 3 s</b><span>pour ouvrir la carte dans le navigateur</span></div>
-          <div class="stat"><b>0,25 s</b><span>pour une recherche par texte ou par détail</span></div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="regards">
+  <section>
     <div class="wrap">
-      <h2>Quatre façons de comparer</h2>
-      <p class="section-lead">Plutôt que de tout fondre dans un score unique, PixPlot garde quatre espaces séparés.
-        Quand deux œuvres sont proches dans l'un et très éloignées dans un autre, l'écart est souvent plus utile que
-        le score lui-même.</p>
-      <div class="grid4">
-        <div class="card"><span class="tag">DINOv3</span><h3>Forme</h3>
-          <p>Silhouettes, cadrage, mise en page et motifs visuels.</p><p class="q">Même composition ?</p></div>
-        <div class="card"><span class="tag">SigLIP 2</span><h3>Sujet</h3>
-          <p>Ce qui se met en mots : thème, genre, école, iconographie.</p><p class="q">Même sujet ?</p></div>
-        <div class="card"><span class="tag">CIELAB</span><h3>Couleur</h3>
-          <p>Répartition des teintes, de la clarté et de la saturation.</p><p class="q">Même palette ?</p></div>
-        <div class="card"><span class="tag">DINOv3, couche 6</span><h3>Touche</h3>
-          <p>Grain, hachures, empâtements, indépendamment du sujet.</p><p class="q">Même facture ?</p></div>
+      <div class="section-head">
+        <h2>L'Atlas, tel qu'il est</h2>
+        <p>WikiArt entier (80&nbsp;716 œuvres, 33,7 Go) traité de bout en bout en environ 1 h 21 sur un PC de bureau
+          (Windows 11, Radeon RX 7900 GRE). L'Atlas s'ouvre en quelques secondes ; une recherche par texte ou par
+          détail répond en 0,25 s.</p>
       </div>
-      <h3 style="margin-top:34px">Un cinquième regard, en essai : la posture</h3>
-      <p class="section-lead">Il repère les figures, estime leur squelette et compare les poses, y compris en miroir.
-        Sans aucune étiquette, il retrouve des formules gestuelles d'un siècle à l'autre (les <i>Pathosformeln</i>
-        d'Aby Warburg) : 25 des 37 paires « même geste » qu'il a proposées ont été validées à la relecture. Il ne bat
-        pas la forme sur l'ensemble des paires et ne voit que les œuvres où une figure est détectée (48 %) ; il reste
-        donc à part, marqué « essai ». Une pose semblable est une piste, pas la preuve qu'un artiste a vu l'autre.</p>
-      <div class="shot"><img src="../images/posture.fr.jpg" loading="lazy" width="1600" height="1932"
-        alt="Trois paires d'œuvres dont les figures prennent la même pose, squelettes dessinés : Titien et Mantegna, Ferenczy et Van Gogh, le Tintoret et Berthe Morisot"></div>
+      <figure class="shot">
+        <img src="../images/atlas-artwork.jpg" loading="lazy" width="1600" height="900"
+          alt="L'Atlas : la carte des 80&nbsp;716 œuvres, la fiche d'un Claude Monet et ses plus proches voisines">
+        <figcaption class="cartel"><span><b>Capture d'écran</b> · fiche d'un Monet, ses voisines et la carte</span><span>WikiArt 81k</span></figcaption>
+      </figure>
+      <figure class="shot" id="planche-posture" style="margin-top:2.5rem">
+        <img src="../images/posture.fr.jpg" loading="lazy" width="1600" height="1932"
+          alt="Trois paires d'œuvres dont les figures prennent la même pose, squelettes dessinés : Titien et Mantegna, Ferenczy et Van Gogh, le Tintoret et Berthe Morisot">
+        <figcaption class="cartel"><span><b>Planche réelle du regard « posture »</b> · Titien et Mantegna, Ferenczy et Van Gogh, le Tintoret et Morisot</span><span>ARCHITECTURE §§ 35, 41</span></figcaption>
+      </figure>
     </div>
   </section>
 
-  <section id="fonctions" class="alt">
+  <section id="mesures">
     <div class="wrap">
-      <h2>Ce que fait l'Atlas</h2>
-      <p class="section-lead">Une interface web locale en JavaScript simple (deck.gl), utilisable hors ligne.</p>
-      <div class="grid3">
-        <div class="card"><h3>Chercher par texte, zone ou détail</h3><p>Par métadonnées, par phrase libre en français
-          ou en anglais, par détail décrit (« une auréole », « un crâne ») ou en traçant un cadre directement sur une
-          œuvre.</p></div>
-        <div class="card"><h3>Comparer et voir pourquoi</h3><p>Jusqu'à six œuvres côte à côte avec leurs scores dans
-          chaque regard, un bouton « Pourquoi ? » qui entoure les zones qui se répondent, et des mesures visuelles
-          sans GPU (équilibre, symétrie, entropie chromatique).</p></div>
-        <div class="card"><h3>Cartes, dates, lieux et concepts</h3><p>Une carte par regard, une vue chronologique,
-          une carte géographique à lieux typés (d'après ARTL@S) et des axes conceptuels 2D sur deux mots choisis
-          (façon 2D CLIP).</p></div>
-        <div class="card"><h3>Repérer les étiquettes douteuses</h3><p>Les œuvres que toutes leurs voisines contredisent
-          remontent dans une liste à part. On y trouve aussi bien des erreurs de catalogue que des tableaux vraiment
-          isolés.</p></div>
-        <div class="card"><h3>Importer des musées (IIIF)</h3><p>Lecture des manifestes et collections IIIF v2/v3 avec
-          normalisation des métadonnées et des droits. Testé sur le Yale Center for British Art.</p></div>
-        <div class="card"><h3>Serveur MCP (20 outils)</h3><p>Permet de brancher Claude ou un autre assistant compatible :
-          il peut chercher, ouvrir les images et les détails, lancer des mesures et écrire des notes dans le carnet
-          partagé.</p></div>
-        <div class="card"><h3>Les notions apprises</h3><p>Un auto-encodeur décompose les regards « sujet » et
-          « forme » en environ 2 000 notions chacun : objets, motifs, mises en page, que le catalogue n'indexe pas.
-          Chacune est nommée avec Iconclass quand le nom est sûr, et ses œuvres s'allument sur la carte.</p></div>
-        <div class="card"><h3>Doublons et variantes</h3><p>Les œuvres entrées deux fois, et les répliques, séries,
-          états de gravure ou copies, avec les étiquettes qui se contredisent d'une entrée à l'autre.</p></div>
-        <div class="card"><h3>Filtres combinés</h3><p>Style, genre, artiste, groupe, date et atypicité à la fois,
-          avec le compte de ce que donnerait chaque choix ; la sélection part au carnet ou dans un Research Pack.</p></div>
+      <div class="section-head">
+        <h2>Ce que chaque regard retrouve</h2>
+        <p>Principe suivi : un modèle n'entre dans PixPlot que s'il améliore un banc d'essai, et les essais négatifs
+          sont publiés. Huit modèles ont été mesurés puis écartés, dont TIPSv2, PE-Spatial, SSCD, Depth Anything,
+          PE-Core et CSD.</p>
       </div>
-      <p class="fine" style="margin-top:22px">Chaque calcul est enregistré dans un dossier daté avec son modèle et ses
-        paramètres. L'export produit un <i>Research Pack</i> (.zip) contenant les images, les métadonnées sourcées et
-        les scores pour archiver ou partager une recherche.</p>
-    </div>
-  </section>
-
-  <section id="resultats">
-    <div class="wrap">
-      <h2>Quelques mesures sur WikiArt</h2>
-      <p class="section-lead">Sur les 80 716 œuvres, part des 10 plus proches voisines qui portent la même étiquette
-        que l'œuvre de départ.</p>
       <div class="table-wrap">
         <table>
-          <thead><tr><th>Regard</th><th>artiste</th><th>style</th><th>genre</th><th>Pointillisme</th><th>Fauvisme</th></tr></thead>
+          <caption>Part des 10 plus proches voisines qui portent la même étiquette que l'œuvre de départ, sur 80&nbsp;716 œuvres</caption>
+          <thead><tr><th>Regard</th><th class="num">artiste</th><th class="num">style</th><th class="num">genre</th><th class="num">Pointillisme</th><th class="num">Fauvisme</th></tr></thead>
           <tbody>
-            <tr><td>Forme (DINOv3)</td><td class="num">50,8 %</td><td class="num">52,4 %</td><td class="num">76,8 %</td><td class="num">21 %</td><td class="num">20 %</td></tr>
-            <tr><td>Sujet (SigLIP 2)</td><td class="num best">61,6 %</td><td class="num best">62,0 %</td><td class="num best">79,5 %</td><td class="num">44 %</td><td class="num">26 %</td></tr>
-            <tr><td>Touche</td><td class="num">53,0 %</td><td class="num">49,6 %</td><td class="num">62,8 %</td><td class="num best">62 %</td><td class="num best">30 %</td></tr>
+            <tr><td>Forme (DINOv3)</td><td class="num">33,9 %</td><td class="num">52,4 %</td><td class="num">76,8 %</td><td class="num">21 %</td><td class="num">20 %</td></tr>
+            <tr><td>Sujet (SigLIP 2)</td><td class="num best">42,9 %</td><td class="num best">62,0 %</td><td class="num best">79,5 %</td><td class="num">44 %</td><td class="num">26 %</td></tr>
+            <tr><td>Touche (DINOv3, couche 6)</td><td class="num">35,0 %</td><td class="num">49,6 %</td><td class="num">62,8 %</td><td class="num best">62 %</td><td class="num best">30 %</td></tr>
           </tbody>
         </table>
       </div>
       <div class="findings">
-        <div class="finding"><p><b>SigLIP 2 retrouve le mieux les catégories usuelles</b> (artiste, style, genre), en
-          bonne partie parce qu'il a appris le vocabulaire de l'histoire de l'art sur les légendes du web.</p></div>
-        <div class="finding"><p><b>La couche intermédiaire de DINOv3 rattrape les styles de facture</b> : le
-          Pointillisme passe de 21 % à 62 %, et la main de l'artiste ressort mieux qu'avec le vecteur global.</p></div>
-        <div class="finding"><p><b>Les copies directes sortent en premier</b> (Raphaël d'après Pérugin, Van Gogh
-          d'après Millet, Manet d'après Goya), mais dès que l'artiste transforme fortement son modèle (Picasso d'après
-          El Greco), aucun regard ne suit encore.</p></div>
-        <div class="finding"><p><b>Les métadonnées WikiArt sont bruitées</b> : l'audit fait remonter de vraies erreurs
-          de classement (des scènes religieuses rangées en scènes de genre). HDBSCAN, lui, ne tient pas sur un
-          continuum aussi dense.</p></div>
+        <p><b>SigLIP 2 retrouve le mieux les catégories usuelles</b> (artiste, style, genre), en bonne partie parce
+          qu'il a appris le vocabulaire de l'histoire de l'art sur les légendes du web.</p>
+        <p><b>La couche intermédiaire de DINOv3 rattrape les styles de facture</b> : le Pointillisme passe de 21 % à
+          62 %, et la main de l'artiste ressort mieux qu'avec le vecteur global.</p>
+        <p><b>Les copies directes sortent en premier</b> (Raphaël d'après Pérugin, Van Gogh d'après Millet), mais dès
+          que l'artiste transforme fortement son modèle (Picasso d'après El Greco), aucun regard ne suit encore.</p>
+        <p><b>Les métadonnées de WikiArt sont bruitées</b> : la liste à vérifier fait remonter de vraies erreurs de
+          classement, comme des scènes religieuses rangées en scènes de genre.</p>
       </div>
+      <p class="fine">Colonne « artiste » mesurée sur 1 090 artistes, après avoir retrouvé l'artiste de 35 185 œuvres
+        anonymes grâce à MMArt. Détail et intervalles de confiance :
+        <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/ARCHITECTURE.fr.md">ARCHITECTURE.fr.md</a>.</p>
     </div>
   </section>
 
-  <section class="alt">
-    <div class="wrap split">
-      <div>
-        <h2>Les 80 716 œuvres d'un seul tenant</h2>
-        <p class="section-lead" style="margin-bottom:0">La carte complète compte 142 groupes colorés. Au zoom, les
-          vignettes haute définition se chargent au fil de la navigation et chaque œuvre s'ouvre sur sa fiche.</p>
-      </div>
-      <div class="shot"><img src="../images/atlas-overview.jpg" loading="lazy" width="1600" height="900"
-        alt="Vue d'ensemble des 80 716 œuvres colorées par groupe"></div>
-    </div>
-  </section>
-
-  <section id="feuille-de-route">
+  <section id="avancement">
     <div class="wrap">
-      <h2>Avancement</h2>
-      <p class="rule"><b>Principe suivi : tester avant d'adopter.</b> Un modèle n'entre dans PixPlot que s'il améliore
-        réellement un banc d'essai ; les essais négatifs (TIPSv2, PE-Spatial, HDBSCAN) sont documentés et écartés.</p>
+      <div class="section-head">
+        <h2>Avancement</h2>
+        <p>Des versions courtes, chacune mesurée. Détail et pistes à l'étude :
+          <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/ROADMAP.fr.md">ROADMAP.fr.md</a>.</p>
+      </div>
       <ol class="road">
-        <li class="done"><span class="v">0.1–0.12</span><div><h3>Socle, regards, désaccords et banc de paires</h3><p>Ingestion,
-          quatre regards, Atlas, recherche par texte et détail, serveur MCP, IIIF, groupes Leiden emboîtés, panneau
-          Désaccords et 104 paires relues à la main.</p></div></li>
-        <li class="done"><span class="v">0.13</span><div><h3>Zones décrites, couche critique et lieux ARTL@S</h3><p>TIPSv2
-          évalué sur RichArt puis écarté au profit d'un index de 1,6 million de zones SigLIP 2 ; fiches de biais des
-          regards, bilan du corpus et lieux typés/datés.</p></div></li>
-        <li class="done"><span class="v">0.14</span><div><h3>Noms de groupes avec Iconclass</h3><p>Le petit lexique
-          écrit à la main remplacé par les notions CC0 d'Iconclass, avec leur code vérifiable ; relus sur 83 groupes :
-          Iconclass plus juste 39 fois, l'ancien nom 24 fois (publié en 0.18).</p></div></li>
-        <li class="done"><span class="v">0.15–0.16</span><div><h3>Composition, « Pourquoi ? », axes conceptuels et mesures</h3><p>PE-Spatial
-          mesuré sur les paires de composition et non retenu (DINOv3 reste devant) ; correspondances de zones dans le
-          comparateur, axes conceptuels 2D et mesures visuelles (Stork).</p></div></li>
-        <li class="done"><span class="v">0.17–0.20</span><div><h3>Filtres, doublons, titres et émotions</h3><p>Filtres
-          combinés, doublons et variantes (SSCD), titres, dates et artistes retrouvés pour 70 902 œuvres de WikiArt
-          (MMArt), émotions des spectateurs (ArtEmis), ordre de la matière ; SSCD, Depth Anything, LocalMAP, PE-Core
-          et CSD mesurés et non retenus.</p></div></li>
-        <li class="done"><span class="v">0.21</span><div><h3>Posture, notions apprises, « Pourquoi ? » mis à l'épreuve</h3><p>Regard
-          « posture » évalué, notions apprises du regard « sujet », intervalles de confiance du banc de paires ; le
+        <li><span class="v">0.1–0.12</span><div><h3>Socle, regards, désaccords</h3><p>Ingestion, quatre regards, Atlas,
+          recherche par texte et détail, serveur MCP, IIIF, groupes Leiden, désaccords, 104 paires relues à la main.</p></div></li>
+        <li><span class="v">0.13–0.16</span><div><h3>Zones, Iconclass, composition, « Pourquoi ? »</h3><p>Index de
+          1,6 million de zones, noms de groupes Iconclass relus sur 83 groupes, axes conceptuels et mesures visuelles
+          (Stork), correspondances de zones dans le comparateur.</p></div></li>
+        <li><span class="v">0.17–0.20</span><div><h3>Filtres, doublons, titres et émotions</h3><p>Filtres combinés,
+          doublons, titres, dates et artistes retrouvés pour 70 902 œuvres (MMArt), émotions des spectateurs (ArtEmis),
+          ordre de la matière.</p></div></li>
+        <li><span class="v">0.21–0.22</span><div><h3>Posture, notions, « Pourquoi ? » mis à l'épreuve</h3><p>Regard
+          « posture » en essai, notions apprises des regards « sujet » et « forme », intervalles de confiance ; le
           bouton « Pourquoi ? » échoue d'abord au test par occultation, puis le réussit après réparation.</p></div></li>
-        <li><span class="v">1.0</span><div><h3>Vers la 1.0</h3><p>Commandes et formats de fichiers stables et décrits
-          (fait, vérifié par des tests), au moins 100 paires validées (fait), documentation complète dans les deux
-          langues (fait), installation testée sur une machine neuve (à faire en dernier).</p></div></li>
+        <li class="next"><span class="v">1.0</span><div><h3>Vers la 1.0</h3><p>Commandes et formats décrits et vérifiés
+          par des tests, plus de 100 paires validées, documentation complète dans les deux langues : fait. Reste
+          l'installation testée sur une machine neuve.</p></div></li>
       </ol>
-      <p class="fine" style="margin-top:18px">Détail complet et pistes à l'étude :
-        <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/ROADMAP.fr.md">ROADMAP.fr.md</a>.</p>
     </div>
   </section>
 
-  <section id="demarrer" class="alt">
+  <section id="installer">
     <div class="wrap">
-      <h2>Installer et essayer</h2>
-      <p class="section-lead">Il faut Python 3.12. Un GPU accélère beaucoup l'extraction (AMD ROCm sous Windows, ou
-        CUDA), mais tout tourne aussi sur CPU pour tester un petit dossier. Voir
-        <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/docs/INSTALL_GPU.fr.md">INSTALL_GPU.fr.md</a>.</p>
+      <div class="section-head">
+        <h2>Installer et essayer</h2>
+        <p>Il faut Python 3.12. Un GPU accélère beaucoup l'extraction (AMD ROCm sous Windows, ou CUDA), mais tout
+          tourne aussi sur processeur pour un petit dossier. Rien n'est envoyé sur un serveur distant. Voir
+          <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/docs/INSTALL_GPU.fr.md">INSTALL_GPU.fr.md</a>.</p>
+      </div>
 <pre><span class="c"># installation</span>
 python -m venv .venv
 .venv\Scripts\activate                 <span class="c"># Linux / macOS : source .venv/bin/activate</span>
@@ -241,9 +363,7 @@ pixplot import-metadata meta.csv       <span class="c"># artiste, date, style…
 pixplot embed                          <span class="c"># vecteurs DINOv3 (GPU), reprenable</span>
 pixplot analyze                        <span class="c"># groupes, carte UMAP, voisinages</span>
 pixplot serve --open                   <span class="c"># ouvre l'Atlas sur http://127.0.0.1:8765</span></pre>
-      <p class="fine" style="margin-top:16px">Pour enchaîner toute la chaîne d'un coup :
-        <code>bash scripts/full_pipeline.sh data/mon_corpus "Ma source"</code>. Tout reste en local, rien n'est envoyé
-        sur un serveur distant.</p>
+      <p class="fine">Toutes les commandes : <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/docs/COMMANDS.fr.md">COMMANDS.fr.md</a>.</p>
     </div>
   </section>
 
@@ -254,17 +374,17 @@ pixplot serve --open                   <span class="c"># ouvre l'Atlas sur http:
         <p><b>Riyadh HADJBA</b>, étudiant en histoire de l'art à l'<a href="https://www.unistra.fr">Université de Strasbourg</a>.
           Projet conçu et dirigé par Riyadh HADJBA, développé avec l'aide d'assistants de code (Claude et Gemini).</p>
         <p class="fine">Inspiré du <a href="https://github.com/YaleDHLab/pix-plot">PixPlot</a> du Yale DHLab (2018),
-          réécrit de zéro.</p>
+          réécrit de zéro. Citable : <a href="https://doi.org/10.5281/zenodo.24363789">DOI 10.5281/zenodo.24363789</a>.</p>
       </div>
       <div>
         <h2>Crédits</h2>
         <ul>
           <li>Modèles : <a href="https://github.com/facebookresearch/dinov3">DINOv3</a> (Meta, licence DINOv3, poids non redistribués),
-            <a href="https://huggingface.co/google/siglip2-so400m-patch16-384">SigLIP 2</a> (Google, Apache 2.0).</li>
-          <li>Bibliothèques : FAISS, e-means, UMAP, scikit-learn, deck.gl, FastAPI, SDK Python MCP.</li>
-          <li>Fond de carte : <a href="https://github.com/topojson/world-atlas">world-atlas</a> (Natural Earth).</li>
-          <li>Lectures utilisées : Wasielewski (2023), Arnold et Tilton (2023), Joyeux-Prunel (2012), Honour et Fleming (2023), Impett et Offert (2024), Stork (2024), Giavitto et Saint-Germier (2025).</li>
-          <li>Corpus d'essai : WikiArt via huggan/wikiart et le Yale Center for British Art (IIIF). Aucune image de corpus n'est incluse dans le dépôt.</li>
+            <a href="https://huggingface.co/google/siglip2-so400m-patch16-384">SigLIP 2</a> (Google, Apache 2.0), RT-DETRv2 et ViTPose (Apache 2.0).</li>
+          <li>Bibliothèques : FAISS, UMAP, scikit-learn, deck.gl, FastAPI, SDK Python MCP.</li>
+          <li>Vocabulaire : <a href="https://iconclass.org">Iconclass</a> (CC0). Fond de carte : <a href="https://github.com/topojson/world-atlas">world-atlas</a> (Natural Earth).</li>
+          <li>Lectures : Warburg, Wölfflin, Wasielewski (2023), Arnold et Tilton (2023), Joyeux-Prunel (2012), Impett et Offert (2024), Stork (2024), Giavitto et Saint-Germier (2025).</li>
+          <li>Corpus d'essai : WikiArt via huggan/wikiart, MMArt (CC BY 4.0) et le Yale Center for British Art (IIIF). Aucune image de corpus n'est incluse dans le dépôt.</li>
         </ul>
       </div>
     </div>
@@ -278,5 +398,6 @@ pixplot serve --open                   <span class="c"># ouvre l'Atlas sur http:
   </div>
 </footer>
 <script src="../assets/site.js"></script>
+<script src="../assets/scenes.js" data-base="../assets/"></script>
 </body>
 </html>

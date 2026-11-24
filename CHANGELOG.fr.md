@@ -16,6 +16,11 @@ Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numé
 
 ## Non publié
 
+- **Site redessiné** : une planche par cas d'usage (dix questions d'historien), chacune animée avec de vraies
+  réponses de PixPlot sur WikiArt 81k (œuvres du domaine public, zones, squelettes et liens réels, caméra qui
+  passe de l'une à l'autre), jouée une fois et désactivée si l'on a demandé moins de mouvement ; à l'ouverture,
+  un échantillon de la vraie carte ; thèmes clair et sombre ; chiffres « artiste » mis à jour.
+  `scripts/site_scenes.py` refait les données des démonstrations.
 - **Pyramide de tuiles** (Gemini 4 Neon) : `pixplot tiles` (13 s sur processeur pour 81k) ; l'Atlas montre la vue d'ensemble en tuiles et ne charge les planches qu'au zoom : transfert à l'ouverture −91 %, mémoire de la carte graphique ÷ 42. Nouveau format de fichiers : `runs/tiles/` (FORMATS). (ARCHITECTURE § 44)
 - **Wölfflin, linéaire / pictural** : préréglage mesuré dans la vue « Axes conceptuels », avec sa mise en garde (seul des cinq couples à séparer Renaissance et Baroque, AUC 0,74 ; avant 1800, l'axe suit le temps). Un axe peut réunir plusieurs phrases séparées par « | », aussi dans l'outil MCP `probe_concepts`. (ARCHITECTURE § 43)
 

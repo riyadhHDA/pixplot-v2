@@ -16,6 +16,10 @@ Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 
 ## Unreleased
 
+- **Website redesigned**: one plate per use case (ten art historian's questions), each animated with real
+  PixPlot answers on WikiArt 81k (public-domain works, real zones, skeletons and links, a camera moving from one
+  to the next), played once and turned off when reduced motion is requested; on opening, a sample of the real
+  map; light and dark themes; updated "artist" figures. `scripts/site_scenes.py` rebuilds the demonstrations' data.
 - **Tile pyramid** (Gemini 4 Neon): `pixplot tiles` (13 s on the CPU for 81k); the Atlas shows the overview as tiles and loads the sheets only when zooming in: transfer on opening −91 %, graphics memory ÷ 42. New file format: `runs/tiles/` (FORMATS). (ARCHITECTURE § 44)
 - **Wölfflin, linear / painterly**: a measured preset in the "Conceptual axes" view, with its caveat (the only one of the five pairs that separates Renaissance from Baroque, AUC 0.74; before 1800 the axis follows time). An axis can gather several sentences separated by "|", also in the MCP tool `probe_concepts`. (ARCHITECTURE § 43)
 

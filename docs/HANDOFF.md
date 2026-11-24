@@ -211,6 +211,22 @@ corrigé ; 63 tests passent, Atlas vérifié.
     calculé pour 81k. Ouverture : 210 Ko au lieu de 35 Mo, mémoire graphique ÷ 42 ; fluidité inchangée
     (déjà au plafond). Vérifié par Claude dans l'Atlas 81k ; ajout `onTileUnload`. Copie supprimée.
     À décider plus tard : lancer `tiles` depuis `analyze` ou non (aujourd'hui à part).
+  - Claude : **site redessiné** (non poussé au moment de l'écriture). Recueil de planches, une par cas
+    d'usage (10), chacune avec une démonstration animée faite de **vraies réponses de PixPlot** sur WikiArt 81k
+    (à la demande de l'utilisateur, pas de personnages dessinés) : vraies œuvres, caméra qui glisse et zoome,
+    zones, squelettes et liens réels qui s'allument (`site/assets/scenes.js`, données `site/assets/scenes.json`
+    et vignettes `site/assets/oeuvres/`, 61 images, 1,6 Mo, chargées à l'approche ; fabriquées par
+    `scripts/site_scenes.py` avec l'Atlas 81k lancé sur le port 8766). **Seulement des œuvres du domaine public**
+    (artistes morts avant 1956, liste fixée dans le script). Jouée une fois à l'entrée dans l'écran, bouton
+    « Rejouer », état final direct si mouvement réduit. Exemples : Van Gogh d'après Millet (1ʳᵉ voisine sa copie
+    de 1881, 2ᵉ l'original), « a skull » (El Greco, Cézanne…), Titien ↔ Mantegna en miroir, Sisley entouré de
+    Monet, Corot en double, notion « échelle » = Descentes de croix, axe de Wölfflin. « une auréole » ne donne
+    rien de bon en recherche de zone (abstractions) : le site ne la cite plus ;
+    ouverture : un échantillon réel de la carte 81k (`site/assets/carte.json`, 6 000 positions UMAP et
+    10 noms de groupes, 68 Ko) qui se range à sa place. Thème clair (carton de montage) et sombre, polices
+    système (Palatino), pas de police externe. Guide aux mêmes styles. Colonne « artiste » du tableau mise à
+    jour (1 090 artistes). Vérifié dans le navigateur : bureau, téléphone (pas de défilement horizontal),
+    clair et sombre, 0 erreur console.
 
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
   19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.
@@ -286,6 +302,12 @@ corrigé ; 63 tests passent, Atlas vérifié.
   `user`).
 
 ## Bloqué ou plus tard
+
+- **Pistes signalées par l'utilisateur le 24/11/2026, à regarder plus tard** (rien de lu ni d'évalué) :
+  Depth Pro 2 d'Apple (https://apple-aiml-research.github.io/ml-depth-pro-2/), à comparer à Depth
+  Anything V2, déjà évalué et écarté pour la composition (ARCHITECTURE § 28) ; OpenVisionBanana
+  (https://github.com/OpenVisionBanana/OpenVisionBanana). Pour chacun : licence des poids, ce qu'il
+  apporterait à un regard existant, banc d'essai avant toute adoption.
 
 - **Phrases des spectateurs d'ArtEmis** (idée du 19/11/2026, « plus tard » selon l'utilisateur) : les
   afficher dans la fiche de l'œuvre et pouvoir chercher dedans (~2 h). Aujourd'hui seules l'émotion
