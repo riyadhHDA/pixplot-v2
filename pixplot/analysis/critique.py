@@ -133,6 +133,26 @@ CARDS: dict[str, dict] = {
                     "la combinaison Forme + profondeur n'améliore pas Forme en validation croisée "
                     "(ARCHITECTURE § 28)",
     },
+    "profondeur_dp2": {
+        "model": "Depth Pro 2 Base (Apple, nov. 2026, DINOv3 ViT-B/16 + DPT, poids sous licence "
+                 "apple-amlr non commerciale), grille 8 × 8 calée sur l'œuvre (z-score)",
+        "trained_on": "mélange d'images uniques, vidéos et séquences multi-vues (détail non publié "
+                      "par Apple)",
+        "sees": "l'agencement relatif des plans en profondeur (contours nets, premier plan / fond)",
+        "blind_to": "les couleurs, la facture, le sujet, l'iconographie et les compositions sans "
+                    "profondeur perspective (abstraction, aplat, enluminure)",
+        "biases": [
+            "entraîné sur des photographies et vidéos 3D : invente des plans sur l'art non perspectif",
+            "sensible au gradient vertical universel (haut loin, bas proche) et aux changements de format",
+            "poids sous licence de recherche non commerciale (apple-amlr)",
+        ],
+        "measured": "évalué contre Depth Anything V2 et Forme, non retenu par défaut : sur "
+                    "« même composition » (14 paires), R@10 0,0 %, R@100 7,1 %, rang médian "
+                    "4 836 (4 266 centré), centile 0,851 — bien meilleur en rang médian que "
+                    "Depth Anything V2 (13 754, centile 0,677) grâce à un biais de gradient "
+                    "vertical quasi nul, mais largement battu par Forme (R@10 53,6 %, rang 8, "
+                    "écart sûr +53,6 pts, p < 0,001)",
+    },
     "sujet_pe": {
         "model": "PE-Core L/14 @336 (Meta, Perception Encoder, 2025, licence Apache 2.0), "
                  "images et textes (32 jetons)",

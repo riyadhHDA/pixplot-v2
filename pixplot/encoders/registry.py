@@ -11,6 +11,7 @@ ENCODERS = (
     "tipsv2_b14", "tipsv2_l14", "tipsv2_so400m14",
     "colorhist", "color_lab", "dinov3_vitb16_texture", "pe_spatial_b16",
     "sscd_disc_mixup", "sscd_disc_large", "depth_anything_v2_small",
+    "depth_pro2_small", "depth_pro2_base", "depth_pro2_large",
     "pe_core_b16", "pe_core_l14", "pe_core_g14", "csd_vitl14",
     "vitpose_base", "vitpose_r18",
 )
@@ -74,6 +75,14 @@ def get_encoder(name: str, **kwargs) -> Encoder:
             kwargs.pop("input_size")
         allowed = ("hf_model", "input_size", "grid", "device", "fp16", "model")
         return DepthAnythingEncoder(arch=name, **{k: v for k, v in kwargs.items() if k in allowed})
+    if name.startswith("depth_pro2_"):
+        from .depth_pro2 import DepthPro2Encoder
+        kwargs.pop("weights", None)
+        kwargs.pop("repo", None)
+        if kwargs.get("input_size") == 448:  # 448 est la valeur par défaut de la CLI (DINOv3)
+            kwargs.pop("input_size")
+        allowed = ("hf_model", "input_size", "grid", "device", "fp16", "model")
+        return DepthPro2Encoder(arch=name, **{k: v for k, v in kwargs.items() if k in allowed})
     if name.startswith("vitpose_"):
         from .posture import ViTPoseEncoder
         kwargs.pop("weights", None)
