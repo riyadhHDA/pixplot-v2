@@ -192,6 +192,10 @@ svg.pose-svg { position: absolute; width: auto; height: auto; stroke: none; fill
 .checks-title { color: var(--accent-2); font-weight: 600; margin-bottom: 2px; }
 .checks ul { margin: 4px 0; padding-left: 18px; }
 .checks small { color: var(--muted); }
+/* date estimée d'une œuvre sans date (pixplot dater) : une piste, en pointillés pour la distinguer d'une date du catalogue */
+.date-estimate { border: 1px dashed var(--line); border-radius: var(--radius); padding: 8px 10px; margin-bottom: 14px; font-size: 13px; }
+.date-estimate span { color: var(--muted); margin-left: 4px; }
+.date-estimate small { display: block; color: var(--muted); margin-top: 3px; }
 
 /* recherche par détail / résultats */
 .fiche .hero.drawing { cursor: crosshair; }

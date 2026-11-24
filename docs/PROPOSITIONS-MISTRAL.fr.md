@@ -59,7 +59,7 @@ Format d'une mise à jour :
 |---|---|---|---|---|---|
 | P1 | Zones émotionnelles : où dans le tableau se situe l'émotion | APOLO × index de zones | zone prédite dans le masque annoté (vs hasard) | ~1 j | à tester |
 | P1 | Banc « perception humaine » : ~200 paires notées par des humains | fruit-SALAD | classement des regards sur jugements humains, avec IC (`pairs ci`) | 2–3 j | à tester |
-| P1 | Datation prédictive + IC pour les œuvres sans date | arXiv 2608.18984 | erreur médiane en années + IC calibrés sur les 56 794 datées | 1–2 j | à tester |
+| P1 | Datation prédictive + IC pour les œuvres sans date | arXiv 2608.18984 | erreur médiane en années + IC calibrés sur les 56 794 datées | 1–2 j | **fait** : `pixplot dater`, ARCHITECTURE § 45 |
 | P1 | Recherche en français challengée (jina-clip-v2, SigLIP 2 NaFlex) | arXiv 2412.08802 | `textbench` FR/EN, IC compris | 1 j | à tester |
 | — | Les 4 autres paires de Wölfflin en axes conceptuels | J. Imaging 2025 | même banc que § 43 (AUC + Spearman dates) | — | **écarté** : déjà mesuré (§ 43, banc de DeepSeek) ; ces quatre couples ne tiennent pas, le résultat s'inverse selon la phrase ou le genre |
 | P2 | Graphe d'influence « qui reprend qui » en vue node-link | WIB-100, arXiv 2604.07468 | R@10 sur WIB-100 + 9 paires filiation | 1–2 sem. | à tester |

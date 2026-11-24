@@ -16,6 +16,7 @@ Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numé
 
 ## Non publié
 
+- **`pixplot dater`** : une date estimée, avec une fourchette à 80 % calibrée, pour les œuvres sans date. Artiste connu : d'après ses seules œuvres datées (3 ans d'erreur médiane sur WikiArt) ; sinon d'après toutes les voisines (12 ans, pas mieux que l'étiquette de style). Affichée dans la fiche comme une piste, transmise par `get_artwork`. Nouveau fichier `datation.npy` (FORMATS). (ARCHITECTURE § 45)
 - **`pixplot sauvegarde`** : met à l'abri le travail fait à la main, qui ne se recalcule pas. Copie les paires
   relues dans `bench/` du dépôt (`<corpus>_pairs_travail.csv`, à commiter), le carnet sur demande (`--carnet`),
   et avec `--vers` le dossier de données vers un autre disque (l'essentiel, ou `--tout`) ; n'efface jamais rien

@@ -182,7 +182,9 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
     @server.tool()
     def get_artwork(artwork_id: int) -> dict:
         """Fiche d'une œuvre : métadonnées (et leur source), groupe, famille HDBSCAN,
-        atypicité, 10 plus proches voisines, provenance du calcul."""
+        atypicité, 10 plus proches voisines, provenance du calcul. Pour une œuvre sans date,
+        ``date_estimate`` donne une date estimée d'après ses voisines datées, avec une fourchette
+        à 80 % : une piste, pas une datation (ARCHITECTURE § 45)."""
         return data.artwork(check(artwork_id), k=10)
 
     @server.tool()

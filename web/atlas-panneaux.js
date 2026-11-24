@@ -524,6 +524,20 @@ function renderMeasuresBody(m) {
 
 let fichePoseSeq = 0;
 
+/** Date estimée d'une œuvre sans date (pixplot dater) : une piste, avec sa fourchette à 80 %. */
+function dateEstimate(d) {
+  const e = d.date_estimate;
+  if (!e) return "";
+  const who = e.method === "artiste"
+    ? `les ${e.neighbors} œuvres datées de l'artiste qui lui ressemblent le plus`
+    : `les ${e.neighbors} œuvres datées les plus proches du corpus (artiste inconnu ou peu daté)`;
+  const space = state.spaces.find((s) => s.key === e.space);
+  return `<div class="date-estimate" title="${esc(e.note)}"><b>Date estimée : vers ${e.year}</b>
+    <span>(${e.low}–${e.high}, fourchette à ${Math.round(e.coverage * 100)} %)</span>
+    <small>Cette œuvre n'a pas de date. Estimation d'après ${who}, selon ${esc(space ? space.label : e.space)}.
+    Une piste, pas une datation.</small></div>`;
+}
+
 function renderFiche(d) {
   const isPosture = d.space === "posture";
   const noFigures = isPosture && (d.posture_figures === 0 || (!d.neighbors.length && d.posture_figures == null));
@@ -565,6 +579,7 @@ function renderFiche(d) {
         <button class="chip" id="chip-fly">Voir sur la carte</button>
       </div>
       ${labelChecks(d)}
+      ${dateEstimate(d)}
       ${meta ? `<table>${meta}</table>` : ""}
       <details class="measures-box" id="fiche-measures">
         <summary>Mesures visuelles <small>équilibre, symétrie, entropie · Stork</small></summary>

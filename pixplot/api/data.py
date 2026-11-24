@@ -564,7 +564,30 @@ class AtlasData:
         }
         if active_space == "posture" and (pidx := self.spaces.posture_index("posture")) is not None:
             out["posture_figures"] = pidx.figure_count(artwork_id)
+        if (est := self.date_estimate(artwork_id)) is not None:
+            out["date_estimate"] = est
         return out
+
+    def date_estimate(self, artwork_id: int) -> dict | None:
+        """Date estimée d'une œuvre **sans date** (``pixplot dater``), ou None : année, fourchette à 80 %,
+        nombre de voisines datées et méthode (œuvres du même artiste, ou toutes les voisines)."""
+        r = self.row_of.get(artwork_id)
+        m = self.meta.get(artwork_id, {})
+        if r is None or any(parse_year(m.get(k)) is not None for k in DATE_KEYS):
+            return None
+        if not hasattr(self, "_dating"):
+            from ..analysis import dating
+            self._dating = dating.load(self.analysis)
+        if self._dating is None:
+            return None
+        arr, meta = self._dating
+        if len(arr) != len(self.ids) or not np.isfinite(arr[r, 0]):
+            return None
+        method = "artiste" if arr.shape[1] > 4 and arr[r, 4] == 1 else "voisines"
+        return {"year": int(round(float(arr[r, 0]))), "low": int(round(float(arr[r, 1]))),
+                "high": int(round(float(arr[r, 2]))), "neighbors": int(arr[r, 3]), "method": method,
+                "space": meta.get("regard"), "coverage": meta.get("couverture_visée", 0.8),
+                "note": "Piste, pas une datation : d'après les œuvres datées les plus proches."}
 
     def search(self, q: str, limit: int = 5000) -> list[int]:
         """Œuvres dont une métadonnée ou le nom de fichier contient ``q`` (sans casse)."""

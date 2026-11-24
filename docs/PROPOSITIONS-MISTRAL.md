@@ -57,7 +57,7 @@ Update format:
 |---|---|---|---|---|---|
 | P1 | Emotion zones: where in the painting the emotion sits | APOLO × zone index | predicted zone inside the annotated mask (vs chance) | ~1 d | to test |
 | P1 | "Human perception" benchmark: ~200 pairs rated by humans | fruit-SALAD | gaze ranking on human ratings, with CIs (`pairs ci`) | 2–3 d | to test |
-| P1 | Predictive dating + CI for undated works | arXiv 2608.18984 | median error in years + calibrated CIs on the 56,794 dated works | 1–2 d | to test |
+| P1 | Predictive dating + CI for undated works | arXiv 2608.18984 | median error in years + calibrated CIs on the 56,794 dated works | 1–2 d | **done**: `pixplot dater`, ARCHITECTURE § 45 |
 | P1 | French text search challenged (jina-clip-v2, SigLIP 2 NaFlex) | arXiv 2412.08802 | `textbench` FR/EN, CIs included | 1 d | to test |
 | — | The 4 other Wölfflin pairs as concept axes | J. Imaging 2025 | same bench as § 43 (AUC + Spearman with dates) | — | **rejected**: already measured (§ 43, DeepSeek's benchmark); these four pairs do not hold, the result flips with the wording or the genre |
 | P2 | Influence graph "who copies whom" as a node-link view | WIB-100, arXiv 2604.07468 | R@10 on WIB-100 + 9 filiation pairs | 1–2 wk | to test |

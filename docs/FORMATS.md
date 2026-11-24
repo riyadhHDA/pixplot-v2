@@ -97,6 +97,7 @@ for zones described by words.
 | `doublons.json` | object (`counts`, `pairs`) | duplicates and variants (SSCD) |
 | `disagreements.json` | object (`spaces`, `pairs`) | disagreements between regards |
 | `ordre.npy` | `float32` (N, 2) | entropy H and complexity C of the surface (§ 33) |
+| `datation.npy` | `float32` (N, 5) | estimated date, low and high bounds of the 80 % range, dated neighbours, method (1 = same artist, 2 = all); NaN without a dated neighbour (§ 45). `datation.json`: regard, measures, margin |
 | `communities/<regard>.json`, `.npz` | | nested Leiden groups, per regard |
 | `maps/<regard>.npy`, `maps/maps.json` | `float32` (N, 2) | maps of the other regards |
 

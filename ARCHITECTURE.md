@@ -2009,3 +2009,52 @@ beyond 24 px; correct click; 0 errors. Added by Claude: each tile leaving the ca
 
 **Limits.** Main map only; to be rerun (`pixplot tiles`) after a new analysis or new thumbnails; the Atlas
 must be restarted to see a new pyramid; a "Pre-computed tiles" box in the view menu turns them off.
+
+## 45. Dating undated works, with a calibrated range (2026-11-24)
+
+**Question.** In WikiArt 81k, 23,922 works have no date (56,794 have one, MMArt, § 34). Can we suggest a date
+from the dated works that resemble them, with an honest margin of error? Lead taken from Mistral's proposals
+(`docs/PROPOSITIONS-MISTRAL.md`), after Schneider et al., "Uncertainty-Aware Art-Historical Dating with
+Vision-Language Models" (arXiv 2608.18984, 2026), who regress dates from frozen embeddings.
+
+**Method** (`pixplot dater`, `pixplot/analysis/dating.py`, CPU only, 30 to 55 s per regard). For a work, its 20
+nearest dated neighbours in a regard; estimated date = median of their years weighted by similarity; range =
+weighted 10 % and 90 % quantiles, widened by a conformal calibration on 11,358 dated works set aside, so that the
+range announced at 80 % contains the true date 80 % of the time. Measured on 17,038 other dated works. The work
+itself and its 839 duplicates (§ 29) never count. Two conditions: "artist visible" (all neighbours) and "artist
+hidden" (no neighbour by the same artist). Baselines: the corpus median, and the median year of the work's style
+(metadata).
+
+| Method | Median error | Within ±25 years | Coverage (80 % target) | Median width |
+|---|---|---|---|---|
+| Baseline: corpus median | 30 years | 46 % | 80 % | 379 years |
+| Baseline: style median | 13 years | 79 % | 81 % | 59 years |
+| Subject (SigLIP 2), artist visible | 5 years | 88 % | 87 % | 35 years |
+| Subject, artist hidden | 12 years | 76 % | 81 % | 49 years |
+| Form (DINOv3), artist hidden | 17 years | 63 % | 81 % | 74 years |
+| Touch, artist hidden | 19 years | 59 % | 80 % | 86 years |
+| Colour, artist hidden | 34 years | 42 % | 81 % | 197 years |
+| **Same artist's works only** (≥ 5 dated), subject | **3 years** | **97 %** | 80.5 % | **16 years** |
+
+**Reading.**
+- **Without the artist, neighbours do not beat the style label.** Subject, artist hidden, against the style
+  median: −1 year on the median error, paired 95 % CI [−1; 0] (2,000 draws), which touches zero; and the mean
+  error is larger (22.2 against 17.6 years). By period: better from 1800 to 1949 (10 against 12 years, 12 against
+  13), worse before 1600 (18 against 13), from 1600 to 1799 (22 against 18) and after 1950 (17 against 14). The
+  corpus, mostly made of 1850–1950 works, favours that period.
+- **With the artist, dating becomes useful**: looking for neighbours among the same artist's dated works only
+  (16,899 eligible test works) gives a 3-year median error, 5.7 years on average, 97 % within ±25 years and a
+  16-year range that keeps its promise (80.5 %). Against all neighbours: 5 years, 12.2 on average, 88 %, 35-year
+  range. The work takes its place in its artist's chronology.
+- **What is kept**: the "subject" regard; a known artist with at least 5 other dated works → their works only
+  (72,142 works, including 15,771 of the 23,922 undated ones); otherwise → all neighbours, range calibrated as if
+  the artist were unknown (8,574 works, about 12 years). `datation.npy` in the analysis run; the record of an
+  undated work shows "Estimated date: around … (low–high, 80 % range)", dashed so as not to be mistaken for a
+  catalogue date; the MCP tool `get_artwork` passes it on (`date_estimate`).
+- **By eye**, undated Dürer portraits fall around 1519–1520 with 5- to 10-year ranges; his undated *River
+  Landscape*, surrounded by 19th-century landscapes in the "subject" regard, got 1889 (1514–1895) before the
+  "same artist" method: the width of the range flagged the doubt.
+
+**Limits.** MMArt dates (sometimes a series or completion date); "artist" = the WikiArt label; coverage is
+calibrated on average, not period by period; an estimated date says which period the neighbouring works resemble,
+not when the work was made: a lead, to be checked against the sources.

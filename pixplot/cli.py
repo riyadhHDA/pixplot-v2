@@ -1211,6 +1211,124 @@ def cmd_whytest(args) -> int:
 
 
 # --------------------------------------------------------------------------- status
+def cmd_dater(args) -> int:
+    """Date chaque œuvre d'après ses voisines datées ; mesure chaque regard face à deux témoins."""
+    import json
+    import time
+
+    import numpy as np
+
+    from .analysis import dating
+    from .api.data import AtlasData
+
+    s = get_settings(args.data)
+    data = AtlasData.load(s)
+    ids = [int(i) for i in data.ids]
+    row = {i: r for r, i in enumerate(ids)}
+    years = np.array([y if y is not None else np.nan for y in data.years()], dtype=float)
+    dated = np.isfinite(years)
+    if dated.sum() < 100:
+        raise SystemExit(f"Trop peu d'œuvres datées ({int(dated.sum())}) pour dater et mesurer.")
+    meta = [data.meta.get(i, {}) for i in ids]
+    styles = [m.get("style") or "" for m in meta]
+    names = [m.get("artist") or "" for m in meta]
+    codes = {a: n for n, a in enumerate(sorted({a for a in names if a and a != "Unknown Artist"}))}
+    artists = np.array([codes.get(a, -1) for a in names])
+    exclude: dict[int, set[int]] = {}
+    dpath = Path(data.analysis.path) / "doublons.json"
+    if dpath.exists():
+        for p in json.loads(dpath.read_text(encoding="utf-8")).get("pairs", []):
+            if p.get("level") == "same" and p["a"] in row and p["b"] in row:
+                ra, rb = row[p["a"]], row[p["b"]]
+                exclude.setdefault(ra, set()).add(rb)
+                exclude.setdefault(rb, set()).add(ra)
+
+    rng = np.random.default_rng(args.seed)
+    D = np.flatnonzero(dated)
+    perm = rng.permutation(D)
+    calib = np.zeros(len(ids), bool); calib[perm[: len(D) // 5]] = True
+    test = np.zeros(len(ids), bool); test[perm[len(D) // 5: len(D) // 5 + int(len(D) * 0.3)]] = True
+    evalrows = np.flatnonzero(calib | test)
+    print(f"Œuvres datées : {int(dated.sum())} / {len(ids)} · calibration {int(calib.sum())} · test {int(test.sum())}"
+          f" · doublons écartés : {sum(len(v) for v in exclude.values()) // 2}")
+
+    report = {"date": time.strftime("%Y-%m-%d"), "k": args.k, "couverture_visée": dating.COVERAGE,
+              "datées": int(dated.sum()), "calibration": int(calib.sum()), "test": int(test.sum()),
+              "témoins": {"médiane du corpus": dating.baseline_global(years, dated, calib, test),
+                          "médiane du style": dating.baseline_style(styles, years, dated, calib, test)},
+              "regards": {}}
+    for name, r in report["témoins"].items():
+        print(f"  témoin · {name:22s} erreur médiane {r['erreur_mediane']:6.1f} ans · ±25 ans {r['a_25_ans']:.0%}"
+              f" · couverture {r['couverture']:.0%} · largeur {r['largeur_mediane']:.0f} ans")
+    # par défaut, les regards retenus de PixPlot (pas la posture, pas un encodeur en cours d'essai)
+    spaces = args.spaces.split(",") if args.spaces else [k for k in ("forme", "sujet", "couleur", "touche")
+                                                         if k in data.spaces.runs]
+    vecs = {}
+    for key in spaces:
+        t0 = time.perf_counter()
+        X = data.spaces.vectors(key, ids)
+        has = np.linalg.norm(X, axis=1) > 0
+        vecs[key] = X
+        res = {}
+        for mode, arts in (("artiste visible", None), ("artiste caché", artists)):
+            Y = np.full((len(ids), args.k), np.nan); Wt = np.zeros((len(ids), args.k))
+            sub = evalrows[has[evalrows]]
+            Ys, Ws = dating.neighbor_years(X, years, dated & has, k=args.k, artists=arts, exclude=exclude,
+                                           rows=sub)
+            Y[sub], Wt[sub] = Ys, Ws
+            res[mode] = dating.evaluate(dating.estimate(Y, Wt), years, calib & has, test & has)
+        res["secondes"] = round(time.perf_counter() - t0, 1)
+        report["regards"][key] = res
+        for mode in ("artiste visible", "artiste caché"):
+            r = res[mode]
+            print(f"  {key:8s} · {mode:15s} erreur médiane {r['erreur_mediane']:6.1f} ans · ±25 ans {r['a_25_ans']:.0%}"
+                  f" · couverture {r['couverture']:.0%} · largeur {r['largeur_mediane']:.0f} ans")
+
+    best = args.space or min(report["regards"], key=lambda k: report["regards"][k]["artiste caché"]["erreur_mediane"])
+    X = vecs.get(best)
+    if X is None:
+        X = data.spaces.vectors(best, ids)
+    has = np.linalg.norm(X, axis=1) > 0
+    # Deux méthodes : artiste connu (au moins 5 autres œuvres datées) → ses seules œuvres datées ;
+    # sinon → toutes les voisines datées, fourchette calibrée comme si l'artiste était inconnu.
+    from collections import Counter
+    cnt = Counter(int(a) for a, d in zip(artists, dated) if d and a >= 0)
+    elig = np.array([a >= 0 and cnt[int(a)] - (1 if d else 0) >= dating.MIN_ARTIST_DATED
+                     for a, d in zip(artists, dated)]) & has
+    out = np.full((len(ids), 5), np.nan)
+    measures = {}
+    for mode, group, kw in (("artiste", elig, {"artists": artists, "same_artist_only": True}),
+                            ("voisines", ~elig & has, {"artists": artists})):
+        rows = np.flatnonzero(group | ((calib | test) & (elig if mode == "artiste" else has)))
+        Y = np.full((len(ids), args.k), np.nan); Wt = np.zeros((len(ids), args.k))
+        Y[rows], Wt[rows] = dating.neighbor_years(X, years, dated & has, k=args.k, exclude=exclude, rows=rows, **kw)
+        raw = dating.estimate(Y, Wt)
+        cal = calib & (elig if mode == "artiste" else has)
+        margin = dating.conformal_margin(raw[cal, 1], raw[cal, 2], years[cal])
+        est = dating.estimate(Y, Wt, margin=margin)
+        tst = test & (elig if mode == "artiste" else has)
+        measures[mode] = {**dating.evaluate(raw, years, cal, tst), "œuvres": int(group.sum())}
+        out[group, :4] = est[group]
+        out[group, 4] = 1 if mode == "artiste" else 2
+        print(f"  méthode « {mode} » ({int(group.sum())} œuvres) : erreur médiane {measures[mode]['erreur_mediane']:.1f} ans"
+              f" · couverture {measures[mode]['couverture']:.0%} · largeur {measures[mode]['largeur_mediane']:.0f} ans")
+    report["méthodes"] = measures
+    meta_out = {"regard": best, "k": args.k, "couverture_visée": dating.COVERAGE,
+                "colonnes": ["année estimée", "bas", "haut", "voisines datées", "méthode (1 = œuvres du même artiste, 2 = toutes les voisines)"],
+                "méthodes": measures,
+                "note": "Date estimée d'après les voisines datées (piste, pas une datation). Fourchette à 80 % calibrée "
+                        "sur des œuvres datées mises de côté ; l'œuvre elle-même et ses doublons ne comptent pas."}
+    path = dating.save(data.analysis, out, meta_out)
+    report["retenu"] = meta_out
+    rpath = s.data_dir / "bench" / "datation_report.json"
+    rpath.parent.mkdir(parents=True, exist_ok=True)
+    rpath.write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
+    undated = ~dated & np.isfinite(out[:, 0])
+    print(f"\nRegard retenu : {best} · {int(undated.sum())} œuvres sans date reçoivent une date estimée → {path}")
+    print(f"Rapport : {rpath}")
+    return 0
+
+
 def cmd_sauvegarde(args) -> int:
     """Recopie le travail fait à la main dans bench/ du dépôt ; avec --vers, copie aussi le dossier de données."""
     from . import backup
@@ -1574,6 +1692,13 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-resume", action="store_true", help="ne pas reprendre un calcul interrompu")
     p.add_argument("--no-sheet", action="store_true", help="ne pas générer la planche visuelle")
     p.set_defaults(func=cmd_whytest)
+
+    p = sub.add_parser("dater", help="date chaque œuvre d'après ses voisines datées, avec une fourchette à 80 %% calibrée ; mesure chaque regard")
+    p.add_argument("--space", help="regard retenu pour dater (défaut : le meilleur, artiste caché)")
+    p.add_argument("--spaces", help="regards à mesurer, séparés par des virgules (défaut : tous sauf posture)")
+    p.add_argument("-k", type=int, default=20, help="voisines datées par œuvre (défaut : 20)")
+    p.add_argument("--seed", type=int, default=0, help="tirage des œuvres de calibration et de test")
+    p.set_defaults(func=cmd_dater)
 
     p = sub.add_parser("sauvegarde", help="mettre à l'abri le travail fait à la main (paires, carnet) et, avec --vers, le dossier de données")
     p.add_argument("--carnet", action="store_true", help="copier aussi le carnet de recherche dans bench/ (notes peut-être privées)")

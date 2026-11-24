@@ -2133,3 +2133,53 @@ de Claude : chaque tuile qui sort du cache libère son image (`onTileUnload`).
 **Limites.** Seulement la carte principale ; à refaire (`pixplot tiles`) après une nouvelle analyse ou de
 nouvelles vignettes ; l'Atlas doit être relancé pour voir une pyramide neuve ; case « Tuiles
 précalculées » dans le menu de la vue pour les désactiver.
+
+## 45. Dater les œuvres sans date, avec une fourchette calibrée (24/11/2026)
+
+**Question.** Sur WikiArt 81k, 23 922 œuvres n'ont pas de date (56 794 en ont une, MMArt, § 34). Peut-on
+leur proposer une date d'après les œuvres datées qui leur ressemblent, avec une marge d'erreur honnête ? Piste
+reprise des propositions de Mistral (`docs/PROPOSITIONS-MISTRAL.fr.md`), d'après Schneider et al.,
+« Uncertainty-Aware Art-Historical Dating with Vision-Language Models » (arXiv 2608.18984, 2026), qui
+régressent la date depuis des vecteurs figés.
+
+**Méthode** (`pixplot dater`, `pixplot/analysis/dating.py`, processeur seul, 30 à 55 s par regard). Pour une
+œuvre, les 20 plus proches voisines datées dans un regard ; date estimée = médiane de leurs années pondérée par la
+ressemblance ; fourchette = quantiles pondérés 10 % et 90 %, élargis par une calibration conforme sur 11 358
+œuvres datées mises de côté, pour que la fourchette annoncée à 80 % contienne la vraie date dans 80 % des cas.
+Mesure sur 17 038 autres œuvres datées. L'œuvre elle-même et ses 839 doublons (§ 29) ne comptent jamais. Deux
+conditions : « artiste visible » (toutes les voisines) et « artiste caché » (aucune voisine du même artiste).
+Témoins : la médiane du corpus, et l'année médiane du style de l'œuvre (métadonnées).
+
+| Méthode | Erreur médiane | À ±25 ans | Couverture (80 % visés) | Largeur médiane |
+|---|---|---|---|---|
+| Témoin : médiane du corpus | 30 ans | 46 % | 80 % | 379 ans |
+| Témoin : médiane du style | 13 ans | 79 % | 81 % | 59 ans |
+| Sujet (SigLIP 2), artiste visible | 5 ans | 88 % | 87 % | 35 ans |
+| Sujet, artiste caché | 12 ans | 76 % | 81 % | 49 ans |
+| Forme (DINOv3), artiste caché | 17 ans | 63 % | 81 % | 74 ans |
+| Touche, artiste caché | 19 ans | 59 % | 80 % | 86 ans |
+| Couleur, artiste caché | 34 ans | 42 % | 81 % | 197 ans |
+| **Œuvres du même artiste seulement** (≥ 5 datées), sujet | **3 ans** | **97 %** | 80,5 % | **16 ans** |
+
+**Lecture.**
+- **Sans l'artiste, les voisines ne battent pas l'étiquette de style.** Sujet, artiste caché, contre médiane du
+  style : écart de −1 an sur l'erreur médiane, IC 95 % apparié [−1 ; 0] (2 000 tirages), qui touche zéro ; et
+  l'erreur moyenne est plus forte (22,2 contre 17,6 ans). Par période : mieux de 1800 à 1949 (10 contre 12 ans,
+  12 contre 13), moins bien avant 1600 (18 contre 13), de 1600 à 1799 (22 contre 18) et après 1950 (17 contre 14).
+  Le corpus, surtout fait d'œuvres de 1850–1950, avantage cette période.
+- **Avec l'artiste, la datation devient utile** : chercher les voisines parmi les seules œuvres datées du même
+  artiste (16 899 œuvres de test éligibles) donne 3 ans d'erreur médiane, 5,7 ans en moyenne, 97 % à ±25 ans et
+  une fourchette de 16 ans qui tient sa promesse (80,5 %). Contre toutes les voisines : 5 ans, 12,2 ans en
+  moyenne, 88 %, fourchette de 35 ans. L'œuvre se place dans la chronologie de son artiste.
+- **Ce qui est retenu** : regard « sujet » ; artiste connu avec au moins 5 autres œuvres datées → ses seules
+  œuvres (72 142 œuvres, dont 15 771 des 23 922 sans date) ; sinon → toutes les voisines, fourchette calibrée
+  comme si l'artiste était inconnu (8 574 œuvres, environ 12 ans). `datation.npy` dans le run d'analyse ; la
+  fiche d'une œuvre sans date affiche « Date estimée : vers … (bas–haut, fourchette à 80 %) », en pointillés pour
+  ne pas la confondre avec une date du catalogue ; l'outil MCP `get_artwork` la transmet (`date_estimate`).
+- **À l'œil**, des portraits sans date de Dürer tombent vers 1519–1520 avec 5 à 10 ans de fourchette ; son
+  *Paysage fluvial* sans date, entouré de paysages du XIXᵉ siècle dans le regard « sujet », recevait 1889
+  (1514–1895) avant la méthode « même artiste » : la largeur de la fourchette signalait le doute.
+
+**Limites.** Dates de MMArt (parfois une date de série ou d'achèvement) ; « artiste » = étiquette de WikiArt ;
+la couverture est calibrée en moyenne, pas période par période ; une date estimée dit à quelle période
+ressemblent les œuvres voisines, pas quand l'œuvre a été faite : une piste, à confronter aux sources.

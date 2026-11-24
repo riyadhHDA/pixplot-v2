@@ -232,6 +232,17 @@ corrigé ; 63 tests passent, Atlas vérifié.
     jour (1 090 artistes). Vérifié dans le navigateur : bureau, téléphone (pas de défilement horizontal),
     clair et sombre, 0 erreur console.
 
+  - Claude : **`pixplot dater`** (ARCHITECTURE § 45, `pixplot/analysis/dating.py`, `tests/test_dating.py`,
+    non publié) : date estimée et fourchette à 80 % calibrée pour les 23 922 œuvres sans date. Artiste avec
+    ≥ 5 autres œuvres datées → ses seules œuvres (3 ans d'erreur médiane, couverture 80,5 %) ; sinon toutes les
+    voisines du regard « sujet » (12 ans ; pas mieux que la médiane du style : IC [−1 ; 0]). Fiche de l'Atlas
+    (bloc en pointillés) et `get_artwork` (`date_estimate`). Calculé sur 81k : `datation.npy`, rapport
+    `data/wikiart81k/bench/datation_report.json`. Piste reprise de `docs/PROPOSITIONS-MISTRAL.fr.md`, que
+    Claude a relu (24 références vérifiées, 3 fausses corrigées).
+  - **Effet de bord à surveiller** : les vecteurs Depth Pro 2 calculés par Neon dans le dossier de données
+    commun (run `depth_pro2_base`) apparaissent comme un regard dans l'Atlas lancé depuis `main`, tant que la
+    branche de Neon (qui le rangera dans `NOT_KEPT`) n'est pas fusionnée.
+
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
   19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.
 

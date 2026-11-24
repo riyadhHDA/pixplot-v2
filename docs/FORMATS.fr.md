@@ -97,6 +97,7 @@ faite sans vecteur. Un run inachevé reprend où il s'était arrêté.
 | `doublons.json` | objet (`counts`, `pairs`) | doublons et variantes (SSCD) |
 | `disagreements.json` | objet (`spaces`, `pairs`) | désaccords entre regards |
 | `ordre.npy` | `float32` (N, 2) | entropie H et complexité C de la matière (§ 33) |
+| `datation.npy` | `float32` (N, 5) | date estimée, bas et haut de la fourchette à 80 %, voisines datées, méthode (1 = même artiste, 2 = toutes) ; NaN sans voisine datée (§ 45). `datation.json` : regard, mesures, marge |
 | `communities/<regard>.json`, `.npz` | | groupes Leiden emboîtés, par regard |
 | `maps/<regard>.npy`, `maps/maps.json` | `float32` (N, 2) | cartes des autres regards |
 

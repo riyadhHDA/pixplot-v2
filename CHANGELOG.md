@@ -16,6 +16,7 @@ Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 
 ## Unreleased
 
+- **`pixplot dater`**: an estimated date, with a calibrated 80 % range, for undated works. Known artist: from their dated works only (3-year median error on WikiArt); otherwise from all neighbours (12 years, no better than the style label). Shown in the record as a lead, passed on by `get_artwork`. New file `datation.npy` (FORMATS). (ARCHITECTURE § 45)
 - **`pixplot sauvegarde`**: keeps hand-made work safe, since it cannot be recomputed. Copies the reviewed pairs
   into the repository's `bench/` (`<corpus>_pairs_travail.csv`, to commit), the notebook on request (`--carnet`),
   and with `--vers` the data folder to another disk (the essentials, or `--tout`); never deletes anything and
