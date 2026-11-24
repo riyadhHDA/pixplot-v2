@@ -35,6 +35,9 @@ REPRISE = 79294                       # Van Gogh, Le Semeur d'après Millet, 188
 MILLET = 41274                        # Millet, Le Semeur, 1850
 MOTIF_Q = "a skull"
 MOTIF = [8723, 28410, 38609, 35525, 70211, 36503]   # El Greco, Cézanne, Zurbarán, Dürer, Mabuse, Ribera
+MOTIF2_Q = "a golden halo around the head of a saint"
+MOTIF2 = [41191, 56931, 10637, 40616, 32250, 55294, 13595, 44239, 43067, 54665]  # David, Pontormo, Angelico,
+# Masaccio, Raphaël, Rogier van der Weyden, Memling, Mantegna, Crivelli, Campin : un artiste par œuvre
 THEME_Q = "Annonciation dans un jardin"
 GESTE = (66184, 56885)                # Titien, Vénus (1565) ↔ Mantegna, Christ au jardin des Oliviers (1455)
 SUSPECT = 1225                        # Sisley, 1894 : ses voisines étiquetées sont des Monet
@@ -156,9 +159,10 @@ def main() -> int:
                          "pairs": [{"a": p["box_a"], "b": p["box_b"], "sim": round(p["sim"], 3)} for p in corr]}
 
     # 2. Où revient ce motif ? Zones décrites par des mots.
-    z = {h["id"]: h for h in get("/api/search/zones", q=MOTIF_Q)["results"]}
-    scenes["motif"] = {"query": MOTIF_Q, "hits": [{"id": art(i, True), "box": z[i]["box"],
-                                                    "rank": list(z).index(i) + 1} for i in MOTIF if i in z]}
+    for key, q, ids, large in (("motif", MOTIF_Q, MOTIF, True), ("motif2", MOTIF2_Q, MOTIF2, True)):
+        z = {h["id"]: h for h in get("/api/search/zones", q=q)["results"]}
+        scenes[key] = {"query": q, "hits": [{"id": art(i, large), "box": z[i]["box"],
+                                             "rank": list(z).index(i) + 1} for i in ids if i in z]}
 
     # 3. Quelles œuvres traitent ce thème ? Les six premiers résultats, tels quels.
     t = get("/api/search/text", q=THEME_Q, k=12)["results"]

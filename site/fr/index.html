@@ -40,10 +40,12 @@
   <div class="opening">
     <div class="wrap">
       <div>
-        <h1>Un atlas de 80&nbsp;716 œuvres, sur un seul ordinateur</h1>
-        <p class="lead">PixPlot range de grands corpus d'œuvres par ressemblance visuelle et aide à y chercher des
-          reprises, des motifs, des gestes et des erreurs de catalogue. Il propose des pistes ; l'historien les
-          vérifie.</p>
+        <h1>Faites l'atlas visuel de vos collections d'œuvres</h1>
+        <p class="lead">PixPlot est un outil libre. Donnez-lui un dossier d'images, une collection IIIF de musée ou un
+          jeu de données : il range les œuvres par ressemblance visuelle et aide à y chercher des reprises, des
+          motifs, des gestes et des erreurs de catalogue. Il propose des pistes ; l'historien les vérifie.</p>
+        <p class="lead case">Toutes les démonstrations de cette page viennent d'un cas pratique : WikiArt,
+          80&nbsp;716 œuvres, traitées sur un seul PC.</p>
         <div class="actions">
           <a class="btn primary" href="#usages">Voir ce qu'il permet</a>
           <a class="btn" href="https://github.com/riyadhHDA/pixplot-v2">Code sur GitHub</a>
@@ -55,7 +57,7 @@
       <figure class="map-plate">
         <canvas data-map="../assets/carte.json" width="840" height="630" role="img"
           aria-label="Carte de WikiArt : 6 000 œuvres tirées au hasard, placées selon leur ressemblance de forme ; quelques groupes nommés, comme les Vierges à l'Enfant, les marines ou l'abstraction gestuelle"></canvas>
-        <figcaption class="cartel"><span><b>WikiArt, 80&nbsp;716 œuvres</b> · carte du regard « forme » (DINOv3, UMAP)</span>
+        <figcaption class="cartel"><span><b>Cas pratique : WikiArt, 80&nbsp;716 œuvres</b> · carte du regard « forme » (DINOv3, UMAP)</span>
           <span>6 000 œuvres tirées au hasard · groupes nommés par PixPlot</span></figcaption>
       </figure>
     </div>
@@ -66,8 +68,8 @@
       <div class="section-head">
         <h2>Les questions qu'on peut lui poser</h2>
         <p>Partez d'un dossier d'images, d'une collection IIIF de musée ou d'un jeu comme WikiArt, avec ou sans
-          métadonnées. Chaque planche montre ce que fait l'Atlas, avec un exemple réel tiré de WikiArt 81k. Un
-          rapprochement calculé reste une piste : il ne prouve ni une influence ni une attribution.</p>
+          métadonnées. Chaque planche montre ce que fait l'Atlas, avec une vraie réponse obtenue sur le cas pratique
+          WikiArt. Un rapprochement calculé reste une piste : il ne prouve ni une influence ni une attribution.</p>
       </div>
 
       <div class="plates">
@@ -95,14 +97,20 @@
             <p>Tracez un cadre sur une main, un drapé ou un objet, ou décrivez le détail avec des mots : PixPlot
               cherche dans 1,6 million de zones et encadre la zone trouvée dans chaque œuvre.</p>
             <dl>
-              <dt>Essai</dt><dd>« a skull » : El Greco, Cézanne, Zurbarán, Dürer, Mabuse, Ribera. Pour les zones, les
-                phrases en anglais marchent mieux.</dd>
+              <dt>Essais</dt><dd>« a skull » : El Greco, Cézanne, Zurbarán, Dürer, Mabuse, Ribera ; « a golden halo
+                around the head of a saint » : Masaccio, Fra Angelico, Rogier van der Weyden, Raphaël… Pour les zones,
+                les phrases en anglais marchent mieux.</dd>
               <dt>Dans l'Atlas</dt><dd>bouton « Chercher ce détail » sur la fiche, ou <kbd>/</kbd></dd>
             </dl>
           </div>
+          <div class="figs">
           <figure class="scene" data-scene="motif" data-label="Un cadre tracé autour d'une auréole, et six œuvres où la même zone est retrouvée et encadrée">
             <figcaption class="cartel"><span>Réponse réelle de PixPlot · WikiArt 81k</span><button class="replay" type="button" hidden>Rejouer</button></figcaption>
           </figure>
+          <figure class="scene" data-scene="motif2" data-label="Dix œuvres, de Masaccio à Raphaël, où PixPlot encadre l'auréole d'un saint">
+            <figcaption class="cartel"><span>Second exemple · « a golden halo around the head of a saint »</span><button class="replay" type="button" hidden>Rejouer</button></figcaption>
+          </figure>
+          </div>
         </article>
 
         <article class="plate">
@@ -265,8 +273,8 @@
   <section>
     <div class="wrap">
       <div class="section-head">
-        <h2>L'Atlas, tel qu'il est</h2>
-        <p>WikiArt entier (80&nbsp;716 œuvres, 33,7 Go) traité de bout en bout en environ 1 h 21 sur un PC de bureau
+        <h2>Le cas pratique : WikiArt sur un seul PC</h2>
+        <p>Pour éprouver l'outil, WikiArt entier (80&nbsp;716 œuvres, 33,7 Go) a été traité de bout en bout en environ 1 h 21 sur un PC de bureau
           (Windows 11, Radeon RX 7900 GRE). L'Atlas s'ouvre en quelques secondes ; une recherche par texte ou par
           détail répond en 0,25 s.</p>
       </div>
@@ -286,7 +294,7 @@
   <section id="mesures">
     <div class="wrap">
       <div class="section-head">
-        <h2>Ce que chaque regard retrouve</h2>
+        <h2>Ce que chaque regard retrouve, sur WikiArt</h2>
         <p>Principe suivi : un modèle n'entre dans PixPlot que s'il améliore un banc d'essai, et les essais négatifs
           sont publiés. Huit modèles ont été mesurés puis écartés, dont TIPSv2, PE-Spatial, SSCD, Depth Anything,
           PE-Core et CSD.</p>
@@ -372,7 +380,9 @@ pixplot serve --open                   <span class="c"># ouvre l'Atlas sur http:
       <div>
         <h2>Auteur</h2>
         <p><b>Riyadh HADJBA</b>, étudiant en histoire de l'art à l'<a href="https://www.unistra.fr">Université de Strasbourg</a>.
-          Projet conçu et dirigé par Riyadh HADJBA, développé avec l'aide d'assistants de code (Claude et Gemini).</p>
+          Projet conçu et dirigé par Riyadh HADJBA, développé avec plusieurs assistants d'IA qu'il coordonne :
+          Claude (Anthropic) et Gemini (Google) pour le code, DeepSeek pour les lectures scientifiques et le banc
+          d'essai de Wölfflin, Mistral pour des contrôles qualité.</p>
         <p class="fine">Inspiré du <a href="https://github.com/YaleDHLab/pix-plot">PixPlot</a> du Yale DHLab (2018),
           réécrit de zéro. Citable : <a href="https://doi.org/10.5281/zenodo.24363789">DOI 10.5281/zenodo.24363789</a>.</p>
       </div>

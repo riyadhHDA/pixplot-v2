@@ -39,9 +39,12 @@
   <div class="opening">
     <div class="wrap">
       <div>
-        <h1>An atlas of 80,716 artworks, on a single computer</h1>
-        <p class="lead">PixPlot arranges large collections of artworks by visual similarity and helps you look in them
-          for reworkings, motifs, gestures and catalogue errors. It suggests leads; the art historian checks them.</p>
+        <h1>Build a visual atlas of your art collections</h1>
+        <p class="lead">PixPlot is a free tool. Give it a folder of images, a museum IIIF collection or a dataset: it
+          arranges the works by visual similarity and helps you look in them for reworkings, motifs, gestures and
+          catalogue errors. It suggests leads; the art historian checks them.</p>
+        <p class="lead case">Every demonstration on this page comes from one case study: WikiArt, 80,716 works,
+          processed on a single PC.</p>
         <div class="actions">
           <a class="btn primary" href="#uses">See what it does</a>
           <a class="btn" href="https://github.com/riyadhHDA/pixplot-v2">Code on GitHub</a>
@@ -53,7 +56,7 @@
       <figure class="map-plate">
         <canvas data-map="assets/carte.json" width="840" height="630" role="img"
           aria-label="Map of WikiArt: 6,000 randomly drawn works, placed by similarity of form; a few named groups, such as Madonna and Child, seascapes or gestural abstraction"></canvas>
-        <figcaption class="cartel"><span><b>WikiArt, 80,716 works</b> · map of the "form" regard (DINOv3, UMAP)</span>
+        <figcaption class="cartel"><span><b>Case study: WikiArt, 80,716 works</b> · map of the "form" regard (DINOv3, UMAP)</span>
           <span>6,000 works drawn at random · groups named by PixPlot</span></figcaption>
       </figure>
     </div>
@@ -64,8 +67,8 @@
       <div class="section-head">
         <h2>The questions you can ask it</h2>
         <p>Start from a folder of images, a museum IIIF collection or a dataset like WikiArt, with or without
-          metadata. Each plate shows what the Atlas does, with a real example from WikiArt 81k. A computed match is
-          still a lead: it proves neither influence nor attribution.</p>
+          metadata. Each plate shows what the Atlas does, with a real answer obtained on the WikiArt case study. A
+          computed match is still a lead: it proves neither influence nor attribution.</p>
       </div>
 
       <div class="plates">
@@ -93,13 +96,19 @@
             <p>Draw a box round a hand, a drapery or an object, or describe the detail in words: PixPlot searches
               1.6 million zones and boxes the zone it found in every work.</p>
             <dl>
-              <dt>Tried</dt><dd>"a skull": El Greco, Cézanne, Zurbarán, Dürer, Mabuse, Ribera</dd>
+              <dt>Tried</dt><dd>"a skull": El Greco, Cézanne, Zurbarán, Dürer, Mabuse, Ribera; "a golden halo around the
+                head of a saint": Masaccio, Fra Angelico, Rogier van der Weyden, Raphael…</dd>
               <dt>In the Atlas</dt><dd>"Search this detail" on the record, or <kbd>/</kbd></dd>
             </dl>
           </div>
+          <div class="figs">
           <figure class="scene" data-scene="motif" data-label="A box drawn round a halo, and six works where the same zone is found and boxed">
             <figcaption class="cartel"><span>Real PixPlot answer · WikiArt 81k</span><button class="replay" type="button" hidden>Replay</button></figcaption>
           </figure>
+          <figure class="scene" data-scene="motif2" data-label="Ten works, from Masaccio to Raphael, where PixPlot boxes a saint's halo">
+            <figcaption class="cartel"><span>Second example · "a golden halo around the head of a saint"</span><button class="replay" type="button" hidden>Replay</button></figcaption>
+          </figure>
+          </div>
         </article>
 
         <article class="plate">
@@ -261,8 +270,8 @@
   <section>
     <div class="wrap">
       <div class="section-head">
-        <h2>The Atlas as it is</h2>
-        <p>All of WikiArt (80,716 works, 33.7 GB) processed end to end in about 1 h 21 on a desktop PC (Windows 11,
+        <h2>The case study: WikiArt on a single PC</h2>
+        <p>To put the tool to the test, all of WikiArt (80,716 works, 33.7 GB) was processed end to end in about 1 h 21 on a desktop PC (Windows 11,
           Radeon RX 7900 GRE). The Atlas opens in a few seconds; a text or detail search answers in 0.25 s.</p>
       </div>
       <figure class="shot">
@@ -281,7 +290,7 @@
   <section id="measures">
     <div class="wrap">
       <div class="section-head">
-        <h2>What each regard finds</h2>
+        <h2>What each regard finds, on WikiArt</h2>
         <p>Rule followed: a model enters PixPlot only if it improves a benchmark, and negative results are published.
           Eight models were measured and set aside, among them TIPSv2, PE-Spatial, SSCD, Depth Anything, PE-Core and
           CSD.</p>
@@ -367,7 +376,9 @@ pixplot serve --open                   <span class="c"># opens the Atlas at http
       <div>
         <h2>Author</h2>
         <p><b>Riyadh HADJBA</b>, art history student at the <a href="https://www.unistra.fr">University of Strasbourg</a>.
-          Project designed and directed by Riyadh HADJBA, developed with the help of coding assistants (Claude and Gemini).</p>
+          Project designed and directed by Riyadh HADJBA, developed with several AI assistants he coordinates:
+          Claude (Anthropic) and Gemini (Google) for the code, DeepSeek for the scientific reading and the Wölfflin
+          benchmark, Mistral for quality checks.</p>
         <p class="fine">Inspired by the Yale DHLab's <a href="https://github.com/YaleDHLab/pix-plot">PixPlot</a> (2018),
           rewritten from scratch. Citable: <a href="https://doi.org/10.5281/zenodo.24363789">DOI 10.5281/zenodo.24363789</a>.</p>
       </div>

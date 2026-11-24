@@ -221,7 +221,10 @@ corrigé ; 63 tests passent, Atlas vérifié.
     « Rejouer », état final direct si mouvement réduit. Exemples : Van Gogh d'après Millet (1ʳᵉ voisine sa copie
     de 1881, 2ᵉ l'original), « a skull » (El Greco, Cézanne…), Titien ↔ Mantegna en miroir, Sisley entouré de
     Monet, Corot en double, notion « échelle » = Descentes de croix, axe de Wölfflin. « une auréole » ne donne
-    rien de bon en recherche de zone (abstractions) : le site ne la cite plus ;
+    rien de bon en recherche de zone (abstractions) : le site ne la cite plus ; « a golden halo around the
+    head of a saint » marche bien (second exemple, 10 œuvres). Chaque démonstration s'agrandit (clic ou bouton,
+    boîte de dialogue modale). Titre : PixPlot est un outil, WikiArt un cas pratique. Crédits : Claude et Gemini
+    (code), DeepSeek (lectures, banc Wölfflin), Mistral (contrôles qualité) ;
     ouverture : un échantillon réel de la carte 81k (`site/assets/carte.json`, 6 000 positions UMAP et
     10 noms de groupes, 68 Ko) qui se range à sa place. Thème clair (carton de montage) et sombre, polices
     système (Palatino), pas de police externe. Guide aux mêmes styles. Colonne « artiste » du tableau mise à

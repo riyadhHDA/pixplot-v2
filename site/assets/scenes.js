@@ -192,6 +192,25 @@
     S.at(6.6, { show: ["note"] });
   };
 
+  BUILD.motif2 = (S, d, A) => {
+    const r = d.scenes.motif2;
+    S.text("q", 40, 34, `<span class="field">${r.query}</span>`, "lbl");
+    const cams = [];
+    r.hits.forEach((h, i) => {
+      // cinq colonnes, deux rangées ; chaque œuvre tient dans une case de 200 × 250
+      const a = A[h.id], col = i % 5, row = Math.floor(i / 5), wide = a.w / a.h > 200 / 250;
+      S.art("a" + i, h.id, 40 + col * 228, 100 + row * 320, wide ? 200 : 250, { byH: !wide, large: true,
+        cap: `${short(a.artist)}, ${a.date || ""} · ${L("rang", "rank")} ${h.rank}` });
+      const b = S.box("b" + i, "a" + i, h.box);
+      cams.push([b.cx - 150, b.cy - 94, 300]);
+    });
+    S.at(0, { cam: [0, 0, 1200], show: ["q"] });
+    r.hits.forEach((_, i) => S.at(0.4 + i * 0.12, { show: ["a" + i] }));
+    [0, 3, 6, 8].forEach((k, n) => S.at(1.8 + n * 1.3, { cam: cams[k], d: 1.0 }).at(2.5 + n * 1.3, { draw: ["b" + k], lit: ["b" + k] }));
+    S.at(7.2, { cam: [0, 0, 1200], d: 1.2, draw: r.hits.map((_, i) => "b" + i).filter((k) => !["b0", "b3", "b6", "b8"].includes(k)),
+      lit: r.hits.map((_, i) => "b" + i) });
+  };
+
   BUILD.theme = (S, d, A) => {
     const r = d.scenes.theme;
     S.text("q", 40, 34, `<span class="field">${r.query}</span> <span class="muted">${L("· phrase libre (SigLIP 2)", "· free text (SigLIP 2)")}</span>`, "lbl");
@@ -345,6 +364,54 @@
       .at(3.0, { cam: [0, 0, 1200], d: 1.2 }).at(3.6, { draw: ["lp"], show: ["pk"], lit: ["pk"] });
   };
 
+  // ------------------------------------------------------------------ agrandir une démonstration
+  // Boîte de dialogue modale (showModal : focus piégé, Échap) ; fermeture aussi par un clic à côté
+  // (closedby="any", avec un repli là où il manque) et par un bouton visible. La planche y est déplacée,
+  // puis remise à sa place à la fermeture ; elle se remet à l'échelle toute seule.
+  let zoom = null;
+  function zoomDialog() {
+    if (zoom) return zoom;
+    const dlg = document.createElement("dialog");
+    dlg.className = "zoom"; dlg.setAttribute("closedby", "any");
+    dlg.setAttribute("aria-labelledby", "zoom-title");
+    dlg.innerHTML = `<div class="zoom-bar"><span class="zoom-title" id="zoom-title"></span>
+      <button type="button" class="zoom-replay">${L("Rejouer", "Replay")}</button>
+      <button type="button" class="zoom-close">${L("Fermer", "Close")}</button></div><div class="zoom-slot"></div>`;
+    document.body.append(dlg);
+    if (!("closedBy" in HTMLDialogElement.prototype)) {
+      dlg.addEventListener("click", (e) => {
+        if (e.target !== dlg) return;
+        const r = dlg.getBoundingClientRect();
+        if (r.top <= e.clientY && e.clientY <= r.bottom && r.left <= e.clientX && e.clientX <= r.right) return;
+        dlg.close();
+      });
+    }
+    zoom = { dlg, fig: null, ph: null };
+    dlg.querySelector(".zoom-close").addEventListener("click", () => dlg.close());
+    dlg.querySelector(".zoom-replay").addEventListener("click", () => zoom.fig && play(zoom.fig._scene));
+    dlg.addEventListener("close", () => {
+      if (!zoom.fig) return;
+      const st = dlg.querySelector(".stage");
+      zoom.ph.replaceWith(st);
+      zoom.fig.querySelector(".zoom-open")?.focus();
+      zoom.fig = null;
+    });
+    return zoom;
+  }
+  function openZoom(fig) {
+    const z = zoomDialog();
+    if (z.fig) return;
+    const st = fig.querySelector(".stage");
+    z.ph = document.createElement("div"); z.ph.className = "stage-ph"; z.ph.style.height = st.offsetHeight + "px";
+    st.replaceWith(z.ph);
+    z.dlg.querySelector(".zoom-slot").append(st);
+    z.dlg.querySelector(".zoom-title").textContent = fig.closest(".plate")?.querySelector("h3")?.textContent || "";
+    z.dlg.querySelector(".zoom-replay").hidden = !motionOK;
+    z.fig = fig;
+    z.dlg.showModal();
+    if (motionOK) play(fig._scene);
+  }
+
   // ------------------------------------------------------------------ montage
   const figures = [...document.querySelectorAll("figure.scene[data-scene]")];
   if (!figures.length || !window.fetch) return;
@@ -365,7 +432,15 @@
         const stage = fig.querySelector(".stage");
         stage.setAttribute("role", "img"); stage.setAttribute("aria-label", fig.dataset.label || "");
         restState(S);
-        const btn = fig.querySelector(".replay");
+        // agrandir : un clic sur la planche, ou le bouton (clavier) placé avant « Rejouer »
+        const open = document.createElement("button");
+        open.type = "button"; open.className = "replay zoom-open"; open.textContent = L("Agrandir", "Enlarge");
+        const cartel = fig.querySelector(".cartel");
+        if (cartel) { const box = document.createElement("span"); box.className = "cartel-actions";
+          box.append(open); const rp = cartel.querySelector(".replay:not(.zoom-open)"); if (rp) box.append(rp); cartel.append(box); }
+        open.addEventListener("click", () => openZoom(fig));
+        stage.addEventListener("click", () => { if (!zoom || zoom.fig !== fig) openZoom(fig); });
+        const btn = fig.querySelector(".replay:not(.zoom-open)");
         if (motionOK) {
           arm(S); io.observe(fig);
           if (btn) { btn.hidden = false; btn.addEventListener("click", () => play(S)); }
