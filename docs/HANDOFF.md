@@ -274,6 +274,13 @@ corrigé ; 63 tests passent, Atlas vérifié.
 
 ## En attente de l'utilisateur
 
+- **Sauvegarde du travail fait à la main (constaté le 24/11/2026)** : le code est sur GitHub, mais
+  `data/` ne l'est pas, et aucune sauvegarde (OneDrive, disque externe) n'a été trouvée. Le plus
+  précieux, car irremplaçable : `data/wikiart81k/bench/pairs.csv` (1 296 lignes, relectures comprises ;
+  la copie versionnée `bench/wikiart81k_pairs.csv` n'a que 105 lignes et date du 16/11), le carnet
+  `notebook.sqlite`, les noms de groupes relus. Proposé : une commande qui recopie ces fichiers dans
+  `bench/` (versionné), plus une copie de `data/` sur un disque externe. Le reste se recalcule.
+
 - **Profil GitHub** : la page de présentation (dépôt `riyadhHDA/riyadhHDA`) est en ligne ; le nom, la
   bio, le lien et les dépôts épinglés sont à régler par l'utilisateur (le jeton `gh` n'a pas le droit
   `user`).
