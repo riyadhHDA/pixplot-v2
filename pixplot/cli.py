@@ -17,7 +17,7 @@ from pathlib import Path
 from .config import get_settings
 from .runs import Run, latest_run, list_runs
 
-STAGES = ("features", "index", "analysis", "export")
+STAGES = ("features", "index", "analysis", "tiles", "export")
 
 TODO: dict[str, str] = {}
 
@@ -1232,6 +1232,43 @@ def cmd_status(args) -> int:
     return 0
 
 
+# --------------------------------------------------------------------------- tiles
+def cmd_tiles(args) -> int:
+    from .analysis.tiles import build_tiles
+
+    s = get_settings(args.data)
+    analysis = (
+        Run.load(s.runs_dir / "analysis" / args.analysis)
+        if args.analysis
+        else latest_run("analysis", runs_dir=s.runs_dir)
+    )
+    if analysis is None:
+        raise SystemExit("Aucune analyse terminée : lancez d'abord `pixplot analyze`.")
+
+    log_path = Path(args.log) if args.log else (s.data_dir / "tiles.log")
+    run = build_tiles(
+        analysis,
+        s.thumbs_dir,
+        s.runs_dir,
+        max_level=args.max_level,
+        tile_size=args.tile_size,
+        fmt=args.format,
+        quality=args.quality,
+        resume=not args.no_resume,
+        log_path=log_path,
+        progress=_progress("Tuiles"),
+    )
+    out = run.manifest.get("outputs", {})
+    mb = out.get("bytes", 0) / (1024 * 1024)
+    print(f"\nPyramide de tuiles : {run.id}")
+    print(f"  Analyse   : {analysis.id}")
+    print(f"  Tuiles    : {out.get('tiles', 0)} (niveaux 0..{args.max_level}, reprises : {out.get('skipped_tiles', 0)})")
+    print(f"  Source    : {out.get('source', '?')}")
+    print(f"  Disque    : {mb:.2f} Mio  ·  durée : {out.get('duration_s', 0):.2f} s")
+    print(f"  Journal   : {log_path}")
+    return 0
+
+
 # --------------------------------------------------------------------------- main
 def build_parser() -> argparse.ArgumentParser:
     from . import __version__
@@ -1346,6 +1383,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--localmap", action="store_true",
                    help="carte d'essai LocalMAP du regard principal (paquet pacmap ; pas mieux qu'UMAP, ARCHITECTURE)")
     p.set_defaults(func=cmd_maps)
+
+    p = sub.add_parser("tiles", help="pyramide de tuiles précalculées pour la carte principale de l'Atlas (CPU)")
+    p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
+    p.add_argument("--max-level", type=int, default=4, help="niveau de zoom maximal de la pyramide (défaut : 4 → 16×16 tuiles)")
+    p.add_argument("--tile-size", type=int, default=512, help="côté d'une tuile en pixels (défaut : 512)")
+    p.add_argument("--format", default="webp", choices=["webp", "jpg", "png"], help="format d'image des tuiles (défaut : webp)")
+    p.add_argument("--quality", type=int, default=85, help="qualité WebP/JPEG (défaut : 85)")
+    p.add_argument("--no-resume", action="store_true", help="ne pas reprendre un calcul interrompu")
+    p.add_argument("--log", help="fichier journal (défaut : <données>/tiles.log)")
+    p.set_defaults(func=cmd_tiles)
 
     p = sub.add_parser("wikiart-noms", help="titres, dates (MMArt) et émotions (ArtEmis) pour WikiArt, par empreinte d'image")
     p.add_argument("--mmart", help="dossier du jeu MMArt téléchargé (huggingface.co/datasets/Shuaimyself/MMArt)")

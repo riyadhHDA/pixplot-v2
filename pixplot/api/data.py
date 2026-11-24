@@ -22,6 +22,7 @@ from ..analysis import iconclass
 from ..analysis.naming import load_names
 from ..analysis.spacemaps import available_maps, load_space_map
 from ..analysis.suspects import load_suspects
+from ..analysis.tiles import find_tiles_run
 from ..config import Settings
 from ..runs import Run, latest_run
 
@@ -173,6 +174,7 @@ class AtlasData:
             "named_groups": bool(self.names),
             "iconclass": bool(self.iconclass),
             "space_maps": available_maps(self.analysis),
+            "tiles": self.tiles_run() is not None,
             "communities": communities.available(self.analysis),
             "places": self.place_counts(),
             "disagreements": self.disagreement_counts(),
@@ -244,6 +246,12 @@ class AtlasData:
         if not hasattr(self, "_dis_cache"):
             self._dis_cache = disagreements.load(self.analysis)
         return self._dis_cache
+
+    def tiles_run(self) -> Run | None:
+        """Dernier run de tuiles terminé pour cette analyse, s'il existe."""
+        if not hasattr(self, "_tiles_run_cache"):
+            self._tiles_run_cache = find_tiles_run(self.analysis, self.settings.runs_dir)
+        return self._tiles_run_cache
 
     def disagreement_counts(self) -> dict[str, int]:
         d = self._disagreements()

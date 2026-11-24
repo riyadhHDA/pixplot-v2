@@ -17,7 +17,7 @@ Un corpus = un dossier (`--data`, ou la variable `PIXPLOT_DATA`), **jamais dans 
 ├── catalog.sqlite        le catalogue : une ligne par image, ses étiquettes, ses lieux
 ├── notebook.sqlite       le carnet de recherche
 ├── thumbs/               les vignettes
-├── runs/                 chaque calcul, daté (features/, index/, analysis/)
+├── runs/                 chaque calcul, daté (features/, index/, analysis/, tiles/)
 ├── bench/                paires de référence et rapports des bancs d'essai
 ├── corpus/               les images d'origine (selon l'import)
 ├── fiche_de_donnees.md   la fiche de données (`pixplot corpus --datasheet`)
@@ -51,7 +51,7 @@ autres fichiers désignent les œuvres par cet identifiant.
 
 Chaque calcul est un **run** : un dossier `runs/<étape>/<nom>_<AAAAMMJJ-HHMMSS>/`. Un run n'est jamais
 écrasé ; on en crée un nouveau. Étapes : `features` (vecteurs), `index` (FAISS), `analysis` (carte,
-groupes, et tout ce qui en dépend).
+groupes, et tout ce qui en dépend), `tiles` (pyramide de tuiles de la carte principale).
 
 ### `manifest.json` (dans chaque run)
 
@@ -103,6 +103,17 @@ faite sans vecteur. Un run inachevé reprend où il s'était arrêté.
 Les runs `analysis/notions_<regard>_…` (§ 37) ne sont pas des analyses de carte : `sae.npz` (poids de
 l'auto-encodeur) et `notions.json` (`space`, `explained_variance`, `dead`, `baseline`, `features` :
 une entrée par notion avec `feature`, `frequency`, `top`, `labels`, `iconclass`).
+
+### Tuiles (`tiles/…`)
+
+Pyramide de tuiles précalculées pour la carte principale (`pixplot tiles`), rattachée à son analyse
+par `parent` dans `manifest.json`. Chaque fichier est écrit de façon atomique (`.tmp` puis
+remplacement), ce qui permet la reprise après coupure.
+
+| Fichier | Format | Contenu |
+|---|---|---|
+| `tiles.json` | JSON | paramètres (`format`, `tile_size`, `extent`, `world`, `min_level`, `max_level`, `background`, `icon_size`, `count`, `analysis`) et `levels` (tuiles non vides `"x/y"` par niveau) |
+| `<niveau>/<x>/<y>.webp` | WebP (ou JPEG/PNG) | tuile de `tile_size × tile_size` px (512 px par défaut), `x` de gauche à droite, `y` de haut en bas, sur fond `#0f0f10` |
 
 ## 5. Les paires de référence
 
