@@ -27,7 +27,10 @@
     const under = svg.cloneNode();                 // liens entre œuvres et blocs : sous eux, pour ne pas les barrer
     world.append(under, svg); fit.append(world); stage.append(fit);
     fig.insertBefore(stage, fig.firstChild);
-    new ResizeObserver(() => { fit.style.scale = String(stage.clientWidth / W); }).observe(stage);
+    // planche étroite (téléphone) : les légendes deviendraient illisibles ; le style les masque et grossit
+    // les étiquettes utiles (classe « narrow »), le texte de la planche disant déjà le reste
+    new ResizeObserver(() => { fit.style.scale = String(stage.clientWidth / W);
+      stage.classList.toggle("narrow", stage.clientWidth < 520); }).observe(stage);
 
     const els = {}, steps = [];
     let rest = [0, 0, W];

@@ -238,6 +238,14 @@ dialog.zoom::backdrop { background: rgb(8 10 12 / 0.8); overflow: hidden; oversc
 .metric .bar { display: inline-block; width: 420px; height: 16px; background: var(--rule); position: relative; }
 .metric .bar i { position: absolute; inset: 0 auto 0 0; background: var(--glow); }
 .metric .bar.dim i { background: var(--ink-2); }
+/* planche étroite : légendes et notes masquées (dites dans le texte de la planche), étiquettes grossies */
+.stage.narrow :is(.w-cap, .w-text.note) { display: none; }
+.stage.narrow .w-text { font-size: 34px; }
+.stage.narrow .w-text .field { font-size: 34px; }
+.stage.narrow :is(.mono-t, .muted-t) { font-size: 28px; }
+.stage.narrow .metric .bar { width: 300px; height: 24px; }
+.stage.narrow .metric b { width: 130px; }
+.stage.narrow .ov :is(.link, .hot) { stroke-width: 4.5; }
 .ov :is(rect, path) { fill: none; stroke-dasharray: 1; }
 .ov .hot { stroke: var(--hot); stroke-width: 3; }
 .ov .hot.lit { filter: drop-shadow(0 0 6px var(--hot)); }
