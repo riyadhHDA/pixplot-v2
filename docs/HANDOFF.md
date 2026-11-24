@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 23/11/2026 (posture dans l'Atlas fusionnée).*
+*Dernière mise à jour : 24/11/2026 (notions du regard « forme »).*
 
 ## Version publiée
 
@@ -187,7 +187,10 @@ corrigé ; 63 tests passent, Atlas vérifié.
 - **Après la 0.21.0 (23/11/2026)** : planche « posture » dans le README FR + EN (poussée). Claude :
   référence des commandes `docs/COMMANDS.fr.md` / `.md` (41 commandes, `tests/test_commands_doc.py`,
   condition de la 1.0), non publiée. Notions du regard forme **calculées** (run `notions_forme_20261123-132834`, 50 min,
-  2 048 notions vivantes, 63,4 % de variance contre 73,7 % pour le sujet ; pas encore lues ni montrées).
+  2 048 notions vivantes, 63,4 % de variance contre 73,7 % pour le sujet). **Lues et montrées le
+  24/11/2026, non publié** (ARCHITECTURE § 42) : nommées avec Iconclass à travers SigLIP 2 (489 sûres,
+  `pixplot notions --nommer`, copie avant noms : `notions.avant-noms.json`) ; panneau « Notions » à deux
+  regards, `/api/notions?space=forme`, `explore_notions(space=…)`.
   **Posture dans l'Atlas, en essai (Neon), fusionné le 23/11/2026, non publié** (ARCHITECTURE § 41,
   `handoff/gemini-posture-atlas.md`) : `vitpose` sorti de `NOT_KEPT`, `posture` dans
   `spaces.EXPERIMENTAL` ; voisines exactes `PostureIndex` (toutes figures, miroir), squelettes dans la

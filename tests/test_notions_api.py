@@ -18,7 +18,7 @@ from pixplot.analysis import sae  # noqa: E402
 from pixplot.analysis.layout import load_valid  # noqa: E402
 from pixplot.api.app import create_app  # noqa: E402
 from pixplot.api.data import AtlasData  # noqa: E402
-from pixplot.runs import create_run, latest_run  # noqa: E402
+from pixplot.runs import Run, create_run, latest_run  # noqa: E402
 
 
 @pytest.fixture
@@ -127,3 +127,55 @@ def test_notions_routes_and_framed_tab(notions_client):
     assert html.index("atlas-notions.js") < html.index("atlas-ui.js")
     js = c.get("/atlas-notions.js")
     assert js.status_code == 200 and "renderNotions" in js.text and "renderFramed" in js.text
+
+
+def test_notions_du_regard_forme_a_part(notions_client, atlas_env):
+    """Un second jeu de notions (regard « forme ») se consulte à part ; « sujet » reste le défaut
+    et la notion « cadre » ne vaut que pour lui."""
+    import json
+
+    _, ids, _ = notions_client
+    s, _ = atlas_env
+    sujet = sae.latest_notions_run(s.runs_dir, "sujet")
+    forme = create_run("analysis", "notions_forme", {"features": 96, "k": 2},
+                       parent=Run.load(s.runs_dir / sujet.manifest["parent"]), runs_dir=s.runs_dir)
+    try:
+        shutil.copy(Path(sujet.path) / "sae.npz", Path(forme.path) / "sae.npz")
+        meta = json.loads((Path(sujet.path) / "notions.json").read_text(encoding="utf-8"))
+        meta["space"] = "forme"
+        meta["features"][0]["iconclass"] = {"notation": "25G", "fr": "plantes", "z": 6.0, "via": "sujet"}
+        (Path(forme.path) / "notions.json").write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
+        forme.complete(notions=2, dead=94)
+        c = TestClient(create_app(AtlasData.load(s)))
+
+        assert c.get("/api/notions").json()["space"] == "sujet"            # défaut inchangé
+        lst = c.get("/api/notions", params={"space": "forme"}).json()
+        assert lst["space"] == "forme" and lst["spaces"] == ["sujet", "forme"] and lst["named_via"] == "sujet"
+        assert lst["framed"] is None                                         # « cadre » : regard « sujet » seulement
+        it = {x["feature"]: x for x in lst["items"]}[5]
+        assert it["label"] == "plantes" and it["iconclass"]["via"] == "sujet"
+        d = c.get("/api/notions/5", params={"space": "forme"}).json()
+        assert d["space"] == "forme" and d["run"] == forme.id and d["items"][0]["id"] == int(ids[0])
+        assert c.get("/api/notions", params={"space": "couleur"}).status_code == 422
+    finally:
+        shutil.rmtree(forme.path, ignore_errors=True)
+
+
+def test_noms_a_travers_siglip(notions_client, atlas_env):
+    """Les notions d'un regard muet sont nommées d'après le centroïde, dans un autre regard, de leurs
+    œuvres les plus fortes ; le nom porte ``via``."""
+    import json
+
+    s, _ = atlas_env
+    run = sae.latest_notions_run(s.runs_dir, "sujet")
+    feat_ids, X = load_valid(Run.load(s.runs_dir / run.manifest["parent"]))
+    # vocabulaire : chaque notion Iconclass est l'œuvre la plus forte d'une notion apprise
+    # (n° 5 → 1re œuvre, n° 88 → 2e) ; avec top=1, chaque notion doit retrouver la sienne
+    vocab_vecs = np.vstack([X[0], X[1]]).astype(np.float32)
+    vocab_vecs /= np.linalg.norm(vocab_vecs, axis=1, keepdims=True)
+    vocab = [{"notation": f"N{i}", "fr": f"notion {i}"} for i in range(2)]
+    n = sae.name_through_siglip(run, s.runs_dir, feat_ids, X, vocab_vecs, vocab, top=1)
+    feats = {f["feature"]: f for f in json.loads((Path(run.path) / "notions.json").read_text(encoding="utf-8"))["features"]}
+    assert n == 2
+    assert feats[5]["iconclass"]["notation"] == "N0" and feats[5]["iconclass"]["via"] == "sujet"
+    assert feats[88]["iconclass"]["notation"] == "N1"

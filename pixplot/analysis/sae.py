@@ -141,13 +141,50 @@ def describe(model: dict, ids: np.ndarray, X: np.ndarray, meta: dict[int, dict],
         feats.append({"feature": f, "frequency": round(n_on / len(ids), 5), "top": [int(ids[r]) for r in rows[:12]],
                       "labels": labels(rows)})
     if notion_vecs is not None and notions:
-        C = np.stack(centroids)
-        S = C @ notion_vecs.T                                  # (notions apprises, notions Iconclass)
-        Zs = (S - S.mean(axis=0)) / (S.std(axis=0) + 1e-6)     # z-score : ce qui distingue cette notion
-        for i, f in enumerate(feats):
-            j = int(np.argmax(Zs[i]))
-            f["iconclass"] = {"notation": notions[j]["notation"], "fr": notions[j]["fr"], "z": round(float(Zs[i, j]), 2)}
+        for f, ic in zip(feats, iconclass_from_centroids(np.stack(centroids), notion_vecs, notions)):
+            f["iconclass"] = ic
     return feats, baseline
+
+
+def iconclass_from_centroids(C: np.ndarray, notion_vecs: np.ndarray, notions: list[dict]) -> list[dict]:
+    """Notion Iconclass la plus distinctive pour chaque centroïde (lignes de ``C``, normalisées) :
+    z-score de la similarité par notion Iconclass, calculé sur l'ensemble des notions apprises."""
+    S = C @ notion_vecs.T                                  # (notions apprises, notions Iconclass)
+    Zs = (S - S.mean(axis=0)) / (S.std(axis=0) + 1e-6)     # z-score : ce qui distingue cette notion
+    out = []
+    for i in range(len(C)):
+        j = int(np.argmax(Zs[i]))
+        out.append({"notation": notions[j]["notation"], "fr": notions[j]["fr"], "z": round(float(Zs[i, j]), 2)})
+    return out
+
+
+def name_through_siglip(run, runs_dir: Path, sig_ids: np.ndarray, sig_X: np.ndarray, notion_vecs: np.ndarray,
+                        notions: list[dict], top: int = 50) -> int:
+    """Nomme avec Iconclass les notions d'un regard muet (DINOv3) : on prend les ``top`` œuvres qui
+    allument le plus chaque notion, on les regarde avec SigLIP 2 (centroïde de leurs vecteurs), et l'on
+    cherche la notion Iconclass la plus proche, comme pour les noms de groupes (ARCHITECTURE § 23).
+    Écrit ``iconclass`` (avec ``via: "sujet"``) dans ``notions.json`` ; renvoie le nombre de notions
+    nommées. Le nom dit ce que *montrent* ces œuvres selon SigLIP 2, pas ce que DINOv3 y a vu."""
+    idx = encode_index(run, runs_dir)
+    meta = load_notions(run)
+    if idx is None or meta is None:
+        raise ValueError("Run de notions incomplet (sae.npz, vecteurs parents ou notions.json manquants).")
+    row = {int(i): r for r, i in enumerate(sig_ids)}
+    feats, cents = [], []
+    for f in meta["features"]:
+        k = int(f["feature"])
+        lo, hi = int(idx["offsets"][k]), int(idx["offsets"][k + 1])
+        rows = [row[int(i)] for i in idx["ids"][lo:hi][: top * 2] if int(i) in row][:top]
+        if not rows:
+            f.pop("iconclass", None)
+            continue
+        c = sig_X[rows].astype(np.float32).mean(axis=0)
+        cents.append(c / max(np.linalg.norm(c), 1e-12))
+        feats.append(f)
+    for f, ic in zip(feats, iconclass_from_centroids(np.stack(cents), notion_vecs, notions)):
+        f["iconclass"] = {**ic, "via": "sujet"}
+    (Path(run.path) / "notions.json").write_text(json.dumps(meta, ensure_ascii=False), encoding="utf-8")
+    return len(feats)
 
 
 def save(run_path: Path, model: dict, feats: list[dict], baseline: dict, info: dict) -> None:

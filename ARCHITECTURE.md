@@ -1876,3 +1876,47 @@ limits. Work by Gemini 4 Neon (`docs/handoff/gemini-posture-atlas.md`), reviewed
 figures, and find nothing in landscapes, still lifes and tightly cropped portraits. No 2D map of its own
 (works without a figure would have no place on it). The drawings realign on hover after the window is
 resized. A similar pose is a lead, not proof that one artist saw the other.
+
+## 42. Notions of the "form" regard, named through SigLIP 2 (2026-11-24)
+
+**Question.** § 37 opened the "subject" regard (SigLIP 2) into 1,792 notions. What does the same method give
+on the "form" regard (DINOv3), and how can its notions be named when DINOv3 cannot read text?
+
+**Computation.** `pixplot notions --space forme`: same autoencoder (TopK Matryoshka, 2,048 notions, 16 per
+work, 30 epochs), on the 80,716 DINOv3 vectors; 50 min on the CPU (run `notions_forme_20261123-132834`).
+
+**Naming through another regard.** Iconclass is a list of words: only SigLIP 2 can compare it with images.
+For each form notion, we take its 50 strongest works (exact activations), average their **SigLIP 2**
+vectors, and look for the most distinctive Iconclass notion (z-score over all notions), as for the names of
+the form groups (§ 23). The name therefore says what these works **show** according to SigLIP 2, not what
+DINOv3 saw in them; the Atlas and the MCP say so (`via: "sujet"`). `pixplot notions --nommer RUN` does it on
+an existing run (3.7 s); a new computation on form does it by itself.
+
+| | Subject (§ 37) | Form |
+|---|---|---|
+| Live notions | 1,792 of 2,048 | 2,048 of 2,048 |
+| Explained variance (held-out works) | 73.7 % | 63.4 % |
+| Reliable Iconclass name (z ≥ 5) | 506 | 489 (through SigLIP 2) |
+| Dominant catalogue label (≥ 60 %), genre / style / artist | 423 / 353 / 57 | 572 / 143 / 18 |
+| Neither | 709 | 1,315 |
+
+**Reading by eye** (sheets of the 8 strongest works, outside the repository). Six named notions out of six
+are right: pumpkins (no. 1439, z 8.0), ladders (no. 607, from Fra Angelico to Léger and Chagall), vertical
+stripes (no. 1396), harvests and haystacks (no. 713), herds of horses (no. 262); one approximation:
+"wax tablet" (no. 994) actually designates Chagall's Tables of the Law. Among the notions without a reliable
+name, several are coherent to the eye and concern layout or gesture more than subject: people seated in a
+circle in drawings (no. 1588), Twombly-like gestural writing (no. 572), arched polyptychs (no. 1604). Their
+weak Iconclass names (z < 4) are wrong and stay hidden, as intended.
+
+**Reading.** Form sums up into notions less well than subject (63 % against 74 % of the variance): DINOv3
+mixes more things. Its notions are less tied to style (143 against 353) and more to genre, which fits a
+regard on composition rather than manner. Notion numbers are specific to each regard and each computation.
+
+**Interface.** The "Notions" panel (key O) offers both regards; `/api/notions?space=forme`,
+`/api/notions/{n}?space=forme`; MCP tool `explore_notions(space="forme")`. List in 38 ms, first notion
+opened in 1.7 s (index computation), then 4 ms. The "frame" notion (no. 88) applies to the "subject" regard
+only.
+
+**Limits.** A name given through SigLIP 2 inherits its biases (§ 26); the z ≥ 5 threshold was set on the
+"subject" regard (§ 37) and is checked here on 6 notions only. A notion describes what the model separates,
+not an art historian's category.

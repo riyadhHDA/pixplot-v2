@@ -60,7 +60,7 @@ corpus.
 | `pixplot suspects` | étiquettes probablement erronées (toutes les voisines disent autre chose) | `--keys`, `--space` |
 | `pixplot doublons` | œuvres entrées deux fois, répliques et variantes (SSCD) | `--same`, `--variant` |
 | `pixplot ordre` | ordre et désordre de la matière (entropie, complexité), sans GPU | `--workers` |
-| `pixplot notions` | notions apprises par un regard (auto-encodeur parcimonieux) | `--space sujet\|forme` |
+| `pixplot notions` | notions apprises par un regard (auto-encodeur parcimonieux) ; `--nommer` nomme un run existant à travers SigLIP 2 | `--space sujet\|forme`, `--nommer` |
 | `pixplot corpus` | bilan critique du corpus ; `--datasheet` écrit sa fiche de données | `--datasheet` |
 
 ## Chercher et exporter

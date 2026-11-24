@@ -357,25 +357,33 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
         return out
 
     @server.tool()
-    def explore_notions(query: str = "", notion: int | None = None, k: int = 20, offset: int = 0) -> dict:
-        """Notions apprises par le modèle (auto-encodeur parcimonieux sur le regard « sujet »,
-        ARCHITECTURE § 37) : chaque œuvre est décrite par 16 notions parmi environ 1 800, découvertes
-        sans étiquette. Sans ``notion`` : liste des notions dont le nom contient ``query`` (nom
-        Iconclass, ou style / genre / artiste dominant), avec leur nombre d'œuvres. Avec ``notion`` :
-        les œuvres où cette notion est la plus forte. Le nom Iconclass n'est donné que s'il est sûr
-        (z ≥ 5) ; sinon on indique l'étiquette du catalogue que partagent les œuvres les plus
-        marquées, ou rien. Une notion décrit ce que le modèle sépare, pas une catégorie d'historien :
-        regarder les œuvres (compare_artworks) avant de la nommer soi-même."""
+    def explore_notions(query: str = "", notion: int | None = None, k: int = 20, offset: int = 0,
+                        space: str = "sujet") -> dict:
+        """Notions apprises par le modèle (auto-encodeur parcimonieux, ARCHITECTURE §§ 37 et 42) :
+        chaque œuvre est décrite par 16 notions parmi environ 2 000, découvertes sans étiquette.
+        ``space`` : « sujet » (SigLIP 2 : objets, motifs, sujets) ou « forme » (DINOv3 : motifs,
+        mises en page, gestes ; ses noms Iconclass sont donnés à travers SigLIP 2, d'après ce que
+        montrent ses œuvres). Les numéros de notion sont propres à chaque regard. Sans ``notion`` :
+        liste des notions dont le nom contient ``query`` (nom Iconclass, ou style / genre / artiste
+        dominant), avec leur nombre d'œuvres. Avec ``notion`` : les œuvres où cette notion est la plus
+        forte. Le nom Iconclass n'est donné que s'il est sûr (z ≥ 5) ; sinon on indique l'étiquette du
+        catalogue que partagent les œuvres les plus marquées, ou rien. Une notion décrit ce que le
+        modèle sépare, pas une catégorie d'historien : regarder les œuvres (compare_artworks) avant de
+        la nommer soi-même."""
         lim = min(max(k, 1), 100)
+        if space not in ("sujet", "forme"):
+            return {"error": "space : « sujet » ou « forme »."}
         if notion is not None:
-            out = data.notion_detail_payload(int(notion), offset=max(offset, 0), limit=lim, highlight_limit=1)
+            out = data.notion_detail_payload(int(notion), offset=max(offset, 0), limit=lim, highlight_limit=1,
+                                             space=space)
             if out is None:
-                return {"error": f"Notion n° {notion} introuvable (ou notions non calculées : « pixplot notions »)."}
+                return {"error": f"Notion n° {notion} introuvable pour le regard « {space} » "
+                                 f"(ou notions non calculées : « pixplot notions --space {space} »)."}
             out.pop("highlight_ids", None)
             return out
-        payload = data.notions_payload()
+        payload = data.notions_payload(space)
         if payload is None:
-            return {"error": "Pas encore calculé : lancer « pixplot notions --space sujet »."}
+            return {"error": f"Pas encore calculé : lancer « pixplot notions --space {space} »."}
         q = query.strip().lower()
 
         def text(it: dict) -> str:

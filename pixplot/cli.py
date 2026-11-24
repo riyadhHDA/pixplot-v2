@@ -597,6 +597,12 @@ def cmd_notions(args) -> int:
 
     prefix = {"sujet": "siglip2", "forme": "dinov3_vitb16"}.get(args.space, args.space)
     s = get_settings(args.data)
+    if args.nommer:                     # nommer un run existant, sans réentraîner
+        from .runs import Run
+        target = Run.load(s.runs_dir / "analysis" / args.nommer)
+        n = _name_notions_through_siglip(s, target)
+        print(f"{target.id} : {n} notions nommées avec Iconclass à travers SigLIP 2")
+        return 0
     runs = [r for r in list_runs("features", runs_dir=s.runs_dir)
             if r.manifest["params"].get("encoder", "") == prefix or
             (prefix == "siglip2" and r.manifest["params"].get("encoder", "").startswith("siglip2"))]
@@ -629,7 +635,38 @@ def cmd_notions(args) -> int:
                                                "dead": model["dead"]})
     run.complete(notions=len(feats), dead=model["dead"])
     print(f"Notions : {run.path / 'notions.json'} ({len(feats)} vivantes)")
+    if prefix != "siglip2":
+        try:
+            n = _name_notions_through_siglip(s, run)
+            print(f"  {n} notions nommées avec Iconclass à travers SigLIP 2")
+        except SystemExit as e:
+            print(f"  pas de noms Iconclass : {e}")
     return 0
+
+
+def _name_notions_through_siglip(s, run) -> int:
+    """Noms Iconclass des notions d'un regard muet, à travers les vecteurs SigLIP 2 (§ 42)."""
+    import json
+
+    import numpy as np
+
+    from .analysis import sae as SAE
+    from .analysis.iconclass import load_vocabulary
+    from .analysis.layout import load_valid
+    from .runs import list_runs
+
+    sig = [r for r in list_runs("features", runs_dir=s.runs_dir)
+           if r.manifest["params"].get("encoder", "").startswith("siglip2")
+           and not r.manifest["params"].get("limit")]
+    dest = s.data_dir.parent / "iconclass"
+    cache, keys = dest / "vectors_siglip2_so400m.npy", dest / "vectors_siglip2_so400m.json"
+    if not sig or not (cache.exists() and keys.exists()):
+        raise SystemExit("il faut les vecteurs SigLIP 2 et ceux d'Iconclass (`pixplot iconclass`)")
+    vocab = load_vocabulary(dest)
+    if json.loads(keys.read_text(encoding="utf-8")) != [v["notation"] for v in vocab]:
+        raise SystemExit("vecteurs Iconclass périmés : relancer `pixplot iconclass`")
+    sig_ids, sig_X = load_valid(sig[-1])
+    return SAE.name_through_siglip(run, s.runs_dir, sig_ids, sig_X, np.load(cache), vocab)
 
 
 def cmd_import_places(args) -> int:
@@ -1332,6 +1369,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--features", type=int, default=2048, help="taille du dictionnaire de notions")
     p.add_argument("-k", type=int, default=16, help="notions actives par œuvre")
     p.add_argument("--epochs", type=int, default=30)
+    p.add_argument("--nommer", metavar="RUN",
+                   help="nommer avec Iconclass, à travers SigLIP 2, un run de notions existant (sans réentraîner)")
     p.set_defaults(func=cmd_notions)
 
     p = sub.add_parser("ordre", help="entropie et complexité de la matière (Sigaki et al., PNAS 2018), sans GPU")

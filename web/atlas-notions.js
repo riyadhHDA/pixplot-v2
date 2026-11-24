@@ -12,7 +12,8 @@
 const NOTIONS_PAGE = 100;
 const NOTION_HIGHLIGHT_MAX = 500;
 const framedFeature = () => ((state.info && state.info.notions && state.info.notions.framed) || {}).feature;
-const nt = { query: "", filter: "all", sort: "feature", shown: NOTIONS_PAGE, active: null, detail: null, qTimer: null };
+const nt = { space: "sujet", query: "", filter: "all", sort: "feature", shown: NOTIONS_PAGE, active: null, detail: null, qTimer: null };
+const notionsCache = {};   // une liste par regard (sujet, forme)
 
 const META_KEY = { style: "style", genre: "genre", artist: "artiste" };
 // étiquette du catalogue partagée par ≥ 60 % des œuvres les plus marquées (ce que disent les
@@ -58,7 +59,8 @@ async function renderNotions() {
   if (!state.notionsData) {
     $("fiche-body").innerHTML = `<div class="loading">Chargement des notions…</div>`;
     try {
-      state.notionsData = await getJSON("/api/notions");
+      state.notionsData = notionsCache[nt.space] || await getJSON(`/api/notions?space=${nt.space}`);
+      notionsCache[nt.space] = state.notionsData;
     } catch (err) {
       if (!panelStale(seq)) $("fiche-body").innerHTML = `<div class="loading">${esc(err.message)}</div>`;
       return;
@@ -67,9 +69,17 @@ async function renderNotions() {
   }
   const data = state.notionsData;
   const unnamed = data.total - data.named;
-  $("fiche-body").innerHTML = `<div class="results-head">
+  const spaces = data.spaces || [data.space];
+  const spaceChips = spaces.length > 1
+    ? `<div class="chips" style="margin:0 0 6px" role="group" aria-label="Regard des notions">${spaces.map((sp) =>
+        `<button class="chip ${sp === data.space ? "on" : ""}" data-nspace="${sp}">${esc(SPACE_SHORT[sp] || sp)}</button>`).join("")}</div>`
+    : "";
+  const via = data.named_via
+    ? ` · noms donnés à travers le regard « ${esc(SPACE_SHORT[data.named_via] || data.named_via)} » (ce que montrent ses œuvres)`
+    : "";
+  $("fiche-body").innerHTML = `<div class="results-head">${spaceChips}
       <div class="sub">${data.total.toLocaleString("fr-FR")} notions vivantes · regard « ${esc(SPACE_SHORT[data.space] || data.space)} »
-        · ${data.named.toLocaleString("fr-FR")} nommées (Iconclass z ≥ ${data.z_min})</div>
+        · ${data.named.toLocaleString("fr-FR")} nommées (Iconclass z ≥ ${data.z_min})${via}</div>
       <input type="search" id="notions-q" class="flt-q" style="margin-top:8px" value="${esc(nt.query)}"
         placeholder="Filtrer par n°, nom Iconclass, style, genre, artiste…" aria-label="Filtrer les notions">
       <div class="chips" style="margin-bottom:6px">
@@ -90,9 +100,18 @@ async function renderNotions() {
     <ol class="notions-list" id="notions-list"></ol>
     <div class="pager" id="notions-pager"></div>
     <p class="prov" style="margin:0 16px 20px">Chaque notion est une direction apprise par un auto-encodeur parcimonieux sur les
-      vecteurs du regard (ARCHITECTURE § 37) : c'est ce que le modèle sépare, pas une catégorie d'histoire de l'art. L'étiquette
+      vecteurs du regard (ARCHITECTURE §§ 37 et 42) : c'est ce que le modèle sépare, pas une catégorie d'histoire de l'art. L'étiquette
       Iconclass n'est affichée qu'à partir de z ≥ ${data.z_min} et reste à vérifier à l'œil.</p>`;
   const body = $("fiche-body");
+  body.querySelectorAll("[data-nspace]").forEach((b) => b.addEventListener("click", () => {
+    if (b.dataset.nspace === nt.space) return;
+    nt.space = b.dataset.nspace;   // les numéros de notion sont propres à chaque regard
+    nt.shown = NOTIONS_PAGE;
+    if (nt.active != null) setHighlight(null, "");   // la notion surlignée appartient à l'autre regard
+    clearNotionSelection();
+    state.notionsData = null;
+    renderNotions();
+  }));
   $("notions-q").addEventListener("input", (e) => {
     nt.query = e.target.value;
     nt.shown = NOTIONS_PAGE;
@@ -150,7 +169,7 @@ async function selectNotion(feature) {
   }
   let d;
   try {
-    d = await getJSON(`/api/notions/${feature}?limit=24&highlight_limit=${NOTION_HIGHLIGHT_MAX}`);
+    d = await getJSON(`/api/notions/${feature}?space=${nt.space}&limit=24&highlight_limit=${NOTION_HIGHLIGHT_MAX}`);
   } catch (err) {
     if (seq === state.notionsSeq && box) box.innerHTML = `<div class="sub">Indisponible : ${esc(err.message)}</div>`;
     return;
@@ -178,7 +197,7 @@ function drawNotionActive(d) {
   }).join(" · ");
   const ic = d.iconclass
     ? `<a class="iconclass sure" href="${esc(d.iconclass.url)}" target="_blank" rel="noopener"
-         title="Iconclass ${esc(d.iconclass.notation)} · z = ${d.iconclass.z.toFixed(2)}, proposition du modèle à vérifier">
+         title="Iconclass ${esc(d.iconclass.notation)} · z = ${d.iconclass.z.toFixed(2)}, proposition du modèle à vérifier${d.iconclass.via ? ` (donnée à travers le regard « ${esc(SPACE_SHORT[d.iconclass.via] || d.iconclass.via)} » : ce que montrent ces œuvres, pas ce que ce regard y voit)` : ""}">
          <span>${esc(d.iconclass.notation)}</span> ${esc(d.iconclass.fr)} · z = ${d.iconclass.z.toFixed(1)}</a>`
     : `<div class="sub" style="margin:2px 0 4px">sans nom (aucune étiquette Iconclass à z ≥ ${state.notionsData ? state.notionsData.z_min : 5})</div>`;
   const shownInfo = d.total > d.highlight_ids.length

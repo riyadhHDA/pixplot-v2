@@ -1994,3 +1994,51 @@ figures très déformées ; rien pour les paysages, natures mortes et portraits 
 propre à la posture (les œuvres sans figure n'y auraient pas de place). Les dessins se recalent au survol
 après un redimensionnement de la fenêtre. Une pose semblable est une piste, pas la preuve qu'un artiste a
 vu l'autre.
+
+## 42. Les notions du regard « forme », nommées à travers SigLIP 2 (24/11/2026)
+
+**Question.** Le § 37 a ouvert le regard « sujet » (SigLIP 2) en 1 792 notions. Que donne la même méthode
+sur le regard « forme » (DINOv3), et comment nommer ses notions alors que DINOv3 ne lit pas le texte ?
+
+**Calcul.** `pixplot notions --space forme` : même auto-encodeur (TopK Matryoshka, 2 048 notions, 16 par
+œuvre, 30 époques), sur les 80 716 vecteurs DINOv3 ; 50 min sur processeur (run
+`notions_forme_20261123-132834`).
+
+**Nommer à travers un autre regard.** Iconclass est une liste de mots : seul SigLIP 2 peut la comparer à
+des images. Pour chaque notion de la forme, on prend ses 50 œuvres les plus fortes (activations exactes),
+on fait la moyenne de leurs vecteurs **SigLIP 2**, et l'on cherche la notion Iconclass la plus distinctive
+(z-score sur toutes les notions), comme pour les noms des groupes de la forme (§ 23). Le nom dit donc ce
+que **montrent** ces œuvres selon SigLIP 2, pas ce que DINOv3 y a vu ; l'Atlas et le MCP l'indiquent
+(`via: "sujet"`). `pixplot notions --nommer RUN` le fait sur un run existant (3,7 s) ; un nouveau calcul
+sur la forme le fait tout seul.
+
+| | Sujet (§ 37) | Forme |
+|---|---|---|
+| Notions vivantes | 1 792 sur 2 048 | 2 048 sur 2 048 |
+| Variance expliquée (œuvres mises de côté) | 73,7 % | 63,4 % |
+| Nom Iconclass sûr (z ≥ 5) | 506 | 489 (à travers SigLIP 2) |
+| Étiquette du catalogue dominante (≥ 60 %), genre / style / artiste | 423 / 353 / 57 | 572 / 143 / 18 |
+| Ni l'un ni l'autre | 709 | 1 315 |
+
+**Lecture à l'œil** (planches des 8 œuvres les plus fortes, hors dépôt). Six notions nommées sur six sont
+justes : citrouilles (n° 1439, z 8,0), échelles (n° 607, de Fra Angelico à Léger et Chagall), rayures
+verticales (n° 1396), moissons et meules (n° 713), chevaux en troupeau (n° 262) ; une approximation :
+« tablette de cire » (n° 994) désigne en fait les Tables de la Loi de Chagall. Parmi les notions sans nom
+sûr, plusieurs sont cohérentes à l'œil et portent sur la mise en page ou le geste plus que sur le sujet :
+personnes assises en cercle dans des dessins (n° 1588), écriture gestuelle à la Twombly (n° 572),
+polyptyques à arcades (n° 1604). Leurs noms Iconclass faibles (z < 4) sont faux et restent masqués,
+comme prévu.
+
+**Lecture.** La forme se résume moins bien en notions que le sujet (63 % contre 74 % de variance) : DINOv3
+mêle davantage de choses. Ses notions sont moins liées au style (143 contre 353) et davantage au genre,
+ce qui va avec un regard sur la composition plus que sur la manière. Les numéros de notion sont propres à
+chaque regard et à chaque calcul.
+
+**Interface.** Le panneau « Notions » (touche O) propose les deux regards ; `/api/notions?space=forme`,
+`/api/notions/{n}?space=forme` ; outil MCP `explore_notions(space="forme")`. Liste en 38 ms, première
+notion ouverte en 1,7 s (calcul de l'index), puis 4 ms. La notion « cadre » (n° 88) ne vaut que pour le
+regard « sujet ».
+
+**Limites.** Un nom donné à travers SigLIP 2 hérite de ses biais (§ 26) ; le seuil z ≥ 5 a été réglé sur le
+regard « sujet » (§ 37) et n'est vérifié ici que sur 6 notions. Une notion décrit ce que le modèle sépare,
+pas une catégorie d'historien.

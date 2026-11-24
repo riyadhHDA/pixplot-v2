@@ -59,7 +59,7 @@ Long computations resume where they stopped and write a log in the corpus folder
 | `pixplot suspects` | labels that are probably wrong (all the neighbours say something else) | `--keys`, `--space` |
 | `pixplot doublons` | works entered twice, replicas and variants (SSCD) | `--same`, `--variant` |
 | `pixplot ordre` | order and disorder of the paint surface (entropy, complexity), no GPU | `--workers` |
-| `pixplot notions` | notions learned by a regard (sparse autoencoder) | `--space sujet\|forme` |
+| `pixplot notions` | notions learned by a regard (sparse autoencoder); `--nommer` names an existing run through SigLIP 2 | `--space sujet\|forme`, `--nommer` |
 | `pixplot corpus` | critical summary of the corpus; `--datasheet` writes its datasheet | `--datasheet` |
 
 ## Searching and exporting

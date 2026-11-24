@@ -265,34 +265,48 @@ class AtlasData:
             self._dup_cache = duplicates.load(self.analysis)
         return self._dup_cache
 
-    def _notions(self) -> tuple[Run, dict] | None:
-        """Dernier run de notions apprises et son ``notions.json``, mis en cache."""
-        if not hasattr(self, "_notions_cache"):
-            run = sae.latest_notions_run(self.settings.runs_dir)
-            meta = sae.load_notions(run) if run is not None else None
-            self._notions_cache = (run, meta) if run is not None and meta is not None else None
-        return self._notions_cache
+    def notion_spaces(self) -> list[str]:
+        """Regards pour lesquels des notions ont été calculées (« sujet » d'abord)."""
+        if not hasattr(self, "_notion_spaces"):
+            self._notion_spaces = [sp for sp in ("sujet", "forme")
+                                   if sae.latest_notions_run(self.settings.runs_dir, sp) is not None]
+        return self._notion_spaces
 
-    def _notions_index(self) -> dict | None:
-        """Index inversé exact par notion, calculé une seule fois à la première consultation."""
-        pair = self._notions()
+    def _notions(self, space: str | None = None) -> tuple[Run, dict] | None:
+        """Dernier run de notions apprises d'un regard (défaut : « sujet » s'il existe) et son
+        ``notions.json``, mis en cache par regard."""
+        if not hasattr(self, "_notions_cache"):
+            self._notions_cache: dict = {}
+        key = space or ""
+        if key not in self._notions_cache:
+            run = sae.latest_notions_run(self.settings.runs_dir, space)
+            meta = sae.load_notions(run) if run is not None else None
+            self._notions_cache[key] = (run, meta) if run is not None and meta is not None else None
+        return self._notions_cache[key]
+
+    def _notions_index(self, space: str | None = None) -> dict | None:
+        """Index inversé exact par notion, calculé une seule fois par regard à la première consultation."""
+        pair = self._notions(space)
         if pair is None:
             return None
+        run, _ = pair
         with self._notions_lock:
             if not hasattr(self, "_notions_idx"):
-                run, _ = pair
-                self._notions_idx = sae.encode_index(run, self.settings.runs_dir, allowed_ids=set(self.row_of))
-        return self._notions_idx
+                self._notions_idx: dict = {}
+            if run.id not in self._notions_idx:
+                self._notions_idx[run.id] = sae.encode_index(run, self.settings.runs_dir,
+                                                             allowed_ids=set(self.row_of))
+        return self._notions_idx[run.id]
 
-    def _notion_count(self, feat: dict) -> int:
-        idx = getattr(self, "_notions_idx", None)
+    def _notion_count(self, feat: dict, run=None) -> int:
+        idx = getattr(self, "_notions_idx", {}).get(run.id) if run is not None else None
         f = int(feat["feature"])
         if idx is not None and 0 <= f < idx["n_features"]:
             return int(idx["offsets"][f + 1] - idx["offsets"][f])
         return max(1, round(float(feat.get("frequency", 0.0)) * len(self.ids)))
 
-    def notions_info(self) -> dict | None:
-        pair = self._notions()
+    def notions_info(self, space: str | None = None) -> dict | None:
+        pair = self._notions(space)
         if pair is None:
             return None
         run, meta = pair
@@ -304,14 +318,15 @@ class AtlasData:
             f88 = next((f for f in feats if int(f["feature"]) == fid), None)
             if f88 is not None:
                 framed = {"feature": fid, "label": sae.FRAMED_LABEL,
-                          "count": self._notion_count(f88)}
+                          "count": self._notion_count(f88, run)}
         return {"run": run.id, "space": meta.get("space", "sujet"), "count": len(feats),
-                "named": named, "z_min": sae.ICONCLASS_Z_MIN, "framed": framed}
+                "named": named, "z_min": sae.ICONCLASS_Z_MIN, "framed": framed,
+                "spaces": self.notion_spaces()}
 
-    def notions_payload(self) -> dict | None:
+    def notions_payload(self, space: str | None = None) -> dict | None:
         """Liste des notions vivantes (numéro, étiquette Iconclass si z ≥ 5 sinon « sans nom »,
         nombre d'œuvres actives)."""
-        pair = self._notions()
+        pair = self._notions(space)
         if pair is None:
             return None
         run, meta = pair
@@ -322,7 +337,7 @@ class AtlasData:
             if is_named:
                 named_count += 1
             ic = f.get("iconclass")
-            ic_out = ({"notation": ic["notation"], "fr": ic["fr"], "z": ic["z"],
+            ic_out = ({"notation": ic["notation"], "fr": ic["fr"], "z": ic["z"], "via": ic.get("via"),
                        "url": iconclass.link(ic["notation"])}
                       if is_named and ic else None)
             items.append({
@@ -331,22 +346,25 @@ class AtlasData:
                 "named": is_named,
                 "iconclass": ic_out,
                 "meta": sae.meta_label(f),
-                "count": self._notion_count(f),
+                "count": self._notion_count(f, run),
                 "frequency": f.get("frequency", 0.0),
                 "labels": f.get("labels", {}),
                 "top": [int(i) for i in f.get("top", []) if int(i) in self.row_of],
             })
         items.sort(key=lambda x: x["feature"])
-        info = self.notions_info()
+        info = self.notions_info(space)
         return {"run": run.id, "space": meta.get("space", "sujet"), "z_min": sae.ICONCLASS_Z_MIN,
                 "n": int(len(self.ids)), "total": len(items), "named": named_count,
                 "dead": meta.get("dead", 0), "explained_variance": meta.get("explained_variance", {}),
-                "framed": info["framed"] if info else None, "items": items}
+                "framed": info["framed"] if info else None, "spaces": self.notion_spaces(),
+                "named_via": next((ic["via"] for f in meta.get("features", [])
+                                   if (ic := f.get("iconclass")) and ic.get("via")), None),
+                "items": items}
 
     def notion_detail_payload(self, feature: int, offset: int = 0, limit: int = 40,
-                              highlight_limit: int = 500) -> dict | None:
+                              highlight_limit: int = 500, space: str | None = None) -> dict | None:
         """Œuvres actives d'une notion, triées par activation décroissante."""
-        pair = self._notions()
+        pair = self._notions(space)
         if pair is None:
             return None
         run, meta = pair
@@ -355,10 +373,10 @@ class AtlasData:
             return None
         label, is_named = sae.notion_label(feat)
         ic = feat.get("iconclass")
-        ic_out = ({"notation": ic["notation"], "fr": ic["fr"], "z": ic["z"],
+        ic_out = ({"notation": ic["notation"], "fr": ic["fr"], "z": ic["z"], "via": ic.get("via"),
                    "url": iconclass.link(ic["notation"])}
                   if is_named and ic else None)
-        idx = self._notions_index()
+        idx = self._notions_index(space)
         exact = False
         if idx is not None and 0 <= feature < idx["n_features"]:
             lo, hi = int(idx["offsets"][feature]), int(idx["offsets"][feature + 1])

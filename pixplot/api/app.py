@@ -187,18 +187,21 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
         return out
 
     @app.get("/api/notions")
-    def notions_list():
-        if "notions" not in map_cache:
-            out = data.notions_payload()
+    def notions_list(space: str | None = Query(None, pattern="^(sujet|forme)$")):
+        key = f"notions:{space or ''}"
+        if key not in map_cache:
+            out = data.notions_payload(space)
             if out is None:
-                raise HTTPException(404, "Pas de notions calculées : lancez `pixplot notions`.")
-            map_cache["notions"] = out
-        return JSONResponse(map_cache["notions"])
+                raise HTTPException(404, "Pas de notions calculées pour ce regard : lancez `pixplot notions`.")
+            map_cache[key] = out
+        return JSONResponse(map_cache[key])
 
     @app.get("/api/notions/{feature}")
     def notion_detail(feature: int, offset: int = Query(0, ge=0), limit: int = Query(40, ge=1, le=500),
-                      highlight_limit: int = Query(500, ge=1, le=5000)):
-        out = data.notion_detail_payload(feature, offset=offset, limit=limit, highlight_limit=highlight_limit)
+                      highlight_limit: int = Query(500, ge=1, le=5000),
+                      space: str | None = Query(None, pattern="^(sujet|forme)$")):
+        out = data.notion_detail_payload(feature, offset=offset, limit=limit, highlight_limit=highlight_limit,
+                                         space=space)
         if out is None:
             raise HTTPException(404, f"Notion n° {feature} introuvable.")
         return out
