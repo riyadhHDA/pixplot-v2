@@ -132,6 +132,11 @@ The values are in French and are part of the format.
 
 **`<data>/bench/review_log.csv`**: log of the quick review, columns `a,b,decision,origin,time`.
 
+**`bench/<corpus>_pairs_travail.csv`** and **`bench/<corpus>_review_log.csv`** (versioned, written by
+`pixplot sauvegarde`): exact copies of `<data>/bench/pairs.csv` and `review_log.csv`, same columns.
+**`bench/<corpus>_notebook.json`** (with `--carnet`): list of notebook entries, same fields as the `entries`
+table, with `artwork_ids` and `context` decoded.
+
 Benchmark reports (`bench/*_report_*.json`) are outputs, not stable formats.
 
 ## 6. The research notebook (`notebook.sqlite`)

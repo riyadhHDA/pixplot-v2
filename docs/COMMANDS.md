@@ -23,6 +23,7 @@ pixplot --data data/wikiart81k serve --open      # the Atlas in the browser
 | `pixplot doctor` | checks the installation: Python, graphics card, libraries | — |
 | `pixplot status` | state of the catalogue and list of computations (*runs*) | — |
 | `pixplot runs` | same as `status` | — |
+| `pixplot sauvegarde` | keeps hand-made work safe: copies the reviewed pairs into the repository's `bench/` (to commit) and, with `--vers`, the data folder to another disk; never deletes anything | `--vers`, `--tout`, `--carnet`, `--force` |
 | `pixplot --version` | version number | — |
 
 ## Bringing works in

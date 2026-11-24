@@ -16,6 +16,10 @@ Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numé
 
 ## Non publié
 
+- **`pixplot sauvegarde`** : met à l'abri le travail fait à la main, qui ne se recalcule pas. Copie les paires
+  relues dans `bench/` du dépôt (`<corpus>_pairs_travail.csv`, à commiter), le carnet sur demande (`--carnet`),
+  et avec `--vers` le dossier de données vers un autre disque (l'essentiel, ou `--tout`) ; n'efface jamais rien
+  et refuse de remplacer une copie plus longue que l'original.
 - **Site redessiné** : une planche par cas d'usage (dix questions d'historien), chacune animée avec de vraies
   réponses de PixPlot sur WikiArt 81k (œuvres du domaine public, zones, squelettes et liens réels, caméra qui
   passe de l'une à l'autre), jouée une fois et désactivée si l'on a demandé moins de mouvement ; à l'ouverture,

@@ -1211,6 +1211,33 @@ def cmd_whytest(args) -> int:
 
 
 # --------------------------------------------------------------------------- status
+def cmd_sauvegarde(args) -> int:
+    """Recopie le travail fait à la main dans bench/ du dépôt ; avec --vers, copie aussi le dossier de données."""
+    from . import backup
+
+    s = get_settings(args.data)
+    data_dir = Path(s.data_dir)
+    corpus = data_dir.name
+    repo = Path(__file__).resolve().parents[1]
+    if not args.sans_depot:
+        if not (repo / "pyproject.toml").exists():
+            raise SystemExit("Dépôt PixPlot introuvable à côté du paquet : utilisez --sans-depot avec --vers.")
+        print(f"Travail fait à la main → {repo / 'bench'}")
+        for e in backup.to_repo(data_dir, repo / "bench", corpus, notebook=args.carnet, force=args.force):
+            lines = f" ({e.get('lignes_source', 0)} lignes, dépôt : {e.get('lignes_cible', 0)})" if "lignes_source" in e else ""
+            print(f"  {Path(e['cible']).name:32s} {e['état']}{lines}")
+        print("  À commiter avec git pour que la copie soit vraiment à l'abri (GitHub).")
+        if not args.carnet:
+            print("  Carnet non copié (notes peut-être privées) : ajoutez --carnet pour l'inclure.")
+    if args.vers:
+        mode = "tout le dossier" if args.tout else "l'essentiel (catalogue, carnet, paires, sources)"
+        print(f"\nCopie de {mode} → {args.vers}")
+        out = backup.mirror(data_dir, Path(args.vers), everything=args.tout, progress=_progress("Copie"))
+        print(f"\n  {out['copiés']} fichiers copiés ({out['octets_copiés'] / 2**20:.1f} Mio), {out['inchangés']} inchangés.")
+        print("  Rien n'est jamais effacé dans la cible.")
+    return 0
+
+
 def cmd_status(args) -> int:
     from .catalog import db
 
@@ -1547,6 +1574,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-resume", action="store_true", help="ne pas reprendre un calcul interrompu")
     p.add_argument("--no-sheet", action="store_true", help="ne pas générer la planche visuelle")
     p.set_defaults(func=cmd_whytest)
+
+    p = sub.add_parser("sauvegarde", help="mettre à l'abri le travail fait à la main (paires, carnet) et, avec --vers, le dossier de données")
+    p.add_argument("--carnet", action="store_true", help="copier aussi le carnet de recherche dans bench/ (notes peut-être privées)")
+    p.add_argument("--force", action="store_true", help="remplacer une copie du dépôt qui a plus de lignes que l'original")
+    p.add_argument("--vers", help="copier aussi le dossier de données vers ce dossier (un autre disque, de préférence)")
+    p.add_argument("--tout", action="store_true", help="avec --vers : tout le dossier (images, vecteurs…), pas seulement l'essentiel")
+    p.add_argument("--sans-depot", action="store_true", help="ne pas écrire dans bench/ du dépôt (seulement --vers)")
+    p.set_defaults(func=cmd_sauvegarde)
 
     sub.add_parser("status", help="état du catalogue et des runs").set_defaults(func=cmd_status)
     sub.add_parser("runs", help="alias de status").set_defaults(func=cmd_status)

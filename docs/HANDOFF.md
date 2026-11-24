@@ -299,6 +299,12 @@ corrigé ; 63 tests passent, Atlas vérifié.
   la copie versionnée `bench/wikiart81k_pairs.csv` n'a que 105 lignes et date du 16/11), le carnet
   `notebook.sqlite`, les noms de groupes relus. Proposé : une commande qui recopie ces fichiers dans
   `bench/` (versionné), plus une copie de `data/` sur un disque externe. Le reste se recalcule.
+  **Fait le 24/11/2026 (non publié)** : `pixplot sauvegarde` (`pixplot/backup.py`, `tests/test_backup.py`) ;
+  `bench/wikiart81k_pairs_travail.csv` écrit (1 296 lignes). Les noms de groupes relus sont déjà dans
+  `bench/wikiart81k_iconclass_review.csv`. **Reste à l'utilisateur** : dire si le carnet peut être versionné
+  (`--carnet`, dépôt public) et brancher un disque externe pour `pixplot --data data/wikiart81k sauvegarde
+  --vers <disque>\pixplot-sauvegarde` (un seul disque, C:, le 24/11/2026). Relancer la commande après
+  chaque séance de relecture.
 
 - **Profil GitHub** : la page de présentation (dépôt `riyadhHDA/riyadhHDA`) est en ligne ; le nom, la
   bio, le lien et les dépôts épinglés sont à régler par l'utilisateur (le jeton `gh` n'a pas le droit

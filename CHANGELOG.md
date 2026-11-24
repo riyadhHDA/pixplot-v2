@@ -16,6 +16,10 @@ Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 
 ## Unreleased
 
+- **`pixplot sauvegarde`**: keeps hand-made work safe, since it cannot be recomputed. Copies the reviewed pairs
+  into the repository's `bench/` (`<corpus>_pairs_travail.csv`, to commit), the notebook on request (`--carnet`),
+  and with `--vers` the data folder to another disk (the essentials, or `--tout`); never deletes anything and
+  refuses to replace a copy longer than the original.
 - **Website redesigned**: one plate per use case (ten art historian's questions), each animated with real
   PixPlot answers on WikiArt 81k (public-domain works, real zones, skeletons and links, a camera moving from one
   to the next), played once and turned off when reduced motion is requested; on opening, a sample of the real

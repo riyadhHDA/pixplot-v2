@@ -18,6 +18,10 @@ Aucune image n'est stockée ici. Résultats : ARCHITECTURE.fr.md § 18.
 Pour s'en servir : copier le fichier vers `<données>/bench/pairs.csv` (seules les colonnes
 `a, b, type, status, source, note` sont lues ; les autres sont ignorées).
 
+`wikiart81k_pairs_travail.csv` : copie exacte du fichier de travail (`<données>/bench/pairs.csv`),
+toutes les paires, proposées comprises, écrite par `pixplot sauvegarde`. En cas de perte du
+dossier de données, la recopier telle quelle vers `<données>/bench/pairs.csv`.
+
 **English**
 
 `wikiart81k_pairs.csv`: the pairs of works annotated by Riyadh HADJBA for the PixPlot v2
@@ -27,3 +31,6 @@ Fleming, a known filiation, or the review of a disagreement between ways of seei
 and the WikiArt labels of both works (artist · style · genre). `wikiart81k_review_log.csv`:
 candidates dismissed during review ("no link"). Artwork numbers are those of PixPlot's local
 catalogue, assigned at ingestion. No image is stored here. Results: ARCHITECTURE.md § 18.
+`wikiart81k_pairs_travail.csv`: exact copy of the working file (`<data>/bench/pairs.csv`), every
+pair including proposed ones, written by `pixplot sauvegarde`; if the data folder is lost, copy it
+back as is to `<data>/bench/pairs.csv`.

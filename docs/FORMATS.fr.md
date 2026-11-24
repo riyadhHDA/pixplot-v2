@@ -131,6 +131,11 @@ remplacement), ce qui permet la reprise après coupure.
 **`<données>/bench/review_log.csv`** : journal de la relecture rapide, colonnes
 `a,b,decision,origin,time`.
 
+**`bench/<corpus>_pairs_travail.csv`** et **`bench/<corpus>_review_log.csv`** (versionnées, écrites par
+`pixplot sauvegarde`) : copies exactes de `<données>/bench/pairs.csv` et `review_log.csv`, mêmes colonnes.
+**`bench/<corpus>_notebook.json`** (avec `--carnet`) : liste des entrées du carnet, mêmes champs que la table
+`entries`, `artwork_ids` et `context` décodés.
+
 Les rapports des bancs d'essai (`bench/*_report_*.json`) sont des sorties, pas des formats stables.
 
 ## 6. Le carnet de recherche (`notebook.sqlite`)
