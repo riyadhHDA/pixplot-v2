@@ -25,6 +25,25 @@ class SearchUnavailable(RuntimeError):
     """La recherche demandée n'est pas prête (index ou vecteurs manquants)."""
 
 
+def concept_phrases(query: str) -> list[str]:
+    """Découpe un axe conceptuel en phrases (séparées par « | »), sans les morceaux vides."""
+    parts = [p.strip() for p in query.split("|")]
+    return [p for p in parts if p] or [query.strip()]
+
+
+def pole_vectors(encoder, poles: list[list[str]]) -> np.ndarray:
+    """Un vecteur normalisé par pôle : moyenne des vecteurs (normalisés) de ses phrases."""
+    flat = [p for phrases in poles for p in phrases]
+    v = np.asarray(encoder.encode_text(flat), dtype=np.float32)
+    v /= np.maximum(np.linalg.norm(v, axis=1, keepdims=True), 1e-12)
+    out, start = [], 0
+    for phrases in poles:
+        m = v[start:start + len(phrases)].mean(axis=0)
+        out.append(m / max(float(np.linalg.norm(m)), 1e-12))
+        start += len(phrases)
+    return np.stack(out)
+
+
 class SearchEngines:
     def __init__(self, data):
         self.data = data
@@ -164,10 +183,15 @@ class SearchEngines:
         Chaque œuvre reçoit ses similarités cosinus avec ``x_query`` et ``y_query`` dans SigLIP 2,
         normalisées par centiles (p1–p99) pour l'affichage en nuage 2D, ainsi que les œuvres qui
         s'écartent le plus de la diagonale (plus proches d'un concept que de l'autre).
+
+        Un axe peut réunir plusieurs phrases séparées par « | » : leurs vecteurs sont moyennés
+        (comme dans le banc d'essai Wölfflin, ARCHITECTURE § 43), ce qui rend l'axe moins
+        dépendant d'une formulation.
         """
+        px, py = concept_phrases(x_query), concept_phrases(y_query)
         with self._lock:
             self._load_text()
-            tvecs = np.asarray(self._text_encoder.encode_text([x_query, y_query]), dtype=np.float32)
+            tvecs = pole_vectors(self._text_encoder, [px, py])
             store = self._text_store
             n_store = len(store.ids)
             raw = np.empty((n_store, 2), dtype=np.float32)
@@ -242,6 +266,8 @@ class SearchEngines:
         out = {
             "x_query": x_query,
             "y_query": y_query,
+            "x_phrases": px,
+            "y_phrases": py,
             "features": store.run.id,
             "count": n_valid,
             "correlation": round(corr, 4),

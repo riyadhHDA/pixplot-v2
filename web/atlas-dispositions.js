@@ -214,6 +214,12 @@ function computeGroupLabels() {
   });
 }
 
+/** Un axe à plusieurs phrases (séparées par « | ») : on n'en affiche que la première. */
+function conceptShort(q) {
+  const parts = String(q || "").split("|").map((s) => s.trim()).filter(Boolean);
+  return parts.length > 1 ? `${parts[0]}… (${parts.length} phrases)` : String(q || "");
+}
+
 function conceptAxisOverlay(xLabel, yLabel) {
   const L = WORLD * 1.08;
   return [
@@ -284,10 +290,14 @@ async function setLayout(layout) {
       pos[2 * r + 1] = ok ? res.y[r] * WORLD : -WORLD;
     }
     state.positions = pos;
-    state.axis = conceptAxisOverlay(xq, yq);
+    const p = state.conceptPreset;
+    const preset = p && p.x === xq && p.y === yq ? p : null;
+    const short = conceptShort;
+    state.axis = conceptAxisOverlay(short(xq), short(yq));
     state.conceptAxes = { x: xq, y: yq, corr: res.correlation };
-    note = `→ « ${xq} » · ↑ « ${yq} » (corrélation r = ${res.correlation.toFixed(2)}). `
-      + "Ce qui s'écarte de la diagonale éclaire à la fois le corpus et l'imaginaire vectoriel de SigLIP 2 (Impett et Offert, 2024).";
+    note = `→ « ${short(xq)} » · ↑ « ${short(yq)} » (corrélation r = ${res.correlation.toFixed(2)}). `
+      + (preset ? preset.note + " "
+        : "Ce qui s'écarte de la diagonale éclaire à la fois le corpus et l'imaginaire vectoriel de SigLIP 2 (Impett et Offert, 2024).");
   } else if (layout === "time") ({ pos: state.positions, axis: state.axis, note } = timePositions());
   else if (layout === "geo") {
     await loadWorld();

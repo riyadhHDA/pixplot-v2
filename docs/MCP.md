@@ -24,7 +24,7 @@ verification stays with the historian.
 | `view_detail` | **a cropped detail** from the original |
 | `compare_artworks` | **numbered contact sheet** of 2 to 12 works + one similarity matrix per space |
 | `why_similar` | **plate of the two works** where the zones that answer each other (4×4 cells, form regard) carry the same number, + their cosines |
-| `probe_concepts` | compares **two textual concepts** across the corpus (SigLIP 2, after Impett & Offert's *2D CLIP*): correlation, poles and off-diagonal deviations |
+| `probe_concepts` | compares **two textual concepts** across the corpus (SigLIP 2, after Impett & Offert's *2D CLIP*): correlation, poles and off-diagonal deviations; a concept can gather several sentences separated by "|" |
 | `measure_artwork` | **neural-free visual measures** (Stork): lightness/saturation barycentre, local spread, left–right symmetry, chromatic entropy and primary compositional split |
 | `get_group` | a group of the map, most central works first |
 | `find_atypical` | the most isolated works (exceptions, cataloguing errors…) |

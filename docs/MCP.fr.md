@@ -25,7 +25,7 @@ comparer, et la vérification reste côté historien.
 | `view_detail` | **un détail recadré** depuis l'original |
 | `compare_artworks` | **planche numérotée** de 2 à 12 œuvres + une matrice de similarité par espace |
 | `why_similar` | **planche des deux œuvres** où les zones qui se répondent (cases 4 × 4, regard forme) portent le même numéro, + leurs cosinus |
-| `probe_concepts` | compare **deux concepts textuels** sur tout le corpus (SigLIP 2, façon *2D CLIP* d'Impett & Offert) : corrélation, extrêmes et écarts à la diagonale |
+| `probe_concepts` | compare **deux concepts textuels** sur tout le corpus (SigLIP 2, façon *2D CLIP* d'Impett & Offert) : corrélation, extrêmes et écarts à la diagonale ; un concept peut réunir plusieurs phrases séparées par « | » |
 | `measure_artwork` | **mesures visuelles sans GPU** (Stork) : barycentre de luminance/saturation, dispersion locale, symétrie gauche-droite, entropie chromatique et première coupe |
 | `get_group` | un groupe de la carte, œuvres les plus centrales d'abord |
 | `find_atypical` | œuvres les plus isolées (exceptions, erreurs de catalogue…) |

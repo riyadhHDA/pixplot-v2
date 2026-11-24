@@ -80,7 +80,7 @@ function updateStats() {
   const i = state.info;
   const base = `${state.n.toLocaleString("fr-FR")} œuvres · ${i.clusters} groupes · ${i.encoder} @${i.input_size}`
     + (state.layout === "time" || state.layout === "geo" ? ` · ${state.layoutNote}` : "")
-    + (state.layout === "concepts" ? ` · axes « ${state.conceptAxes.x} » / « ${state.conceptAxes.y} »` : "")
+    + (state.layout === "concepts" ? ` · axes « ${conceptShort(state.conceptAxes.x)} » / « ${conceptShort(state.conceptAxes.y)} »` : "")
     + (state.layout.startsWith("map:") ? ` · carte « ${SPACE_SHORT[state.layout.slice(4)] || state.layout.slice(4)} »` : "");
   $("stats").textContent = state.highlight
     ? `${state.highlightLabel} : ${state.highlight.size.toLocaleString("fr-FR")} œuvres  —  ${base}`

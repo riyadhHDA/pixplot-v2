@@ -82,6 +82,8 @@ function wireUI() {
     $("concept-controls").querySelectorAll(".concept-preset").forEach((b) => b.addEventListener("click", () => {
       $("concept-x").value = b.dataset.x;
       $("concept-y").value = b.dataset.y;
+      // un préréglage mesuré garde sa mise en garde tant que ses phrases ne sont pas modifiées
+      state.conceptPreset = b.dataset.note ? { x: b.dataset.x, y: b.dataset.y, note: b.dataset.note } : null;
       $("layout").value = "concepts";
       setLayout("concepts");
     }));

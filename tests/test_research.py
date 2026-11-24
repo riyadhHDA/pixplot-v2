@@ -822,6 +822,26 @@ def test_concept_axes(env):
     assert "x" not in res_mcp and "y" not in res_mcp and len(res_mcp["extremes"]["more_x"]) == 3
 
 
+def test_concept_phrases_moyennees():
+    """Un axe à plusieurs phrases (séparées par « | ») : vecteurs moyennés puis normalisés (§ 43)."""
+    from pixplot.api.search import concept_phrases, pole_vectors
+
+    assert concept_phrases("sacré") == ["sacré"]
+    assert concept_phrases(" a | b ||  c ") == ["a", "b", "c"]
+    assert concept_phrases(" | ") == ["|"]          # rien d'autre que le séparateur : gardé tel quel
+
+    table = {"a": [2.0, 0.0], "b": [0.0, 1.0], "c": [0.0, 3.0]}
+
+    class Enc:
+        def encode_text(self, texts):
+            return np.array([table[t] for t in texts], dtype=np.float32)
+
+    v = pole_vectors(Enc(), [["a", "b"], ["c"]])
+    # chaque phrase est normalisée avant la moyenne : a et b pèsent autant malgré leurs normes
+    assert np.allclose(v[0], [np.sqrt(0.5), np.sqrt(0.5)], atol=1e-6)
+    assert np.allclose(v[1], [0.0, 1.0])
+
+
 def test_iconclass_vocabulary_and_pick(tmp_path):
     from pixplot.analysis import iconclass as ic
 

@@ -14,6 +14,10 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
+## Non publié
+
+- **Wölfflin, linéaire / pictural** : préréglage mesuré dans la vue « Axes conceptuels », avec sa mise en garde (seul des cinq couples à séparer Renaissance et Baroque, AUC 0,74 ; avant 1800, l'axe suit le temps). Un axe peut réunir plusieurs phrases séparées par « | », aussi dans l'outil MCP `probe_concepts`. (ARCHITECTURE § 43)
+
 ## 0.22.0 — 24/11/2026 · Posture dans l'Atlas, notions du regard « forme », référence des commandes
 
 - **« Pourquoi ? »** : quand moins de 4 zones se répondent, le comparateur le dit et explique pourquoi (ressemblance plus diffuse ; 31 % des paires du banc d'essai, 10 % des voisines proches). (ARCHITECTURE § 40, complément)

@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 24/11/2026 (publication de la 0.22.0).*
+*Dernière mise à jour : 24/11/2026 (Wölfflin, tuiles confiées à Neon).*
 
 ## Version publiée
 
@@ -169,9 +169,8 @@ corrigé ; 63 tests passent, Atlas vérifié.
     pour le run `notions_sujet_20261121-213443` (`sae.FRAMED_RUN`). 100 tests, vérifié dans l'Atlas 81k.
   - Deepseek : banc Wölfflin mesuré, seul linéaire/pictural robuste (AUC 0,74 ; témoins jusqu'à
     ±0,08, ±0,24 à genre égal). Note écrite par Claude : `handoff/deepseek-wolfflin.md` ; script et
-    résultats dans `data/wikiart81k/bench/wolfflin/` (hors git). **À décider par l'utilisateur** :
-    axe d'essai préréglé dans la vue « Axes conceptuels », ou rien ; section d'ARCHITECTURE après
-    la fusion du § 39.
+    résultats dans `data/wikiart81k/bench/wolfflin/` (hors git). **Décidé le 24/11/2026** : axe
+    d'essai préréglé, fait (voir « Après la 0.22.0 »).
   - CHANGELOG FR + EN : section « Non publié » écrite par Claude (Mistral arrêté avant).
   - Claude : outil MCP `explore_notions` (20 outils) : chercher les notions par nom, voir leurs
     œuvres ; essayé sur 81k (liste 15–40 ms, première notion ouverte 2,7 s). README, MCP, site, AGENTS à jour.
@@ -199,6 +198,17 @@ corrigé ; 63 tests passent, Atlas vérifié.
   Claude dans l'Atlas 81k (*Le Semeur* → Millet rang 1, Titien ↔ Mantegna en miroir, 0 erreur).
   Ajout de Claude : `communities` / `disagreements` excluent les regards en essai par défaut
   (`cli._default_spaces`). Copie de travail supprimée.
+
+- **Après la 0.22.0 (24/11/2026), non publié** :
+  - Claude : **Wölfflin, linéaire / pictural** dans la vue « Axes conceptuels » (ARCHITECTURE § 43).
+    Un axe peut réunir plusieurs phrases séparées par « | » (moyennées ; aussi `probe_concepts`) ; le
+    préréglage reprend les 3 phrases par pôle du banc de DeepSeek et affiche sa mise en garde (remplace
+    l'ancien « linéaire / pictural » à deux mots). Mesuré tel que l'Atlas le calcule : AUC 0,743
+    (identique au banc), 0,757 avec l'écart à la diagonale ; avec les dates, Spearman 0,49 avant 1800
+    (bascule vers 1550), nul ensuite. Vérifié dans l'Atlas 81k (1 s par appel, 17 s au premier, 0 erreur).
+  - **Gemini 4 Neon : pyramide de tuiles** pour la carte principale, en cours dans
+    `C:\Users\Riyadh\Documents\pixplot-tuiles` (branche `gemini/tuiles`, port 8770). Compte rendu
+    attendu : `docs/handoff/gemini-tuiles.md`. À relire, puis `nouvelle-tache.ps1 tuiles -Agent gemini -Terminer`.
 
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
   19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.

@@ -14,6 +14,10 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
+## Unreleased
+
+- **Wölfflin, linear / painterly**: a measured preset in the "Conceptual axes" view, with its caveat (the only one of the five pairs that separates Renaissance from Baroque, AUC 0.74; before 1800 the axis follows time). An axis can gather several sentences separated by "|", also in the MCP tool `probe_concepts`. (ARCHITECTURE § 43)
+
 ## 0.22.0 — 2026-11-24 · Posture in the Atlas, notions of the "form" regard, command reference
 
 - **"Why?"**: when fewer than 4 zones answer each other, the comparator says so and explains why (a more diffuse resemblance; 31 % of benchmark pairs, 10 % of close neighbours). (ARCHITECTURE § 40, addendum)

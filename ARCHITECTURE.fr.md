@@ -2052,3 +2052,46 @@ regard « sujet ».
 **Limites.** Un nom donné à travers SigLIP 2 hérite de ses biais (§ 26) ; le seuil z ≥ 5 a été réglé sur le
 regard « sujet » (§ 37) et n'est vérifié ici que sur 6 notions. Une notion décrit ce que le modèle sépare,
 pas une catégorie d'historien.
+
+## 43. Wölfflin dans les axes conceptuels : linéaire / pictural (24/11/2026)
+
+**Question.** Les cinq couples de Wölfflin (*Principes fondamentaux de l'histoire de l'art*, 1915),
+traduits en phrases et projetés dans SigLIP 2 comme les axes conceptuels (§ 26), séparent-ils
+Renaissance et Baroque ? Mesure faite par DeepSeek le 22/11/2026 (`docs/handoff/deepseek-wolfflin.md`,
+script et chiffres dans `data/wikiart81k/bench/wolfflin/`, hors git) : 2 729 œuvres Renaissance (Early et
+High) et 4 211 baroques, 3 phrases anglaises par pôle, moyennées ; AUC avec IC 95 % par bootstrap ;
+contrôles à genre égal, phrase par phrase, et trois axes témoins sans rapport.
+
+**Résultat.** Seul **linéaire / pictural** tient : AUC 0,743 [0,731–0,755], dans le bon sens dans chaque
+genre et quelle que soit la phrase (0,67 à 0,73). Les quatre autres couples (0,61 à 0,68) ne dépassent pas
+nettement les témoins (jusqu'à ±0,08 sur tout le corpus, ±0,24 à genre égal) et s'inversent selon les mots
+ou le genre. Nommer directement les styles donne 0,986 : le modèle connaît « le Baroque », mais ce savoir
+ne passe guère par les concepts de Wölfflin.
+
+**Dans l'Atlas.** Un axe conceptuel peut désormais réunir **plusieurs phrases séparées par « | »**, dont
+les vecteurs sont moyennés (`concept_phrases`, `pole_vectors` dans `pixplot/api/search.py` ; aussi pour
+l'outil MCP `probe_concepts`). Le préréglage « Wölfflin : linéaire / pictural » de la vue « Axes
+conceptuels » reprend exactement les phrases du banc d'essai et affiche sa mise en garde ; il remplace
+l'ancien préréglage à deux mots français, jamais mesuré. Les quatre autres couples ne sont pas proposés.
+
+**Mesures sur l'axe tel que l'Atlas le calcule** (WikiArt 81k, 40 s au total, SigLIP 2 sur GPU) :
+
+| Mesure | Valeur |
+|---|---|
+| AUC Renaissance / Baroque, score du banc (pictural − linéaire) | 0,743 [0,731–0,754], identique au banc |
+| AUC avec l'écart à la diagonale de la vue (scores centrés-réduits) | 0,757 [0,745–0,767] |
+| Corrélation des deux pôles sur le corpus | r = 0,64 |
+| Rang avec l'année (Spearman), 56 794 œuvres datées | −0,01 |
+| Rang avec l'année, œuvres d'avant 1800 (10 960) | **0,49** |
+| Médiane de l'écart par demi-siècle | 1450–1499 : −0,75 · 1500–1549 : −0,64 · **1550–1599 : +0,13** · 1650–1699 : +0,21 · 1850–1899 : +0,28 · 1950–1999 : −0,16 · 2000– : −0,30 |
+| Temps : premier appel (chargement de SigLIP 2) / suivants | 17 s / 0,5 à 1 s |
+
+**Lecture.** Avant 1800, l'axe suit le temps, avec une bascule nette au milieu du XVIᵉ siècle, ce qui va
+dans le sens de Wölfflin. Après 1800, il ne suit plus la chronologie : les extrêmes « linéaires » sont du
+Minimalisme et du Color Field (Feeley, LeWitt, Mangold), les extrêmes « picturaux » des esquisses et des
+peintures à touche visible (Monticelli, Repin). L'axe oppose donc surtout **une surface nette à une touche
+visible** ; il recoupe Wölfflin sur la période pour laquelle Wölfflin l'a pensé, sans en être la mesure.
+
+**Limites.** Étiquettes de style de WikiArt (bénévoles) ; dates de MMArt pour 70 % des œuvres ; phrases
+écrites une fois, en anglais, sans relecture par un historien ; une AUC dit qu'un axe sépare deux groupes,
+pas qu'il mesure une notion. Les extrêmes restent pollués par les reproductions encadrées (§ 37, n° 88).

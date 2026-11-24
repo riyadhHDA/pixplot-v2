@@ -45,14 +45,17 @@
           </div>
           <form id="concept-controls" class="concept-controls" hidden>
             <label>Axe horizontal (→)
-              <input id="concept-x" type="text" value="sacré" placeholder="ex. sacré, linéaire, nu…" maxlength="200">
+              <input id="concept-x" type="text" value="sacré" placeholder="ex. sacré, linéaire, nu… (plusieurs phrases : séparées par |)" maxlength="600">
             </label>
             <label>Axe vertical (↑)
-              <input id="concept-y" type="text" value="profane" placeholder="ex. profane, pictural, dénudé…" maxlength="200">
+              <input id="concept-y" type="text" value="profane" placeholder="ex. profane, pictural, dénudé…" maxlength="600">
             </label>
             <div class="concept-presets">
               <button type="button" class="chip concept-preset" data-x="sacré" data-y="profane">sacré / profane</button>
-              <button type="button" class="chip concept-preset" data-x="linéaire" data-y="pictural">linéaire / pictural</button>
+              <button type="button" class="chip concept-preset" title="Les 3 phrases par pôle du banc d'essai Wölfflin (ARCHITECTURE § 43)"
+                data-x="a painting with clear outlines | contours drawn with a firm line, forms modelled with crisp edges | smooth even paint with sharply defined shapes"
+                data-y="a painting made of loose patches of colour | brushwork instead of outlines, soft blurred edges merging into the background | paint applied in visible, broken touches"
+                data-note="Wölfflin, linéaire / pictural (axe d'essai, 3 phrases par pôle). C'est le seul de ses cinq couples qui sépare nettement Renaissance et Baroque (AUC 0,74 ; les quatre autres ne tiennent pas). Mais l'axe oppose surtout une surface nette à une touche visible : avant 1800, il suit le temps (bascule vers 1550) ; après, le Minimalisme part au pôle « linéaire » et l'Expressionnisme abstrait au pôle « pictural ». Une piste de lecture, pas la vision de Wölfflin.">Wölfflin : linéaire / pictural</button>
               <button type="button" class="chip concept-preset" data-x="lumière" data-y="obscurité">lumière / obscurité</button>
               <button type="button" class="chip concept-preset" data-x="naked" data-y="nude">naked / nude</button>
             </div>

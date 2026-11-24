@@ -224,8 +224,8 @@ def create_app(data: AtlasData, web_dir: Path = WEB_DIR, engines: SearchEngines 
         return JSONResponse(map_cache[key])
 
     @app.get("/api/layout/concepts")
-    def concept_layout(x: str = Query(..., min_length=2, max_length=200),
-                       y: str = Query(..., min_length=2, max_length=200),
+    def concept_layout(x: str = Query(..., min_length=2, max_length=600),
+                       y: str = Query(..., min_length=2, max_length=600),
                        k: int = Query(8, ge=1, le=30)):
         try:
             return JSONResponse(engines.concept_axes(x, y, k=k, include_coords=True))

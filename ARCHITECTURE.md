@@ -1930,3 +1930,46 @@ only.
 **Limits.** A name given through SigLIP 2 inherits its biases (§ 26); the z ≥ 5 threshold was set on the
 "subject" regard (§ 37) and is checked here on 6 notions only. A notion describes what the model separates,
 not an art historian's category.
+
+## 43. Wölfflin in the conceptual axes: linear / painterly (2026-11-24)
+
+**Question.** Do Wölfflin's five pairs (*Principles of Art History*, 1915), turned into sentences and
+projected into SigLIP 2 like the conceptual axes (§ 26), separate Renaissance from Baroque? Measured by
+DeepSeek on 2026-11-22 (`docs/handoff/deepseek-wolfflin.md`, script and figures in
+`data/wikiart81k/bench/wolfflin/`, outside git): 2,729 Renaissance works (Early and High) and 4,211
+Baroque ones, 3 English sentences per pole, averaged; AUC with bootstrap 95 % CI; controls by genre,
+sentence by sentence, and three unrelated control axes.
+
+**Result.** Only **linear / painterly** holds: AUC 0.743 [0.731–0.755], in the right direction in every
+genre and whatever the sentence (0.67 to 0.73). The four other pairs (0.61 to 0.68) do not clearly beat
+the controls (up to ±0.08 over the whole corpus, ±0.24 within a genre) and flip with the wording or the
+genre. Naming the styles directly gives 0.986: the model knows "Baroque", but this knowledge hardly goes
+through Wölfflin's concepts.
+
+**In the Atlas.** A conceptual axis can now gather **several sentences separated by "|"**, whose vectors
+are averaged (`concept_phrases`, `pole_vectors` in `pixplot/api/search.py`; also for the MCP tool
+`probe_concepts`). The "Wölfflin: linear / painterly" preset of the "Conceptual axes" view uses exactly the
+benchmark's sentences and shows its caveat; it replaces the old two-French-word preset, which was never
+measured. The four other pairs are not offered.
+
+**Measurements on the axis as the Atlas computes it** (WikiArt 81k, 40 s in all, SigLIP 2 on the GPU):
+
+| Measure | Value |
+|---|---|
+| Renaissance / Baroque AUC, benchmark score (painterly − linear) | 0.743 [0.731–0.754], same as the benchmark |
+| AUC with the view's distance from the diagonal (standardised scores) | 0.757 [0.745–0.767] |
+| Correlation of the two poles over the corpus | r = 0.64 |
+| Rank correlation with the year (Spearman), 56,794 dated works | −0.01 |
+| Rank correlation with the year, works before 1800 (10,960) | **0.49** |
+| Median distance by half-century | 1450–1499: −0.75 · 1500–1549: −0.64 · **1550–1599: +0.13** · 1650–1699: +0.21 · 1850–1899: +0.28 · 1950–1999: −0.16 · 2000–: −0.30 |
+| Time: first call (loading SigLIP 2) / next ones | 17 s / 0.5 to 1 s |
+
+**Reading.** Before 1800 the axis follows time, with a clear switch in the mid-16th century, which agrees
+with Wölfflin. After 1800 it no longer follows chronology: the "linear" extremes are Minimalism and Colour
+Field (Feeley, LeWitt, Mangold), the "painterly" ones sketches and paintings with visible brushwork
+(Monticelli, Repin). The axis therefore mostly opposes **a clean surface to a visible touch**; it overlaps
+with Wölfflin over the period he designed it for, without being its measure.
+
+**Limits.** WikiArt style labels (volunteers); MMArt dates for 70 % of the works; sentences written once,
+in English, without review by an art historian; an AUC says an axis separates two groups, not that it
+measures a notion. The extremes are still polluted by framed reproductions (§ 37, no. 88).

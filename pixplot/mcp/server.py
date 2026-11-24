@@ -424,7 +424,9 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
         """Compare deux concepts textuels sur tout le corpus dans SigLIP 2 (d'après 2D CLIP,
         Impett et Offert, 2024 ; ex. « sacré » vs « profane », « nu » vs « dénudé »).
         Renvoie leur corrélation, les œuvres les plus proches de chaque pôle et celles qui
-        s'écartent le plus de la diagonale : éclaire à la fois le corpus et les biais du modèle."""
+        s'écartent le plus de la diagonale : éclaire à la fois le corpus et les biais du modèle.
+        Un concept peut réunir plusieurs phrases séparées par « | » (moyennées : axe moins
+        dépendant des mots choisis)."""
         try:
             return engines.concept_axes(x, y, k=min(max(k, 1), 30), include_coords=False)
         except SearchUnavailable as exc:
