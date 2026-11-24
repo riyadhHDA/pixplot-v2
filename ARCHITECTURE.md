@@ -1842,6 +1842,16 @@ errors, 0 network errors) on *The Sower*, the two Rembrandts, and Pissarro/Levit
 - **Scope**: the ranking measures weighted local similarity, never causal proof of influence or an internal
   explanation of the network.
 
+**Addendum (2026-11-24): when fewer than 4 zones answer each other.** Correspondences are *mutual* (each cell
+is the other's best). Counted on the CPU, without GPU, for all the validated pairs of the benchmark (1,278,
+metadata pairs included) and as many close neighbours (seed 0): a median of **4** mutual correspondences
+for the benchmark pairs, **7** for close neighbours; fewer than 4 for **31 %** of the benchmark pairs (402)
+and **10 %** of the neighbours (133), while both works almost always have 16 valid cells. The shortfall
+therefore comes from the resemblance itself, more diffuse between distant works, not from a cropping
+defect. We do not fill in with non-mutual correspondences (they have not been put to the test); the
+comparator now says, under the zones, that only 1 to 3 zones clearly answer each other and what this
+means. These pairs remain outside the occlusion test.
+
 ## 41. The "posture" regard in the Atlas, on trial (2026-11-23)
 
 **Decision.** § 35 had left posture in `NOT_KEPT`: it does not beat form on the validated pairs. Yet the

@@ -1958,6 +1958,16 @@ l'Atlas (port 8770, 0 erreur console, 0 erreur réseau) sur *Le Semeur*, les deu
 - **Portée** : le classement mesure une ressemblance locale pondérée, jamais une preuve causale d'emprunt ni
   une explication interne du réseau.
 
+**Complément (24/11/2026) : quand moins de 4 zones se répondent.** Les correspondances sont *mutuelles*
+(chaque case est la meilleure de l'autre). Compté sur processeur, sans GPU, pour toutes les paires
+validées du banc d'essai (1 278, métadonnées comprises) et autant de voisines proches (graine 0) : médiane
+de **4** correspondances mutuelles pour les paires du banc, **7** pour les voisines proches ; moins de 4
+pour **31 %** des paires du banc (402) et **10 %** des voisines (133), alors que les deux œuvres ont presque
+toujours 16 cases valides. Le manque vient donc de la ressemblance elle-même, plus diffuse entre œuvres
+éloignées, et non d'un défaut de découpage. On ne complète pas avec des correspondances non mutuelles
+(elles n'ont pas été mises à l'épreuve) ; le comparateur dit désormais, sous les zones, que seules 1 à 3
+zones se répondent nettement et ce que cela signifie. Ces paires restent hors du test d'occultation.
+
 ## 41. Le regard « posture » dans l'Atlas, en essai (23/11/2026)
 
 **Décision.** Le § 35 avait laissé la posture dans `NOT_KEPT` : elle ne bat pas la forme sur les paires

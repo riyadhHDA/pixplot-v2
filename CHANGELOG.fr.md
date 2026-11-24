@@ -16,6 +16,7 @@ Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numé
 
 ## Non publié
 
+- **« Pourquoi ? »** : quand moins de 4 zones se répondent, le comparateur le dit et explique pourquoi (ressemblance plus diffuse ; 31 % des paires du banc d'essai, 10 % des voisines proches). (ARCHITECTURE § 40, complément)
 - **Site** : posture (avec la planche), notions apprises, doublons et filtres combinés ; feuille de route remise à jour jusqu'à la 1.0.
 - **Notions du regard « forme »** : 2 048 notions apprises sur DINOv3, nommées avec Iconclass à travers SigLIP 2 (ce que montrent leurs œuvres) ; le panneau « Notions » de l'Atlas propose les deux regards, `explore_notions` prend `space`, `pixplot notions --nommer RUN`. (ARCHITECTURE § 42)
 - **Regard « posture » dans l'Atlas, en essai** (Gemini 4 Neon, relu par Claude) : voisines exactes sur toutes les figures, avec le miroir ; squelettes dessinés dans la fiche et le comparateur ; `similar_artworks` accepte `space="posture"`. Séparé des quatre regards principaux et marqué « essai ». `communities` et `disagreements` le laissent de côté par défaut. (ARCHITECTURE § 41)

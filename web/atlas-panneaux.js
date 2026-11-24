@@ -408,6 +408,10 @@ async function showWhy(idA, idB, nA, nB, btn) {
     ? `<h3>Pourquoi ${nA + 1} et ${nB + 1} se ressemblent-elles ? <small>regard « ${esc(SPACE_SHORT[r.space] || r.space)} », cases ${esc(r.grid)}</small></h3>
        <ol>${r.pairs.map((p, k) => `<li style="--c:${WHY_COLORS[k % WHY_COLORS.length]}">zone ${k + 1} ↔ zone ${k + 1} :
          cosinus ${p.sim.toFixed(2)}, ${p.lift >= 0 ? "+" : ""}${p.lift.toFixed(2)} au-dessus de leur ressemblance moyenne</li>`).join("")}</ol>
+       ${r.pairs.length < 4 ? `<p class="prov">Seule${r.pairs.length > 1 ? "s" : ""} ${r.pairs.length} zone${r.pairs.length > 1 ? "s se répondent" : " se répond"}
+       nettement (sur 4 cherchées) : la ressemblance tient moins à des parties précises qu'à l'ensemble, ou à peu de
+       choses. C'est fréquent entre œuvres éloignées (paires du banc d'essai : 4 en médiane, moins de 4 pour 31 % ;
+       voisines proches : 7, moins de 4 pour 10 %).</p>` : ""}
        <p class="prov">Zones qui se ressemblent le plus (correspondances mutuelles centrées par position et pondérées
        par leur poids global) : une piste à regarder, pas une explication. Le regard compare des formes : à vous de
        dire si ces zones partagent un motif, une pose, une composition, ou seulement un fond semblable.</p>`
