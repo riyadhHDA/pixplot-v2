@@ -14,7 +14,7 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
-## Unreleased
+## 0.22.0 — 2026-11-24 · Posture in the Atlas, notions of the "form" regard, command reference
 
 - **"Why?"**: when fewer than 4 zones answer each other, the comparator says so and explains why (a more diffuse resemblance; 31 % of benchmark pairs, 10 % of close neighbours). (ARCHITECTURE § 40, addendum)
 - **Website**: posture (with the plate), learned notions, duplicates and combined filters; roadmap brought up to date through 1.0.

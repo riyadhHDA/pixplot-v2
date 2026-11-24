@@ -4,10 +4,11 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 24/11/2026 (notions du regard « forme »).*
+*Dernière mise à jour : 24/11/2026 (publication de la 0.22.0).*
 
 ## Version publiée
 
+**0.22.0** (24/11/2026) : regard « posture » en essai dans l'Atlas et le MCP (§ 41), notions du regard « forme » nommées à travers SigLIP 2 (§ 42), « Pourquoi ? » qui dit quand moins de 4 zones se répondent (§ 40, complément), référence des commandes, site à jour. Détail dans « En cours » plus bas (« Après la 0.21.0 », publié).
 **0.21.0** (23/11/2026) : regard « posture » évalué (§ 35), banc d'essai texte (§ 36), notions apprises et leur panneau (§ 37), intervalles de confiance (§ 38), « Pourquoi ? » mis à l'épreuve puis réparé (§§ 39–40), fiche de données, formats et parité FR / EN vérifiés par des tests, outil MCP `explore_notions` (20 outils). Détail dans « En cours » plus bas (publié).
 **0.20.0** (19/11/2026) : titres, dates, artistes (MMArt) et émotions (ArtEmis) pour WikiArt, vue
 chronologique ; ordre de la matière ; PE-Core et CSD évalués, non retenus (ARCHITECTURE §§ 30 à 34).

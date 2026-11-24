@@ -14,7 +14,7 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
-## Non publié
+## 0.22.0 — 24/11/2026 · Posture dans l'Atlas, notions du regard « forme », référence des commandes
 
 - **« Pourquoi ? »** : quand moins de 4 zones se répondent, le comparateur le dit et explique pourquoi (ressemblance plus diffuse ; 31 % des paires du banc d'essai, 10 % des voisines proches). (ARCHITECTURE § 40, complément)
 - **Site** : posture (avec la planche), notions apprises, doublons et filtres combinés ; feuille de route remise à jour jusqu'à la 1.0.

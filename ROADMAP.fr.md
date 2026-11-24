@@ -1,6 +1,6 @@
 # Feuille de route
 
-[English](ROADMAP.md) · **Français** · Mise à jour : 23/11/2026 · Version actuelle : **0.21.0**
+[English](ROADMAP.md) · **Français** · Mise à jour : 24/11/2026 · Version actuelle : **0.22.0**
 
 Ce qui est déjà sorti figure dans [CHANGELOG.fr.md](CHANGELOG.fr.md). Ici sont rassemblées
 les prochaines étapes, les essais écartés et les pistes à tester.
@@ -110,10 +110,11 @@ de confiance à 95 % de l'écart apparié exclut zéro (`pixplot pairs ci`, ARCH
   - **CSD** (ECCV 2024) pour le style pur face à la « touche », et **PE-Core** face à SigLIP 2 pour le
     « sujet » *(évalués, non retenus : ARCHITECTURE §§ 31–32)*.
   - **Postures et regards** (Stork § 8.3 & § 9.3.1 ; *Human-Art* CVPR 2023 ; Madhu et al.) *(évalué en
-    0.21.0, § 35 : regard « posture », pas encore proposé ; 37 paires « même geste » à relire)* :
+    0.21.0, § 35 ; proposé en essai dans l'Atlas en 0.22.0, § 41 : 25 paires « même geste » validées sur 37)* :
     détection de squelettes pour les *Pathosformeln* et la symétrie des figures.
   - **Auto-encodeurs parcimonieux** (*PatchSAE* ICLR 2025, *Matryoshka SAE* ICML 2025) *(fait en 0.21.0,
-    § 37 : 1 792 notions du regard « sujet », panneau « Notions » de l'Atlas)* sur les
+    § 37 : 1 792 notions du regard « sujet », panneau « Notions » de l'Atlas ; regard « forme » en 0.22.0,
+    § 42)* sur les
     vecteurs déjà calculés, et hiérarchie Iconclass enrichie (*Visual Narratives*, WACV 2024).
 - **Collection Space Navigator** (Ohm et al., 2023) *(fait en 0.19.0)* : filtres combinés
   dans l'Atlas (étiquettes, groupes, atypicité, dates) avec comptes croisés, sélection envoyée au
