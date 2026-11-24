@@ -16,6 +16,7 @@ Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 
 ## Unreleased
 
+- **Website**: posture (with the plate), learned notions, duplicates and combined filters; roadmap brought up to date through 1.0.
 - **Notions of the "form" regard**: 2,048 notions learned on DINOv3, named with Iconclass through SigLIP 2 (what their works show); the Atlas "Notions" panel offers both regards, `explore_notions` takes `space`, `pixplot notions --nommer RUN`. (ARCHITECTURE § 42)
 - **"Posture" regard in the Atlas, on trial** (Gemini 4 Neon, reviewed by Claude): exact neighbours over every figure, mirror included; skeletons drawn on the card and in the comparator; `similar_artworks` accepts `space="posture"`. Kept apart from the four main regards and marked "trial". `communities` and `disagreements` leave it out by default. (ARCHITECTURE § 41)
 - **Command reference** (`docs/COMMANDS.md` / `.fr.md`): the 41 `pixplot` commands, grouped by stage of work; a test rejects an undescribed command or a description without a command (a 1.0 condition).

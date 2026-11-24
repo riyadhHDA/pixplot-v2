@@ -101,6 +101,14 @@
         <div class="card"><span class="tag">DINOv3, couche 6</span><h3>Touche</h3>
           <p>Grain, hachures, empâtements, indépendamment du sujet.</p><p class="q">Même facture ?</p></div>
       </div>
+      <h3 style="margin-top:34px">Un cinquième regard, en essai : la posture</h3>
+      <p class="section-lead">Il repère les figures, estime leur squelette et compare les poses, y compris en miroir.
+        Sans aucune étiquette, il retrouve des formules gestuelles d'un siècle à l'autre (les <i>Pathosformeln</i>
+        d'Aby Warburg) : 25 des 37 paires « même geste » qu'il a proposées ont été validées à la relecture. Il ne bat
+        pas la forme sur l'ensemble des paires et ne voit que les œuvres où une figure est détectée (48 %) ; il reste
+        donc à part, marqué « essai ». Une pose semblable est une piste, pas la preuve qu'un artiste a vu l'autre.</p>
+      <div class="shot"><img src="../images/posture.fr.jpg" loading="lazy" width="1600" height="1932"
+        alt="Trois paires d'œuvres dont les figures prennent la même pose, squelettes dessinés : Titien et Mantegna, Ferenczy et Van Gogh, le Tintoret et Berthe Morisot"></div>
     </div>
   </section>
 
@@ -126,6 +134,13 @@
         <div class="card"><h3>Serveur MCP (20 outils)</h3><p>Permet de brancher Claude ou un autre assistant compatible :
           il peut chercher, ouvrir les images et les détails, lancer des mesures et écrire des notes dans le carnet
           partagé.</p></div>
+        <div class="card"><h3>Les notions apprises</h3><p>Un auto-encodeur décompose les regards « sujet » et
+          « forme » en environ 2 000 notions chacun : objets, motifs, mises en page, que le catalogue n'indexe pas.
+          Chacune est nommée avec Iconclass quand le nom est sûr, et ses œuvres s'allument sur la carte.</p></div>
+        <div class="card"><h3>Doublons et variantes</h3><p>Les œuvres entrées deux fois, et les répliques, séries,
+          états de gravure ou copies, avec les étiquettes qui se contredisent d'une entrée à l'autre.</p></div>
+        <div class="card"><h3>Filtres combinés</h3><p>Style, genre, artiste, groupe, date et atypicité à la fois,
+          avec le compte de ce que donnerait chaque choix ; la sélection part au carnet ou dans un Research Pack.</p></div>
       </div>
       <p class="fine" style="margin-top:22px">Chaque calcul est enregistré dans un dossier daté avec son modèle et ses
         paramètres. L'export produit un <i>Research Pack</i> (.zip) contenant les images, les métadonnées sourcées et
@@ -187,11 +202,22 @@
         <li class="done"><span class="v">0.13</span><div><h3>Zones décrites, couche critique et lieux ARTL@S</h3><p>TIPSv2
           évalué sur RichArt puis écarté au profit d'un index de 1,6 million de zones SigLIP 2 ; fiches de biais des
           regards, bilan du corpus et lieux typés/datés.</p></div></li>
-        <li><span class="v">0.14</span><div><h3>Noms de groupes avec Iconclass <small style="color:var(--muted);font-family:var(--font);font-size:13px">· en cours de relecture</small></h3><p>Remplacer
-          le petit lexique écrit à la main par les notions CC0 d'Iconclass avec leur code vérifiable.</p></div></li>
+        <li class="done"><span class="v">0.14</span><div><h3>Noms de groupes avec Iconclass</h3><p>Le petit lexique
+          écrit à la main remplacé par les notions CC0 d'Iconclass, avec leur code vérifiable ; relus sur 83 groupes :
+          Iconclass plus juste 39 fois, l'ancien nom 24 fois (publié en 0.18).</p></div></li>
         <li class="done"><span class="v">0.15–0.16</span><div><h3>Composition, « Pourquoi ? », axes conceptuels et mesures</h3><p>PE-Spatial
           mesuré sur les paires de composition et non retenu (DINOv3 reste devant) ; correspondances de zones dans le
           comparateur, axes conceptuels 2D et mesures visuelles (Stork).</p></div></li>
+        <li class="done"><span class="v">0.17–0.20</span><div><h3>Filtres, doublons, titres et émotions</h3><p>Filtres
+          combinés, doublons et variantes (SSCD), titres, dates et artistes retrouvés pour 70 902 œuvres de WikiArt
+          (MMArt), émotions des spectateurs (ArtEmis), ordre de la matière ; SSCD, Depth Anything, LocalMAP, PE-Core
+          et CSD mesurés et non retenus.</p></div></li>
+        <li class="done"><span class="v">0.21</span><div><h3>Posture, notions apprises, « Pourquoi ? » mis à l'épreuve</h3><p>Regard
+          « posture » évalué, notions apprises du regard « sujet », intervalles de confiance du banc de paires ; le
+          bouton « Pourquoi ? » échoue d'abord au test par occultation, puis le réussit après réparation.</p></div></li>
+        <li><span class="v">1.0</span><div><h3>Vers la 1.0</h3><p>Commandes et formats de fichiers stables et décrits
+          (fait, vérifié par des tests), au moins 100 paires validées (fait), documentation complète dans les deux
+          langues (fait), installation testée sur une machine neuve (à faire en dernier).</p></div></li>
       </ol>
       <p class="fine" style="margin-top:18px">Détail complet et pistes à l'étude :
         <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/ROADMAP.fr.md">ROADMAP.fr.md</a>.</p>

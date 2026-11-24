@@ -100,6 +100,14 @@
         <div class="card"><span class="tag">DINOv3, layer 6</span><h3>Touch</h3>
           <p>Grain, hatching and brushwork, regardless of the subject.</p><p class="q">Same handling?</p></div>
       </div>
+      <h3 style="margin-top:34px">A fifth way, on trial: posture</h3>
+      <p class="section-lead">It finds the figures, estimates their skeletons and compares the poses, mirror images
+        included. Without any label, it finds gestural formulas across centuries (Aby Warburg's <i>Pathosformeln</i>):
+        25 of the 37 "same gesture" pairs it proposed were validated on review. It does not beat form over all the
+        pairs and only sees works where a figure is detected (48 %), so it stays apart, marked "trial". A similar pose
+        is a lead, not proof that one artist saw the other.</p>
+      <div class="shot"><img src="images/posture.jpg" loading="lazy" width="1600" height="1932"
+        alt="Three pairs of works whose figures strike the same pose, skeletons drawn: Titian and Mantegna, Ferenczy and Van Gogh, Tintoretto and Berthe Morisot"></div>
     </div>
   </section>
 
@@ -121,6 +129,13 @@
           normalised metadata and rights. Tested on the Yale Center for British Art.</p></div>
         <div class="card"><h3>MCP server (20 tools)</h3><p>Connects Claude or another MCP-compatible assistant so it
           can search, view images and crops, run visual measures and save notes in the shared notebook.</p></div>
+        <div class="card"><h3>Learned notions</h3><p>An autoencoder breaks the "subject" and "form" spaces into about
+          2,000 notions each: objects, motifs, layouts the catalogue does not index. Each is named with Iconclass when
+          the name is reliable, and its works light up on the map.</p></div>
+        <div class="card"><h3>Duplicates and variants</h3><p>Works entered twice, and replicas, series, print states or
+          copies, with the labels that contradict each other from one entry to the next.</p></div>
+        <div class="card"><h3>Combined filters</h3><p>Style, genre, artist, group, date and atypicality at once, with
+          the count each choice would give; the selection goes to the notebook or into a Research Pack.</p></div>
       </div>
       <p class="fine" style="margin-top:22px">Every computation is saved in a dated run folder with its model and
         parameters. Exporting creates a <i>Research Pack</i> (.zip) with the images, sourced metadata and scores so a
@@ -181,11 +196,22 @@
         <li class="done"><span class="v">0.13</span><div><h3>Described zones, critical layer and ARTL@S places</h3><p>TIPSv2
           tested on RichArt and dropped in favour of a 1.6M SigLIP 2 region index; model bias cards, corpus audit and
           typed/dated places.</p></div></li>
-        <li><span class="v">0.14</span><div><h3>Iconclass group naming <small style="color:var(--muted);font-family:var(--font);font-size:13px">· under review</small></h3><p>Replacing
-          the small hand-written lexicon with CC0 Iconclass terms and verifiable codes.</p></div></li>
+        <li class="done"><span class="v">0.14</span><div><h3>Iconclass group naming</h3><p>The small hand-written
+          lexicon replaced with CC0 Iconclass terms and verifiable codes; reviewed on 83 groups: Iconclass more
+          accurate 39 times, the old name 24 times (released in 0.18).</p></div></li>
         <li class="done"><span class="v">0.15–0.16</span><div><h3>Composition, "Why?", conceptual axes and visual measures</h3><p>PE-Spatial
           benchmarked on composition pairs and dropped (DINOv3 stays ahead); zone matching in the comparator, 2D
           conceptual axes and neural-free visual measures (Stork).</p></div></li>
+        <li class="done"><span class="v">0.17–0.20</span><div><h3>Filters, duplicates, titles and emotions</h3><p>Combined
+          filters, duplicates and variants (SSCD), titles, dates and artists recovered for 70,902 WikiArt works
+          (MMArt), viewers' emotions (ArtEmis), order of the paint surface; SSCD, Depth Anything, LocalMAP, PE-Core
+          and CSD measured and dropped.</p></div></li>
+        <li class="done"><span class="v">0.21</span><div><h3>Posture, learned notions, "Why?" put to the test</h3><p>"Posture"
+          space evaluated, learned notions of the "subject" space, confidence intervals for the pair benchmark; the
+          "Why?" button first fails the occlusion test, then passes it once fixed.</p></div></li>
+        <li><span class="v">1.0</span><div><h3>Towards 1.0</h3><p>Stable, documented commands and file formats (done,
+          checked by tests), at least 100 validated pairs (done), complete documentation in both languages (done),
+          installation tested on a fresh machine (to be done last).</p></div></li>
       </ol>
       <p class="fine" style="margin-top:18px">Full roadmap and open leads:
         <a href="https://github.com/riyadhHDA/pixplot-v2/blob/main/ROADMAP.md">ROADMAP.md</a>.</p>
