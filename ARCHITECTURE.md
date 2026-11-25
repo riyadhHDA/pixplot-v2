@@ -2130,3 +2130,54 @@ visual measures and in the "Disorder" and "Complexity" colours, as descriptions 
 
 **Limits.** A single scale (256-px thumbnails), luminance only, ties broken by position (which inflates one pattern
 in flat areas); 8,000 queries, without confidence intervals, the gaps being very large against chance or touch.
+
+## 48. An "influence between artists" benchmark, from Wikidata (2026-11-25)
+
+**Question.** Validated "filiation" pairs are too few (10) for narrow confidence intervals (§§ 38, 46). Can an
+influence-between-artists benchmark complement them? Work by Gemini 4 Neon (`docs/handoff/gemini-banc-influence.md`),
+reviewed by Claude.
+
+**Source.** WIB-100 (M-ArtAgent, Liu et al., arXiv 2604.07468, 2026; a lead from Mistral's proposals), 2,000 artist
+pairs on WikiArt, is not published: no data, no list of artists. Its protocol is reused with **Wikidata** (CC0):
+`P737` "influenced by" and `P1066` "student of", counted and measured separately, with the references cited on
+Wikidata; public SPARQL queries with a generic tool identifier; dated raw answers outside git
+(`<data>/bench/influence/`). Matching: 1,072 of 1,089 artists (98.4 %), 1,068 through the WikiArt identifier `P6002`;
+17 missing (initials or accents in the file name). Links between artists with at least 5 works: 302 `P737`, 152
+`P1066`; 53.5 % carry a reference on Wikidata. Controls (500 pairs each, no known link): hard (same period, same
+style), medium (same period, other style), easy (distant periods); chronologically impossible pairs are set apart.
+
+**Measure** (`pixplot influence`, `pixplot/analysis/influence.py`). For A → B in a regard: for each work of B, the
+median rank of A's works among its neighbours (B's works and duplicates excluded); median over B, as a percentile.
+The measure does not depend on how many works A has. AUC of links against controls, 95 % CIs and paired gaps by
+resampling the pairs (2,000 draws).
+
+| AUC (95 % CI) | Form | Subject | Colour | Touch | Posture |
+|---|---|---|---|---|---|
+| "influenced by" against medium | **0.659** [0.621–0.697] | 0.561 | 0.525 | 0.627 | 0.523 |
+| "influenced by" against easy | 0.837 | **0.906** [0.884–0.926] | 0.670 | 0.764 | 0.395 |
+| "student of" against easy | 0.828 | **0.911** [0.884–0.936] | 0.718 | 0.749 | 0.493 |
+
+At equal period and style (same-period, same-style links against hard controls):
+
+| AUC (95 % CI) | Form | Subject | Colour | Touch | Posture |
+|---|---|---|---|---|---|
+| "influenced by" (74 links) | 0.588 [0.521–0.651] | 0.567 | 0.565 | 0.575 | 0.542 |
+| "student of" (52 links) | 0.635 | **0.727** [0.650–0.798] | 0.622 | 0.643 | 0.640 |
+
+**Reading.**
+- **A stated influence barely shows** against contemporaries of the same style: 0.54 to 0.59, with no regard
+  safely ahead. Resemblance is a clue, not proof of influence.
+- **The workshop link shows better**: "student of", at equal period and style, 0.727 in subject, a safe gap over
+  every other regard (+0.08 to +0.21). The student keeps the master's repertoire.
+- **When an influence crosses movements** (against medium controls), form and touch are safely ahead of subject and
+  colour.
+- **Against distant periods**, every regard separates well (subject above all): this mostly measures the period.
+- **The median misses occasional borrowings.** Hokusai → Monet fails (form 0.16: prints and oils lie far apart in
+  the corpus), while Hokusai's *Irises* and Monet's (1917) meet at rank 3; likewise Brâncuși → Modigliani (two
+  sculpted heads of 1912, rank 8). The "best work" measure, more favourable, is biased by the number of works of the
+  great masters: kept as an appendix only.
+
+**Limits.** Wikidata links are volunteers' statements, unevenly sourced (46.5 % without a reference), sometimes
+questionable (Benois → Repin, Benois being 26 years younger); real links missing from Wikidata may sit among the
+controls. 30 randomly drawn links await the user's review (`<data>/bench/influence/relecture_p737_30.csv`) before
+this becomes a stable reference. A corpus centred on 19th–20th-century Western art.

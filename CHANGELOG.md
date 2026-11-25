@@ -16,6 +16,7 @@ Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 
 ## Unreleased
 
+- **`pixplot influence`** (Gemini 4 Neon): an "influence between artists" benchmark from Wikidata (CC0; WIB-100 is not published): 302 "influenced by" and 152 "student of" links over 1,072 matched artists, against same-period, same-style controls. A stated influence barely shows (AUC 0.54 to 0.59); the workshop link shows better ("student of", subject 0.73). (ARCHITECTURE § 48)
 - **Two-by-two ordinal patterns measured, not kept** (Tarozo et al., 2025): the distribution of the 24 patterns says more than entropy and complexity (style 16 % of neighbours against 9 %, chance 8 %), but stays far below the "touch" regard (50 %). Nothing added to the code. (ARCHITECTURE § 47)
 - **Depth Pro 2 and OpenVisionBanana evaluated, not kept** (Gemini 4 Neon): Depth Pro 2 fixes Depth Anything V2's vertical bias (median rank 13,754 → 4,836) but finds no "same composition" pair in its top 10 neighbours (Form: 53.6 %); OpenVisionBanana is a generative model, rejected without computation. `depth_pro2_*` encoder in `NOT_KEPT`. (ARCHITECTURE § 46)
 - **`pixplot dater`**: an estimated date, with a calibrated 80 % range, for undated works. Known artist: from their dated works only (3-year median error on WikiArt); otherwise from all neighbours (12 years, no better than the style label). Shown in the record as a lead, passed on by `get_artwork`; in the timeline view, a

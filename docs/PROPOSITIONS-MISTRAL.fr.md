@@ -30,7 +30,7 @@ Format d'une mise à jour :
 
 | Papier (date) | Réf. | Pourquoi pour PixPlot | Statut |
 |---|---|---|---|
-| M-ArtAgent + WikiArt Influence Benchmark WIB-100 (2026) | arXiv 2604.07468 | Banc « filiation » équilibré, prêt à l'emploi sur WikiArt | à lire en priorité |
+| M-ArtAgent + WikiArt Influence Benchmark WIB-100 (2026) | arXiv 2604.07468 | Banc « filiation » équilibré, prêt à l'emploi sur WikiArt | **WIB-100 non publié** ; protocole repris avec Wikidata (`pixplot influence`, ARCHITECTURE § 48) |
 | Sparse Autoencoders Learn Monosemantic Features in VLMs (avr. 2025) | arXiv 2504.02821 | Testé sur SigLIP SoViT-400m (notre modèle) ; cadre pour noter nos notions SAE | à lire en priorité |
 | EmoSEM : segmenter les zones qui suscitent l'émotion (avr. 2025) ; lien avec APOLO / ArtEmis non vérifié | arXiv 2504.14658 | Localiser l'émotion dans le tableau, croisé avec nos 1,6 M zones | à lire en priorité |
 | fruit-SALAD, Scientific Data (2025) | s41597-025-04529-4 | Similarité perçue par des humains, projetée dans les embeddings : juger les regards | **référence non vérifiée** (page inaccessible au 24/11/2026) |

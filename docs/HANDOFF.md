@@ -253,9 +253,11 @@ corrigé ; 63 tests passent, Atlas vérifié.
     **25/11/2026, accord de l'utilisateur** : caches Hugging Face des modèles écartés supprimés (11 Go : Depth
     Pro 2, Depth Anything V2, DINOv2, DINOv3-L, TIPSv2 ×2, PE-Core, PE-Spatial, CSD, RT-DETR r18) ; vecteurs
     gardés ; ils se retéléchargent si l'on relance leur évaluation. Copies de sécurité de `data/` gardées.
-  - **Gemini 4 Neon, en cours (25/11/2026)** : banc d'essai « influence » d'après WIB-100 (M-ArtAgent,
-    arXiv 2604.07468), dans `C:\Users\Riyadh\Documents\pixplot-banc-influence` (branche
-    `gemini/banc-influence`). Compte rendu attendu : `docs/handoff/gemini-banc-influence.md`.
+  - **Gemini 4 Neon : banc « influence »**, fusionné le 25/11/2026 (ARCHITECTURE § 48,
+    `handoff/gemini-banc-influence.md`, `pixplot influence`). WIB-100 non publié ; Wikidata à la place (302 liens
+    « influencé par », 152 « élève de », 1 072 artistes rattachés). Influence affirmée à peine visible (AUC 0,54 à
+    0,59 à époque et style égaux) ; « élève de » mieux vu par le sujet (0,73). **À relire par l'utilisateur** :
+    30 liens dans `data/wikiart81k/bench/influence/relecture_p737_30.csv`. Copie de travail supprimée.
 
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
   19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.

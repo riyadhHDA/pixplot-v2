@@ -2262,3 +2262,56 @@ surface, pas comme ressemblance.
 **Limites.** Une seule échelle (vignettes de 256 px), luminance seule, égalités départagées par la position (ce
 qui gonfle un motif dans les aplats) ; 8 000 requêtes, sans intervalle de confiance, les écarts étant très grands
 face au hasard ou à la touche.
+
+## 48. Un banc d'essai « influence entre artistes », d'après Wikidata (25/11/2026)
+
+**Question.** Les paires « filiation » validées sont trop peu nombreuses (10) pour des intervalles de confiance
+étroits (§§ 38, 46). Un banc d'influence entre artistes peut-il les compléter ? Travail de Gemini 4 Neon
+(`docs/handoff/gemini-banc-influence.md`), relu par Claude.
+
+**Source.** WIB-100 (M-ArtAgent, Liu et al., arXiv 2604.07468, 2026 ; piste des propositions de Mistral), 2 000
+paires d'artistes sur WikiArt, n'est pas publié : ni données ni liste d'artistes. On reprend son protocole avec
+**Wikidata** (CC0) : `P737` « influencé par » et `P1066` « élève de », comptés et mesurés à part, avec les
+références citées sur Wikidata ; requêtes SPARQL publiques avec un identifiant d'outil générique ; réponses brutes
+datées hors git (`<données>/bench/influence/`). Rattachement : 1 072 artistes sur 1 089 (98,4 %), dont 1 068 par
+l'identifiant WikiArt `P6002` ; 17 absents (initiales ou accents dans le nom de fichier). Liens entre artistes
+d'au moins 5 œuvres : 302 `P737`, 152 `P1066` ; 53,5 % portent une référence sur Wikidata. Témoins (500 paires
+chacun, sans lien connu) : difficiles (même époque, même style), moyens (même époque, autre style), faciles
+(époques éloignées) ; les paires chronologiquement impossibles sont mises à part.
+
+**Mesure** (`pixplot influence`, `pixplot/analysis/influence.py`). Pour A → B dans un regard : pour chaque œuvre de
+B, rang médian des œuvres de A parmi ses voisines (œuvres de B et doublons exclus) ; médiane sur B, en centile.
+Mesure invariante au nombre d'œuvres de A. AUC des liens contre les témoins, IC 95 % et écarts appariés par
+tirages avec remise sur les paires (2 000).
+
+| AUC (IC 95 %) | Forme | Sujet | Couleur | Touche | Posture |
+|---|---|---|---|---|---|
+| « influencé par » contre moyens | **0,659** [0,621–0,697] | 0,561 | 0,525 | 0,627 | 0,523 |
+| « influencé par » contre faciles | 0,837 | **0,906** [0,884–0,926] | 0,670 | 0,764 | 0,395 |
+| « élève de » contre faciles | 0,828 | **0,911** [0,884–0,936] | 0,718 | 0,749 | 0,493 |
+
+À époque et style égaux (liens de même époque et même style contre témoins difficiles) :
+
+| AUC (IC 95 %) | Forme | Sujet | Couleur | Touche | Posture |
+|---|---|---|---|---|---|
+| « influencé par » (74 liens) | 0,588 [0,521–0,651] | 0,567 | 0,565 | 0,575 | 0,542 |
+| « élève de » (52 liens) | 0,635 | **0,727** [0,650–0,798] | 0,622 | 0,643 | 0,640 |
+
+**Lecture.**
+- **Une influence affirmée se voit à peine** face à des contemporains du même style : de 0,54 à 0,59, sans regard
+  sûrement devant les autres. La ressemblance est un indice, pas une preuve d'influence.
+- **Le lien d'atelier se voit mieux** : « élève de », à époque et style égaux, 0,727 en sujet, écart sûr face à
+  tous les autres regards (+0,08 à +0,21). L'élève garde le répertoire du maître.
+- **Quand une influence traverse les mouvements** (contre les témoins moyens), forme et touche devancent sûrement
+  sujet et couleur.
+- **Contre des époques éloignées**, tout regard sépare bien (le sujet surtout) : cela mesure surtout l'époque.
+- **La médiane manque les emprunts ponctuels.** Hokusai → Monet échoue (forme 0,16 : estampe et huile sont loin
+  dans le corpus), alors que les *Iris* de Hokusai et ceux de Monet (1917) se retrouvent au 3ᵉ rang ; même chose
+  pour Brâncuși → Modigliani (deux têtes sculptées de 1912, rang 8). La mesure par « meilleure œuvre », plus
+  favorable, est biaisée par le nombre d'œuvres des grands maîtres : gardée en annexe seulement.
+
+**Limites.** Les liens de Wikidata sont des affirmations de bénévoles, inégalement sourcées (46,5 % sans
+référence), parfois discutables (Benois → Repine, Benois étant de 26 ans le cadet) ; de vrais liens absents de
+Wikidata peuvent se trouver parmi les témoins. 30 liens tirés au hasard attendent la relecture de l'utilisateur
+(`<données>/bench/influence/relecture_p737_30.csv`) avant d'en faire une référence stable. Corpus centré sur les
+XIXᵉ–XXᵉ siècles occidentaux.
