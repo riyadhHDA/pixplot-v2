@@ -139,6 +139,14 @@ remplacement), ce qui permet la reprise après coupure.
 
 Les rapports des bancs d'essai (`bench/*_report_*.json`) sont des sorties, pas des formats stables.
 
+**`<données>/bench/influence/`** (hors git, produit par `pixplot influence`, source Wikidata CC0) :
+- `raw_p6002_<AAAAMMJJ>.json`, `raw_names_<AAAAMMJJ>.json`, `raw_links_<AAAAMMJJ>.json` : réponses SPARQL brutes avec date de requête et licence ;
+- `artists.json` : rattachement des artistes du catalogue à Wikidata (`p6002`, `nom_dates`, `ambigu`, `absent`) ;
+- `links.json` : liens dirigés `P737` (« influencé par ») et `P1066` (« élève de ») avec identifiants Wikidata, chronologie et références ;
+- `controls.json` : groupes témoins (`difficiles`, `moyens`, `faciles`, `impossibles`) ;
+- `relecture_p737_30.csv` : échantillon de 30 liens `P737` à relire par l'historien, colonnes `source,target,source_qid,target_qid,property,source_dates,target_dates,source_style,target_style,references,verdict,note` (`verdict` vide, rien validé d'office) ;
+- `report_<analyse>.json` : AUC, intervalles de confiance à 95 %, écarts appariés entre regards et scores par paire.
+
 ## 6. Le carnet de recherche (`notebook.sqlite`)
 
 Table `entries` : `id`, `created`, `updated`, `kind`, `title`, `note`, `artwork_ids` (liste JSON),

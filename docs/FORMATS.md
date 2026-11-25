@@ -140,6 +140,14 @@ table, with `artwork_ids` and `context` decoded.
 
 Benchmark reports (`bench/*_report_*.json`) are outputs, not stable formats.
 
+**`<data>/bench/influence/`** (never in git, written by `pixplot influence`, Wikidata CC0 source):
+- `raw_p6002_<YYYYMMDD>.json`, `raw_names_<YYYYMMDD>.json`, `raw_links_<YYYYMMDD>.json`: raw SPARQL responses with fetch date and license;
+- `artists.json`: catalog artists linked to Wikidata (`p6002`, `nom_dates`, `ambigu`, `absent`);
+- `links.json`: directed `P737` ("influenced by") and `P1066` ("student of") links with Wikidata IDs, chronology and references;
+- `controls.json`: control tiers (`difficiles`, `moyens`, `faciles`, `impossibles`);
+- `relecture_p737_30.csv`: 30 sampled `P737` links for historian review, columns `source,target,source_qid,target_qid,property,source_dates,target_dates,source_style,target_style,references,verdict,note` (`verdict` left empty, nothing pre-validated);
+- `report_<analysis>.json`: AUCs, 95% confidence intervals, paired differences across regards and per-pair scores.
+
 ## 6. The research notebook (`notebook.sqlite`)
 
 Table `entries`: `id`, `created`, `updated`, `kind`, `title`, `note`, `artwork_ids` (JSON list),

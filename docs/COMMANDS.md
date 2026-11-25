@@ -99,6 +99,7 @@ proof: the benchmarks measure what each regard finds, not what is true.
 | `pixplot zonebench` | find a zone with words: RichArt benchmark | `--encoders` |
 | `pixplot textbench` | sentence search, on the MMArt descriptions | `-n`, `--encoders` |
 | `pixplot whytest` | puts the "Why?" button to the test by occlusion | `-k`, `--random` |
+| `pixplot influence` | artist-level "influence" benchmark on Wikidata (`P737`, `P1066`) with controls and paired CIs | `--fetch`, `--spaces`, `--min-works`, `--boot` |
 | `pixplot audit` | blind audit: where the groups contradict the labels | `--keys`, `--min-count` |
 
 ## Stability
