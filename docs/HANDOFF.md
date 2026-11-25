@@ -239,9 +239,12 @@ corrigé ; 63 tests passent, Atlas vérifié.
     (bloc en pointillés) et `get_artwork` (`date_estimate`). Calculé sur 81k : `datation.npy`, rapport
     `data/wikiart81k/bench/datation_report.json`. Piste reprise de `docs/PROPOSITIONS-MISTRAL.fr.md`, que
     Claude a relu (24 références vérifiées, 3 fausses corrigées).
-  - **Effet de bord à surveiller** : les vecteurs Depth Pro 2 calculés par Neon dans le dossier de données
-    commun (run `depth_pro2_base`) apparaissent comme un regard dans l'Atlas lancé depuis `main`, tant que la
-    branche de Neon (qui le rangera dans `NOT_KEPT`) n'est pas fusionnée.
+  - **Gemini 4 Neon : Depth Pro 2 et OpenVisionBanana**, fusionné le 25/11/2026 (ARCHITECTURE § 46,
+    `handoff/gemini-modeles-essai.md`) : aucun des deux retenu. Depth Pro 2 Base (licence apple-amlr non
+    commerciale) : R@10 0 % en « même composition » contre 53,6 % pour Forme ; encodeur dans `NOT_KEPT`
+    (clé `profondeur_dp2`), vecteurs gardés (run `features/depth_pro2_base_20261124-190441`, 10 Mo).
+    OpenVisionBanana (génératif, licence FLUX non commerciale) écarté sans calcul. Cache Hugging Face de
+    Depth Pro 2 (386 Mo) : à supprimer si l'utilisateur veut de la place. Copie de travail supprimée.
 
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
   19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.
@@ -324,11 +327,6 @@ corrigé ; 63 tests passent, Atlas vérifié.
 
 ## Bloqué ou plus tard
 
-- **Pistes signalées par l'utilisateur le 24/11/2026, à regarder plus tard** (rien de lu ni d'évalué) :
-  Depth Pro 2 d'Apple (https://apple-aiml-research.github.io/ml-depth-pro-2/), à comparer à Depth
-  Anything V2, déjà évalué et écarté pour la composition (ARCHITECTURE § 28) ; OpenVisionBanana
-  (https://github.com/OpenVisionBanana/OpenVisionBanana). Pour chacun : licence des poids, ce qu'il
-  apporterait à un regard existant, banc d'essai avant toute adoption.
 
 - **Phrases des spectateurs d'ArtEmis** (idée du 19/11/2026, « plus tard » selon l'utilisateur) : les
   afficher dans la fiche de l'œuvre et pouvoir chercher dedans (~2 h). Aujourd'hui seules l'émotion

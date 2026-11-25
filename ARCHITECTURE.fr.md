@@ -2183,3 +2183,46 @@ Témoins : la médiane du corpus, et l'année médiane du style de l'œuvre (mé
 **Limites.** Dates de MMArt (parfois une date de série ou d'achèvement) ; « artiste » = étiquette de WikiArt ;
 la couverture est calibrée en moyenne, pas période par période ; une date estimée dit à quelle période
 ressemblent les œuvres voisines, pas quand l'œuvre a été faite : une piste, à confronter aux sources.
+
+## 46. Depth Pro 2 et OpenVisionBanana, évalués et non retenus (24/11/2026)
+
+**Question.** Deux modèles signalés par l'utilisateur : Depth Pro 2 (Apple, novembre 2026, arXiv 2611.26603)
+fait-il mieux que Depth Anything V2 (§ 28) pour la composition par les plans ? OpenVisionBanana peut-il servir
+de regard ? Travail de Gemini 4 Neon (`docs/handoff/gemini-modeles-essai.md`), relu par Claude.
+
+**OpenVisionBanana, écarté sans calcul.** C'est un modèle génératif (flux rectifié, sur FLUX.2 [klein] 4B et
+9B) qui rend ses réponses sous forme d'images, pas de vecteurs ; poids sous licence FLUX non commerciale ;
+environ 13 Go en BF16 pour la variante 4B ; de 22 heures à plus de 10 jours de carte graphique pour 80 716
+œuvres. Rien de téléchargé.
+
+**Depth Pro 2 Base, mesuré.** Tronc DINOv3 ViT-B/16 + décodeur DPT (97 M de paramètres), poids `apple/DepthPro2-B`
+sous licence Apple de recherche non commerciale (`apple-amlr`), accès public. Même descripteur que le § 28 :
+profondeur inverse sur l'œuvre seule, grille 8 × 8, centrée et normalisée. `pixplot/encoders/depth_pro2.py`,
+dans `NOT_KEPT` (clé `profondeur_dp2`). 80 716 œuvres en 31 min (43 images/s, 5,2 Go de mémoire graphique),
+aucun échec.
+
+| « Même composition, sujet différent » (14 paires, 28 recherches) | R@10 [IC 95 %] | Rang médian | Centile |
+|---|---|---|---|
+| Forme (DINOv3), regard actuel | **53,6 %** [35,7–67,9] | **8** | **0,928** |
+| Sujet (SigLIP 2) | 21,4 % | 814 | 0,738 |
+| Profondeur, Depth Anything V2 (§ 28) | 3,6 % | 13 754 | 0,677 |
+| Profondeur, Depth Pro 2 Base | 0,0 % | 4 836 | 0,851 |
+
+**Lecture.** Depth Pro 2 corrige le défaut principal de Depth Anything V2 : le gradient vertical moyen (haut
+loin, bas proche) disparaît presque (de −0,10…+0,18 à −0,03…+0,03), et le cosinus entre deux œuvres prises au
+hasard tombe de 0,54 à 0,05 ; le rang médian de l'œuvre jumelle est divisé par près de trois. Mais aucune paire
+n'arrive dans les 10 premières, ni en « même composition », ni en « filiation » (Forme : 45 % en filiation).
+Écarts appariés sûrs : Forme − Depth Pro 2 = +53,6 points [+39,3 ; +67,9] ; Sujet − Depth Pro 2 = +21,4 [+3,6 ;
++42,9]. Combiné à Forme (Forme + α · profondeur) : rien de sûr à α = 0,05, dégradation dès α = 0,10, comme au
+§ 28. À l'œil (6 paires) : belle réussite chez Pérugin (*La Remise des clés* ↔ *Le Mariage de la Vierge*, rangs 18
+et 14) ; faux succès sur deux affiches Pop Art, où il invente des plans ; échecs sur les lunettes de Michel-Ange
+et de Mantegna, sur le cubisme de Picasso et sur des copies fidèles (Rubens d'après Titien, Van Gogh d'après
+Millet), que la finesse des contours pénalise.
+
+**Décision.** Aucun des deux modèles n'est retenu. Le code de Depth Pro 2 et ses vecteurs (10 Mo, run
+`features/depth_pro2_base_20261124-190441`) restent pour refaire les bancs d'essai. Leur présence dans le
+dossier de données commun avant la fusion faisait apparaître un regard parasite dans l'Atlas de `main` : la
+fusion le range dans `NOT_KEPT`.
+
+**Limites.** 14 paires « même composition » et 10 « filiation » seulement ; seule la variante B et la grille
+8 × 8 ont été mesurées ; un estimateur de profondeur reste inadapté à l'art non perspectif.

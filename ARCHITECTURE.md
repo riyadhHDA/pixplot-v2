@@ -2058,3 +2058,42 @@ hidden" (no neighbour by the same artist). Baselines: the corpus median, and the
 **Limits.** MMArt dates (sometimes a series or completion date); "artist" = the WikiArt label; coverage is
 calibrated on average, not period by period; an estimated date says which period the neighbouring works resemble,
 not when the work was made: a lead, to be checked against the sources.
+
+## 46. Depth Pro 2 and OpenVisionBanana, evaluated and not kept (2026-11-24)
+
+**Question.** Two models flagged by the user: does Depth Pro 2 (Apple, November 2026, arXiv 2611.26603) do
+better than Depth Anything V2 (§ 28) for composition through depth planes? Can OpenVisionBanana serve as a
+regard? Work by Gemini 4 Neon (`docs/handoff/gemini-modeles-essai.md`), reviewed by Claude.
+
+**OpenVisionBanana, rejected without computation.** It is a generative model (rectified flow, on FLUX.2 [klein]
+4B and 9B) that answers with images, not vectors; weights under the non-commercial FLUX licence; about 13 GB in
+BF16 for the 4B variant; from 22 hours to over 10 days of GPU for 80,716 works. Nothing downloaded.
+
+**Depth Pro 2 Base, measured.** DINOv3 ViT-B/16 backbone + DPT decoder (97 M parameters), `apple/DepthPro2-B`
+weights under Apple's non-commercial research licence (`apple-amlr`), public access. Same descriptor as § 28:
+inverse depth on the work alone, 8 × 8 grid, centred and normalised. `pixplot/encoders/depth_pro2.py`, in
+`NOT_KEPT` (key `profondeur_dp2`). 80,716 works in 31 min (43 images/s, 5.2 GB of graphics memory), no failure.
+
+| "Same composition, different subject" (14 pairs, 28 queries) | R@10 [95 % CI] | Median rank | Percentile |
+|---|---|---|---|
+| Form (DINOv3), current regard | **53.6 %** [35.7–67.9] | **8** | **0.928** |
+| Subject (SigLIP 2) | 21.4 % | 814 | 0.738 |
+| Depth, Depth Anything V2 (§ 28) | 3.6 % | 13,754 | 0.677 |
+| Depth, Depth Pro 2 Base | 0.0 % | 4,836 | 0.851 |
+
+**Reading.** Depth Pro 2 fixes Depth Anything V2's main flaw: the mean vertical gradient (top far, bottom near)
+almost disappears (from −0.10…+0.18 to −0.03…+0.03), and the cosine between two random works falls from 0.54 to
+0.05; the twin work's median rank is divided by nearly three. But no pair reaches the top 10, in "same
+composition" or in "filiation" (Form: 45 % in filiation). Safe paired gaps: Form − Depth Pro 2 = +53.6 points
+[+39.3; +67.9]; Subject − Depth Pro 2 = +21.4 [+3.6; +42.9]. Combined with Form (Form + α · depth): nothing safe at
+α = 0.05, worse from α = 0.10, as in § 28. By eye (6 pairs): a fine success with Perugino (*Delivery of the Keys* ↔
+*Marriage of the Virgin*, ranks 18 and 14); a false success on two Pop Art posters, where it invents planes;
+failures on Michelangelo's and Mantegna's lunettes, on Picasso's Cubism and on faithful copies (Rubens after
+Titian, Van Gogh after Millet), penalised by the sharpness of the contours.
+
+**Decision.** Neither model is kept. Depth Pro 2's code and vectors (10 MB, run
+`features/depth_pro2_base_20261124-190441`) stay to rerun the benchmarks. Their presence in the shared data folder
+before the merge made a stray regard appear in `main`'s Atlas: the merge puts it in `NOT_KEPT`.
+
+**Limits.** Only 14 "same composition" and 10 "filiation" pairs; only the B variant and the 8 × 8 grid were
+measured; a depth estimator remains unsuited to non-perspective art.
