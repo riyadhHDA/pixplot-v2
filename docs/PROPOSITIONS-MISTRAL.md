@@ -45,7 +45,7 @@ Update format:
 | VQArt-Bench: art and heritage VQA (Oct. 2025) | arXiv 2510.12750 | Quantitatively evaluate the MCP server's answers | spotted |
 | GeoToken: image geolocalization, local-first (Nov. 2025) | arXiv 2511.01082 | Estimate the depicted place of a landscape (complements the places view) | spotted |
 | Revisiting Wölfflin in the Age of AI, J. Imaging (2025) | doi 10.3390/jimaging11050128 | Compare with our linear/painterly axis (§ 43) | **reference not verified** (page unreachable on 2026-11-24) |
-| Two-by-two ordinal patterns in art paintings (Mar. 2025) | arXiv 2503.09844 | Extension of permutation entropy (`pixplot ordre`) | spotted |
+| Two-by-two ordinal patterns in art paintings (Mar. 2025) | arXiv 2503.09844 | Extension of permutation entropy (`pixplot ordre`) | **measured, not kept** (ARCHITECTURE § 47) |
 | Forensic Study of Paintings: canvas comparison (June 2025) | arXiv 2506.20272 | Material/workshop filiation (museum corpus, HD scans) | spotted |
 | Curating art exhibitions using machine learning (2025) | arXiv 2506.19813 | Suggest a hang from the map (Research Pack) | spotted |
 | DINOv3 (Meta, Aug. 2025) | arXiv 2508.10104 | Our "form" gaze; § 6.1.3 = part correspondences ("Why?") | spotted |

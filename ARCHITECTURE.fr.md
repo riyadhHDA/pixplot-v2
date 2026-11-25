@@ -2226,3 +2226,39 @@ fusion le range dans `NOT_KEPT`.
 
 **Limites.** 14 paires « même composition » et 10 « filiation » seulement ; seule la variante B et la grille
 8 × 8 ont été mesurées ; un estimateur de profondeur reste inadapté à l'art non perspectif.
+
+## 47. Les 24 motifs ordinaux 2 × 2 : mesurés, non retenus (25/11/2026)
+
+**Question.** `pixplot ordre` (§ 33) résume la matière d'une œuvre en deux chiffres, l'entropie de permutation H
+et la complexité C, tirés des 24 ordres possibles des fenêtres 2 × 2 de pixels. Tarozo et al. (« Two-by-two
+ordinal patterns in art paintings », *PNAS Nexus* 4, pgaf092, 2025, arXiv 2503.09844 ; piste des propositions
+de Mistral) étudient la distribution complète de ces 24 motifs. En dit-elle plus que H et C ?
+
+**Méthode.** Pour les 80 716 œuvres : fréquence des 24 motifs sur la luminance de la vignette de 256 px (comme
+au § 33), en 2 min 35 s sur processeur. Descripteurs comparés, centrés et réduits, puis comparés par cosinus :
+H et C ; le logarithme des 24 fréquences ; les deux ensemble ; le regard « touche » pour repère. Sur 8 000 œuvres
+tirées au hasard : part des 10 plus proches voisines qui portent le même style, le même genre, le même artiste ;
+et erreur médiane de datation, artiste caché (méthode du § 45). Script hors dépôt.
+
+| Descripteur | Style | Genre | Artiste | Date, artiste caché |
+|---|---|---|---|---|
+| Hasard | 7,9 % | 14,6 % | 0,5 % | 30 ans (médiane du corpus) |
+| H et C (2 chiffres) | 9,4 % | 13,7 % | 0,7 % | 35 ans |
+| 24 motifs | 16,3 % | 27,1 % | 4,0 % | 31 ans |
+| 24 motifs + H et C | 16,3 % | 27,1 % | 3,9 % | 32 ans |
+| Touche (DINOv3, couche 6) | **50,1 %** | **55,9 %** | **33,7 %** | **19 ans** |
+
+**Lecture.** Les 24 motifs en disent plus que H et C : deux fois le hasard pour le style et le genre, huit fois
+pour l'artiste. Mais ils restent loin du regard « touche », qui voit la facture à une échelle bien plus riche, et
+ne datent pas mieux qu'une même année donnée à toutes les œuvres. H et C, eux, ne retrouvent ni le style ni le
+genre mieux que le hasard : ils décrivent la surface (de l'aplat au bruit, § 33), ils ne rapprochent pas des
+œuvres. Une part de ce que voient les motifs tient sans doute à la reproduction (dessin sur papier, gravure,
+compression), comme pour H et C.
+
+**Décision.** Ni regard, ni nouvelle couleur de carte : rien n'est ajouté au code. H et C restent dans les
+mesures visuelles de la fiche et dans les couleurs « Désordre » et « Complexité », comme descriptions de la
+surface, pas comme ressemblance.
+
+**Limites.** Une seule échelle (vignettes de 256 px), luminance seule, égalités départagées par la position (ce
+qui gonfle un motif dans les aplats) ; 8 000 requêtes, sans intervalle de confiance, les écarts étant très grands
+face au hasard ou à la touche.

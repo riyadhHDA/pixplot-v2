@@ -2097,3 +2097,36 @@ before the merge made a stray regard appear in `main`'s Atlas: the merge puts it
 
 **Limits.** Only 14 "same composition" and 10 "filiation" pairs; only the B variant and the 8 × 8 grid were
 measured; a depth estimator remains unsuited to non-perspective art.
+
+## 47. The 24 two-by-two ordinal patterns: measured, not kept (2026-11-25)
+
+**Question.** `pixplot ordre` (§ 33) sums up a work's surface in two figures, permutation entropy H and complexity
+C, drawn from the 24 possible orders of 2 × 2 pixel windows. Tarozo et al. ("Two-by-two ordinal patterns in art
+paintings", *PNAS Nexus* 4, pgaf092, 2025, arXiv 2503.09844; a lead from Mistral's proposals) study the full
+distribution of these 24 patterns. Does it say more than H and C?
+
+**Method.** For the 80,716 works: frequency of the 24 patterns on the luminance of the 256-px thumbnail (as in
+§ 33), in 2 min 35 s on the CPU. Descriptors compared, standardised, then compared by cosine: H and C; the log of
+the 24 frequencies; both together; the "touch" regard as a reference. On 8,000 random works: share of the 10
+nearest neighbours with the same style, genre, artist; and median dating error, artist hidden (method of § 45).
+Script outside the repository.
+
+| Descriptor | Style | Genre | Artist | Date, artist hidden |
+|---|---|---|---|---|
+| Chance | 7.9 % | 14.6 % | 0.5 % | 30 years (corpus median) |
+| H and C (2 figures) | 9.4 % | 13.7 % | 0.7 % | 35 years |
+| 24 patterns | 16.3 % | 27.1 % | 4.0 % | 31 years |
+| 24 patterns + H and C | 16.3 % | 27.1 % | 3.9 % | 32 years |
+| Touch (DINOv3, layer 6) | **50.1 %** | **55.9 %** | **33.7 %** | **19 years** |
+
+**Reading.** The 24 patterns say more than H and C: twice chance for style and genre, eight times for the artist.
+But they stay far below the "touch" regard, which sees handling at a much richer scale, and they date no better
+than giving every work the same year. H and C, for their part, find style and genre no better than chance: they
+describe the surface (from flat colour to noise, § 33), they do not bring works together. Part of what the
+patterns see is probably the reproduction (drawing on paper, engraving, compression), as with H and C.
+
+**Decision.** Neither a regard nor a new map colour: nothing is added to the code. H and C stay in the record's
+visual measures and in the "Disorder" and "Complexity" colours, as descriptions of the surface, not as resemblance.
+
+**Limits.** A single scale (256-px thumbnails), luminance only, ties broken by position (which inflates one pattern
+in flat areas); 8,000 queries, without confidence intervals, the gaps being very large against chance or touch.

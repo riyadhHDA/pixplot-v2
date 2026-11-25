@@ -240,7 +240,9 @@ corrigé ; 63 tests passent, Atlas vérifié.
     les œuvres sans date à leur date estimée » (`year_est` dans `/api/map`), empilées au-dessus d'un trait dans
     chaque colonne ; vérifié sur 81k (23 922 œuvres, 35 ms, 0 erreur). Site : 11ᵉ planche « Quand cette œuvre
     a-t-elle été faite ? » (portrait sans date de Dürer, n° 10, et ses 8 portraits datés les plus proches sur une
-    frise ; `DATER` dans `scripts/site_scenes.py`). README FR + EN mis à jour pour la 0.23.0. Calculé sur 81k : `datation.npy`, rapport
+    frise ; `DATER` dans `scripts/site_scenes.py`). README FR + EN mis à jour pour la 0.23.0.
+  - Claude, 25/11/2026 : **motifs ordinaux 2 × 2 mesurés, non retenus** (ARCHITECTURE § 47) : 24 motifs = style
+    16 % des voisines (H et C : 9 %, hasard 8 %, touche 50 %) ; rien d'ajouté au code. Calculé sur 81k : `datation.npy`, rapport
     `data/wikiart81k/bench/datation_report.json`. Piste reprise de `docs/PROPOSITIONS-MISTRAL.fr.md`, que
     Claude a relu (24 références vérifiées, 3 fausses corrigées).
   - **Gemini 4 Neon : Depth Pro 2 et OpenVisionBanana**, fusionné le 25/11/2026 (ARCHITECTURE § 46,
