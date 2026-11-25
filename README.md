@@ -14,7 +14,7 @@
   <img alt="Python 3.12" src="https://img.shields.io/badge/python-3.12-3776ab">
   <img alt="100% local" src="https://img.shields.io/badge/100%25-local-2c2c31">
   <img alt="GPU: AMD ROCm or CPU" src="https://img.shields.io/badge/GPU-AMD%20ROCm%20%7C%20CPU-9b978e">
-  <img alt="MCP server" src="https://img.shields.io/badge/MCP-19%20tools-e0b040">
+  <img alt="MCP server" src="https://img.shields.io/badge/MCP-20%20tools-e0b040">
 </p>
 
 # PixPlot v2
@@ -36,13 +36,15 @@ check, not a conclusion.
 | Your question | What PixPlot does | Example on WikiArt |
 |---|---|---|
 | **Who copied, quoted or reworked whom?** | Nearest neighbours under four regards, a comparator and a "Pourquoi ?" button that shows the zones answering each other. | Van Gogh's *Sower* finds Millet's at rank 1; so does Rubens's copy of Titian's *Rape of Europa*. |
-| **Where does this motif come back?** | Search for a **detail** drawn on an image, or for a **zone described** in words, across 1.6 million zones. | "A halo", "a skull", "a blessing hand": the exact zone is framed in every work found. |
-| **Which works deal with this theme?** | **Free-text** search (French or English) and **conceptual axes**: the whole corpus placed between two words. | "Annunciation in a garden"; the corpus laid out between "sacred" and "profane". |
+| **Where does this motif come back?** | Search for a **detail** drawn on an image, or for a **zone described** in words, across 1.6 million zones. | "a skull": the skull boxed in El Greco, Cézanne, Zurbarán, Dürer; "a golden halo around the head of a saint": the halo in Masaccio, Fra Angelico, Raphael. For zones, English sentences work better. |
+| **Which works deal with this theme?** | **Free-text** search (French or English) and **conceptual axes**: the whole corpus placed between two words or two sets of sentences. | "Annunciation in a garden"; the corpus laid out between "sacred" and "profane", or on Wölfflin's linear / painterly axis (a switch around 1550, § 43). |
+| **When was this work made?** | An **estimated date** for undated works, from the dated works that resemble them (the artist's own, when there are enough), with a calibrated 80 % range (`pixplot dater`). A lead, not a dating. | An undated Dürer portrait: around 1520 (1516–1523). Median error of 3 years when the artist is known, 12 otherwise (§ 45). |
+| **What does the model see that the catalogue does not name?** | **Learned notions**: the "subject" and "form" regards broken into about 2,000 notions each, named with Iconclass when the name is reliable. | The "ladder" notion gathers Depositions, from Fra Angelico to Tintoretto (§§ 37, 42). |
 | **Is my catalogue reliable?** | A **To check** list of labels contradicted by all neighbours, and **duplicate** detection. | 4,884 labels to check; 839 works entered twice, 702 of them under two different styles (the same Corot as "Romantic" and "Realist"). |
 | **What brings these two works together?** | The same pair seen through form, subject, colour and touch; **disagreements** between regards (same composition, different subject…). | A layout reused for another theme; one subject painted by two hands. |
 | **What is my corpus made of?** | A map of named groups (art-history vocabulary and **Iconclass**), **combined filters**, timeline and geographic views, a report on what is missing. | "Baroque" + "portrait" = 980 works, lit up on the map in 14 ms. |
 | **How do I keep track of my research?** | A **research notebook**, **Research Pack** export (.zip: images, sourced metadata, scores, method, corpus datasheet) and an assistant plugged in through **MCP** that searches and compares with you. | A file ready for a seminar, a thesis or a colleague's review. |
-| **Which model sees what?** | Benchmarks on pairs validated by the historian; every model has a card (training data, biases). | Four models set aside after measurement (TIPSv2, PE-Spatial, SSCD, Depth Anything), figures published (ARCHITECTURE § 19, 24, 27, 28). |
+| **Which model sees what?** | Benchmarks on pairs validated by the historian; every model has a card (training data, biases). | Models set aside after measurement: TIPSv2, PE-Spatial, SSCD, Depth Anything V2, PE-Core, CSD, Depth Pro 2; figures published (ARCHITECTURE §§ 19, 24, 27, 28, 31, 32, 46). |
 
 ## Full WikiArt on one PC
 
@@ -75,13 +77,14 @@ remains a lead, not proof that one artist saw the other ([ARCHITECTURE §§ 35 a
 | | |
 |---|---|
 | **Four separate spaces** | **Form** (DINOv3: silhouettes, layout), **subject** (SigLIP 2: theme, genre, school), **colour** (CIELAB palette) and **touch** (brushwork and grain from DINOv3 layer 6). Comparing spaces helps see why two works match or diverge. |
-| **Search** | By metadata, by **free text** in French or English (SigLIP 2), by **described zone** ("a halo", "a skull" across 1.6M regions) or by **detail** by drawing a box directly on a painting. |
+| **Search** | By metadata, by **free text** in French or English (SigLIP 2), by **described zone** ("a skull", "a golden halo" across 1.6M regions) or by **detail** by drawing a box directly on a painting. |
 | **Groups** | Spherical clustering (e-means) and nested Leiden communities, with tentative names proposed from an art-history vocabulary. |
-| **Web Atlas** | Interactive offline deck.gl map, records with sourced metadata and neural-free **visual measures** (balance, symmetry, chromatic entropy, after Stork), a **comparator** (up to six works with a "Pourquoi ?" zone matcher), **combined filters** (artist, style, genre, group…), a **research notebook**, one map per space, **2D conceptual axes** on two words (after *2D CLIP*), plus **timeline** and **geographic** views (typed/dated places, offline world map). |
+| **Web Atlas** | Interactive offline deck.gl map, records with sourced metadata and neural-free **visual measures** (balance, symmetry, chromatic entropy, after Stork), a **comparator** (up to six works with a "Pourquoi ?" zone matcher), **combined filters** (artist, style, genre, group…), a **research notebook**, one map per space, **2D conceptual axes** on two words (after *2D CLIP*), plus **timeline** (optionally with undated works at their estimated date) and **geographic** views (typed/dated places, offline world map), a **learned notions** panel; overview drawn from **pre-computed tiles** (`pixplot tiles`: 210 KB on opening instead of 35 MB). |
 | **Catalogue audit** | Blind audit (pixels only), a **To check** list of works whose label is contradicted by all their neighbours (either a cataloguing error or an unusual work) and **duplicates**: works entered twice and their variants (`pixplot doublons`). |
 | **IIIF museum imports** | `pixplot import-iiif` ingests IIIF v2/v3 manifests and collections with normalised metadata and rights fields. |
 | **MCP server (20 tools)** | Connects Claude or any compatible assistant to search, inspect images and crops, compare works, run visual measures, probe conceptual axes and add notes to the notebook. |
 | **Traceability** | Every computation is saved in a dated *run* (`manifest.json` with model, parameters and parent run). Exporting a *Research Pack* (.zip) bundles images, sourced metadata and scores. |
+| **Backup** | `pixplot sauvegarde` keeps hand-made work safe, since it cannot be recomputed: reviewed pairs go to the repository's `bench/` (versioned), and with `--vers` the data folder goes to another disk. Nothing is ever deleted. |
 
 ## Some measurements on WikiArt
 
