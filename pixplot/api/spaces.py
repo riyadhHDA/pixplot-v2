@@ -38,6 +38,8 @@ KINDS = [
      "empreinte de détection de copies : répliques, gravures d'après, reprises proches (en essai)"),
     ("depth_anything", "profondeur", "Profondeur (Depth Anything V2)",
      "agencement des plans en profondeur (premier plan, fond) sur une grille 8 × 8 (en essai)"),
+    ("depth_pro2", "profondeur_dp2", "Profondeur (Depth Pro 2)",
+     "agencement des plans en profondeur (Depth Pro 2, DINOv3 + DPT) sur une grille 8 × 8 (en essai)"),
     ("pe_core", "sujet_pe", "Sujet (PE-Core)",
      "ce que l'on décrirait avec des mots : sujet, genre, école, manière (PE-Core, en essai)"),
     ("csd", "touche_csd", "Style / touche (CSD)",
@@ -48,11 +50,11 @@ KINDS = [
 ]
 # Modèles évalués mais non retenus comme regards : leurs vecteurs restent sur le disque pour
 # les bancs d'essai, mais l'Atlas et le serveur MCP ne les proposent pas (ARCHITECTURE § 24).
-NOT_KEPT = ("pe_spatial", "sscd", "depth_anything", "pe_core", "csd")
+NOT_KEPT = ("pe_spatial", "sscd", "depth_anything", "depth_pro2", "pe_core", "csd")
 # Regards spécialisés, en essai : proposés à part dans l'Atlas et marqués « essai ».
 EXPERIMENTAL = frozenset({"posture"})
-ORDER = ["forme", "sujet", "couleur", "touche", "composition", "profondeur", "posture", "copie",
-         "sujet_pe", "touche_csd", "forme_v2", "couleur_rvb"]
+ORDER = ["forme", "sujet", "couleur", "touche", "composition", "profondeur", "profondeur_dp2",
+         "posture", "copie", "sujet_pe", "touche_csd", "forme_v2", "couleur_rvb"]
 
 
 def describe_encoder(encoder: str) -> tuple[str, str, str]:

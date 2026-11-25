@@ -869,8 +869,8 @@ def cmd_composition(args) -> int:
             print("Variante « posture_multi »…", flush=True)
             results += score_posture_run("posture_multi", Path(run.path), pairs, ids, allow_mirror=True)
     order = ["forme", "forme_masq", "forme_4x4", "forme_4x4c", "composition", "composition_masq",
-             "composition_4x4", "composition_4x4c", "profondeur", "posture", "posture_multi",
-             "sujet", "couleur", "touche", "copie"]
+             "composition_4x4", "composition_4x4c", "profondeur", "profondeur_dp2", "posture",
+             "posture_multi", "sujet", "couleur", "touche", "copie"]
     print(f"\nBanc d'essai « composition » · {len(ids)} œuvres · paires validées par l'utilisateur")
     print("centile : part du corpus plus éloignée que l'œuvre jumelle (0,5 = hasard, 1 = la plus proche)")
     print(f"{'type':<44} {'regard':<16} {'n':>4} {'R@10':>6} {'R@100':>6} {'rang méd.':>9} {'centile':>8}")
