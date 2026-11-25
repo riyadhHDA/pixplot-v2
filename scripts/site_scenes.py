@@ -44,6 +44,7 @@ SUSPECT = 1225                        # Sisley, 1894 : ses voisines étiquetées
 DOUBLON = (3733, 3948)                # Corot, 1873 : la même image, « romantique » et « réaliste »
 DESACCORD = (32914, 67091)            # d'après Rembrandt (gravure Bowyer) ↔ Bryullov, 1831
 NOTION = 607                          # regard « forme » : échelle (Iconclass 41A343)
+DATER = 10                            # Dürer, portrait sans date (Damia van der Goes) : date estimée (§ 45)
 NOTION_PD = [10582, 17746, 70404, 45762, 71573, 32934, 33315, 35161]
 DEAD_BEFORE_1956 = {                  # artistes acceptés pour les résultats pris automatiquement
     "leonardo-da-vinci", "benozzo-gozzoli", "gustave-dore", "rembrandt", "vittore-carpaccio", "albrecht-durer",
@@ -230,6 +231,25 @@ def main() -> int:
                 and data.meta.get(int(i), {}).get("genre") == "portrait")
     assert len(carte["pts"]) == 3 * len(idx)
     scenes["filtres"] = {"sample": flags, "total": total}
+
+    # 10. Dater une œuvre sans date : ses voisines datées du même artiste (pixplot dater, § 45).
+    from pixplot.analysis import dating
+    est = dating.load(data.analysis)
+    if est is not None:
+        arr, meta = est
+        ids = [int(i) for i in data.ids]
+        years = data.years()
+        r0 = data.row_of[DATER]
+        artist = data.meta.get(DATER, {}).get("artist")
+        same = [r for r, i in enumerate(ids) if years[r] is not None and data.meta.get(i, {}).get("artist") == artist]
+        X = data.spaces.vectors(meta.get("regard", "sujet"), [ids[r] for r in same] + [DATER])
+        sims = X[:-1] @ X[-1]
+        top = np.argsort(-sims)[:20]
+        neigh = [{"id": art(ids[same[k]]), "year": int(years[same[k]]), "sim": round(float(sims[k]), 3)} for k in top[:8]]
+        scenes["dater"] = {"work": art(DATER, True), "year": int(round(float(arr[r0, 0]))),
+                           "low": int(round(float(arr[r0, 1]))), "high": int(round(float(arr[r0, 2]))),
+                           "space": meta.get("regard"), "neighbors": neigh,
+                           "years20": [int(years[same[k]]) for k in top], "n_dated_artist": len(same)}
 
     out = {"source": "PixPlot v2 sur WikiArt 81k (réponses réelles de l'Atlas, 24/11/2026)", "art": ART, "scenes": scenes}
     (OUT / "scenes.json").write_text(json.dumps(out, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")

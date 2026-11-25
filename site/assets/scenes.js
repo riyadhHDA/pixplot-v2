@@ -352,6 +352,42 @@
     S.at(3.6, { draw: ["mb"], show: ["mtb"] }).at(4.2, { cam: [0, 0, 1200], d: 1.2 }).at(5.0, { draw: ["swing"] });
   };
 
+  BUILD.dater = (S, d, A) => {
+    // une œuvre sans date, ses voisines datées du même artiste posées sur une frise, puis la fourchette estimée
+    const r = d.scenes.dater;
+    if (!r) return;
+    const y0 = Math.min(r.low, ...r.years20) - 3, y1 = Math.max(r.high, ...r.years20) + 3;
+    const X = (y) => 90 + ((y - y0) / (y1 - y0)) * 1020, AX = 620;
+    S.art("w", r.work, 40, 40, 230, { byH: true, large: true,
+      cap: `${short(A[r.work].artist)} · <b>${L("sans date", "undated")}</b>` });
+    S.text("q", 330, 50, L(`Ses œuvres datées les plus proches<br><span class="muted">regard « sujet », parmi ${r.n_dated_artist} œuvres datées de l'artiste</span>`,
+      `Its closest dated works<br><span class="muted">"subject" regard, among the artist's ${r.n_dated_artist} dated works</span>`), "lbl");
+    S.path("ax", `M60 ${AX} L1140 ${AX}`, "axis");
+    for (let y = Math.ceil(y0 / 5) * 5; y <= y1; y += 5) {
+      S.path("t" + y, `M${X(y)} ${AX - 8} L${X(y)} ${AX + 8}`, "axis");
+      S.text("tl" + y, X(y) - 22, AX + 14, String(y), "mono-t");
+    }
+    // les voisines sur une rangée, triées par année ; un trait relie chacune à son année exacte sur la frise
+    const sorted = r.neighbors.map((n, i) => ({ ...n, i })).sort((a, b) => a.year - b.year || b.sim - a.sim);
+    sorted.forEach((n, k) => {
+      const x = 330 + k * 103, y = 250;
+      S.art("n" + n.i, n.id, x, y, 0, { box: [88, 112], cap: `${n.year}` });
+      S.link("l" + n.i, "w", "n" + n.i, "link soft", 0.06);
+      S.path("s" + n.i, `M${x + 44} ${y + 112 + 26} L${X(n.year)} ${AX - 12}`, "link soft");
+    });
+    const seen = {};
+    r.years20.forEach((y, i) => { const j = (seen[y] = (seen[y] || 0) + 1) - 1; S.dot("d" + i, X(y), AX - 10 - j * 9, 4.5, "joint"); });
+    S.path("br", `M${X(r.low)} ${AX + 46} L${X(r.low)} ${AX + 36} L${X(r.high)} ${AX + 36} L${X(r.high)} ${AX + 46}`, "link hotline");
+    S.path("md", `M${X(r.year)} ${AX - 4} L${X(r.year)} ${AX + 52}`, "median");
+    S.text("est", X(r.year) - 150, AX + 60, L(`<b class="hot-t">vers ${r.year}</b> (${r.low}–${r.high}, fourchette à 80 %)`,
+      `<b class="hot-t">around ${r.year}</b> (${r.low}–${r.high}, 80 % range)`), "lbl");
+    S.at(0, { cam: [0, 0, 640], show: ["q"] }).at(1.0, { cam: [300, 120, 900], d: 1.4 });
+    r.neighbors.forEach((_, i) => S.at(1.6 + i * 0.22, { show: ["n" + i], draw: ["l" + i, "s" + i] }));
+    S.at(3.6, { show: r.years20.map((_, i) => "d" + i) })
+      .at(4.3, { draw: ["br", "md"], show: ["est"], lit: ["w"] })
+      .at(5.0, { cam: [0, 0, 1200], d: 1.2 });
+  };
+
   BUILD.trace = (S, d) => {
     const r = d.scenes.reprise;
     S.text("q", 40, 50, `<span class="bubble">${L("Cherche les reprises du <i>Semeur</i> de Millet", "Find reworkings of Millet's <i>Sower</i>")}</span>`, "lbl");
