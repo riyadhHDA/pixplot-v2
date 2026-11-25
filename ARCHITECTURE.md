@@ -2181,3 +2181,44 @@ At equal period and style (same-period, same-style links against hard controls):
 questionable (Benois → Repin, Benois being 26 years younger); real links missing from Wikidata may sit among the
 controls. 30 randomly drawn links await the user's review (`<data>/bench/influence/relecture_p737_30.csv`) before
 this becomes a stable reference. A corpus centred on 19th–20th-century Western art.
+
+## 49. Blurry notions: the coherence of each learned notion (2026-11-25)
+
+**Question.** Learned notions (§§ 37 and 42) are directions a sparse autoencoder found on its own. Some point to
+one clear thing (a ladder, a beard); others might be catch-alls. Can we measure this without looking at all of
+them? Pach et al. ("Sparse Autoencoders Learn Monosemantic Features in Vision-Language Models", arXiv 2504.02821,
+2025; a lead from Mistral's proposals) score each notion by the mean similarity between the images that activate
+it most, weighted by their activations.
+
+**Method.** `pixplot notions --coherence <run>` (and automatically after each training run), 6 s per regard.
+For each notion that marks at least 10 works: its 50 most strongly marked works, the mean cosine similarity
+between them, each pair weighted by the product of activations. This is compared with 50 randomly drawn works
+(300 draws): the gap, in standard deviations, is the **gap to chance**. It is measured in the regard where the
+notion was learned and in the other one (form ↔ subject). Classes, threshold 3: **blurry** if the gap in its own
+regard is ≤ 3 (its works resemble each other no more than chance); **coherent in its own regard only** if it is
+above 3 in its regard but not in the other; **clear** otherwise. The result goes to the run's `coherence.json`
+(FORMATS).
+
+| Regard of the notions | Scored | Clear | One regard only | Blurry | Clear among named (Iconclass) |
+|---|---|---|---|---|---|
+| Subject (SigLIP 2) | 1,637 / 1,792 | 74.6 % | 8.8 % | 16.6 % | 93.7 % (461) |
+| Form (DINOv3) | 2,046 / 2,048 | 76.0 % | 5.5 % | 18.5 % | 97.3 % (489) |
+
+Controls: 50 random works have a mean similarity of 0.579 ± 0.010 in the subject regard, 0.173 ± 0.017 in the
+form regard.
+
+**Reading.** Notions named by Iconclass or by a dominant catalogue label are almost all clear (93 to 99 %);
+blurry ones gather among those with neither (37 % for subject, 35 % for form). Looked at by eye, the blurry form
+notions are indeed catch-alls (no. 128: a Ruth Vollmer sculpture, a Man Ray photogram, still lifes, prints; gap
+to chance 1.9). The second reading, in the other regard, tells what the notion gathers: subject notion no. 24
+("famous masterpiece", § 37) is very coherent for SigLIP 2 (18.0) and not for DINOv3 (1.4): these works share
+neither form nor layout, only their fame; no. 641 ("Chinese", Warhol's Maos) likewise (4.5 against 1.0).
+
+**Interface.** The "Notions" panel marks "floue" (blurry) or "un seul regard" (one regard only) next to the
+name, offers a "hide blurry notions" box and a sort by coherence; a notion's detail gives both gaps to chance.
+`explore_notions` (MCP) passes them on.
+
+**Limits.** A single set of 50 works per notion and a threshold fixed at 3, with no confidence interval. The
+regard that judges is also the one that learned the notion: a notion "clear" in its own regard may gather a trait
+of the reproduction (the frame, no. 88) rather than a thing; "clear" means "coherent", not "right". Pach et al.
+judge with a third-party model (DINOv2), which we did not keep (its cache was deleted on 2026-11-25).

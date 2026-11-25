@@ -603,6 +603,11 @@ def cmd_notions(args) -> int:
         n = _name_notions_through_siglip(s, target)
         print(f"{target.id} : {n} notions nommées avec Iconclass à travers SigLIP 2")
         return 0
+    if args.coherence:                  # noter la cohérence d'un run existant
+        from .runs import Run
+        target = Run.load(s.runs_dir / "analysis" / args.coherence)
+        _notions_coherence(s, target)
+        return 0
     runs = [r for r in list_runs("features", runs_dir=s.runs_dir)
             if r.manifest["params"].get("encoder", "") == prefix or
             (prefix == "siglip2" and r.manifest["params"].get("encoder", "").startswith("siglip2"))]
@@ -641,7 +646,43 @@ def cmd_notions(args) -> int:
             print(f"  {n} notions nommées avec Iconclass à travers SigLIP 2")
         except SystemExit as e:
             print(f"  pas de noms Iconclass : {e}")
+    try:
+        _notions_coherence(s, run)
+    except SystemExit as e:
+        print(f"  cohérence non calculée : {e}")
     return 0
+
+
+def _notions_coherence(s, run) -> None:
+    """Cohérence de chaque notion dans son regard et dans l'autre (forme ↔ sujet), écrite dans
+    ``coherence.json`` du run (ARCHITECTURE § 49)."""
+    import time
+
+    import numpy as np
+
+    from .analysis import sae as SAE
+    from .api.data import AtlasData
+
+    space = (SAE.load_notions(run) or {}).get("space") or run.manifest["name"].removeprefix("notions_")
+    other = {"sujet": "forme", "forme": "sujet"}.get(space)
+    t = time.time()
+    data = AtlasData.load(s)
+    ids = np.asarray([int(i) for i in data.ids], dtype=np.int64)
+    spaces = [sp for sp in (space, other) if sp and sp in data.spaces.runs]
+    if space not in spaces:
+        raise SystemExit(f"regard « {space} » absent de l'analyse")
+    vectors = {sp: np.asarray(data.spaces.vectors(sp, [int(i) for i in ids]), dtype=np.float32) for sp in spaces}
+    index = SAE.encode_index(run, s.runs_dir, allowed_ids=set(int(i) for i in ids))
+    if index is None:
+        raise SystemExit("sae.npz ou vecteurs parents absents")
+    res = SAE.coherence(index, ids, vectors, own=space)
+    SAE.save_coherence(run, res)
+    feats = res["features"].values()
+    n = max(len(res["features"]), 1)
+    counts = {c: sum(1 for f in feats if f["class"] == c) for c in ("nette", "un_regard", "floue")}
+    print(f"  cohérence ({', '.join(spaces)}) en {time.time() - t:.0f} s : {len(res['features'])} notions notées · "
+          f"nettes {counts['nette'] / n:.1%} · cohérentes dans leur seul regard {counts['un_regard'] / n:.1%} · "
+          f"floues {counts['floue'] / n:.1%}")
 
 
 def _name_notions_through_siglip(s, run) -> int:
@@ -1711,6 +1752,8 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--epochs", type=int, default=30)
     p.add_argument("--nommer", metavar="RUN",
                    help="nommer avec Iconclass, à travers SigLIP 2, un run de notions existant (sans réentraîner)")
+    p.add_argument("--coherence", metavar="RUN",
+                   help="noter la cohérence des notions d'un run existant (floues, nettes ; sans réentraîner)")
     p.set_defaults(func=cmd_notions)
 
     p = sub.add_parser("ordre", help="entropie et complexité de la matière (Sigaki et al., PNAS 2018), sans GPU")

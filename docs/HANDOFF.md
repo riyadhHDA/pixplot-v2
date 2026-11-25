@@ -4,7 +4,7 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 25/11/2026 (publication de la 0.23.0).*
+*Dernière mise à jour : 25/11/2026 (notions floues, après la 0.23.0).*
 
 ## Version publiée
 
@@ -320,6 +320,16 @@ corrigé ; 63 tests passent, Atlas vérifié.
   `pixplot bench`, artiste P@10 sur 1 090 artistes : forme 33,9 %, sujet 42,9 %, touche 35,0 %,
   couleur 7,3 % (avant, 129 artistes : 50,8 / 61,6 / 53,0 %) ; même classement ; README FR + EN à jour.
 
+- **Gemini 4 Neon, en cours (25/11/2026)** : zones de PixPlot face au regard humain (AVAtt, oculométrie sur
+  peintures, Kerkouri et al., arXiv 2610.30481), dans `C:\Users\Riyadh\Documents\pixplot-oculometrie` (branche
+  `gemini/oculometrie`). Compte rendu attendu : `docs/handoff/gemini-oculometrie.md`.
+- **Claude, 25/11/2026, non publié** : **notions floues** (ARCHITECTURE § 49, Pach et al., arXiv 2504.02821).
+  `pixplot notions --coherence <run>` (6 s, aussi après chaque entraînement) écrit `coherence.json` : écart au hasard
+  des 50 œuvres les plus marquées, dans le regard de la notion et dans l'autre. Floues : 16,6 % (sujet), 18,5 %
+  (forme), presque toutes sans nom ; nommées nettes à 94–97 %. Panneau « Notions » : étiquettes « floue » / « un seul
+  regard », case « Masquer les notions floues », tri par cohérence, ligne dans le détail ; `explore_notions` la
+  transmet. Calculé pour les deux runs de 81k ; vérifié dans l'Atlas 81k (0 erreur) ; 158 tests.
+
 ## En attente de l'utilisateur
 
 - **Sauvegarde du travail fait à la main (constaté le 24/11/2026)** : le code est sur GitHub, mais
@@ -340,6 +350,17 @@ corrigé ; 63 tests passent, Atlas vérifié.
   `user`).
 
 ## Bloqué ou plus tard
+
+- **Étude du regard menée par l'utilisateur lui-même** (idée du 25/11/2026, « à l'occasion ») : comparer les zones
+  de PixPlot à ce que regardent de vraies personnes. Voies peu coûteuses proposées : **BubbleView** (image floutée,
+  clics pour voir net ; Kim et al., 2017 ; aucun matériel, une page web branchée sur PixPlot), **WebGazer.js**
+  (webcam, libre, précision grossière mais suffisante pour des cases 4 × 4), ou un oculomètre prêté par un
+  laboratoire de psychologie de l'université (les modèles grand public interdisent souvent l'usage de recherche
+  sans licence « pro »). Consentement écrit et avis d'un comité d'éthique à prévoir. Attendre d'abord le compte
+  rendu de Neon sur AVAtt. Prolongement évoqué le 25/11/2026 : enregistrer aussi la **réaction dite à voix haute**
+  (protocole *think-aloud*, transcription locale, textes rattachés aux œuvres et comparables à ArtEmis), voire
+  le visage ou la physiologie (cf. projet eMotion, Tröndle et Tschacher, Saint-Gall, à vérifier) ; voix et
+  visage sont des données biométriques (RGPD) : consentement explicite, jamais dans le dépôt.
 
 
 - **Phrases des spectateurs d'ArtEmis** (idée du 19/11/2026, « plus tard » selon l'utilisateur) : les
@@ -370,6 +391,7 @@ corrigé ; 63 tests passent, Atlas vérifié.
   `data/wikiart81k/bench/composition_report_*.json`.
 - Paires validées : `bench/wikiart81k_pairs.csv` (104 paires relues à la main par l'utilisateur).
 - DOI Zenodo (toutes versions) : `10.5281/zenodo.24363789` ; chaque release GitHub est archivée
-  automatiquement par Zenodo, avec son propre DOI (0.15.1 : `10.5281/zenodo.24363790`).
+  automatiquement par Zenodo, avec son propre DOI (0.15.1 : `10.5281/zenodo.24363790` ; 0.23.0 :
+  `10.5281/zenodo.24529842`, vérifié le 25/11/2026).
 - Search Console : le site est vérifié (`site/googlea3776ac9a4d427ef.html`) ; le plan du site est
   `https://riyadhhda.github.io/pixplot-v2/sitemap.xml` (pas à la racine du domaine).

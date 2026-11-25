@@ -12,7 +12,7 @@
 const NOTIONS_PAGE = 100;
 const NOTION_HIGHLIGHT_MAX = 500;
 const framedFeature = () => ((state.info && state.info.notions && state.info.notions.framed) || {}).feature;
-const nt = { space: "sujet", query: "", filter: "all", sort: "feature", shown: NOTIONS_PAGE, active: null, detail: null, qTimer: null };
+const nt = { space: "sujet", query: "", filter: "all", hideBlurry: false, sort: "feature", shown: NOTIONS_PAGE, active: null, detail: null, qTimer: null };
 const notionsCache = {};   // une liste par regard (sujet, forme)
 
 const META_KEY = { style: "style", genre: "genre", artist: "artiste" };
@@ -34,12 +34,36 @@ function clearNotionSelection() {
   if (box) { box.hidden = true; box.innerHTML = ""; }
 }
 
+const COHERENCE_HELP = "Cohérence : on compare la ressemblance entre les 50 œuvres les plus marquées par la notion à celle de 50 œuvres "
+  + "tirées au hasard. « Floue » : elles ne se ressemblent pas plus que le hasard, la notion est sans doute un fourre-tout. "
+  + "« Un seul regard » : elles se ressemblent pour le regard qui l'a apprise, pas pour l'autre (forme ↔ sujet).";
+
+function coherenceBadge(c) {
+  if (!c || c.class === "nette") return `<span class="notion-coh"></span>`;
+  return c.class === "floue"
+    ? `<span class="notion-coh floue" title="${esc(COHERENCE_HELP)}">floue</span>`
+    : `<span class="notion-coh un-regard" title="${esc(COHERENCE_HELP)}">un seul regard</span>`;
+}
+
+/** Ligne de cohérence dans le détail d'une notion (écarts au hasard dans chaque regard). */
+function coherenceLine(feature) {
+  const data = state.notionsData;
+  const it = data && data.items.find((x) => x.feature === feature);
+  if (!it || !it.coherence) return "";
+  const parts = Object.entries(it.coherence.z).map(([sp, z]) =>
+    `${esc(SPACE_SHORT[sp] || sp)} ${z.toLocaleString("fr-FR", { maximumFractionDigits: 1 })}`).join(" · ");
+  const verdict = { nette: "nette", floue: "floue (pas plus cohérente que le hasard)",
+    un_regard: "cohérente dans son seul regard" }[it.coherence.class];
+  return `<div class="sub" style="margin:2px 0 0" title="${esc(COHERENCE_HELP)}">Cohérence : ${verdict} · écart au hasard ${parts} (seuil ${data.coherence.threshold})</div>`;
+}
+
 function filteredNotions() {
   const items = (state.notionsData && state.notionsData.items) || [];
   const q = nt.query.trim().toLowerCase();
   let out = items;
   if (nt.filter === "named") out = out.filter((it) => it.named);
   else if (nt.filter === "unnamed") out = out.filter((it) => !it.named);
+  if (nt.hideBlurry) out = out.filter((it) => !it.coherence || it.coherence.class !== "floue");
   if (q) {
     out = out.filter((it) => {
       const hay = `n° ${it.feature} #${it.feature} ${it.feature} ${it.label} ${it.meta ? `${it.meta.value} ${pretty(it.meta.value)}` : ""} ${it.iconclass ? it.iconclass.notation : ""}`.toLowerCase();
@@ -47,7 +71,10 @@ function filteredNotions() {
     });
   }
   if (nt.sort === "count") out = out.slice().sort((a, b) => (b.count - a.count) || (a.feature - b.feature));
-  else if (nt.sort === "z") out = out.slice().sort((a, b) => ((b.iconclass ? b.iconclass.z : -1) - (a.iconclass ? a.iconclass.z : -1)) || (a.feature - b.feature));
+  else if (nt.sort === "coherence") {
+    const zc = (it) => (it.coherence ? it.coherence.z[state.notionsData.space] : -Infinity);
+    out = out.slice().sort((a, b) => (zc(b) - zc(a)) || (a.feature - b.feature));
+  } else if (nt.sort === "z") out = out.slice().sort((a, b) => ((b.iconclass ? b.iconclass.z : -1) - (a.iconclass ? a.iconclass.z : -1)) || (a.feature - b.feature));
   return out;
 }
 
@@ -69,6 +96,7 @@ async function renderNotions() {
   }
   const data = state.notionsData;
   const unnamed = data.total - data.named;
+  const blurry = data.coherence ? data.items.filter((it) => it.coherence && it.coherence.class === "floue").length : 0;
   const spaces = data.spaces || [data.space];
   const spaceChips = spaces.length > 1
     ? `<div class="chips" style="margin:0 0 6px" role="group" aria-label="Regard des notions">${spaces.map((sp) =>
@@ -87,11 +115,14 @@ async function renderNotions() {
         <button class="chip ${nt.filter === "named" ? "on" : ""}" data-nf="named">Nommées <small>${data.named}</small></button>
         <button class="chip ${nt.filter === "unnamed" ? "on" : ""}" data-nf="unnamed">Sans nom <small>${unnamed}</small></button>
       </div>
+      ${blurry ? `<label class="notion-hide" title="${esc(COHERENCE_HELP)}"><input type="checkbox" id="notions-hide-blurry" ${nt.hideBlurry ? "checked" : ""}>
+        Masquer les notions floues <small>${blurry.toLocaleString("fr-FR")}</small></label>` : ""}
       <div class="notion-sort">
         <label>Trier par <select id="notions-sort">
           <option value="feature" ${nt.sort === "feature" ? "selected" : ""}>Ordre général → fin (n°)</option>
           <option value="count" ${nt.sort === "count" ? "selected" : ""}>Nombre d'œuvres actives</option>
           <option value="z" ${nt.sort === "z" ? "selected" : ""}>Score Iconclass (z)</option>
+          ${data.coherence ? `<option value="coherence" ${nt.sort === "coherence" ? "selected" : ""}>Cohérence</option>` : ""}
         </select></label>
         <span class="sub" id="notions-shown"></span>
       </div>
@@ -101,7 +132,7 @@ async function renderNotions() {
     <div class="pager" id="notions-pager"></div>
     <p class="prov" style="margin:0 16px 20px">Chaque notion est une direction apprise par un auto-encodeur parcimonieux sur les
       vecteurs du regard (ARCHITECTURE §§ 37 et 42) : c'est ce que le modèle sépare, pas une catégorie d'histoire de l'art. L'étiquette
-      Iconclass n'est affichée qu'à partir de z ≥ ${data.z_min} et reste à vérifier à l'œil.</p>`;
+      Iconclass n'est affichée qu'à partir de z ≥ ${data.z_min} et reste à vérifier à l'œil.${data.coherence ? ` ${esc(COHERENCE_HELP)} (§ 49)` : ""}</p>`;
   const body = $("fiche-body");
   body.querySelectorAll("[data-nspace]").forEach((b) => b.addEventListener("click", () => {
     if (b.dataset.nspace === nt.space) return;
@@ -124,6 +155,12 @@ async function renderNotions() {
     body.querySelectorAll("[data-nf]").forEach((x) => x.classList.toggle("on", x === b));
     drawNotionsList();
   }));
+  const hide = $("notions-hide-blurry");
+  if (hide) hide.addEventListener("change", (e) => {
+    nt.hideBlurry = e.target.checked;
+    nt.shown = NOTIONS_PAGE;
+    drawNotionsList();
+  });
   $("notions-sort").addEventListener("change", (e) => {
     nt.sort = e.target.value;
     nt.shown = NOTIONS_PAGE;
@@ -145,6 +182,7 @@ function drawNotionsList() {
       ${!it.named && it.meta
         ? `<span class="notion-lbl meta" title="Pas de nom Iconclass sûr : étiquette du catalogue partagée par les œuvres les plus marquées">${esc(metaText(it.meta))}</span>`
         : `<span class="notion-lbl ${it.named ? "" : "unnamed"}">${esc(it.label)}${it.iconclass ? ` <small>${esc(it.iconclass.notation)}</small>` : ""}</span>`}
+      ${coherenceBadge(it.coherence)}
       <span class="notion-n" title="${it.count.toLocaleString("fr-FR")} œuvres actives">${it.count.toLocaleString("fr-FR")}</span>
     </button></li>`).join("") || `<li class="empty-note">Aucune notion ne correspond.</li>`;
   list.querySelectorAll("[data-feature]").forEach((b) => b.addEventListener("click", () => selectNotion(Number(b.dataset.feature))));
@@ -211,6 +249,7 @@ function drawNotionActive(d) {
       <div><strong>Notion n° ${d.feature}</strong>${d.named ? ` — ${esc(d.label)}` : d.meta ? ` — <span class="notion-lbl meta">${esc(metaText(d.meta))}</span>` : ""}${d.editorial_label ? ` · <em>${esc(d.editorial_label)}</em>` : ""}</div>
       ${ic}
       <div class="sub" style="margin:4px 0 0">${shownInfo}</div>
+      ${coherenceLine(d.feature)}
       ${dom ? `<div class="sub" style="margin:2px 0 0">${esc(dom)}</div>` : ""}
       <div class="chips" style="margin:8px 0 4px">
         <button class="chip" id="nt-fit" title="Cadrer la carte sur les œuvres surlignées">Cadrer</button>

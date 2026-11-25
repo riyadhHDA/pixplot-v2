@@ -63,7 +63,7 @@ corpus.
 | `pixplot doublons` | œuvres entrées deux fois, répliques et variantes (SSCD) | `--same`, `--variant` |
 | `pixplot ordre` | ordre et désordre de la matière (entropie, complexité), sans GPU | `--workers` |
 | `pixplot dater` | date chaque œuvre d'après ses voisines datées (celles de son artiste s'il en a assez), avec une fourchette à 80 % calibrée ; mesure chaque regard face à deux témoins ; sans GPU | `--space`, `--spaces`, `-k` |
-| `pixplot notions` | notions apprises par un regard (auto-encodeur parcimonieux) ; `--nommer` nomme un run existant à travers SigLIP 2 | `--space sujet\|forme`, `--nommer` |
+| `pixplot notions` | notions apprises par un regard (auto-encodeur parcimonieux) ; `--nommer` nomme un run existant à travers SigLIP 2 ; `--coherence` note la cohérence de ses notions (§ 49) | `--space sujet\|forme`, `--nommer`, `--coherence` |
 | `pixplot corpus` | bilan critique du corpus ; `--datasheet` écrit sa fiche de données | `--datasheet` |
 
 ## Chercher et exporter

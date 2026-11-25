@@ -371,7 +371,9 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
         forte. Le nom Iconclass n'est donné que s'il est sûr (z ≥ 5) ; sinon on indique l'étiquette du
         catalogue que partagent les œuvres les plus marquées, ou rien. Une notion décrit ce que le
         modèle sépare, pas une catégorie d'historien : regarder les œuvres (compare_artworks) avant de
-        la nommer soi-même."""
+        la nommer soi-même. ``coherence`` (§ 49) : « floue » si ses œuvres les plus marquées ne se
+        ressemblent pas plus que des œuvres tirées au hasard (fourre-tout probable), « un_regard » si
+        elles ne se ressemblent que pour le regard qui l'a apprise, « nette » sinon."""
         lim = min(max(k, 1), 100)
         if space not in ("sujet", "forme"):
             return {"error": "space : « sujet » ou « forme »."}
@@ -382,6 +384,9 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
                 return {"error": f"Notion n° {notion} introuvable pour le regard « {space} » "
                                  f"(ou notions non calculées : « pixplot notions --space {space} »)."}
             out.pop("highlight_ids", None)
+            listing = data.notions_payload(space) or {}
+            out["coherence"] = next((it.get("coherence") for it in listing.get("items", [])
+                                     if it["feature"] == int(notion)), None)
             return out
         payload = data.notions_payload(space)
         if payload is None:
@@ -396,7 +401,7 @@ def create_server(data: AtlasData, engines: SearchEngines | None = None):
         items.sort(key=lambda it: -it["count"])
         page = [{"notion": it["feature"], "name": it["label"] if it["named"] else None,
                  "iconclass": it["iconclass"], "catalogue_label": it.get("meta"), "count": it["count"],
-                 "top_ids": it["top"][:6]} for it in items[offset:offset + lim]]
+                 "coherence": it.get("coherence"), "top_ids": it["top"][:6]} for it in items[offset:offset + lim]]
         return {"space": payload["space"], "run": payload["run"], "total_notions": payload["total"],
                 "named": payload["named"], "z_min": payload["z_min"], "matches": len(items),
                 "items": page,

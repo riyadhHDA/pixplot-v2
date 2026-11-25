@@ -340,6 +340,8 @@ class AtlasData:
         run, meta = pair
         items = []
         named_count = 0
+        coh = sae.load_coherence(run) or {}
+        coh_feats = coh.get("features", {})
         for f in meta.get("features", []):
             label, is_named = sae.notion_label(f)
             if is_named:
@@ -358,6 +360,7 @@ class AtlasData:
                 "frequency": f.get("frequency", 0.0),
                 "labels": f.get("labels", {}),
                 "top": [int(i) for i in f.get("top", []) if int(i) in self.row_of],
+                "coherence": coh_feats.get(str(int(f["feature"]))),
             })
         items.sort(key=lambda x: x["feature"])
         info = self.notions_info(space)
@@ -367,6 +370,8 @@ class AtlasData:
                 "framed": info["framed"] if info else None, "spaces": self.notion_spaces(),
                 "named_via": next((ic["via"] for f in meta.get("features", [])
                                    if (ic := f.get("iconclass")) and ic.get("via")), None),
+                "coherence": ({"own": coh.get("own"), "threshold": coh.get("threshold"), "top": coh.get("top")}
+                              if coh else None),
                 "items": items}
 
     def notion_detail_payload(self, feature: int, offset: int = 0, limit: int = 40,

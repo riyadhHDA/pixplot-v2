@@ -62,7 +62,7 @@ Long computations resume where they stopped and write a log in the corpus folder
 | `pixplot doublons` | works entered twice, replicas and variants (SSCD) | `--same`, `--variant` |
 | `pixplot ordre` | order and disorder of the paint surface (entropy, complexity), no GPU | `--workers` |
 | `pixplot dater` | dates each work from its dated neighbours (its artist's, if there are enough), with a calibrated 80 % range; measures each regard against two baselines; no GPU | `--space`, `--spaces`, `-k` |
-| `pixplot notions` | notions learned by a regard (sparse autoencoder); `--nommer` names an existing run through SigLIP 2 | `--space sujet\|forme`, `--nommer` |
+| `pixplot notions` | notions learned by a regard (sparse autoencoder); `--nommer` names an existing run through SigLIP 2; `--coherence` scores its notions' coherence (§ 49) | `--space sujet\|forme`, `--nommer`, `--coherence` |
 | `pixplot corpus` | critical summary of the corpus; `--datasheet` writes its datasheet | `--datasheet` |
 
 ## Searching and exporting

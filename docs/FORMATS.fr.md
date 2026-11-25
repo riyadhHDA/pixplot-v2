@@ -103,7 +103,9 @@ faite sans vecteur. Un run inachevé reprend où il s'était arrêté.
 
 Les runs `analysis/notions_<regard>_…` (§ 37) ne sont pas des analyses de carte : `sae.npz` (poids de
 l'auto-encodeur) et `notions.json` (`space`, `explained_variance`, `dead`, `baseline`, `features` :
-une entrée par notion avec `feature`, `frequency`, `top`, `labels`, `iconclass`).
+une entrée par notion avec `feature`, `frequency`, `top`, `labels`, `iconclass`). `coherence.json` (§ 49) : `own`
+(regard de la notion), `top`, `threshold`, `trials`, `baseline` (moyenne et écart-type du témoin par regard) et
+`features` : pour chaque numéro de notion, `class` (`nette`, `un_regard`, `floue`) et `z` (écart au hasard par regard).
 
 ### Tuiles (`tiles/…`)
 

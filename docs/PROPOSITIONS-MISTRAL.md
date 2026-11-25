@@ -29,7 +29,7 @@ Update format:
 | Paper (date) | Ref. | Why it matters for PixPlot | Status |
 |---|---|---|---|
 | M-ArtAgent + WikiArt Influence Benchmark WIB-100 (2026) | arXiv 2604.07468 | Ready-made "filiation" benchmark on WikiArt | **WIB-100 not published**; protocol reused with Wikidata (`pixplot influence`, ARCHITECTURE § 48) |
-| Sparse Autoencoders Learn Monosemantic Features in VLMs (Apr. 2025) | arXiv 2504.02821 | Tested on SigLIP SoViT-400m (our model); framework to score our SAE notions | read first |
+| Sparse Autoencoders Learn Monosemantic Features in VLMs (Apr. 2025) | arXiv 2504.02821 | Tested on SigLIP SoViT-400m (our model); framework to score our SAE notions | **done**: blurry notions (`pixplot notions --coherence`, ARCHITECTURE § 49) |
 | EmoSEM: segmenting the regions that trigger emotion (Apr. 2025); link with APOLO / ArtEmis unverified | arXiv 2504.14658 | Locate emotion inside the painting, crossed with our 1.6 M zones | read first |
 | fruit-SALAD, Scientific Data (2025) | s41597-025-04529-4 | Human-perceived similarity projected into embeddings: judge the gazes | **reference not verified** (page unreachable on 2026-11-24) |
 | Dare to Plagiarize? (June 2025) | arXiv 2506.23132 | Detection + retrieval of the authentic source (duplicates, filiation) | read first |
@@ -110,3 +110,5 @@ Update format:
   3 wrong ones fixed (SigLIP 2 = 2502.14786; 2602.19133 and 2511.22471 do not match "ArtContext" and
   "ArtUnmasked"); 2 unverifiable (fruit-SALAD, J. Imaging); EmoSEM with no established link to APOLO / ArtEmis.
   Wölfflin (4 other pairs) rejected as already measured (§ 43); backup done (`pixplot sauvegarde`).
+- 2026-11-25 — Claude: ordinal patterns measured, not kept (§ 47); "influence" benchmark from Wikidata, WIB-100
+  being unpublished (§ 48); notion coherence after Pach et al.: blurry notions (§ 49).

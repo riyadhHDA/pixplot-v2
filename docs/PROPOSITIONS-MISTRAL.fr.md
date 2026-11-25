@@ -31,7 +31,7 @@ Format d'une mise à jour :
 | Papier (date) | Réf. | Pourquoi pour PixPlot | Statut |
 |---|---|---|---|
 | M-ArtAgent + WikiArt Influence Benchmark WIB-100 (2026) | arXiv 2604.07468 | Banc « filiation » équilibré, prêt à l'emploi sur WikiArt | **WIB-100 non publié** ; protocole repris avec Wikidata (`pixplot influence`, ARCHITECTURE § 48) |
-| Sparse Autoencoders Learn Monosemantic Features in VLMs (avr. 2025) | arXiv 2504.02821 | Testé sur SigLIP SoViT-400m (notre modèle) ; cadre pour noter nos notions SAE | à lire en priorité |
+| Sparse Autoencoders Learn Monosemantic Features in VLMs (avr. 2025) | arXiv 2504.02821 | Testé sur SigLIP SoViT-400m (notre modèle) ; cadre pour noter nos notions SAE | **fait** : notions floues (`pixplot notions --coherence`, ARCHITECTURE § 49) |
 | EmoSEM : segmenter les zones qui suscitent l'émotion (avr. 2025) ; lien avec APOLO / ArtEmis non vérifié | arXiv 2504.14658 | Localiser l'émotion dans le tableau, croisé avec nos 1,6 M zones | à lire en priorité |
 | fruit-SALAD, Scientific Data (2025) | s41597-025-04529-4 | Similarité perçue par des humains, projetée dans les embeddings : juger les regards | **référence non vérifiée** (page inaccessible au 24/11/2026) |
 | Dare to Plagiarize? (juin 2025) | arXiv 2506.23132 | Détection + retrieval de la source authentique (doublons, filiation) | à lire en priorité |
@@ -112,3 +112,5 @@ Format d'une mise à jour :
   3 fausses corrigées (SigLIP 2 = 2502.14786 ; 2602.19133 et 2511.22471 ne correspondent pas à « ArtContext » et
   « ArtUnmasked ») ; 2 non vérifiables (fruit-SALAD, J. Imaging) ; EmoSEM sans lien établi avec APOLO / ArtEmis.
   Wölfflin (4 autres paires) écarté car déjà mesuré (§ 43) ; sauvegarde faite (`pixplot sauvegarde`).
+- 2026-11-25 — Claude : motifs ordinaux mesurés, non retenus (§ 47) ; banc « influence » d'après Wikidata, WIB-100
+  n'étant pas publié (§ 48) ; cohérence des notions d'après Pach et al. : notions floues (§ 49).

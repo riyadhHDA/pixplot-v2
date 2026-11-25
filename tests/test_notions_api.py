@@ -101,6 +101,7 @@ def test_notions_routes_and_framed_tab(notions_client):
     assert by_f[5]["named"] is True and by_f[5]["label"] == "arc-en-ciel"
     assert by_f[5]["iconclass"]["url"].startswith("https://iconclass.org/")
     assert by_f[88]["named"] is False and by_f[88]["label"] == "sans nom" and by_f[88]["iconclass"] is None
+    assert lst["coherence"] is None and by_f[5]["coherence"] is None   # pas encore calculée
 
     # Activations exactes recalculées depuis sae.npz (triées par score décroissant)
     d5 = c.get("/api/notions/5", params={"limit": 10, "highlight_limit": 20}).json()
@@ -179,3 +180,16 @@ def test_noms_a_travers_siglip(notions_client, atlas_env):
     assert n == 2
     assert feats[5]["iconclass"]["notation"] == "N0" and feats[5]["iconclass"]["via"] == "sujet"
     assert feats[88]["iconclass"]["notation"] == "N1"
+
+
+def test_coherence_dans_la_liste(notions_client, atlas_env):
+    """La cohérence écrite dans ``coherence.json`` (§ 49) accompagne chaque notion de la liste."""
+    c, _, _ = notions_client
+    s, _ = atlas_env
+    run = sae.latest_notions_run(s.runs_dir, "sujet")
+    sae.save_coherence(run, {"own": "sujet", "top": 50, "threshold": 3.0, "trials": 300, "baseline": {},
+                             "features": {"5": {"class": "floue", "z": {"sujet": 1.2, "forme": 0.4}}}})
+    lst = c.get("/api/notions").json()
+    assert lst["coherence"] == {"own": "sujet", "threshold": 3.0, "top": 50}
+    by_f = {it["feature"]: it for it in lst["items"]}
+    assert by_f[5]["coherence"]["class"] == "floue" and by_f[88]["coherence"] is None

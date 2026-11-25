@@ -103,7 +103,9 @@ for zones described by words.
 
 `analysis/notions_<regard>_…` runs (§ 37) are not map analyses: `sae.npz` (autoencoder weights) and
 `notions.json` (`space`, `explained_variance`, `dead`, `baseline`, `features`: one entry per notion
-with `feature`, `frequency`, `top`, `labels`, `iconclass`).
+with `feature`, `frequency`, `top`, `labels`, `iconclass`). `coherence.json` (§ 49): `own` (the notion's
+regard), `top`, `threshold`, `trials`, `baseline` (control mean and standard deviation per regard) and `features`:
+for each notion number, `class` (`nette`, `un_regard`, `floue`) and `z` (gap to chance per regard).
 
 ### Tiles (`tiles/…`)
 

@@ -2315,3 +2315,44 @@ référence), parfois discutables (Benois → Repine, Benois étant de 26 ans le
 Wikidata peuvent se trouver parmi les témoins. 30 liens tirés au hasard attendent la relecture de l'utilisateur
 (`<données>/bench/influence/relecture_p737_30.csv`) avant d'en faire une référence stable. Corpus centré sur les
 XIXᵉ–XXᵉ siècles occidentaux.
+
+## 49. Notions floues : la cohérence de chaque notion apprise (25/11/2026)
+
+**Question.** Les notions apprises (§§ 37 et 42) sont des directions qu'un auto-encodeur a trouvées seul. Certaines
+désignent une chose nette (une échelle, une barbe), d'autres pourraient être des fourre-tout. Peut-on le mesurer
+sans tout regarder ? Pach et al. (« Sparse Autoencoders Learn Monosemantic Features in Vision-Language Models »,
+arXiv 2504.02821, 2025 ; piste des propositions de Mistral) notent chaque notion par la ressemblance moyenne entre
+les images qui l'activent le plus, pondérée par leurs activations.
+
+**Méthode.** `pixplot notions --coherence <run>` (et automatiquement après chaque entraînement), 6 s par regard.
+Pour chaque notion qui marque au moins 10 œuvres : ses 50 œuvres les plus marquées, similarité cosinus moyenne
+entre elles, chaque paire pondérée par le produit des activations. On la compare à celle de 50 œuvres tirées au
+hasard (300 tirages) : l'écart, en écarts-types, est l'**écart au hasard**. On le mesure dans le regard où la
+notion a été apprise et dans l'autre (forme ↔ sujet). Classes, seuil 3 : **floue** si l'écart dans son propre
+regard est ≤ 3 (ses œuvres ne se ressemblent pas plus que le hasard) ; **cohérente dans son seul regard** si elle
+dépasse 3 dans son regard mais pas dans l'autre ; **nette** sinon. Résultat dans `coherence.json` du run (FORMATS).
+
+| Regard des notions | Notées | Nettes | Un seul regard | Floues | Nettes parmi les nommées (Iconclass) |
+|---|---|---|---|---|---|
+| Sujet (SigLIP 2) | 1 637 / 1 792 | 74,6 % | 8,8 % | 16,6 % | 93,7 % (461) |
+| Forme (DINOv3) | 2 046 / 2 048 | 76,0 % | 5,5 % | 18,5 % | 97,3 % (489) |
+
+Témoins : 50 œuvres au hasard ont une similarité moyenne de 0,579 ± 0,010 dans le regard sujet, 0,173 ± 0,017
+dans le regard forme.
+
+**Lecture.** Les notions nommées par Iconclass ou par une étiquette dominante du catalogue sont presque toutes
+nettes (93 à 99 %) ; les floues se concentrent parmi celles qui n'ont ni l'un ni l'autre (37 % en sujet, 35 % en
+forme). Regardées à l'œil, les notions floues du regard forme sont bien des fourre-tout (n° 128 : une sculpture de
+Ruth Vollmer, un photogramme de Man Ray, des natures mortes, des gravures, écart au hasard 1,9). La deuxième
+lecture, dans l'autre regard, dit ce que la notion rassemble : la n° 24 du regard sujet (« chef-d'œuvre célèbre »,
+§ 37) est très cohérente pour SigLIP 2 (18,0) et pas pour DINOv3 (1,4) : ces œuvres ne partagent ni forme ni mise en
+page, seulement leur célébrité ; la n° 641 (« Chinois », les Mao de Warhol) de même (4,5 contre 1,0).
+
+**Interface.** Le panneau « Notions » marque « floue » ou « un seul regard » à côté du nom, propose une case
+« Masquer les notions floues » et un tri par cohérence ; le détail d'une notion donne ses deux écarts au hasard.
+`explore_notions` (MCP) les transmet.
+
+**Limites.** Un seul jeu de 50 œuvres par notion et un seuil fixé à 3, sans intervalle de confiance. Le regard
+qui juge est aussi celui qui a appris la notion : une notion « nette » dans son regard peut rassembler un trait de
+la reproduction (le cadre, n° 88) plutôt qu'une chose ; « nette » veut dire « cohérente », pas « juste ». Pach et
+al. jugent avec un modèle tiers (DINOv2), que nous n'avons pas gardé (son cache a été supprimé le 25/11/2026).

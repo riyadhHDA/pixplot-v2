@@ -249,6 +249,83 @@ def notion_label(feat: dict, z_min: float = ICONCLASS_Z_MIN) -> tuple[str, bool]
     return "sans nom", False
 
 
+COHERENCE_FILE = "coherence.json"
+COHERENCE_TOP = 50             # œuvres les plus marquées examinées par notion
+COHERENCE_Z = 3.0              # seuil : au-dessus, les œuvres se ressemblent plus que 50 œuvres au hasard
+
+
+def _weighted_mean_similarity(X: np.ndarray, w: np.ndarray | None = None) -> float:
+    """Similarité cosinus moyenne entre les lignes de ``X`` (normalisées), paires pondérées par
+    ``w_i · w_j`` (diagonale exclue)."""
+    G = X @ X.T
+    if w is None:
+        n = len(X)
+        return float((G.sum() - np.trace(G)) / max(n * (n - 1), 1))
+    W = np.outer(w, w)
+    np.fill_diagonal(W, 0.0)
+    return float((W * G).sum() / max(W.sum(), 1e-12))
+
+
+def coherence(index: dict, ids: np.ndarray, vectors: dict[str, np.ndarray], own: str,
+              top: int = COHERENCE_TOP, trials: int = 300, seed: int = 0, min_count: int = 10) -> dict:
+    """Cohérence de chaque notion (score de monosémantie, Pach et al., arXiv 2504.02821) : à quel point
+    ses ``top`` œuvres les plus marquées se ressemblent, comparé à ``top`` œuvres tirées au hasard.
+
+    ``vectors`` associe à chaque regard ses vecteurs normalisés, ligne à ligne alignés sur ``ids`` ;
+    ``own`` est le regard où la notion a été apprise. Pour chaque regard on donne un écart réduit
+    ``z`` (écarts-types au-dessus du témoin). Classe : « floue » si ``z`` dans son propre regard
+    ≤ ``COHERENCE_Z`` ; « un_regard » si cohérente dans son propre regard mais pas dans l'autre ;
+    sinon « nette ». Les notions qui marquent moins de ``min_count`` œuvres ne sont pas notées."""
+    row = {int(i): r for r, i in enumerate(ids)}
+    rng = np.random.default_rng(seed)
+    base: dict[str, list[float]] = {sp: [] for sp in vectors}
+    for _ in range(trials):
+        rr = rng.choice(len(ids), min(top, len(ids)), replace=False)
+        for sp, X in vectors.items():
+            base[sp].append(_weighted_mean_similarity(X[rr]))
+    stats = {sp: (float(np.mean(v)), float(np.std(v)) or 1e-6) for sp, v in base.items()}
+    others = [sp for sp in vectors if sp != own]
+    out: dict[str, dict] = {}
+    off = index["offsets"]
+    for f in range(index["n_features"]):
+        a, b = int(off[f]), int(off[f + 1])
+        if b - a < min_count:
+            continue
+        sel = [(row[int(i)], float(s)) for i, s in zip(index["ids"][a:min(b, a + top)], index["scores"][a:min(b, a + top)])
+               if int(i) in row]
+        if len(sel) < min_count:
+            continue
+        rr = np.array([r for r, _ in sel])
+        w = np.array([s for _, s in sel], dtype=np.float64)
+        w = w / max(w.max(), 1e-12)
+        z = {sp: round((_weighted_mean_similarity(X[rr].astype(np.float64), w) - stats[sp][0]) / stats[sp][1], 2)
+             for sp, X in vectors.items()}
+        if z[own] <= COHERENCE_Z:
+            cls = "floue"
+        elif others and all(z[o] <= COHERENCE_Z for o in others):
+            cls = "un_regard"
+        else:
+            cls = "nette"
+        out[str(f)] = {"class": cls, "z": z}
+    return {"own": own, "top": top, "threshold": COHERENCE_Z, "trials": trials,
+            "baseline": {sp: {"mean": round(m, 4), "sd": round(s, 4)} for sp, (m, s) in stats.items()},
+            "features": out}
+
+
+def save_coherence(run, result: dict) -> Path:
+    p = Path(run.path) / COHERENCE_FILE
+    p.write_text(json.dumps(result, ensure_ascii=False), encoding="utf-8")
+    return p
+
+
+def load_coherence(run) -> dict | None:
+    """Lit ``coherence.json`` d'un run de notions (``None`` s'il n'a pas été calculé)."""
+    p = Path(run.path) / COHERENCE_FILE
+    if not p.exists():
+        return None
+    return json.loads(p.read_text(encoding="utf-8"))
+
+
 def encode_index(run, runs_dir: Path, allowed_ids: set[int] | None = None, batch: int = 4096) -> dict | None:
     """Recalcule en NumPy les activations TopK exactes depuis ``sae.npz`` et construit un index
     inversé par notion (œuvres triées par activation décroissante). Renvoie ``None`` si ``sae.npz``
