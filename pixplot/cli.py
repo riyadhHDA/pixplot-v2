@@ -1414,6 +1414,154 @@ def cmd_tiles(args) -> int:
     return 0
 
 
+# --------------------------------------------------------------------------- influence
+def cmd_influence(args) -> int:
+    import json
+    from datetime import datetime, timezone
+
+    from .analysis import influence as I
+    from .analysis.pairbench import load_space_matrix
+    from .api.data import AtlasData
+
+    s = get_settings(args.data)
+    out_dir = I.influence_dir(s)
+    artists_file = out_dir / "artists.json"
+    links_file = out_dir / "links.json"
+    review_csv = out_dir / "relecture_p737_30.csv"
+
+    cat_artists, artist_works = I.load_catalog_artists(s.catalog_path)
+    print(f"Catalogue : {len(cat_artists)} artistes connus "
+          f"({sum(1 for a in cat_artists.values() if a.n_artworks >= args.min_works)} avec ≥ {args.min_works} œuvres).")
+
+    if args.fetch or not (artists_file.exists() and links_file.exists()):
+        if not args.fetch:
+            raise SystemExit(
+                f"Données Wikidata absentes dans {out_dir}. "
+                "Lancez `pixplot influence --fetch` pour interroger le service SPARQL public de Wikidata (CC0)."
+            )
+        p6002_rows, raw_p6 = I.fetch_p6002_table(out_dir)
+        p6_slugs = {r["slug"] for r in p6002_rows}
+        missing = [slug for slug in sorted(cat_artists) if slug.lower() not in p6_slugs]
+        name_cands, raw_nm = I.fetch_candidates_by_name(missing, out_dir)
+        artists_data = I.match_artists(cat_artists, p6002_rows, name_cands)
+        artists_data["fetched_at"] = datetime.now(timezone.utc).isoformat()
+        artists_data["license"] = I.WIKIDATA_LICENSE
+        artists_data["raw_files"] = [raw_p6.name, raw_nm.name]
+        artists_file.write_text(json.dumps(artists_data, ensure_ascii=False, indent=1), encoding="utf-8")
+
+        links, raw_lk = I.fetch_wikidata_links(artists_data, out_dir, min_works=args.min_works)
+        links_payload = {
+            "fetched_at": datetime.now(timezone.utc).isoformat(),
+            "license": I.WIKIDATA_LICENSE,
+            "min_works": args.min_works,
+            "raw_file": raw_lk.name,
+            "counts": {
+                "P737_possible": sum(1 for l in links if l["property"] == "P737" and l["chronology"] == "possible"),
+                "P737_impossible": sum(1 for l in links if l["property"] == "P737" and l["chronology"] == "impossible"),
+                "P1066_possible": sum(1 for l in links if l["property"] == "P1066" and l["chronology"] == "possible"),
+                "P1066_impossible": sum(1 for l in links if l["property"] == "P1066" and l["chronology"] == "impossible"),
+                "with_references": sum(1 for l in links if l.get("references")),
+            },
+            "links": links,
+        }
+        links_file.write_text(json.dumps(links_payload, ensure_ascii=False, indent=1), encoding="utf-8")
+        I.export_review_sample(links, artists_data, review_csv, seed=args.seed)
+        print(f"Échantillon de relecture : {review_csv}")
+    else:
+        artists_data = json.loads(artists_file.read_text(encoding="utf-8"))
+        links_payload = json.loads(links_file.read_text(encoding="utf-8"))
+        links = links_payload["links"]
+
+    c = artists_data["counts"]
+    print(f"Rattachement Wikidata : {c.get('surs', 0)} sûrs (P6002 : {c.get('p6002', 0)}, "
+          f"nom+dates : {c.get('nom_dates', 0)}), {c.get('ambigu', 0)} ambigus, {c.get('absent', 0)} absents.")
+    lc = links_payload["counts"]
+    print(f"Liens (≥ {args.min_works} œuvres) : P737 = {lc['P737_possible']} possibles "
+          f"(+{lc['P737_impossible']} impossibles) · P1066 = {lc['P1066_possible']} possibles "
+          f"(+{lc['P1066_impossible']} impossibles) · avec références Wikidata : {lc['with_references']}.")
+
+    controls = I.build_controls(artists_data, links, min_works=args.min_works,
+                                max_per_tier=args.max_controls, seed=args.seed)
+    (out_dir / "controls.json").write_text(
+        json.dumps({"seed": args.seed, "min_works": args.min_works,
+                    "counts": {k: len(v) for k, v in controls.items()}, "controls": controls},
+                   ensure_ascii=False, indent=1),
+        encoding="utf-8",
+    )
+    print("Témoins : " + ", ".join(f"{k}={len(v)}" for k, v in controls.items()))
+
+    analysis = _analysis_arg(s, args.analysis)
+    data = AtlasData.load(s, analysis)
+    exclude = I.load_duplicate_map(Path(analysis.path))
+    print(f"Doublons exacts exclus : {len(exclude)} œuvres concernées.")
+
+    wanted = [x.strip() for x in args.spaces.split(",")] if args.spaces else ["forme", "sujet", "couleur", "touche", "posture"]
+    available = [sp for sp in wanted if sp in data.spaces.runs]
+    if not available:
+        raise SystemExit(f"Aucun des regards demandés n'est disponible ({', '.join(data.spaces.runs)}).")
+
+    positives = {
+        "P737": [(l["source"], l["target"]) for l in links if l["property"] == "P737" and l["chronology"] == "possible"],
+        "P1066": [(l["source"], l["target"]) for l in links if l["property"] == "P1066" and l["chronology"] == "possible"],
+    }
+    ctrl_pairs = {tier: [(p["source"], p["target"]) for p in ps] for tier, ps in controls.items()}
+    all_pairs = sorted({p for ps in list(positives.values()) + list(ctrl_pairs.values()) for p in ps})
+    print(f"Paires dirigées uniques à mesurer : {len(all_pairs)} dans {len(available)} regards ({', '.join(available)}).")
+
+    ids = [int(i) for i in data.ids]
+    scores_by_space: dict[str, dict] = {}
+    for sp in available:
+        print(f"  Mesure « {sp} »…", flush=True)
+        if sp == "posture":
+            pidx = data.spaces.posture_index("posture")
+            scores_by_space[sp] = I.score_pairs_posture(all_pairs, artist_works, pidx, exclude)
+        else:
+            X, row = load_space_matrix(data.spaces, sp, ids)
+            scores_by_space[sp] = I.score_pairs_matrix(all_pairs, artist_works, X, row, exclude,
+                                                       min_works=args.min_works)
+            del X
+
+    eval_median = I.evaluate_scores(scores_by_space, positives, ctrl_pairs,
+                                    metric="centile", n_boot=args.boot, seed=args.seed)
+    eval_best = I.evaluate_scores(scores_by_space, positives, ctrl_pairs,
+                                  metric="best_centile", n_boot=args.boot, seed=args.seed)
+
+    print("\nAUC (rang médian des œuvres de A parmi les voisines de B ; hors témoins impossibles) :")
+    for rel in ("P737", "P1066"):
+        for tier in ("difficiles", "moyens", "faciles"):
+            comp = eval_median["comparisons"].get(f"{rel}_vs_{tier}")
+            if not comp:
+                continue
+            print(f"\n  {rel} contre {tier} :")
+            for sp, st in comp["spaces"].items():
+                ci = f"[{st['ci'][0]:.3f} ; {st['ci'][1]:.3f}]" if st["ci"] else "[—]"
+                print(f"    {sp:<10} AUC {st['auc']:.3f} {ci}  (n+={st['n_pos']}, n-={st['n_neg']})")
+            sigs = [p for p in comp["paired"] if p["significant"]]
+            if sigs:
+                print("    Écarts appariés sûrs (IC exclut 0) : " + ", ".join(
+                    f"{p['a']} − {p['b']} = {p['diff_auc']:+.3f} [{p['ci'][0]:+.3f} ; {p['ci'][1]:+.3f}] (p={p['p']:.3g})"
+                    for p in sigs
+                ))
+
+    report = {
+        "analysis": analysis.id,
+        "created": datetime.now(timezone.utc).isoformat(),
+        "license_source": I.WIKIDATA_LICENSE,
+        "spaces": available,
+        "min_works": args.min_works,
+        "artists_counts": artists_data["counts"],
+        "links_counts": links_payload["counts"],
+        "controls_counts": {k: len(v) for k, v in controls.items()},
+        "evaluation_median": eval_median,
+        "evaluation_best": eval_best,
+        "scores": {sp: {f"{a}|{b}": v for (a, b), v in sc.items()} for sp, sc in scores_by_space.items()},
+    }
+    report_path = out_dir / f"report_{Path(analysis.path).name}.json"
+    report_path.write_text(json.dumps(report, ensure_ascii=False, indent=1), encoding="utf-8")
+    print(f"\nRapport : {report_path}")
+    return 0
+
+
 # --------------------------------------------------------------------------- main
 def build_parser() -> argparse.ArgumentParser:
     from . import __version__
@@ -1692,6 +1840,16 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-resume", action="store_true", help="ne pas reprendre un calcul interrompu")
     p.add_argument("--no-sheet", action="store_true", help="ne pas générer la planche visuelle")
     p.set_defaults(func=cmd_whytest)
+
+    p = sub.add_parser("influence", help="banc d'essai « influence entre artistes » sur Wikidata (P737 / P1066)")
+    p.add_argument("--fetch", action="store_true", help="interroger Wikidata SPARQL et enregistrer les réponses brutes")
+    p.add_argument("--spaces", help="regards à mesurer, séparés par des virgules (défaut : forme,sujet,couleur,touche,posture)")
+    p.add_argument("--analysis", help="nom du run d'analyse (défaut : le dernier)")
+    p.add_argument("--min-works", type=int, default=5, help="minimum d'œuvres par artiste (défaut : 5)")
+    p.add_argument("--max-controls", type=int, default=500, help="maximum de paires témoins par niveau (défaut : 500)")
+    p.add_argument("--boot", type=int, default=2000, help="tirages bootstrap pour les IC 95 %% (défaut : 2000)")
+    p.add_argument("--seed", type=int, default=0)
+    p.set_defaults(func=cmd_influence)
 
     p = sub.add_parser("dater", help="date chaque œuvre d'après ses voisines datées, avec une fourchette à 80 %% calibrée ; mesure chaque regard")
     p.add_argument("--space", help="regard retenu pour dater (défaut : le meilleur, artiste caché)")

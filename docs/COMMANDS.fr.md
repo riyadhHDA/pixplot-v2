@@ -100,6 +100,7 @@ pas une preuve : les bancs mesurent ce que chaque regard retrouve, pas ce qui es
 | `pixplot zonebench` | chercher une zone avec des mots : banc RichArt | `--encoders` |
 | `pixplot textbench` | recherche par phrase, sur les descriptions MMArt | `-n`, `--encoders` |
 | `pixplot whytest` | met à l'épreuve le bouton « Pourquoi ? » par occultation | `-k`, `--random` |
+| `pixplot influence` | banc d'essai « influence entre artistes » sur Wikidata (`P737`, `P1066`) avec témoins et IC appariés | `--fetch`, `--spaces`, `--min-works`, `--boot` |
 | `pixplot audit` | audit à l'aveugle : où les groupes contredisent les étiquettes | `--keys`, `--min-count` |
 
 ## Stabilité
