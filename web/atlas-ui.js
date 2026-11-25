@@ -96,6 +96,9 @@ function wireUI() {
       setLayout("concepts");
     }));
   }
+  if ($("time-estimated")) {
+    $("time-estimated").addEventListener("change", (e) => { state.timeEstimated = e.target.checked; setLayout("time"); });
+  }
   $("place-type").addEventListener("change", (e) => { state.placeType = e.target.value; setLayout("geo"); });
   $("place-paths").addEventListener("change", () => redraw());
   $("place-year").addEventListener("input", (e) => {

@@ -15,6 +15,11 @@ function posOf(id) {
 
 function timePositions() {
   const m = state.map, n = state.n, cell = state.iconSize * 1.08;
+  // Avec l'option « dates estimées » (pixplot dater), une œuvre sans date prend sa date estimée ;
+  // elle est empilée au-dessus des œuvres datées de sa colonne, après un trait qui les sépare.
+  const useEst = !!(state.timeEstimated && m.year_est);
+  const isEst = (r) => useEst && m.year[r] == null && m.year_est[r] != null;
+  const yearOf = (r) => (m.year[r] != null ? m.year[r] : isEst(r) ? m.year_est[r] : null);
   const years = m.year.filter((y) => y != null);
   if (!years.length) return { pos: state.positions, axis: [], note: "aucune œuvre datée" };
   const [lo, hi] = minMax(years);
@@ -23,9 +28,16 @@ function timePositions() {
   const step = [1, 2, 5, 10, 20, 25, 50, 100, 200].find((s) => (hi - lo) / s + 1 <= maxCols) || 500;
   const start = Math.floor(lo / step) * step;
   const bins = Math.floor((hi - start) / step) + 2; // + un bloc « sans date »
-  const binOf = (y) => (y == null ? bins - 1 : Math.floor((y - start) / step));
-  const counts = new Array(bins).fill(0);
-  for (const y of m.year) counts[binOf(y)]++;
+  // une date estimée hors de l'étendue des dates réelles est ramenée au bord (rare)
+  const binOf = (y) => (y == null ? bins - 1 : Math.min(bins - 2, Math.max(0, Math.floor((y - start) / step))));
+  const counts = new Array(bins).fill(0), dated = new Array(bins).fill(0);
+  let nEst = 0;
+  for (let r = 0; r < n; r++) {
+    const b = binOf(yearOf(r));
+    counts[b]++;
+    if (m.year[r] != null) dated[b]++;
+    if (isEst(r)) nEst++;
+  }
   // Chaque période est un bloc de w vignettes de large ; w est choisi pour que l'ensemble
   // ait à peu près les proportions de l'écran (sinon les périodes chargées font des tours).
   const el = $("map"), target = el.clientWidth / Math.max(1, el.clientHeight);
@@ -37,11 +49,12 @@ function timePositions() {
     if (err < best) { best = err; w = k; }
   }
   const blockW = (w + 1) * cell, x0 = -(bins * blockW) / 2, base = 0;
-  const order = [...Array(n).keys()].sort((a, b) => (m.cluster[a] - m.cluster[b]) || (a - b));
+  // œuvres datées d'abord (en bas de la colonne), puis estimées ; dans chaque part, rangées par groupe
+  const order = [...Array(n).keys()].sort((a, b) => (isEst(a) - isEst(b)) || (m.cluster[a] - m.cluster[b]) || (a - b));
   const fill = new Array(bins).fill(0);
   const pos = new Float32Array(n * 2);
   for (const r of order) {
-    const b = binOf(m.year[r]), k = fill[b]++;
+    const b = binOf(yearOf(r)), k = fill[b]++;
     pos[2 * r] = x0 + b * blockW + ((k % w) + 0.5) * cell;
     pos[2 * r + 1] = base + (Math.floor(k / w) + 0.5) * cell;
   }
@@ -53,10 +66,18 @@ function timePositions() {
   for (let b = 0; b < bins; b++) {
     const x = x0 + b * blockW;
     if (b < bins - 1) axis.push({ line: [[x - cell / 2, base], [x - cell / 2, top]] });
+    // trait entre les œuvres datées et, au-dessus, celles placées à leur date estimée
+    if (useEst && b < bins - 1 && counts[b] > dated[b]) {
+      const yb = base + Math.ceil(dated[b] / w) * cell;
+      axis.push({ line: [[x - cell / 2, yb], [x + (w - 0.5) * cell, yb]] });
+    }
     if (b === bins - 1 ? counts[b] > 0 : b % every === 0)
       axis.push({ at: [x + (w * cell) / 2, base - cell * 0.3], text: b === bins - 1 ? "sans date" : String(start + b * step) });
   }
-  return { pos, axis, note: `un bloc = ${step === 1 ? "une année" : `${step} ans`}, œuvres rangées par groupe` };
+  const estNote = useEst
+    ? ` ; ${nEst.toLocaleString("fr-FR")} œuvres sans date placées à leur date estimée, au-dessus du trait de chaque colonne (une piste, pas une datation)`
+    : "";
+  return { pos, axis, note: `un bloc = ${step === 1 ? "une année" : `${step} ans`}, œuvres rangées par groupe${estNote}` };
 }
 
 // ------------------------------------------------------------------ lieux typés et datés (ARTL@S)
@@ -311,6 +332,7 @@ async function setLayout(layout) {
   state.posVersion = (state.posVersion || 0) + 1;
   if ($("place-controls")) $("place-controls").hidden = layout !== "geo" || !(state.places && state.places.types.length);
   if ($("concept-controls")) $("concept-controls").hidden = layout !== "concepts";
+  if ($("time-controls")) $("time-controls").hidden = layout !== "time" || !state.map.year_est;
   state.layoutNote = note;
   $("layout-note").textContent = note;
   computeGroupLabels();

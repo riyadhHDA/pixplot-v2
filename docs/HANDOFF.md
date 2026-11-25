@@ -236,15 +236,22 @@ corrigé ; 63 tests passent, Atlas vérifié.
     non publié) : date estimée et fourchette à 80 % calibrée pour les 23 922 œuvres sans date. Artiste avec
     ≥ 5 autres œuvres datées → ses seules œuvres (3 ans d'erreur médiane, couverture 80,5 %) ; sinon toutes les
     voisines du regard « sujet » (12 ans ; pas mieux que la médiane du style : IC [−1 ; 0]). Fiche de l'Atlas
-    (bloc en pointillés) et `get_artwork` (`date_estimate`). Calculé sur 81k : `datation.npy`, rapport
+    (bloc en pointillés) et `get_artwork` (`date_estimate`). 25/11/2026 : vue chronologique, case « Placer aussi
+    les œuvres sans date à leur date estimée » (`year_est` dans `/api/map`), empilées au-dessus d'un trait dans
+    chaque colonne ; vérifié sur 81k (23 922 œuvres, 35 ms, 0 erreur). Calculé sur 81k : `datation.npy`, rapport
     `data/wikiart81k/bench/datation_report.json`. Piste reprise de `docs/PROPOSITIONS-MISTRAL.fr.md`, que
     Claude a relu (24 références vérifiées, 3 fausses corrigées).
   - **Gemini 4 Neon : Depth Pro 2 et OpenVisionBanana**, fusionné le 25/11/2026 (ARCHITECTURE § 46,
     `handoff/gemini-modeles-essai.md`) : aucun des deux retenu. Depth Pro 2 Base (licence apple-amlr non
     commerciale) : R@10 0 % en « même composition » contre 53,6 % pour Forme ; encodeur dans `NOT_KEPT`
     (clé `profondeur_dp2`), vecteurs gardés (run `features/depth_pro2_base_20261124-190441`, 10 Mo).
-    OpenVisionBanana (génératif, licence FLUX non commerciale) écarté sans calcul. Cache Hugging Face de
-    Depth Pro 2 (386 Mo) : à supprimer si l'utilisateur veut de la place. Copie de travail supprimée.
+    OpenVisionBanana (génératif, licence FLUX non commerciale) écarté sans calcul. Copie de travail supprimée.
+    **25/11/2026, accord de l'utilisateur** : caches Hugging Face des modèles écartés supprimés (11 Go : Depth
+    Pro 2, Depth Anything V2, DINOv2, DINOv3-L, TIPSv2 ×2, PE-Core, PE-Spatial, CSD, RT-DETR r18) ; vecteurs
+    gardés ; ils se retéléchargent si l'on relance leur évaluation. Copies de sécurité de `data/` gardées.
+  - **Gemini 4 Neon, en cours (25/11/2026)** : banc d'essai « influence » d'après WIB-100 (M-ArtAgent,
+    arXiv 2604.07468), dans `C:\Users\Riyadh\Documents\pixplot-banc-influence` (branche
+    `gemini/banc-influence`). Compte rendu attendu : `docs/handoff/gemini-banc-influence.md`.
 
 - **Test d'installation sur machine vierge** (condition de la 1.0) : **décision de l'utilisateur du
   19/11/2026, à faire tout à la fin**, juste avant la 1.0. Ne pas le proposer avant.

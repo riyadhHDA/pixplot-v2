@@ -479,6 +479,9 @@ class AtlasData:
         years = self.years()
         if sum(y is not None for y in years) >= max(2, len(years) // 20):
             payload["year"] = years
+            est = self.estimated_years(years)
+            if est is not None:
+                payload["year_est"] = est
         coords = self.coordinates()
         if coords and sum(v is not None for v in coords[0]) >= 2:
             payload["lat"], payload["lon"] = coords
@@ -568,6 +571,23 @@ class AtlasData:
             out["date_estimate"] = est
         return out
 
+    def _dating_arr(self):
+        """``datation.npy`` et ses métadonnées (``pixplot dater``), lus une fois ; None s'il n'existe pas."""
+        if not hasattr(self, "_dating"):
+            from ..analysis import dating
+            self._dating = dating.load(self.analysis)
+        return self._dating
+
+    def estimated_years(self, years: list[int | None]) -> list[int | None] | None:
+        """Année estimée des œuvres **sans date** (None pour les autres), pour la vue chronologique ; None si
+        ``pixplot dater`` n'a pas été lancé pour cette analyse."""
+        d = self._dating_arr()
+        if d is None or len(d[0]) != len(self.ids):
+            return None
+        arr = d[0]
+        return [None if y is not None or not np.isfinite(arr[r, 0]) else int(round(float(arr[r, 0])))
+                for r, y in enumerate(years)]
+
     def date_estimate(self, artwork_id: int) -> dict | None:
         """Date estimée d'une œuvre **sans date** (``pixplot dater``), ou None : année, fourchette à 80 %,
         nombre de voisines datées et méthode (œuvres du même artiste, ou toutes les voisines)."""
@@ -575,10 +595,7 @@ class AtlasData:
         m = self.meta.get(artwork_id, {})
         if r is None or any(parse_year(m.get(k)) is not None for k in DATE_KEYS):
             return None
-        if not hasattr(self, "_dating"):
-            from ..analysis import dating
-            self._dating = dating.load(self.analysis)
-        if self._dating is None:
+        if self._dating_arr() is None:
             return None
         arr, meta = self._dating
         if len(arr) != len(self.ids) or not np.isfinite(arr[r, 0]):

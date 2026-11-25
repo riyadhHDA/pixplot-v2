@@ -79,6 +79,10 @@ def test_fiche_et_api(atlas_env):
         e = data.artwork(undated)["date_estimate"]
         assert (e["year"], e["low"], e["high"], e["method"]) == (1550, 1520, 1580, "artiste")
         assert "date_estimate" not in data.artwork(dated_id)
+        # carte de l'Atlas : l'année estimée seulement pour les œuvres sans date (vue chronologique)
+        est = data.map_payload()["year_est"]
+        rows = {i: r for r, i in enumerate(ids)}
+        assert est[rows[undated]] == 1550 and est[rows[dated_id]] is None
     finally:
         path.unlink()
         path.with_suffix(".json").unlink()
