@@ -2231,32 +2231,36 @@ judge with a third-party model (DINOv2), which we did not keep (its cache was de
 **Data.** AVAtt (Kerkouri et al., arXiv 2610.30481, 2026): 282 paintings viewed freely (5.5 or 15 s) by 152
 volunteers, Tobii eye tracker, 121,002 fixations. Eye-tracking data CC0, code MIT; images (25 in copyright) kept
 locally in `data/avatt/`. 108 paintings matched to WikiArt 81k by dHash fingerprint (§ 34 rule: distance ≤ 8 bits,
-margin ≥ 4).
+margin ≥ 4); the 174 missing ones are encoded locally with the same models (`--encode-missing`, cache outside git)
+to cover all **282 paintings**.
 
 **Method.** Share of fixations falling in the shown cells, relative to their area; NSS (0 at chance, positive if
 the zone is looked at more than the rest). Controls: random cells, centre bias, local contrast, on the same grid.
 95 % CIs by bootstrap over paintings.
 
-| Zones (n = 108, neighbour in WikiArt 81k) | Share of fixations | NSS [95 % CI] |
+| Zones (n = 282, neighbour in WikiArt 81k) | Share of fixations | NSS [95 % CI] |
 |---|---|---|
-| Current "Why?" (§ 40) | 43.2 % | +0.26 [+0.21; +0.31] |
-| Random cells | 24.6 % | 0.00 |
-| Old "Why?" (§ 39, corners) | 11.0 % | −0.23 |
-| Centre bias | 58.7 % | +0.55 |
-| Local contrast | 42.1 % | +0.34 |
+| Current "Why?" (§ 40) | 44.9 % | +0.31 [+0.27; +0.34] |
+| Random cells | 24.2 % | −0.01 |
+| Old "Why?" (§ 39, corners) | 11.1 % | −0.23 |
+| Centre bias | 57.5 % | +0.53 |
+| Local contrast | 40.7 % | +0.32 |
 
-`search_zones`, 20 French queries: NSS +0.105 [+0.061; +0.149] above chance, but below centre bias. Per query:
-"child", "face", "house" much looked at (+0.30 to +0.37); "sky and clouds" (−0.24), "mountain" (−0.14) little
-looked at, although PixPlot does find what was asked. With the work's title as the query: +0.22, level with centre
-bias.
+*(On the 108 paintings matched to WikiArt alone: +0.26 [+0.21; +0.31], same order; on n = 282, "Why?" draws level
+with local contrast, Δ −0.011 [−0.059; +0.037], while remaining below centre bias.)*
+
+`search_zones`, 20 French queries (n = 167 paintings): NSS +0.142 [+0.099; +0.190] above chance, but below centre
+bias (+0.215). Per query: "child", "face", "house" much looked at; "sky and clouds", "mountain" little looked at,
+although PixPlot does find what was asked. With the work's title as the query (n = 123 paintings):
+**+0.249 [+0.190; +0.314]**, **ahead of centre bias** (+0.144; Δ +0.105 [+0.034; +0.180], *p* = 0.002).
 
 **Reading.** Human gaze confirms the § 40 repair: the old ranking avoided looked-at zones, the current one lands
-above chance. But "Why?" is not an attention map: a plain centre bias does better. It shows what two canvases
-share, and a little-looked-at zone (a Sisley sky) can rightly bring two compositions together. `search_zones`
-follows the query, not salience.
+above chance and matches local contrast. But "Why?" is not an attention map: a plain centre bias does better. It
+shows what two canvases share, and a little-looked-at zone (a Sisley sky) can rightly bring two compositions
+together. `search_zones` follows the query, not salience — and when the query is the work's title, it beats the
+centre bias.
 
 **Decision.** Nothing changes in the Atlas: the warning under the zones ("a lead to look at, not an explanation")
-is right. Benchmark kept (`pixplot oculometrie`).
+is right. Benchmark kept (`pixplot oculometrie`, `--encode-missing` option to cover all of AVAtt).
 
-**Limits.** 108 paintings out of 282; non-specialist observers in free viewing, not a historian looking for an
-attribution; fixed 4 × 4 grid.
+**Limits.** Non-specialist observers in free viewing, not a historian looking for an attribution; fixed 4 × 4 grid.

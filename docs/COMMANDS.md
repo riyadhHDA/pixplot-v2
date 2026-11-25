@@ -99,7 +99,7 @@ proof: the benchmarks measure what each regard finds, not what is true.
 | `pixplot zonebench` | find a zone with words: RichArt benchmark | `--encoders` |
 | `pixplot textbench` | sentence search, on the MMArt descriptions | `-n`, `--encoders` |
 | `pixplot whytest` | puts the "Why?" button to the test by occlusion | `-k`, `--random` |
-| `pixplot oculometrie` | compares "Why?" and `search_zones` boxes against human eye-tracking (AVAtt), with naive baselines and 95% CIs | `--avatt`, `--boot`, `--skip-zones` |
+| `pixplot oculometrie` | compares "Why?" and `search_zones` boxes against human eye-tracking (AVAtt), with naive baselines and 95% CIs | `--avatt`, `--boot`, `--skip-zones`, `--encode-missing` |
 | `pixplot influence` | artist-level "influence" benchmark on Wikidata (`P737`, `P1066`) with controls and paired CIs | `--fetch`, `--spaces`, `--min-works`, `--boot` |
 | `pixplot audit` | blind audit: where the groups contradict the labels | `--keys`, `--min-count` |
 

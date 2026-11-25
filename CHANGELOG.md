@@ -14,9 +14,9 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
-## Unreleased
+## 0.24.0 — 2026-11-25 · Blurry notions and eye-tracking (AVAtt)
 
-- **`pixplot oculometrie`** (Gemini 4 Neon): PixPlot's zones against human gaze (AVAtt, 108 paintings, 121,002 fixations). The repaired "Why?" lands above chance (NSS +0.26; the old one, −0.23), but a plain centre bias does better: it shows what two canvases share, not what people look at. `search_zones` follows the query, not salience. (ARCHITECTURE § 50)
+- **`pixplot oculometrie`** (Gemini 4 Neon): PixPlot's zones against human gaze (AVAtt, 282 paintings, 121,002 fixations; `--encode-missing` option to cover the 174 works outside WikiArt). The repaired "Why?" lands above chance (NSS +0.31; the old one, −0.23) and matches local contrast, but a plain centre bias does better (+0.53): it shows what two canvases share, not what people look at. `search_zones` follows the query, not salience — and beats the centre bias when queried with the work's title (+0.25 vs +0.14). (ARCHITECTURE § 50)
 - **Blurry notions**: each learned notion gets a coherence score (Pach et al., 2025): do its 50 most strongly marked works resemble each other more than 50 random works, in its own regard and in the other? About 17 % of notions are "blurry" (catch-alls), almost all among unnamed ones. The "Notions" panel marks them, can hide them and sort by coherence; `explore_notions` passes the score on. `pixplot notions --coherence <run>` (6 s), new file `coherence.json` (FORMATS). (ARCHITECTURE § 49)
 
 ## 0.23.0 — 2026-11-25 · Estimated dating, influence benchmark, Wölfflin, tiles, backup, new website

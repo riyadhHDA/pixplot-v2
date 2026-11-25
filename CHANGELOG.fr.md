@@ -14,9 +14,9 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
-## Non publié
+## 0.24.0 — 25/11/2026 · Notions floues et oculométrie (AVAtt)
 
-- **`pixplot oculometrie`** (Gemini 4 Neon) : les zones de PixPlot face au regard humain (AVAtt, 108 peintures, 121 002 fixations). Le « Pourquoi ? » réparé tombe au-dessus du hasard (NSS +0,26 ; l'ancien, −0,23), mais un simple biais vers le centre fait mieux : il montre ce que deux toiles partagent, pas ce qu'on regarde. `search_zones` suit la requête, pas la saillance. (ARCHITECTURE § 50)
+- **`pixplot oculometrie`** (Gemini 4 Neon) : les zones de PixPlot face au regard humain (AVAtt, 282 peintures, 121 002 fixations ; option `--encode-missing` pour couvrir les 174 œuvres hors WikiArt). Le « Pourquoi ? » réparé tombe au-dessus du hasard (NSS +0,31 ; l'ancien, −0,23) et rejoint le contraste local, mais un simple biais vers le centre fait mieux (+0,53) : il montre ce que deux toiles partagent, pas ce qu'on regarde. `search_zones` suit la requête, pas la saillance — et dépasse le biais central quand la requête est le titre de l'œuvre (+0,25 contre +0,14). (ARCHITECTURE § 50)
 - **Notions floues** : chaque notion apprise reçoit une note de cohérence (Pach et al., 2025) : ses 50 œuvres les plus marquées se ressemblent-elles plus que 50 œuvres au hasard, dans son regard et dans l'autre ? Environ 17 % des notions sont « floues » (des fourre-tout), presque toutes parmi celles sans nom. Le panneau « Notions » les marque, peut les masquer et trier par cohérence ; `explore_notions` transmet la note. `pixplot notions --coherence <run>` (6 s), nouveau fichier `coherence.json` (FORMATS). (ARCHITECTURE § 49)
 
 ## 0.23.0 — 25/11/2026 · Datation estimée, banc « influence », Wölfflin, tuiles, sauvegarde, nouveau site

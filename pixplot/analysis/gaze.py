@@ -46,9 +46,9 @@ from PIL import Image, ImageDraw, ImageFilter
 from ..catalog.ingest import dhash
 from ..catalog.wikiart_names import MAX_BITS, MIN_MARGIN, _popcount
 from ..features.extract import OK
-from ..features.regions import DEFAULT_GRIDS
+from ..features.regions import DEFAULT_GRIDS, letterbox_mask, pool_regions
 from ..index.regions import cell_boxes, patches_per_side, square_to_image
-from ..index.textzones import ZoneIndex, find_zone_index, zone_boxes
+from ..index.textzones import ZoneIndex, crops as zone_crops, find_zone_index, zone_boxes
 from ..runs import Run, list_runs
 from .correspondences import GRID, cells_of, correspondences, load_or_compute_cell_means
 
@@ -478,6 +478,132 @@ def _summarize_conditions(
     return out
 
 
+# ------------------------------------------------------------------ encodage local des peintures AVAtt absentes
+def encode_missing_dino(
+    paintings: list[AvattPainting],
+    forme_run: Run,
+    *,
+    cache_path: Path | None = None,
+    batch_size: int = 32,
+    say: Callable[[str], None] = print,
+) -> dict[str, tuple[np.ndarray, np.ndarray, tuple[int, int]]]:
+    """Encode en local (DINOv3) les peintures AVAtt absentes du catalogue.
+
+    Renvoie ``{image_id: (global_vec, regions_vec, (w, h))}`` et met en cache dans ``cache_path``
+    (strictement dans ``data/``, jamais versionné).
+    """
+    missing = [p for p in paintings if p.artwork_id is None and len(p.fixations) > 0]
+    if not missing:
+        return {}
+    want_ids = [p.image_id for p in missing]
+    if cache_path and cache_path.exists():
+        z = np.load(cache_path, allow_pickle=False)
+        if str(z["run_id"].item()) == forme_run.id and z["image_ids"].tolist() == want_ids:
+            say(f"  Cache DINOv3 réutilisé ({len(want_ids)} peintures) : {cache_path.name}")
+            return {
+                iid: (
+                    np.asarray(z["global"][i], dtype=np.float32),
+                    np.asarray(z["regions"][i], dtype=np.float32),
+                    (int(z["sizes"][i, 0]), int(z["sizes"][i, 1])),
+                )
+                for i, iid in enumerate(want_ids)
+            }
+
+    from ..encoders.registry import get_encoder
+
+    params = forme_run.manifest.get("params", {})
+    grids = tuple(params.get("region_grids", DEFAULT_GRIDS))
+    say(f"  Encodage DINOv3 des {len(missing)} peintures AVAtt absentes ({params['encoder']})…")
+    enc = get_encoder(params["encoder"], hf_model=params.get("weights"), input_size=params.get("input_size"))
+
+    g_list, r_list, s_list = [], [], []
+    for s in range(0, len(missing), batch_size):
+        chunk = missing[s:s + batch_size]
+        arrs, masks = [], []
+        for p in chunk:
+            im = crop_painting(p)
+            s_list.append(im.size)
+            arr, box = enc.preprocess(im)
+            arrs.append(arr)
+            masks.append(letterbox_mask(box, enc.input_size, enc.patch_size))
+        batch = np.stack(arrs)
+        res = enc.encode(batch)
+        g_vec = np.asarray(res.global_vectors, dtype=np.float32)
+        g_vec /= np.maximum(np.linalg.norm(g_vec, axis=1, keepdims=True), 1e-12)
+        r_vec = pool_regions(res.patch_grid, grids=grids, mask=np.stack(masks))
+        g_list.append(g_vec)
+        r_list.append(r_vec)
+
+    G_ex = np.concatenate(g_list, axis=0).astype(np.float16)
+    R_ex = np.concatenate(r_list, axis=0).astype(np.float16)
+    S_ex = np.asarray(s_list, dtype=np.int32)
+    if cache_path:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        np.savez(
+            cache_path,
+            **{
+                "run_id": np.array(forme_run.id),
+                "image_ids": np.array(want_ids),
+                "global": G_ex,
+                "regions": R_ex,
+                "sizes": S_ex,
+            },
+        )
+    # Libère la mémoire GPU avant de charger SigLIP 2
+    del enc
+    try:
+        import torch
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+    except Exception:
+        pass
+    return {
+        iid: (G_ex[i].astype(np.float32), R_ex[i].astype(np.float32), (int(S_ex[i, 0]), int(S_ex[i, 1])))
+        for i, iid in enumerate(want_ids)
+    }
+
+
+def encode_missing_zones(
+    paintings: list[AvattPainting],
+    encoder,
+    *,
+    cache_path: Path | None = None,
+    batch_images: int = 4,
+    say: Callable[[str], None] = print,
+) -> dict[str, np.ndarray]:
+    """Encode en local les 20 zones SigLIP 2 des peintures AVAtt absentes du catalogue."""
+    missing = [p for p in paintings if p.artwork_id is None and len(p.fixations) > 0]
+    if not missing:
+        return {}
+    want_ids = [p.image_id for p in missing]
+    if cache_path and cache_path.exists():
+        z = np.load(cache_path, allow_pickle=False)
+        if str(z["encoder"].item()) == encoder.name and z["image_ids"].tolist() == want_ids:
+            say(f"  Cache zones SigLIP 2 réutilisé ({len(want_ids)} peintures) : {cache_path.name}")
+            return {iid: np.asarray(z["zones"][i], dtype=np.float32) for i, iid in enumerate(want_ids)}
+
+    boxes = zone_boxes()
+    n_z = len(boxes)
+    say(f"  Encodage des {n_z} zones SigLIP 2 pour {len(missing)} peintures AVAtt absentes…")
+    out = np.empty((len(missing), n_z, encoder.dim), dtype=np.float16)
+    for s in range(0, len(missing), batch_images):
+        chunk = missing[s:s + batch_images]
+        arrs = []
+        for p in chunk:
+            im = crop_painting(p)
+            im.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
+            arrs.append(np.stack([encoder.preprocess(c)[0] for c in zone_crops(im, boxes)]))
+        flat = np.concatenate(arrs, axis=0)
+        vecs = np.asarray(encoder.encode(flat).global_vectors, dtype=np.float32)
+        vecs /= np.maximum(np.linalg.norm(vecs, axis=1, keepdims=True), 1e-12)
+        out[s:s + len(chunk)] = vecs.reshape(len(chunk), n_z, -1).astype(np.float16)
+
+    if cache_path:
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        np.savez(cache_path, encoder=np.array(encoder.name), image_ids=np.array(want_ids), zones=out)
+    return {iid: out[i].astype(np.float32) for i, iid in enumerate(want_ids)}
+
+
 # ------------------------------------------------------------------ mesure (a) : « Pourquoi ? » (4 × 4 DINOv3)
 def _find_forme_run(runs_dir: Path) -> Run:
     runs = [
@@ -501,18 +627,15 @@ def evaluate_why(
     n_random: int = 50,
     n_boot: int = 2000,
     seed: int = 0,
+    extra_dino: dict[str, tuple[np.ndarray, np.ndarray, tuple[int, int]]] | None = None,
     say: Callable[[str], None] = print,
 ) -> dict:
     """Mesure (a) : coïncidence entre les cases 4 × 4 du « Pourquoi ? » et les fixations AVAtt.
 
     ``neighbor_pool`` :
-    - ``"avatt"``   : 1ʳᵉ voisine parmi les autres peintures d'AVAtt rattachées ;
+    - ``"avatt"``   : 1ʳᵉ voisine parmi les autres peintures d'AVAtt disponibles ;
     - ``"corpus"``  : 1ʳᵉ voisine dans tout le corpus (hors doublons cos >= 0,98).
     """
-    matched = [p for p in paintings if p.artwork_id is not None and len(p.fixations) > 0]
-    if len(matched) < 2:
-        raise RuntimeError(f"Trop peu de peintures AVAtt rattachées ({len(matched)}) pour évaluer « Pourquoi ? ».")
-
     run = _find_forme_run(runs_dir)
     p_run = Path(run.path)
     ids = np.load(p_run / "ids.npy")
@@ -533,22 +656,42 @@ def evaluate_why(
     finally:
         conn.close()
 
-    matched = [p for p in matched if p.artwork_id in row_of]
-    avatt_rows = np.array([row_of[p.artwork_id] for p in matched], dtype=np.int64)
-    G_avatt = np.asarray(G[avatt_rows], dtype=np.float32)
+    matched = [
+        p for p in paintings
+        if len(p.fixations) > 0
+        and ((p.artwork_id is not None and p.artwork_id in row_of) or (extra_dino and p.image_id in extra_dino))
+    ]
+    if len(matched) < 2:
+        raise RuntimeError(f"Trop peu de peintures AVAtt disponibles ({len(matched)}) pour évaluer « Pourquoi ? ».")
+
+    # Vecteurs globaux, régionaux et dimensions pour chaque peinture évaluée
+    g_list, r_list, sz_list = [], [], []
+    for p in matched:
+        if p.artwork_id is not None and p.artwork_id in row_of:
+            row = row_of[p.artwork_id]
+            gv = np.asarray(G[row], dtype=np.float32)
+            rv = np.asarray(R[row], dtype=np.float32)
+            sz = sizes.get(p.artwork_id, (1, 1))
+        else:
+            gv, rv, sz = extra_dino[p.image_id]
+        g_list.append(gv)
+        r_list.append(rv)
+        sz_list.append(sz)
+
+    G_avatt = np.stack(g_list).astype(np.float32)
     G_avatt /= np.maximum(np.linalg.norm(G_avatt, axis=1, keepdims=True), 1e-12)
 
     # Trouve la 1ʳᵉ voisine en forme pour chaque peinture AVAtt
-    neighbors: list[tuple[AvattPainting, int, float, str]] = []
+    # Chaque entrée : (index_a, nb_aid_or_none, nb_cos, nb_label, reg_b, gb, sz_b)
+    neighbors: list[tuple[int, int | None, float, str, np.ndarray, np.ndarray, tuple[int, int]]] = []
     if neighbor_pool == "avatt":
         sim = G_avatt @ G_avatt.T
         np.fill_diagonal(sim, -np.inf)
         for i, p in enumerate(matched):
-            # Exclut les quasi-doublons (cos >= 0,98)
             s_row = np.where(sim[i] >= 0.98, -np.inf, sim[i])
             j = int(np.argmax(s_row))
             nb = matched[j]
-            neighbors.append((p, int(nb.artwork_id), float(s_row[j]), nb.image_id))
+            neighbors.append((i, nb.artwork_id, float(s_row[j]), nb.image_id, r_list[j], g_list[j], sz_list[j]))
     elif neighbor_pool == "corpus":
         ok_idx = np.flatnonzero(status == OK)
         best_sim = np.full(len(matched), -np.inf, dtype=np.float32)
@@ -561,13 +704,21 @@ def evaluate_why(
             blk_ids = ids[blk_idx]
             for i, p in enumerate(matched):
                 row_s = cs[i]
-                row_s = np.where((blk_ids == p.artwork_id) | (row_s >= 0.98), -np.inf, row_s)
+                excl = (row_s >= 0.98) if p.artwork_id is None else ((blk_ids == p.artwork_id) | (row_s >= 0.98))
+                row_s = np.where(excl, -np.inf, row_s)
                 j = int(np.argmax(row_s))
                 if row_s[j] > best_sim[i]:
                     best_sim[i] = float(row_s[j])
                     best_aid[i] = int(blk_ids[j])
         for i, p in enumerate(matched):
-            neighbors.append((p, int(best_aid[i]), float(best_sim[i]), f"#{int(best_aid[i])}"))
+            nb_aid = int(best_aid[i])
+            rb = row_of[nb_aid]
+            neighbors.append((
+                i, nb_aid, float(best_sim[i]), f"#{nb_aid}",
+                np.asarray(R[rb], dtype=np.float32),
+                np.asarray(G[rb], dtype=np.float32),
+                sizes.get(nb_aid, (1, 1)),
+            ))
     else:
         raise ValueError(f"neighbor_pool inconnu : {neighbor_pool}")
 
@@ -579,14 +730,11 @@ def evaluate_why(
     n_zero_corr = 0
     n_full_k = 0
 
-    for p, nb_aid, nb_cos, nb_label in neighbors:
-        ra, rb = row_of[p.artwork_id], row_of[nb_aid]
-        reg_a = np.asarray(R[ra], dtype=np.float32)
-        reg_b = np.asarray(R[rb], dtype=np.float32)
-        ga = np.asarray(G[ra], dtype=np.float32)
-        gb = np.asarray(G[rb], dtype=np.float32)
-        sz_a = sizes.get(p.artwork_id, (1, 1))
-        sz_b = sizes.get(nb_aid, (1, 1))
+    for idx_a, nb_aid, nb_cos, nb_label, reg_b, gb, sz_b in neighbors:
+        p = matched[idx_a]
+        reg_a = r_list[idx_a]
+        ga = g_list[idx_a]
+        sz_a = sz_list[idx_a]
 
         # Cases valides de A (même règle que correspondences.match)
         cvecs_a = cells_of(reg_a, grids)
@@ -743,15 +891,16 @@ def evaluate_search_zones(
     queries: tuple[str, ...] = DEFAULT_ZONE_QUERIES,
     top_k_per_query: int = 15,
     encoder=None,
+    extra_zones: dict[str, np.ndarray] | None = None,
     n_boot: int = 2000,
     seed: int = 0,
     say: Callable[[str], None] = print,
 ) -> dict:
     """Mesure (b) : les zones renvoyées par ``search_zones`` sont-elles plus regardées ?
 
-    Deux protocoles sur les peintures AVAtt rattachées :
+    Deux protocoles sur les peintures AVAtt disponibles :
     1. ``queries`` : 20 requêtes iconographiques fixes en français ; pour chaque requête, les
-       ``top_k_per_query`` meilleures peintures AVAtt dans ``ZoneIndex`` et la zone renvoyée.
+       ``top_k_per_query`` meilleures peintures AVAtt et la zone renvoyée.
     2. ``titles``  : pour chaque peinture AVAtt ayant un titre non vide, la meilleure zone de
        cette peinture pour son propre titre parmi ses 20 zones SigLIP 2.
 
@@ -764,8 +913,12 @@ def evaluate_search_zones(
         raise RuntimeError("Index des zones textuelles absent : lancez `pixplot zones`.")
     z_index = ZoneIndex(z_run)
 
-    matched = [p for p in paintings if p.artwork_id is not None and len(p.fixations) > 0]
-    by_aid = {p.artwork_id: p for p in matched}
+    matched = [
+        p for p in paintings
+        if len(p.fixations) > 0 and (p.artwork_id is not None or (extra_zones and p.image_id in extra_zones))
+    ]
+    by_iid = {p.image_id: p for p in matched}
+    by_aid = {p.artwork_id: p for p in matched if p.artwork_id is not None}
     allowed = set(by_aid.keys())
 
     if encoder is None:
@@ -780,24 +933,71 @@ def evaluate_search_zones(
         say(f"  Chargement de {p_sig['encoder']} pour encoder les requêtes…")
         encoder = get_encoder(p_sig["encoder"], hf_model=p_sig.get("weights"), input_size=p_sig.get("input_size"))
 
+    # Construit la matrice exacte (N_zones, D) des zones des peintures évaluées si extra_zones est fourni
+    zone_bank: tuple[np.ndarray, list[str], np.ndarray] | None = None
+    if extra_zones:
+        vecs_l: list[np.ndarray] = []
+        iids_l: list[str] = []
+        cells_l: list[int] = []
+        if z_index.full is not None and z_index.zone_rows is not None and allowed:
+            mask = np.isin(z_index.zone_ids, list(allowed))
+            idx = np.flatnonzero(mask)
+            rows = z_index.zone_rows[idx]
+            cells = z_index.zone_cells[idx].astype(np.int64)
+            vecs_l.append(np.asarray(z_index.full[rows, cells], dtype=np.float32))
+            iids_l.extend(by_aid[int(z_index.zone_ids[r])].image_id for r in idx.tolist())
+            cells_l.extend(cells.tolist())
+        n_boxes = len(z_index.boxes)
+        for p in matched:
+            if p.artwork_id is None and p.image_id in extra_zones:
+                zv = np.asarray(extra_zones[p.image_id], dtype=np.float32)
+                vecs_l.append(zv[:n_boxes])
+                iids_l.extend([p.image_id] * min(len(zv), n_boxes))
+                cells_l.extend(range(min(len(zv), n_boxes)))
+        if vecs_l:
+            zone_bank = (np.concatenate(vecs_l, axis=0), iids_l, np.asarray(cells_l, dtype=np.int64))
+
+    def _search_one(qv: np.ndarray, k_lim: int, only_iid: str | None = None) -> list[dict]:
+        if zone_bank is not None:
+            mat, iids, cells = zone_bank
+            scores = mat @ qv
+            if only_iid is not None:
+                sel = [i for i, iid in enumerate(iids) if iid == only_iid]
+                if not sel:
+                    return []
+                best_i = max(sel, key=lambda i: float(scores[i]))
+                g, box = z_index.boxes[int(cells[best_i])]
+                return [{"image_id": only_iid, "score": round(float(scores[best_i]), 4), "grid": g, "box": list(box)}]
+            order = np.argsort(-scores)
+            out, seen = [], set()
+            for o in order.tolist():
+                iid = iids[o]
+                if iid in seen:
+                    continue
+                seen.add(iid)
+                g, box = z_index.boxes[int(cells[o])]
+                out.append({"image_id": iid, "score": round(float(scores[o]), 4), "grid": g, "box": list(box)})
+                if len(out) >= k_lim:
+                    break
+            return out
+        sub = {by_iid[only_iid].artwork_id} if only_iid is not None else allowed
+        hits = _search_avatt_zones(z_index, qv, sub, k=k_lim)
+        return [{**h, "image_id": by_aid[h["id"]].image_id} for h in hits]
+
     cmap = center_bias_map(128)
-    lmaps = {p.artwork_id: local_contrast_map(crop_painting(p), size=128) for p in matched}
+    lmaps = {p.image_id: local_contrast_map(crop_painting(p), size=128) for p in matched}
 
     # --- Protocole 1 : requêtes iconographiques fixes
     q_vecs = np.asarray(encoder.encode_text(list(queries)), dtype=np.float32)
     q_vecs /= np.maximum(np.linalg.norm(q_vecs, axis=1, keepdims=True), 1e-12)
 
     raw_hits: list[dict] = []
-    by_painting_hits: dict[int, list[dict]] = {}
+    by_painting_hits: dict[str, list[dict]] = {}
     for q, qv in zip(queries, q_vecs):
-        # On demande assez de voisines pour trouver top_k_per_query parmi les peintures AVAtt :
-        # plutôt que d'élargir k sur 1,6 M zones (qui pourrait rater des peintures AVAtt),
-        # on évalue exactement les 20 zones de chaque peinture AVAtt dans z_index.full si dispo,
-        # sinon on passe par z_index.search(..., allowed=allowed).
-        hits = _search_avatt_zones(z_index, qv, allowed, k=top_k_per_query)
+        hits = _search_one(qv, k_lim=top_k_per_query)
         for rank_q, h in enumerate(hits, start=1):
-            p = by_aid[h["id"]]
-            ev = _eval_single_zone(p, h["grid"], h["box"], cmap, lmaps[p.artwork_id])
+            p = by_iid[h["image_id"]]
+            ev = _eval_single_zone(p, h["grid"], h["box"], cmap, lmaps[p.image_id])
             rec = {
                 "query": q,
                 "rank_in_query": rank_q,
@@ -811,13 +1011,13 @@ def evaluate_search_zones(
                 **ev,
             }
             raw_hits.append(rec)
-            by_painting_hits.setdefault(p.artwork_id, []).append(rec)
+            by_painting_hits.setdefault(p.image_id, []).append(rec)
 
     # Agrégation par peinture pour le bootstrap sur les peintures
     painting_agg: list[dict] = []
-    for aid, recs in sorted(by_painting_hits.items()):
-        p = by_aid[aid]
-        agg: dict = {"image_id": p.image_id, "artwork_id": aid, "n_queries": len(recs)}
+    for iid, recs in sorted(by_painting_hits.items()):
+        p = by_iid[iid]
+        agg: dict = {"image_id": p.image_id, "artwork_id": p.artwork_id, "n_queries": len(recs)}
         for cond in ("zone", "random", "center", "contrast"):
             agg[cond] = {
                 m: float(np.mean([r[cond][m] for r in recs]))
@@ -848,11 +1048,11 @@ def evaluate_search_zones(
         t_vecs = np.asarray(encoder.encode_text([p.title for p in titled]), dtype=np.float32)
         t_vecs /= np.maximum(np.linalg.norm(t_vecs, axis=1, keepdims=True), 1e-12)
         for p, tv in zip(titled, t_vecs):
-            hits = _search_avatt_zones(z_index, tv, {p.artwork_id}, k=1)
+            hits = _search_one(tv, k_lim=1, only_iid=p.image_id)
             if not hits:
                 continue
             h = hits[0]
-            ev = _eval_single_zone(p, h["grid"], h["box"], cmap, lmaps[p.artwork_id])
+            ev = _eval_single_zone(p, h["grid"], h["box"], cmap, lmaps[p.image_id])
             title_records.append({
                 "query": p.title,
                 "score": h["score"],
@@ -1012,9 +1212,13 @@ def run_oculometrie(
     n_boot: int = 2000,
     seed: int = 0,
     skip_zones: bool = False,
+    encode_missing: bool = False,
     say: Callable[[str], None] = print,
 ) -> dict:
     """Exécute le rattachement AVAtt, les mesures (a), (b), (c) et génère les planches visuelles."""
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
     say("1. Chargement d'AVAtt…")
     paintings, load_info = load_avatt(avatt_dir)
     say(f"   {load_info['paintings_loaded']} peintures uniques ({load_info['duplicates_excluded']} doublon exclu), "
@@ -1025,17 +1229,49 @@ def run_oculometrie(
     say(f"   {match_info['matched']}/{match_info['total']} rattachées ({match_info['unmatched']} absentes, "
         f"{match_info['rejected_margin']} rejetées par marge).")
 
+    extra_dino = None
+    if encode_missing:
+        extra_dino = encode_missing_dino(
+            paintings,
+            _find_forme_run(runs_dir),
+            cache_path=out_dir / "avatt_extra_dino.npz",
+            say=say,
+        )
+
     say("3. Mesure (a) & (c) : zones du « Pourquoi ? » (AVAtt ↔ AVAtt et AVAtt ↔ corpus)…")
-    why_avatt = evaluate_why(paintings, catalog_path, runs_dir, neighbor_pool="avatt", n_boot=n_boot, seed=seed, say=say)
-    why_corpus = evaluate_why(paintings, catalog_path, runs_dir, neighbor_pool="corpus", n_boot=n_boot, seed=seed + 10, say=say)
+    why_avatt = evaluate_why(
+        paintings, catalog_path, runs_dir,
+        neighbor_pool="avatt", n_boot=n_boot, seed=seed, extra_dino=extra_dino, say=say,
+    )
+    why_corpus = evaluate_why(
+        paintings, catalog_path, runs_dir,
+        neighbor_pool="corpus", n_boot=n_boot, seed=seed + 10, extra_dino=extra_dino, say=say,
+    )
 
     zones_res = None
     if not skip_zones and find_zone_index(runs_dir) is not None:
         say("4. Mesure (b) & (c) : zones de `search_zones`…")
-        zones_res = evaluate_search_zones(paintings, runs_dir, n_boot=n_boot, seed=seed + 20, say=say)
+        sig_enc = None
+        extra_zones = None
+        if encode_missing:
+            from ..encoders.registry import get_encoder
+            sig_runs = [
+                r for r in list_runs("features", runs_dir=runs_dir)
+                if str(r.manifest["params"].get("encoder", "")).startswith("siglip2")
+            ]
+            if not sig_runs:
+                raise RuntimeError("Aucun run SigLIP 2 trouvé pour encoder les zones manquantes.")
+            p_sig = sig_runs[-1].manifest["params"]
+            say(f"  Chargement de {p_sig['encoder']}…")
+            sig_enc = get_encoder(p_sig["encoder"], hf_model=p_sig.get("weights"), input_size=p_sig.get("input_size"))
+            extra_zones = encode_missing_zones(
+                paintings, sig_enc, cache_path=out_dir / "avatt_extra_zones.npz", say=say,
+            )
+        zones_res = evaluate_search_zones(
+            paintings, runs_dir,
+            encoder=sig_enc, extra_zones=extra_zones, n_boot=n_boot, seed=seed + 20, say=say,
+        )
 
-    out_dir = Path(out_dir)
-    out_dir.mkdir(parents=True, exist_ok=True)
     by_id = {p.image_id: p for p in paintings}
 
     # Planches visuelles : 3 réussites + 3 échecs pour « Pourquoi ? » et pour `search_zones`

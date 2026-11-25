@@ -4,15 +4,15 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 25/11/2026 (oculométrie fusionnée).*
+*Dernière mise à jour : 25/11/2026 (0.24.0 publiée, AVAtt complet sur 282 peintures).*
 
-> **Relais (25/11/2026)** : Claude n'a bientôt plus de crédit ; **Gemini 4 Neon devient l'intégrateur** sur `main`
-> (dossier `Pixplot V2`). Aucune copie de travail en cours. Prochaine étape naturelle : publier la **0.24.0**
-> (notions floues § 49, oculométrie § 50 : voir le CHANGELOG « Non publié ») en suivant les conventions
-> d'AGENTS.md (numéro dans 8 fichiers, test de cohérence, tag, release bilingue), après accord de l'utilisateur.
+> **Relais (25/11/2026)** : **Gemini 4 Neon est l'intégrateur** sur `main` (dossier `Pixplot V2`).
+> Aucune copie de travail en cours (`pixplot-oculometrie` et branche `gemini/oculometrie` supprimées).
+> **0.24.0** publiée (notions floues § 49, oculométrie AVAtt étendue aux 282 peintures § 50).
 
 ## Version publiée
 
+**0.24.0** (25/11/2026) : notions floues (§ 49, cohérence des notions apprises, panneau « Notions » et `explore_notions`) ; oculométrie AVAtt (`pixplot oculometrie`, § 50, étendu aux 282 peintures avec `--encode-missing` : « Pourquoi ? » NSS +0,31 contre hasard 0 et biais central +0,53 ; `search_zones` sur titres +0,25 devant le biais central +0,14).
 **0.23.0** (25/11/2026) : datation estimée (`pixplot dater`, § 45) et vue chronologique ; banc « influence » d'après Wikidata (`pixplot influence`, § 48) ; axe de Wölfflin (§ 43) ; tuiles (§ 44) ; `pixplot sauvegarde` ; site redessiné (planches animées de vraies réponses) ; Depth Pro 2, OpenVisionBanana et motifs ordinaux mesurés, non retenus (§§ 46–47). Détail dans « En cours », « Après la 0.22.0 » (publié).
 **0.22.0** (24/11/2026) : regard « posture » en essai dans l'Atlas et le MCP (§ 41), notions du regard « forme » nommées à travers SigLIP 2 (§ 42), « Pourquoi ? » qui dit quand moins de 4 zones se répondent (§ 40, complément), référence des commandes, site à jour. Détail dans « En cours » plus bas (« Après la 0.21.0 », publié).
 **0.21.0** (23/11/2026) : regard « posture » évalué (§ 35), banc d'essai texte (§ 36), notions apprises et leur panneau (§ 37), intervalles de confiance (§ 38), « Pourquoi ? » mis à l'épreuve puis réparé (§§ 39–40), fiche de données, formats et parité FR / EN vérifiés par des tests, outil MCP `explore_notions` (20 outils). Détail dans « En cours » plus bas (publié).
@@ -325,13 +325,13 @@ corrigé ; 63 tests passent, Atlas vérifié.
   `pixplot bench`, artiste P@10 sur 1 090 artistes : forme 33,9 %, sujet 42,9 %, touche 35,0 %,
   couleur 7,3 % (avant, 129 artistes : 50,8 / 61,6 / 53,0 %) ; même classement ; README FR + EN à jour.
 
-- **Gemini 4 Neon, fusionné le 25/11/2026, non publié** : zones de PixPlot face au regard humain (AVAtt,
-  ARCHITECTURE § 50, `handoff/gemini-oculometrie.md`, `pixplot oculometrie`). « Pourquoi ? » au-dessus du hasard
-  (NSS +0,26) mais sous le biais vers le centre (+0,55) ; rien ne change dans l'Atlas. Fusion relue par Claude,
-  162 tests. **Question de Neon laissée à l'utilisateur** : encoder les 174 peintures AVAtt absentes de WikiArt
-  (quelques secondes de GPU, images sous droits comprises, à garder en local) ou s'en tenir aux 108. Copie de
-  travail `pixplot-oculometrie` à supprimer (dossier et branche `gemini/oculometrie`, déjà fusionnée).
-- **Claude, 25/11/2026, non publié** : **notions floues** (ARCHITECTURE § 49, Pach et al., arXiv 2504.02821).
+- **Gemini 4 Neon, 25/11/2026, publié en 0.24.0** : zones de PixPlot face au regard humain (AVAtt,
+  ARCHITECTURE § 50, `handoff/gemini-oculometrie.md`, `pixplot oculometrie --encode-missing`). Étendu aux 282
+  peintures d'AVAtt (cache local `avatt_extra_dino.npz` et `avatt_extra_zones.npz` hors git) : « Pourquoi ? »
+  NSS +0,31 [+0,27 ; +0,34] (rejoint le contraste local +0,32, sous le biais central +0,53) ; `search_zones`
+  sur titres +0,25 [+0,19 ; +0,31] devant le biais central (+0,14, *p* = 0,002). Copie `pixplot-oculometrie`
+  et branche `gemini/oculometrie` supprimées.
+- **Claude, 25/11/2026, publié en 0.24.0** : **notions floues** (ARCHITECTURE § 49, Pach et al., arXiv 2504.02821).
   `pixplot notions --coherence <run>` (6 s, aussi après chaque entraînement) écrit `coherence.json` : écart au hasard
   des 50 œuvres les plus marquées, dans le regard de la notion et dans l'autre. Floues : 16,6 % (sujet), 18,5 %
   (forme), presque toutes sans nom ; nommées nettes à 94–97 %. Panneau « Notions » : étiquettes « floue » / « un seul

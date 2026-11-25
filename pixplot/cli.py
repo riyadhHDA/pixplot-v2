@@ -1622,6 +1622,7 @@ def cmd_oculometrie(args) -> int:
         n_boot=args.boot,
         seed=args.seed,
         skip_zones=args.skip_zones,
+        encode_missing=args.encode_missing,
         say=lambda m: print(m, flush=True),
     )
 
@@ -1947,6 +1948,7 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--boot", type=int, default=2000, help="tirages bootstrap sur les peintures (défaut : 2000)")
     p.add_argument("--seed", type=int, default=0)
     p.add_argument("--skip-zones", action="store_true", help="ne pas évaluer search_zones (évite de charger SigLIP 2)")
+    p.add_argument("--encode-missing", action="store_true", help="encoder en local (GPU) les peintures AVAtt absentes du catalogue")
     p.set_defaults(func=cmd_oculometrie)
 
     p = sub.add_parser("influence", help="banc d'essai « influence entre artistes » sur Wikidata (P737 / P1066)")

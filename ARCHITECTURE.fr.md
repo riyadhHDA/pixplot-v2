@@ -2365,32 +2365,38 @@ al. jugent avec un modèle tiers (DINOv2), que nous n'avons pas gardé (son cach
 **Données.** AVAtt (Kerkouri et al., arXiv 2610.30481, 2026) : 282 peintures regardées librement (5,5 ou 15 s)
 par 152 volontaires, oculomètre Tobii, 121 002 fixations. Données oculométriques CC0, code MIT ; images (dont 25
 sous droits) gardées en local dans `data/avatt/`. 108 peintures rattachées à WikiArt 81k par empreinte dHash
-(règle du § 34 : distance ≤ 8 bits, marge ≥ 4).
+(règle du § 34 : distance ≤ 8 bits, marge ≥ 4) ; les 174 absentes sont encodées en local avec les mêmes modèles
+(`--encode-missing`, cache hors git) pour évaluer les **282 peintures**.
 
 **Méthode.** Part des fixations qui tombent dans les cases montrées, rapportée à leur surface ; NSS (0 au hasard,
 positif si la zone est plus regardée que le reste). Témoins : cases au hasard, biais vers le centre, contraste
 local, sur la même grille. IC à 95 % par bootstrap sur les peintures.
 
-| Zones (n = 108, voisine dans WikiArt 81k) | Part des fixations | NSS [IC 95 %] |
+| Zones (n = 282, voisine dans WikiArt 81k) | Part des fixations | NSS [IC 95 %] |
 |---|---|---|
-| « Pourquoi ? » actuel (§ 40) | 43,2 % | +0,26 [+0,21 ; +0,31] |
-| Cases au hasard | 24,6 % | 0,00 |
-| Ancien « Pourquoi ? » (§ 39, coins) | 11,0 % | −0,23 |
-| Biais vers le centre | 58,7 % | +0,55 |
-| Contraste local | 42,1 % | +0,34 |
+| « Pourquoi ? » actuel (§ 40) | 44,9 % | +0,31 [+0,27 ; +0,34] |
+| Cases au hasard | 24,2 % | −0,01 |
+| Ancien « Pourquoi ? » (§ 39, coins) | 11,1 % | −0,23 |
+| Biais vers le centre | 57,5 % | +0,53 |
+| Contraste local | 40,7 % | +0,32 |
 
-`search_zones`, 20 requêtes en français : NSS +0,105 [+0,061 ; +0,149] au-dessus du hasard, mais sous le biais vers
-le centre. Par requête : « enfant », « visage », « maison » très regardés (+0,30 à +0,37) ; « ciel et nuages »
-(−0,24), « montagne » (−0,14) peu regardés, alors que PixPlot y trouve bien ce qu'on demande. Avec le titre de
-l'œuvre pour requête : +0,22, à égalité avec le biais vers le centre.
+*(Sur les seules 108 peintures rattachées à WikiArt : +0,26 [+0,21 ; +0,31], même classement ; sur n = 282,
+« Pourquoi ? » rejoint le contraste local, Δ −0,011 [−0,059 ; +0,037], mais reste sous le biais central.)*
+
+`search_zones`, 20 requêtes en français (n = 167 peintures) : NSS +0,142 [+0,099 ; +0,190] au-dessus du hasard,
+mais sous le biais vers le centre (+0,215). Par requête : « enfant », « visage », « maison » très regardés ;
+« ciel et nuages », « montagne » peu regardés, alors que PixPlot y trouve bien ce qu'on demande. Avec le titre de
+l'œuvre pour requête (n = 123 peintures) : **+0,249 [+0,190 ; +0,314]**, **devant le biais vers le centre**
+(+0,144 ; Δ +0,105 [+0,034 ; +0,180], *p* = 0,002).
 
 **Lecture.** La réparation du § 40 est confirmée par le regard humain : l'ancien classement évitait les zones
-regardées, l'actuel tombe au-dessus du hasard. Mais le « Pourquoi ? » n'est pas une carte d'attention : un simple
-biais vers le centre fait mieux. Il montre ce que deux toiles ont en commun, et une zone peu regardée (un ciel de
-Sisley) peut légitimement rapprocher deux compositions. `search_zones` suit la requête, pas la saillance.
+regardées, l'actuel tombe au-dessus du hasard et rejoint le contraste local. Mais le « Pourquoi ? » n'est pas une
+carte d'attention : un simple biais vers le centre fait mieux. Il montre ce que deux toiles ont en commun, et une
+zone peu regardée (un ciel de Sisley) peut légitimement rapprocher deux compositions. `search_zones` suit la
+requête, pas la saillance — et quand la requête est le titre de l'œuvre, elle tombe plus juste que le biais central.
 
 **Décision.** Rien ne change dans l'Atlas : la mise en garde sous les zones (« une piste à regarder, pas une
-explication ») est juste. Banc gardé (`pixplot oculometrie`).
+explication ») est juste. Banc gardé (`pixplot oculometrie`, option `--encode-missing` pour couvrir tout AVAtt).
 
-**Limites.** 108 peintures sur 282 ; observateurs non spécialistes en regard libre, pas un historien qui cherche une
-attribution ; grille 4 × 4 fixe.
+**Limites.** Observateurs non spécialistes en regard libre, pas un historien qui cherche une attribution ; grille
+4 × 4 fixe.
