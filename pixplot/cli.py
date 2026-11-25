@@ -1603,6 +1603,63 @@ def cmd_influence(args) -> int:
     return 0
 
 
+def cmd_oculometrie(args) -> int:
+    """Banc d'essai oculométrique (AVAtt) : zones du « Pourquoi ? » et de `search_zones`."""
+    from .analysis.gaze import run_oculometrie
+
+    s = get_settings(args.data)
+    avatt_dir = Path(args.avatt) if args.avatt else (s.data_dir.parent / "avatt")
+    if not (avatt_dir / "metadata.csv").exists():
+        raise SystemExit(
+            f"Jeu AVAtt introuvable dans {avatt_dir} (attendu : metadata.csv, images/, scanpaths/)."
+        )
+    out_dir = Path(args.out) if args.out else (s.data_dir / "bench" / "oculometrie")
+    report = run_oculometrie(
+        avatt_dir=avatt_dir,
+        catalog_path=s.catalog_path,
+        runs_dir=s.runs_dir,
+        out_dir=out_dir,
+        n_boot=args.boot,
+        seed=args.seed,
+        skip_zones=args.skip_zones,
+        say=lambda m: print(m, flush=True),
+    )
+
+    def _fmt(st: dict) -> str:
+        return f"{st['mean']:.3f} [{st['mean_ci'][0]:.3f} ; {st['mean_ci'][1]:.3f}]"
+
+    for label, block in (("Pourquoi ? (AVAtt ↔ AVAtt)", report["why_avatt"]),
+                         ("Pourquoi ? (AVAtt ↔ corpus)", report["why_corpus"])):
+        print(f"\n=== {label} (n = {block['n_paintings']}) ===")
+        for cond in ("why", "random", "center", "contrast", "why_old"):
+            c = block["conditions"].get(cond)
+            if not c:
+                continue
+            print(f"  {cond:<10} fix={_fmt(c['fix_share'])}  surf={c['area']['mean']:.3f}  "
+                  f"enr={_fmt(c['enrichment'])}  NSS={_fmt(c['nss'])}")
+        for diff_k, d in block["paired"].items():
+            ns = d["nss"]
+            print(f"  Δ NSS {diff_k:<20} {ns['mean_diff']:+.3f} [{ns['mean_ci'][0]:+.3f} ; {ns['mean_ci'][1]:+.3f}] (p={ns['p_mean']:.4f})")
+        cb = block["continuous_baselines"]
+        print(f"  NSS continu : centre {_fmt(cb['center_nss'])} · contraste {_fmt(cb['contrast_nss'])}")
+
+    sz = report.get("search_zones")
+    if sz:
+        for label, block in (("search_zones (20 requêtes FR)", sz["iconographic_queries"]),
+                             ("search_zones (titres d'œuvres)", sz["title_queries"])):
+            print(f"\n=== {label} (n = {block['n_paintings']} peintures) ===")
+            for cond in ("zone", "random", "center", "contrast"):
+                c = block["conditions"].get(cond)
+                if not c:
+                    continue
+                print(f"  {cond:<10} fix={_fmt(c['fix_share'])}  enr={_fmt(c['enrichment'])}  "
+                      f"NSS={_fmt(c['nss'])}  rang={_fmt(c['rank_pct'])}")
+            for diff_k, d in block["paired"].items():
+                ns = d["nss"]
+                print(f"  Δ NSS {diff_k:<20} {ns['mean_diff']:+.3f} [{ns['mean_ci'][0]:+.3f} ; {ns['mean_ci'][1]:+.3f}] (p={ns['p_mean']:.4f})")
+    return 0
+
+
 # --------------------------------------------------------------------------- main
 def build_parser() -> argparse.ArgumentParser:
     from . import __version__
@@ -1883,6 +1940,14 @@ def build_parser() -> argparse.ArgumentParser:
     p.add_argument("--no-resume", action="store_true", help="ne pas reprendre un calcul interrompu")
     p.add_argument("--no-sheet", action="store_true", help="ne pas générer la planche visuelle")
     p.set_defaults(func=cmd_whytest)
+
+    p = sub.add_parser("oculometrie", help="comparer les zones de PixPlot au regard humain (AVAtt)")
+    p.add_argument("--avatt", default=None, help="dossier AVAtt (défaut : <parent_de_données>/avatt)")
+    p.add_argument("--out", default=None, help="dossier de sortie (défaut : <données>/bench/oculometrie)")
+    p.add_argument("--boot", type=int, default=2000, help="tirages bootstrap sur les peintures (défaut : 2000)")
+    p.add_argument("--seed", type=int, default=0)
+    p.add_argument("--skip-zones", action="store_true", help="ne pas évaluer search_zones (évite de charger SigLIP 2)")
+    p.set_defaults(func=cmd_oculometrie)
 
     p = sub.add_parser("influence", help="banc d'essai « influence entre artistes » sur Wikidata (P737 / P1066)")
     p.add_argument("--fetch", action="store_true", help="interroger Wikidata SPARQL et enregistrer les réponses brutes")
