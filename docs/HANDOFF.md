@@ -4,7 +4,12 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 25/11/2026 (notions floues, après la 0.23.0).*
+*Dernière mise à jour : 25/11/2026 (oculométrie fusionnée).*
+
+> **Relais (25/11/2026)** : Claude n'a bientôt plus de crédit ; **Gemini 4 Neon devient l'intégrateur** sur `main`
+> (dossier `Pixplot V2`). Aucune copie de travail en cours. Prochaine étape naturelle : publier la **0.24.0**
+> (notions floues § 49, oculométrie § 50 : voir le CHANGELOG « Non publié ») en suivant les conventions
+> d'AGENTS.md (numéro dans 8 fichiers, test de cohérence, tag, release bilingue), après accord de l'utilisateur.
 
 ## Version publiée
 
@@ -320,9 +325,12 @@ corrigé ; 63 tests passent, Atlas vérifié.
   `pixplot bench`, artiste P@10 sur 1 090 artistes : forme 33,9 %, sujet 42,9 %, touche 35,0 %,
   couleur 7,3 % (avant, 129 artistes : 50,8 / 61,6 / 53,0 %) ; même classement ; README FR + EN à jour.
 
-- **Gemini 4 Neon, en cours (25/11/2026)** : zones de PixPlot face au regard humain (AVAtt, oculométrie sur
-  peintures, Kerkouri et al., arXiv 2610.30481), dans `C:\Users\Riyadh\Documents\pixplot-oculometrie` (branche
-  `gemini/oculometrie`). Compte rendu attendu : `docs/handoff/gemini-oculometrie.md`.
+- **Gemini 4 Neon, fusionné le 25/11/2026, non publié** : zones de PixPlot face au regard humain (AVAtt,
+  ARCHITECTURE § 50, `handoff/gemini-oculometrie.md`, `pixplot oculometrie`). « Pourquoi ? » au-dessus du hasard
+  (NSS +0,26) mais sous le biais vers le centre (+0,55) ; rien ne change dans l'Atlas. Fusion relue par Claude,
+  162 tests. **Question de Neon laissée à l'utilisateur** : encoder les 174 peintures AVAtt absentes de WikiArt
+  (quelques secondes de GPU, images sous droits comprises, à garder en local) ou s'en tenir aux 108. Copie de
+  travail `pixplot-oculometrie` à supprimer (dossier et branche `gemini/oculometrie`, déjà fusionnée).
 - **Claude, 25/11/2026, non publié** : **notions floues** (ARCHITECTURE § 49, Pach et al., arXiv 2504.02821).
   `pixplot notions --coherence <run>` (6 s, aussi après chaque entraînement) écrit `coherence.json` : écart au hasard
   des 50 œuvres les plus marquées, dans le regard de la notion et dans l'autre. Floues : 16,6 % (sujet), 18,5 %

@@ -2222,3 +2222,41 @@ name, offers a "hide blurry notions" box and a sort by coherence; a notion's det
 regard that judges is also the one that learned the notion: a notion "clear" in its own regard may gather a trait
 of the reproduction (the frame, no. 88) rather than a thing; "clear" means "coherent", not "right". Pach et al.
 judge with a third-party model (DINOv2), which we did not keep (its cache was deleted on 2026-11-25).
+
+## 50. PixPlot's zones against human gaze (AVAtt, 2026-11-25)
+
+**Question** (Gemini 4 Neon, `docs/handoff/gemini-oculometrie.md`, `pixplot oculometrie`). Do the "Why?" zones
+(§ 40) and `search_zones` fall where real people look?
+
+**Data.** AVAtt (Kerkouri et al., arXiv 2610.30481, 2026): 282 paintings viewed freely (5.5 or 15 s) by 152
+volunteers, Tobii eye tracker, 121,002 fixations. Eye-tracking data CC0, code MIT; images (25 in copyright) kept
+locally in `data/avatt/`. 108 paintings matched to WikiArt 81k by dHash fingerprint (§ 34 rule: distance ≤ 8 bits,
+margin ≥ 4).
+
+**Method.** Share of fixations falling in the shown cells, relative to their area; NSS (0 at chance, positive if
+the zone is looked at more than the rest). Controls: random cells, centre bias, local contrast, on the same grid.
+95 % CIs by bootstrap over paintings.
+
+| Zones (n = 108, neighbour in WikiArt 81k) | Share of fixations | NSS [95 % CI] |
+|---|---|---|
+| Current "Why?" (§ 40) | 43.2 % | +0.26 [+0.21; +0.31] |
+| Random cells | 24.6 % | 0.00 |
+| Old "Why?" (§ 39, corners) | 11.0 % | −0.23 |
+| Centre bias | 58.7 % | +0.55 |
+| Local contrast | 42.1 % | +0.34 |
+
+`search_zones`, 20 French queries: NSS +0.105 [+0.061; +0.149] above chance, but below centre bias. Per query:
+"child", "face", "house" much looked at (+0.30 to +0.37); "sky and clouds" (−0.24), "mountain" (−0.14) little
+looked at, although PixPlot does find what was asked. With the work's title as the query: +0.22, level with centre
+bias.
+
+**Reading.** Human gaze confirms the § 40 repair: the old ranking avoided looked-at zones, the current one lands
+above chance. But "Why?" is not an attention map: a plain centre bias does better. It shows what two canvases
+share, and a little-looked-at zone (a Sisley sky) can rightly bring two compositions together. `search_zones`
+follows the query, not salience.
+
+**Decision.** Nothing changes in the Atlas: the warning under the zones ("a lead to look at, not an explanation")
+is right. Benchmark kept (`pixplot oculometrie`).
+
+**Limits.** 108 paintings out of 282; non-specialist observers in free viewing, not a historian looking for an
+attribution; fixed 4 × 4 grid.
