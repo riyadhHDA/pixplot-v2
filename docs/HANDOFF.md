@@ -4,10 +4,11 @@
 Ce fichier remplace la mémoire propre à chaque assistant : il doit suffire à reprendre le travail
 avec n'importe quel modèle.
 
-*Dernière mise à jour : 24/11/2026 (Wölfflin, tuiles de Neon fusionnées).*
+*Dernière mise à jour : 25/11/2026 (publication de la 0.23.0).*
 
 ## Version publiée
 
+**0.23.0** (25/11/2026) : datation estimée (`pixplot dater`, § 45) et vue chronologique ; banc « influence » d'après Wikidata (`pixplot influence`, § 48) ; axe de Wölfflin (§ 43) ; tuiles (§ 44) ; `pixplot sauvegarde` ; site redessiné (planches animées de vraies réponses) ; Depth Pro 2, OpenVisionBanana et motifs ordinaux mesurés, non retenus (§§ 46–47). Détail dans « En cours », « Après la 0.22.0 » (publié).
 **0.22.0** (24/11/2026) : regard « posture » en essai dans l'Atlas et le MCP (§ 41), notions du regard « forme » nommées à travers SigLIP 2 (§ 42), « Pourquoi ? » qui dit quand moins de 4 zones se répondent (§ 40, complément), référence des commandes, site à jour. Détail dans « En cours » plus bas (« Après la 0.21.0 », publié).
 **0.21.0** (23/11/2026) : regard « posture » évalué (§ 35), banc d'essai texte (§ 36), notions apprises et leur panneau (§ 37), intervalles de confiance (§ 38), « Pourquoi ? » mis à l'épreuve puis réparé (§§ 39–40), fiche de données, formats et parité FR / EN vérifiés par des tests, outil MCP `explore_notions` (20 outils). Détail dans « En cours » plus bas (publié).
 **0.20.0** (19/11/2026) : titres, dates, artistes (MMArt) et émotions (ArtEmis) pour WikiArt, vue
@@ -199,7 +200,7 @@ corrigé ; 63 tests passent, Atlas vérifié.
   Ajout de Claude : `communities` / `disagreements` excluent les regards en essai par défaut
   (`cli._default_spaces`). Copie de travail supprimée.
 
-- **Après la 0.22.0 (24/11/2026), non publié** :
+- **Après la 0.22.0 (24–25/11/2026), publié en 0.23.0** :
   - Claude : **Wölfflin, linéaire / pictural** dans la vue « Axes conceptuels » (ARCHITECTURE § 43).
     Un axe peut réunir plusieurs phrases séparées par « | » (moyennées ; aussi `probe_concepts`) ; le
     préréglage reprend les 3 phrases par pôle du banc de DeepSeek et affiche sa mise en garde (remplace

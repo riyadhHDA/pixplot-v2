@@ -14,7 +14,7 @@ Yale DHLab (2018). Ce n'est pas un numéro de version. Les versions du logiciel 
 Chaque version est une étiquette git `vX.Y.Z` et une *release* GitHub. Le numéro est dans
 `pyproject.toml` et `pixplot/__init__.py`, et s'affiche avec `pixplot --version`.
 
-## Non publié
+## 0.23.0 — 25/11/2026 · Datation estimée, banc « influence », Wölfflin, tuiles, sauvegarde, nouveau site
 
 - **`pixplot influence`** (Gemini 4 Neon) : banc d'essai « influence entre artistes » d'après Wikidata (CC0 ; WIB-100 n'est pas publié) : 302 liens « influencé par » et 152 « élève de » sur 1 072 artistes rattachés, contre des témoins de même époque et même style. Une influence affirmée se voit à peine (AUC 0,54 à 0,59) ; le lien d'atelier se voit mieux (« élève de », sujet 0,73). (ARCHITECTURE § 48)
 - **Motifs ordinaux 2 × 2 mesurés, non retenus** (Tarozo et al., 2025) : la distribution des 24 motifs en dit plus que l'entropie et la complexité (style 16 % des voisines contre 9 %, hasard 8 %), mais reste loin du regard « touche » (50 %). Rien d'ajouté au code. (ARCHITECTURE § 47)

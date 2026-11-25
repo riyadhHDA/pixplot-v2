@@ -14,7 +14,7 @@ DHLab's (2018). It is not a version number. Software versions follow
 Each version is a git tag `vX.Y.Z` and a GitHub release. The number lives in
 `pyproject.toml` and `pixplot/__init__.py`, and `pixplot --version` prints it.
 
-## Unreleased
+## 0.23.0 — 2026-11-25 · Estimated dating, influence benchmark, Wölfflin, tiles, backup, new website
 
 - **`pixplot influence`** (Gemini 4 Neon): an "influence between artists" benchmark from Wikidata (CC0; WIB-100 is not published): 302 "influenced by" and 152 "student of" links over 1,072 matched artists, against same-period, same-style controls. A stated influence barely shows (AUC 0.54 to 0.59); the workshop link shows better ("student of", subject 0.73). (ARCHITECTURE § 48)
 - **Two-by-two ordinal patterns measured, not kept** (Tarozo et al., 2025): the distribution of the 24 patterns says more than entropy and complexity (style 16 % of neighbours against 9 %, chance 8 %), but stays far below the "touch" regard (50 %). Nothing added to the code. (ARCHITECTURE § 47)

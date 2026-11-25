@@ -1,6 +1,6 @@
 # Roadmap
 
-**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-24 · Current version: **0.22.0**
+**English** · [Français](ROADMAP.fr.md) · Updated: 2026-11-25 · Current version: **0.23.0**
 
 Completed work is listed in [CHANGELOG.md](CHANGELOG.md). This file tracks upcoming steps,
 dropped experiments and leads worth testing.
